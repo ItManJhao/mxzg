@@ -65,7 +65,7 @@ export class GuildMemberView extends BaseView<GuildRosterArgs> {
         this.render();
     }
 
-    /** 快照上屏时更新公会人数与虚拟行，退会成功后关闭旧成员窗。 */
+    /** 快照上屏时更新人数与虚拟行，退会成功后关闭旧成员窗。 */
     private render(): void {
         const snapshot = GuildModel.instance.snapshot;
         if (!snapshot?.guild || snapshot.guild.id !== this.args?.guildId
@@ -73,14 +73,14 @@ export class GuildMemberView extends BaseView<GuildRosterArgs> {
             this.close();
             return;
         }
-        this._count!.string = `成员 ${snapshot.guild.memberCount}/${snapshot.guild.capacity}`;
+        this._count!.string = `${snapshot.guild.memberCount}/${snapshot.guild.capacity}`;
         this._leave!.interactable = !GuildController.instance.busy;
         this._list!.list.setData(snapshot.members);
     }
 
-    /** 将当前成员填入已加载的虚拟行节点。 */
+    /** 将当前成员及本人标记填入复用行，不以职务推定选中底图。 */
     private renderRow(node: Node, member: GuildMember): void {
-        node.getComponent(GuildMemberCell)!.render(member);
+        node.getComponent(GuildMemberCell)!.render(member, member.id === this.args?.roleId);
     }
 
     /** 确认窗随成员窗关闭，回包在服务端提交后更新公会大厅。 */

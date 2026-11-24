@@ -1,5 +1,6 @@
 /** 英雄面板属性和战力。按旧装备、套装与万分比规则计算，统一快照保留未恢复的来源。 */
 package com.funsgamex.mxzg.hero;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -8,9 +9,9 @@ import tools.jackson.databind.*;
 public class HeroPanelRules {
     /** 四属性使用长整数；不同于基础成长，已包含本批恢复的装备与套装。 */
     public record Values(long hp,long atk,long def,long spd) {}
-    /** 来源、四维和战力共用本次属性输入。缺少 power 表示历史读数据没有战力值。 */
+    /** 四维与个人分共用原始属性。rawAttributes 只在服务端队伍评分时使用。 */
     public record State(Values values, List<String> includedSources, List<String> pendingSources,
-                        boolean complete, Integer power) {}
+                        boolean complete, Integer power, @JsonIgnore Map<Integer, Long> rawAttributes) {}
     /** 同源装备配置。 */
     private final Map<Integer,JsonNode> equipment=new HashMap<>();
     /** 同源套装阈值，满足多个阈值时全部累加。 */
@@ -41,9 +42,9 @@ public class HeroPanelRules {
         var pending = new ArrayList<>(result.pendingSources());
         pending.add(0, "skill_panel");
         return new State(result.values(), List.of("base", "equipment", "equipment_set"), List.copyOf(pending), false,
-                result.power());
+                result.power(), result.rawAttributes());
     }
-    /** 合并技能贡献后计算四维及同源战力，成长率仅作用于原基础属性。 */
+    /** 合并技能贡献后计算四维及同源个人战力，队伍评分另用同一份未折算属性。 */
     public State calculate(HeroGrowthRules.Stats base, HeroEquipmentRepository.State worn,
                            java.util.function.Consumer<java.util.function.BiConsumer<Integer, Long>> skills) {
         var attrs = attributes(base, worn, skills);
@@ -53,7 +54,7 @@ public class HeroPanelRules {
                 scale(attrs.getOrDefault(101, 0L), attrs.getOrDefault(204, 0L)));
         return new State(values, List.of("base", "equipment", "equipment_set", "skill_panel"),
                 List.of("soul_skill", "talent", "runes", "awakening", "account_and_other_hero_sources"), false,
-                powers.score(attrs));
+                powers.score(attrs), attrs);
     }
     /** 保留全部属性编号的未折算数据，供战斗构建使用；不从四维面板反推，不丢弃暴击等属性。 */
     public Map<Integer,Long> attributes(HeroGrowthRules.Stats base,HeroEquipmentRepository.State worn,java.util.function.Consumer<java.util.function.BiConsumer<Integer,Long>> skills){

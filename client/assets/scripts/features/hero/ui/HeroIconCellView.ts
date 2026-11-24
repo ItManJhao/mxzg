@@ -3,9 +3,10 @@
  * 点击由列表派发给所属页面；本组件不持有选择回调、页面导航或名册状态。
  */
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
-import { _decorator, Button, Component, Label, Node, Sprite } from "cc";
+import { _decorator, Button, Component, Label, Node, Sprite, SpriteFrame } from "cc";
 import { ResManager } from "../../../framework/assets/ResManager";
 import { RedDotBinding } from "../../../framework/ui/RedDotBinding";
+import { HeroPortraitDisplayUtils } from "../utils/HeroPortraitDisplayUtils";
 import { HERO_FACE_FALLBACK, HeroCellModel } from "./HeroListPresentation";
 
 const { ccclass, property } = _decorator;
@@ -13,7 +14,7 @@ const { ccclass, property } = _decorator;
 const ELEMENT_FRAMES = [ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-0", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-1", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-2", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-3", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-4", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-5", "SpriteFrame")] as const;
 
 /**
- * HeroIconCell 上的一格。脸、名字、元素、星、等级、锁和出战标都绑在预制上。
+ * 英雄头像及标记由调用方的预制体绑定；名册预制体另配原版品质和星级资源。
  */
 @ccclass("HeroIconCellView")
 export class HeroIconCellView extends Component {
@@ -40,6 +41,21 @@ export class HeroIconCellView extends Component {
     @property(Node)
     battle: Node | null = null;
 
+    /** 英雄名册的品质框。其他用途的头像格不绑定此字段。 */
+    @property(Sprite) rosterFrame: Sprite | null = null;
+
+    /** 名册品质框按日服编号 0～5 排列，编号 0 用于空位。 */
+    @property([SpriteFrame]) rosterFrames: SpriteFrame[] = [];
+
+    /** 名册普通星资源，按金星、紫星顺序绑定。 */
+    @property([SpriteFrame]) rosterStarFrames: SpriteFrame[] = [];
+
+    /** 名册十星及以上使用的翼徽，其他头像格不绑定。 */
+    @property(Node) rosterStarBadge: Node | null = null;
+
+    /** 十一至十三星叠在翼徽上的星差数字，随当前格子的星级刷新。 */
+    @property(Node) rosterStarBadgeNumber: Node | null = null;
+
     /** 名册和创造法阵的可选红点锚点，保留预制体位置和尺寸。 */
     @property(Node)
     reminderAnchor: Node | null = null;
@@ -52,6 +68,7 @@ export class HeroIconCellView extends Component {
     /** 图片绘制代次，复用和销毁时递增，拒绝旧图片覆盖当前格子。 */
     private revision = 0;
 
+    /** 校验各头像格共有的绑定，以及名册预制体专有的品质与星级资源。 */
     validateBindings(): void {
         const fields = {
             button: this.button, face: this.face, nameLabel: this.nameLabel, elem: this.elem,
@@ -64,6 +81,9 @@ export class HeroIconCellView extends Component {
             throw new Error("assets/bundles/module/hero/prefabs/HeroIconCellView.prefab / HeroIconCellView: stars 必须绑定五颗星");
         if (!this.face!.getComponent(Sprite))
             throw new Error("assets/bundles/module/hero/prefabs/HeroIconCellView.prefab / HeroIconCellView: face 缺少 Sprite");
+        if (this.rosterFrame && !HeroPortraitDisplayUtils.hasRankBindings(this)) {
+            throw new Error("英雄名册格缺少品质框或星级资源");
+        }
     }
 
     /**
@@ -77,8 +97,15 @@ export class HeroIconCellView extends Component {
         this.paintFace(cell, empty, revision);
         this.paintName(cell, empty);
         this.paintElem(cell, empty, revision);
-        this.paintStars(empty ? 0 : cell.stars);
-        this.paintLevel(empty ? null : cell.level);
+        const star = empty ? 0 : cell.stars;
+        if (this.rosterFrame) {
+            HeroPortraitDisplayUtils.paintRank(this, star, () => this.isValid && revision === this.revision);
+        } else {
+            HeroPortraitDisplayUtils.paintStars(this.stars, star);
+        }
+        if (this.levelLabel) {
+            HeroPortraitDisplayUtils.paintLevel(this.levelLabel, empty ? null : cell.level);
+        }
         if (this.lock) this.lock.active = !empty && cell.locked;
         if (this.battle) this.battle.active = !empty && cell.deployed && cell.kind === "owned";
         this.button!.interactable = !empty;
@@ -136,22 +163,13 @@ export class HeroIconCellView extends Component {
         this.nameLabel.string = show ? cell.name : "";
     }
 
-    /** 显示合法元素图标并保留完整Bundle描述；未知元素隐藏，复用后拒绝旧结果。 */
+    /** 共用格按元素绘制。名册使用独立的顶部元素筛选，头像上隐藏元素图标。 */
     private paintElem(cell: HeroCellModel, empty: boolean, revision: number): void {
         if (!this.elem) return;
-        const show = !empty && cell.elem !== null && !!ELEMENT_FRAMES[cell.elem];
+        const show = !this.rosterFrame && !empty && cell.elem !== null && !!ELEMENT_FRAMES[cell.elem];
         this.elem.active = show;
         if (show && cell.elem !== null) {
             ResManager.setSprite(this.elem, ELEMENT_FRAMES[cell.elem], () => this.isValid && revision === this.revision);
-        }
-    }
-
-    private paintStars(count: number): void {
-        const n = count > 5 ? 5 : count < 0 ? 0 : count;
-        for (let i = 0; i < this.stars.length; i++) {
-            const star = this.stars[i];
-            if (!star) continue;
-            star.active = i < n;
         }
     }
 
@@ -159,12 +177,5 @@ export class HeroIconCellView extends Component {
     onDestroy(): void {
         this.revision++;
         this.reminder?.dispose();
-    }
-
-    private paintLevel(level: number | null): void {
-        if (!this.levelLabel) return;
-        const show = level !== null;
-        this.levelLabel.node.active = show;
-        this.levelLabel.string = show ? String(level) : "";
     }
 }

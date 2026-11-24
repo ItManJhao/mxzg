@@ -1,5 +1,5 @@
 /** 契约任务列表格子，展示当前任务的条件、奖励和操作，不持有角色状态。 */
-import { _decorator, Button, Component, Label, Node } from "cc";
+import { _decorator, Button, Component, Label, Node, RichText } from "cc";
 import { ResManager } from "../../../framework/assets/ResManager";
 import { RedDotBinding } from "../../../framework/ui/RedDotBinding";
 import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
@@ -10,7 +10,7 @@ const { ccclass, property } = _decorator;
 export interface VipTaskDisplay {
     /** 当前绑定的策划任务编号。 */
     readonly id: number;
-    /** 配置任务条件与实际进度。 */
+    /** 配置任务条件和实际进度，旧配置的条件高亮已转换为 RichText 文字标签。 */
     readonly description: string;
     /** 旧任务卡展示的第一项实际奖励配置。 */
     readonly reward: { readonly itemId: number; readonly quantity: number };
@@ -26,8 +26,8 @@ export interface VipTaskDisplay {
 
 @ccclass("VipTaskCell")
 export class VipTaskCell extends Component {
-    /** 任务条件标签，空间由模板固定。 */
-    @property(Label) private title: Label | null = null;
+    /** 任务条件及进度，字体和可换行宽度保存在预制体。 */
+    @property(RichText) private title: RichText | null = null;
     /** 配置奖励的品质框和图标，由格子所属节点维护图片生命周期。 */
     @property(Node) private rewardFrame: Node | null = null;
     /** 品质框内部的物品图。 */

@@ -264,7 +264,7 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
         }
     }
 
-    /** 首次为已配置建筑绑定点击和锁态显示索引；拖动手势结束前忽略建筑点击。 */
+    /** 首次为已配置建筑绑定点击和锁态显示索引；忽略来自同一次拖动的点击。 */
     private bindSpots(): void {
         if (this.clicksBound) {
             return;
@@ -314,11 +314,11 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
         });
     }
 
-    /** 登记地图触摸开始、移动和取消事件，关闭时由cleanup按同一目标解除。 */
+    /** 在捕获阶段处理地图手势，避免子 Button 截断冒泡后，下一次触摸无法重置拖动状态。 */
     private bindDrag(): void {
-        this.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this);
-        this.node.on(Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
-        this.node.on(Node.EventType.TOUCH_CANCEL, this.onTouchStart, this);
+        this.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this, true);
+        this.node.on(Node.EventType.TOUCH_MOVE, this.onTouchMove, this, true);
+        this.node.on(Node.EventType.TOUCH_CANCEL, this.onTouchStart, this, true);
     }
 
     /** 重置当前手势的拖动标记和累计横向移动距离，供点击与拖动判定使用。 */
@@ -482,7 +482,7 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
         });
     }
 
-    /** 幂等标记页面关闭，停止特效并解除地图触摸监听；动态美术由对应停止入口撤回持有。 */
+    /** 幂等标记页面关闭，停止特效并移除捕获阶段的地图触摸监听。 */
     private cleanup(): void {
         if (this.cleaned) {
             return;
@@ -495,9 +495,9 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
         if (!this.node || !this.node.isValid) {
             return;
         }
-        this.node.off(Node.EventType.TOUCH_START, this.onTouchStart, this);
-        this.node.off(Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
-        this.node.off(Node.EventType.TOUCH_CANCEL, this.onTouchStart, this);
+        this.node.off(Node.EventType.TOUCH_START, this.onTouchStart, this, true);
+        this.node.off(Node.EventType.TOUCH_MOVE, this.onTouchMove, this, true);
+        this.node.off(Node.EventType.TOUCH_CANCEL, this.onTouchStart, this, true);
     }
 
     /** 设置已有主城节点的尺寸、锚点与缩放，不重建页面层级。 */

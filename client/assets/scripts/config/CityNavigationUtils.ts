@@ -50,17 +50,6 @@ export class CityNavigationUtils {
     private constructor() {
     }
 
-    /** 底栏七格在 720 宽预制上的位置。设计宽是 640。下标 3 是战斗。y 是画面中心系。 */
-    public static cityBarSlot(index: number): {
-        x: number;
-        y: number;
-        size: number;
-    } {
-        const xs = [-300, -200, -100, 0, 100, 200, 300];
-        const hot = index === 3;
-        return { x: xs[index] || 0, y: hot ? -548 : -562, size: hot ? 96 : 78 };
-    }
-
     /** 从已安装配置取得底栏入口条件，锁标和导航用同一行。 */
     public static bottomGate(id: string): OpenConditionRow | undefined {
         const gateId = CITY_BAR.find(entry => entry.id === id)?.gateId;

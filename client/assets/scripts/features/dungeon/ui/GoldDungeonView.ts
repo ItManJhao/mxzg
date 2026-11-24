@@ -20,6 +20,7 @@ import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
 import { BattleReplayPreview } from "../../battle/ui/BattleReplayPreview";
 import { ChapterEndView } from "../../battle/ui/ChapterEndView";
 import { BattleReplayUtils } from "../../battle/utils/BattleReplayUtils";
+import { RulesView } from "../../common/ui/RulesView";
 import { DAILY_DUNGEON_ENTRIES, DailyDungeonController } from "../DailyDungeonController";
 import { DAILY_DUNGEON_KINDS, DailyDungeonModel, type DailyDungeonBattle, type DailyDungeonItem, type DailyDungeonKind, type DailyDungeonStage,
     type DailyDungeonState } from "../DailyDungeonModel";
@@ -53,6 +54,8 @@ export class GoldDungeonView extends BaseView<GoldDungeonArgs> {
     @property(Button) private _backButton: Button | null = null;
     /** 成功挑战或扫荡后刷新当日剩余次数。 */
     @property(Label) private _countLabel: Label | null = null;
+    /** 打开日常副本共用的只读说明，不查询或消费次数。 */
+    @property(Button) private _rulesButton: Button | null = null;
     /** 各类型复用同一份关卡卡与滚动列表，尺寸和间距由 Prefab 提供。 */
     @property(SuperScroll) private _list: SuperScroll | null = null;
     /** 副本状态尚未同步或跨日失效时提供重新查询。 */
@@ -86,11 +89,11 @@ export class GoldDungeonView extends BaseView<GoldDungeonArgs> {
     private openingWarmScheduled = false;
     /** 已发起查询的服务器重置时间，每次跨日只补查一次。 */
     private checkedReset = 0;
-    /** 安装页签、控制器和跨日检查，默认展示金币副本，并允许首个可挑战列表预热开场。 */
+    /** 绑定页签、说明及跨日检查，默认展示金币副本，首个可挑战列表预热开场。 */
     public onOpen(args?: GoldDungeonArgs): void {
         super.onOpen(args);
         if (!args?.account || !this._panel || !this._battleHost || !this._battleBackground || !this._list
-            || !this._retryButton || !this._retryLabel || !this._countLabel || !this._backButton
+            || !this._retryButton || !this._retryLabel || !this._countLabel || !this._rulesButton || !this._backButton
             || !this._banner
             || [this._tabButtons, this._tabSelection, this._tabLocks, this._bannerFrames, this._battleFrames]
                 .some(bindings => bindings.length !== DAILY_DUNGEON_KINDS.length)) {
@@ -107,6 +110,7 @@ export class GoldDungeonView extends BaseView<GoldDungeonArgs> {
         this.openingWarmScheduled = false;
         this.checkedReset = 0;
         this.listen(this._backButton, args.backToHall);
+        this.listen(this._rulesButton, this.openRules.bind(this));
         this.listen(this._retryButton, () => DailyDungeonController.instance.refreshVisible());
         this.ownListener(ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport()));
         this.ownListener(EventDispatcher.instance.on("daily-dungeon.updated", this, this.onDungeonUpdated));
@@ -195,7 +199,7 @@ export class GoldDungeonView extends BaseView<GoldDungeonArgs> {
         }
     }
 
-    /** 挑战在途立即揭开原战场，收到战报后播放；拒绝或中断则恢复当前关卡列表。 */
+    /** 显示权威剩余次数和列表，挑战在途揭开战场；拒绝或中断后恢复列表。 */
     private render(): void {
         if (this.closed || this.presenting) {
             return;
@@ -221,14 +225,19 @@ export class GoldDungeonView extends BaseView<GoldDungeonArgs> {
         this._retryButton!.node.active = refresh;
         this._retryButton!.interactable = !busy;
         this._retryLabel!.string = busy ? "同步中" : "重试";
-        this._countLabel!.string = !refresh && state
-            ? `剩余次数：${Math.max(0, state.totalLimit - state.wins)}/${state.totalLimit}` : "次数待同步";
+        this._countLabel!.string = refresh ? "次数待同步" : this.remainingText(state!);
         const stages = refresh ? [] : model.stagesFor(this.kind);
         this._list!.list.setData(stages);
         if (!this.openingWarmScheduled && stages.some(stage => stage.canChallenge && !stage.cleared)) {
             this.openingWarmScheduled = true;
             this.afterDraw(() => BattleReplayPreview.warmChallengeOpening(this._battleHost!));
         }
+    }
+
+    /** 沿用旧版“今日剩余次数”措辞，只展示服务端总上限扣除当日用量后的结果。 */
+    private remainingText(state: DailyDungeonState): string {
+        const format = GameConfig.instance.getConfig(GConfig.Language, 41246)?.value ?? "今日剩余次数：%s";
+        return format.replace(/%[sd]/, String(Math.max(0, state.totalLimit - state.wins)));
     }
 
     /** 先让列表或战场背景画出一帧，再开始资源工作；提前离页时解除本次一次性回调。 */
@@ -313,6 +322,20 @@ export class GoldDungeonView extends BaseView<GoldDungeonArgs> {
         } else {
             controller.refreshVisible();
         }
+    }
+
+    /** 沿用旧版语言配置和通用说明窗；关闭后保留当前副本页签与滚动位置。 */
+    private openRules(): void {
+        const config = GameConfig.instance;
+        const title = config.getConfig(GConfig.Language, 42028)?.value ?? "日常副本";
+        const message = config.getConfig(GConfig.Language, 42029)?.value?.replace(/\\n/g, "\n");
+        if (!message) {
+            UIManager.instance.toast("副本说明暂不可用");
+            return;
+        }
+        void UIManager.instance.openChild(this, RulesView, { title, message }).catch(() => {
+            // 开窗错误由 UIManager 统一处理。
+        });
     }
 
     /** 点击预览奖励只说明物品与配置数量，不写库存。 */

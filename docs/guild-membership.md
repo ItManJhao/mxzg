@@ -9,6 +9,8 @@
 - 公会名按负责人确认的日服服务端上限 64 校验。当前策划表和日服旧界面上限均为 25。同一套角色名称校验计算显示长度，ASCII 和 Latin-1 字符计 1，其余字符计 2。客户端展示服务端给出的公会名上限。
 - 入会必须经审批。申请通过后，服务端清理此角色在其他公会尚未处理的申请。公会列表只搜索当前区服。
 - 通常成员可主动退出，两小时期限过后才能重新申请。仍有其他成员时会长不能退出。会长独自退出会解散公会。
+- 会长可编辑、清空公告，保存后按原公会通知流程刷新在线成员，重登读取服务端的已存公告。普通成员保留只读权限。
+- V61 保存公会等级和本级经验。新公会实际从 1 级、0/750 经验、15 人起步；门槛与容量取旧等级表。捐献等经验来源尚未开放。
 
 依据为项目旧服务端 `ClanHandler` 的创建、申请、审批和退出入口，以及 `ClanService` 的容量、申请清理和冷却检查。开放条件和初始容量使用策划表投影，由 [export_guild_rules.py](../tools/export_guild_rules.py) 生成并检查。公会变更和个人空间同步见[通信契约](network-contract.md#公会成员与申请)。
 
@@ -18,6 +20,7 @@
 |---|---|
 | 推荐、查找与大厅 | [GuildView](../client/assets/scripts/features/guild/ui/GuildView.ts) |
 | 建会与徽章选择 | [GuildCreateView](../client/assets/scripts/features/guild/ui/GuildCreateView.ts)、[GuildBadgePickerView](../client/assets/scripts/features/guild/ui/GuildBadgePickerView.ts) |
+| 名称、宣言与查找名称编辑 | [GuildTextInputView](../client/assets/scripts/features/guild/ui/GuildTextInputView.ts) |
 | 成员、退会与审批 | [GuildMemberView](../client/assets/scripts/features/guild/ui/GuildMemberView.ts)、[GuildApprovalView](../client/assets/scripts/features/guild/ui/GuildApprovalView.ts) |
 | 公会状态与已认证请求 | [GuildController](../client/assets/scripts/features/guild/GuildController.ts)、[GuildModel](../client/assets/scripts/features/guild/GuildModel.ts) |
 | 准入、扣费及成员事务 | [GuildService](../backend/src/main/java/com/funsgamex/mxzg/guild/GuildService.java)、[V51 成员迁移](../backend/src/main/resources/db/migration/V51__guild_membership.sql)、[V52 徽章迁移](../backend/src/main/resources/db/migration/V52__guild_badge.sql) |
@@ -26,7 +29,9 @@
 
 日服项目的 `web-jpn/jp-overlay/src/layer/clan/ClanLayer.lua` 定义了三页签、独立成员与申请窗口和大厅切换，原 `ClanUncreateLayer.ccb`、`ClanInfoLayer.ccb`、`ClanMemberLayer.ccb`、`ClanRankLayer.ccb` 提供布局。背景与配乐复用项目已有 `maps/ui/map-bg-clan-1` 和 `audio/clan-1`，大厅标题、入口和徽章使用本项目原图。审批及成员行显示服务端的昵称、等级、头像和头像框。
 
-大厅按旧版保留科技、商店、任务、捐献、首领、排行、公会战和历史的位置，以灰态标识待开发入口。公会经验、在线状态、成员战力和贡献等字段待相应数据接通。申请名单由会长查看。简体中文界面、已确认的名称上限和新版目录翻页继续沿用项目口径。
+名称、宣言和查找名参考日服 `web-jpn/build/jp_input.js` 的共用输入浮层：点击字段时打开独立输入窗，取消不改值，确认只回填目录页的草稿。查找仍需另点「查找」，建会仍在原按钮发起并由服务端扣费。默认宣言仅用于展示和首次编辑预填，未确认编辑时不作为公告写入。新版沿用已确认的公会名上限 64 和稳定分页，不照抄旧 Lua 的 25 或旧推荐列表的随机排序。
+
+大厅按旧版放置左侧等级/经验/人数与右侧宣言卡，未接通的科技、商店、任务、捐献、首领、排行、公会战和历史继续灰态。公告编辑复用现有单行浮层，不复刻旧版独立公告窗再唤起输入的两步过程。成员窗按原结构显示人数、头像、等级、职务和当前主阵容战力，黄底只标本人；在线状态、贡献、自动接任与成员职务菜单未接入，不显示占位数值。申请名单由会长查看。
 
 ## 验证
 

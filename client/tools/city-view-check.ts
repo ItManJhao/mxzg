@@ -1,20 +1,19 @@
 /**
  * 主城入口回归。使用引擎替身核对预制体绑定、红点状态和开关生命周期。
  */
-import { Node, Prefab, UITransform } from "cc";
+import { Button, Node, Prefab, UITransform } from "cc";
 import { readFileSync } from "fs";
 
 import { join } from "path";
 
 import { CityMapLayoutUtils, CITY_EDGE_BLEED } from "../assets/scripts/features/city/ui/CityMapLayoutUtils";
-import { CityChromeView } from "../assets/scripts/features/city/ui/CityChromeView";
 import { CityHubView } from "../assets/scripts/features/city/ui/CityHubView";
 import { GameRedDotKey } from "../assets/scripts/features/common/utils/GameRedDotKey";
 import { RedDotManager } from "../assets/scripts/framework/ui/RedDotManager";
 import { PrefabLoader } from "../assets/scripts/framework/assets/PrefabLoader";
 import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 
-import { TAB_SELECTED_SCALE, CityTabUtils } from "../assets/scripts/features/city/utils/CityTabUtils";
+import { CityTabUtils } from "../assets/scripts/features/city/utils/CityTabUtils";
 
 const root = process.cwd();
 
@@ -148,12 +147,9 @@ function checkSources(): void {
   assert(hub.indexOf("onCityAtom") < 0, "hub does not reimplement routing");
   assert(hub.indexOf("cityAtomLocked") >= 0, "hub still locks buildings from the query");
   assert(chrome.indexOf("setCityExtras") >= 0, "chrome still hides the activity row");
-  assert(chrome.indexOf('createRect("BgPad"') < 0, "new chrome does not paint a BgPad");
-  assert(chrome.indexOf('getChildByName("BgPad")') >= 0, "new chrome turns an existing BgPad off");
-  const chromeTools = read("client/assets/scripts/features/city/ui/CityChromeUtils.ts");
-  assert(chromeTools.indexOf('createRect("BgPad"') < 0, "显示工具不重建固定背景");
-  assert(!chromeTools.includes("mountCityChromePrefab") && !chromeTools.includes("mountCityChrome("), "旧主城工厂已退役");
-  assert(chromeTools.indexOf("layoutCityTab") >= 0 && chromeTools.indexOf("prepareCityTab") >= 0, "显示工具保留导航尺寸规范化与选中缩放");
+  assert(!/setPosition|setScale|setContentSize|addComponent|new Node|layoutCityTab|prepareCityTab/.test(chrome),
+    "主城顶底栏脚本不创建、重排或缩放固定控件");
+  assert(chrome.includes("ViewportLayoutUtils.fitVisibleRoot"), "仅桥接根视口，子布局交给 Widget 和 ViewportScale");
   assert(hub.indexOf("layerCoverX") >= 0, "hub keeps far layers over the viewport");
   const skyLeft = CityMapLayoutUtils.layerCoverX(0, 0.63, 750, 0.5, 1200, 1.2, 640);
   const skyLeftEdge = skyLeft - 0.5 * 1200 * 1.2;
@@ -174,12 +170,7 @@ function checkSources(): void {
   }
   const leftPlate = CityMapLayoutUtils.findCityNode(CityMapLayoutUtils.buildCityMapLayout(null, null, null, { viewW: 590, viewH: 1280 }), "spr_map_bg1_1");
   assert(leftPlate !== null && leftPlate.x === 0 && leftPlate.ax === 0, "left foreground plate stays on the content left");
-  assert(chrome.includes("home/ui/main-scene-lang_lbl-fetters-unlock"), "chrome keeps the VIP caption");
-  assert(Math.abs(TAB_SELECTED_SCALE - 1.5) < 1e-6, "selected tab matches MainSceneCtr 1.5x checked size");
-  assert(CityTabUtils.tabVisualScale(true) > CityTabUtils.tabVisualScale(false) * 1.2 && CityTabUtils.tabVisualScale(false) === 1, "only the selected tab grows");
-  assert(chrome.indexOf('setCityTabSelected(button, state === "selected")') >= 0, "new chrome scales the selected tab");
-  assert(chrome.indexOf("tabPaintState") >= 0, "new chrome keeps a single selected tab");
-  assert(chrome.indexOf("layoutCityTab") >= 0, "new chrome keeps the selected scale after fit");
+  assert(chrome.includes("tabPaintState"), "new chrome keeps a single selected tab");
 }
 
 /** 核对视差底板、特效和入口仍由预制体绑定，入口绘制在地图之后。 */
@@ -213,6 +204,7 @@ function checkHubPrefab(): void {
   assert(entries > layers.indexOf("CityParallax") && entries < layers.indexOf("BtnMainline"),
     "entrances render above the map and below the mainline button");
   assert(nodeName(data, comp.btnMainline) === "BtnMainline", "mainline button is bound");
+  assert(nodeAt(data, comp.btnMainline)._active === false, "日服主城从底栏战斗进入主线，隐藏地图中额外的重复按钮");
   assert((comp.effects || []).length >= 1, "city effects are bound");
 }
 
@@ -230,7 +222,7 @@ function checkEntryLayout(): void {
   }
 }
 
-/** 检查导航保留各按钮的引用，红点样式统一由公共预制体提供。 */
+/** 检查顶栏布局和导航引用，红点样式统一由公共预制体提供。 */
 function checkChromePrefab(): void {
   const uuid = metaUuid("client/assets/scripts/features/city/ui/CityChromeView.ts.meta");
   const data = loadPrefab("client/assets/bundles/module/home/prefabs/CityChromeView.prefab");
@@ -256,23 +248,99 @@ function checkChromePrefab(): void {
   assert(parentName(data, power) === "PowerSlot", "power value sits under PowerSlot");
   assert(parentName(data, bottom) === "BottomBar", "bottom pad targets BottomBar/Bg");
   one("avatar", "Avatar");
+  one("avatarFace", "Face");
+  one("avatarBorder", "Border");
+  one("lblLevel", "LblLevel");
+  one("levelBg", "LevelBg");
+  const componentOf = (saved: PrefabObj, type: string) => saved._components?.map(ref => data[ref.__id__!])
+    .find(value => value.__type__ === type);
+  const transformOf = (saved: PrefabObj) => componentOf(saved, "cc.UITransform");
+  const childOf = (saved: PrefabObj, name: string) => {
+    const child = saved._children?.map(ref => nodeAt(data, ref)).find(value => value._name === name);
+    assert(child, `${saved._name} 的 ${name} 保存于预制体`);
+    return child!;
+  };
+  const namedNode = (name: string) => {
+    const saved = data.find(value => value.__type__ === "cc.Node" && value._name === name);
+    if (!saved) {
+      throw new Error(`顶栏缺少 ${name}`);
+    }
+    return saved;
+  };
+  const rootNode = namedNode("CityChromeView");
+  const design = transformOf(rootNode)?._contentSize;
+  assert(design?.width === 640 && design.height === 1280, "主城常驻层使用项目的 640×1280 设计尺寸");
+  const flags = (node: PrefabObj) => (componentOf(node, "cc.Widget") as (PrefabObj & { _alignFlags: number }))?._alignFlags;
+  const topDock = childOf(rootNode, "TopDock");
+  const bottomDock = childOf(rootNode, "BottomDock");
+  const floatingDock = childOf(rootNode, "FloatingDock");
+  assert(flags(topDock) === (1 | 16) && flags(bottomDock) === (4 | 16) && flags(floatingDock) === (4 | 16),
+    "顶底栏和聊天默认位置通过 Widget 贴住实际屏幕边缘");
+  assert(nodeAt(data, rootNode._children!.at(-1)!) === floatingDock, "浮动聊天在顶底栏上方绘制并可重新抓取");
+  const scaleType = classId(metaUuid("client/assets/scripts/framework/ui/ViewportScale.ts.meta"));
+  const scales = rootNode._components?.map(ref => data[ref.__id__!]).filter(row => row.__type__ === scaleType) as
+    Array<PrefabObj & { target: { __id__: number }; designWidth: number; maxScale: number }>;
+  assert(scales?.length === 3 && scales.every(row => row.designWidth === 640 && row.maxScale === 1)
+    && scales.map(row => nodeName(data, row.target)).join() === "TopDock,BottomDock,FloatingDock",
+    "缩放整体对齐，不逐个重排控件");
+  const header = childOf(topDock, "TopBar");
+  const bar = childOf(bottomDock, "BottomBar");
+  assert(transformOf(bar)?._contentSize?.width === 640 && transformOf(header)?._contentSize?.width === 640,
+    "顶底栏设计宽度统一为 640");
+  const avatar = childOf(header, "Avatar");
+  const name = childOf(header, "LblName");
+  const powerSlot = childOf(header, "PowerSlot");
+  const halfWidth = (node: PrefabObj) => transformOf(node)!._contentSize!.width / 2;
+  assert(avatar._lpos!.x - halfWidth(avatar) >= -320
+    && avatar._lpos!.x + halfWidth(avatar) < name._lpos!.x - halfWidth(name), "头像位于可见范围且不叠昵称");
+  assert(name._lpos!.x + halfWidth(name) < powerSlot._lpos!.x - halfWidth(powerSlot), "昵称不挡战力栏");
+  const levelPos = namedNode("LblLevel")._lpos!;
+  assert(levelPos.x === avatar._lpos!.x && levelPos.y === namedNode("LevelBg")._lpos!.y, "等级底牌、文字与头像对齐");
+  const label = namedNode("LblLevel")._components?.map(ref => data[ref.__id__!])
+    .find(value => value.__type__ === "cc.Label") as (PrefabObj & { _fontSize?: number }) | undefined;
+  assert(label?._fontSize === 17, "等级字号保留放大后的 17 尺寸");
   one("actGroup", "ActGroup");
   one("utilityRow", "UtilityRow");
   one("bottomBg", "Bg");
   one("tabCity", "TabCity");
   one("tabFetter", "TabFetter");
-  for (const key of ["tabCity", "tabHero", "tabBag", "tabBattle", "tabDungeon", "tabClan", "tabFetter"]) {
+  const selectionGroup = childOf(bar, "SelectedTabArtwork");
+  const selected = comp.selectedTabs;
+  assert(Array.isArray(selected) && selected.length === 7, "七个页签都有独立的预制选中外观");
+  const keys = ["tabCity", "tabHero", "tabBag", "tabBattle", "tabDungeon", "tabClan", "tabFetter"];
+  for (const [index, key] of keys.entries()) {
     const ref = comp[key];
     assert(ref && !Array.isArray(ref), `${key} 绑定底栏入口`);
     const tab = nodeAt(data, ref as { __id__?: number });
-    assert(!tab._children?.some(child => nodeName(data, child) === "RedDot"), `${key} 使用公共红点`);
+    const normal = childOf(tab, "Default");
+    const lock = childOf(tab, "Lock");
+    assert(tab._children!.indexOf(tab._children!.find(link => nodeAt(data, link) === normal)!)
+      < tab._children!.indexOf(tab._children!.find(link => nodeAt(data, link) === lock)!), "锁标在普通图案之后绘制");
+    childOf(lock, "Lv");
+    const picked = nodeAt(data, (selected as { __id__: number }[])[index]);
+    assert(parentName(data, (selected as { __id__: number }[])[index]) === selectionGroup._name, "选中图案绘制于共同前层");
+    assert(!componentOf(picked, "cc.Button") && picked._lpos!.x === tab._lpos!.x
+      && picked._lpos!.y > tab._lpos!.y && halfWidth(picked) > halfWidth(normal), `${key} 选中图案大且高，点击区不变`);
+    assert(picked._active === (index === 0) && normal._active === (index !== 0), `${key} 初始只显示一种外观`);
+    for (const artwork of [normal, picked]) {
+      childOf(artwork, "RedDotAnchor");
+      const caption = childOf(artwork, "Caption");
+      const sprite = componentOf(caption, "cc.Sprite");
+      assert(sprite?._spriteFrame?.__uuid__, "底栏标题图已经序列化，不运行时创建");
+    }
   }
   one("btnMail", "BtnMail");
   const activity = comp.activityButtons;
   if (!Array.isArray(activity)) throw new Error("activity buttons missing");
-  assert(activity.length === 8, "eight activity buttons");
-  const names = activity.map((ref) => nodeName(data, ref));
-  assert(names.indexOf("ActRecommend") >= 0 && names.indexOf("BtnActExpand") >= 0, "activity row is bound");
+  assert(activity.length >= 12 && activity.every(ref => componentOf(nodeAt(data, ref), "cc.Button")), "日服活动入口分组使用现有图与按钮");
+  assert(parentName(data, comp.actGroup as { __id__: number }) === "TopDock"
+    && parentName(data, comp.utilityRow as { __id__: number }) === "BottomDock", "主城活动和快捷行分别跟随各自屏幕边缘");
+  one("btnChat", "BtnChat");
+  const chat = childOf(floatingDock, "BtnChat");
+  assert(chat._lpos!.x === 274 && chat._lpos!.y === 535, "聊天初始位置仍由预制体保存");
+  assert(Array.isArray(comp.shortcutButtons)
+    && !comp.shortcutButtons.some(ref => nodeName(data, ref) === "BtnChat"), "聊天点击不重复走快捷入口");
+  one("utilityEntries", "ShortcutArtwork");
   const shell = "c4e8aHSe2NOkI8Vai2cC0fj";
   const text = read("client/assets/bundles/module/home/prefabs/CityChromeView.prefab");
   assert(text.split(shell).length === 2, "CityChromeShell class id stays once");
@@ -297,26 +365,8 @@ function checkTabSelection(): void {
   const paint = CityTabUtils.tabPaintState(["selected", "selected", "open", "locked"]);
   assert(paint.join(",") === "open,selected,open,locked");
 }
-/** 宽屏只增加导航间距，选中图标不能越长越高而挡住主线挑战按钮。 */
-function checkWideTabSize(): void {
-  const base = CityTabUtils.cityTabLayout(640, 3, true), wide = CityTabUtils.cityTabLayout(960, 3, true);
-  assert(wide.scale === base.scale && wide.y === base.y, "宽屏选中图标保持默认大小和高度");
-  assert(CityTabUtils.cityTabLayout(360, 3, true).scale < base.scale, "窄屏仍按可用宽度缩小");
-  assert(CityTabUtils.cityTabLayout(960, 6, false).x > CityTabUtils.cityTabLayout(640, 6, false).x, "宽屏按钮间距仍展开");
-}
-
-/** 用真实顶底栏与地图绑定验证锁态、聚合以及两个法阵挂点独立显示。 */
+/** 顶底栏状态由 home-presentation 验证；此处检查地图上的两个法阵挂点。 */
 async function checkRedDotLifecycle(): Promise<void> {
-  const root = new Node("CityChromeFixture");
-  const chrome = root.addComponent(CityChromeView);
-  const city = new Node("TabCity");
-  const dungeon = new Node("TabDungeon");
-  const clan = new Node("TabClan");
-  city.parent = root;
-  dungeon.parent = root;
-  clan.parent = root;
-  const dungeonLock = new Node("Lock");
-  dungeonLock.parent = dungeon;
   const prefab = Object.assign(new Prefab(), { _instantiate: () => {
     const node = new Node("RedDot");
     node.addComponent(UITransform).setContentSize(28, 28);
@@ -324,7 +374,6 @@ async function checkRedDotLifecycle(): Promise<void> {
   } });
   const loadPrefab = PrefabLoader.loadPrefab;
   PrefabLoader.loadPrefab = async () => prefab;
-  Object.assign(chrome, { started: true, tabs: { city, dungeon, clan } });
 
   const hub = new Node("CityHubFixture").addComponent(CityHubView);
   const summon = new Node("spot-main_summon");
@@ -347,10 +396,9 @@ async function checkRedDotLifecycle(): Promise<void> {
   });
   const dots = RedDotManager.instance;
   try {
-    chrome.runOpen();
     dots.set(GameRedDotKey.SUMMON + ".test", true);
     await new Promise<void>(resolve => setImmediate(resolve));
-    assert(city.getChildByName("RedDot")?.active && !summonAnchor.getChildByName("RedDot"), "主城汇总亮起，锁定中的法阵不挂红点");
+    assert(!summonAnchor.getChildByName("RedDot"), "锁定中的法阵不挂红点");
     open = true;
     hub.refreshLocks();
     await new Promise<void>(resolve => setImmediate(resolve));
@@ -361,34 +409,88 @@ async function checkRedDotLifecycle(): Promise<void> {
     assert(creationAnchor.getChildByName("RedDot")?.active && summonAnchor.getChildByName("RedDot")?.active === false,
       "两个法阵分别使用各自的条件，不共用显示状态");
 
-    dots.set(GameRedDotKey.DUNGEON + ".test", true);
-    assert(!dungeon.getChildByName("RedDot"), "锁定时不挂载红点");
-    chrome.setTabs([{ id: "dungeon", text: "副本", state: "open" }]);
-    await new Promise<void>(resolve => setImmediate(resolve));
-    assert(dungeon.getChildByName("RedDot")?.active && !dungeonLock.active, "入口开放后复用当前聚合值");
-
-    dots.set(GameRedDotKey.GUILD_APPLICATIONS, true);
-    await new Promise<void>(resolve => setImmediate(resolve));
-    assert(clan.getChildByName("RedDot")?.active, "公会底栏汇总审批分支");
-    dots.set(GameRedDotKey.GUILD_APPLICATIONS, false);
-    assert(clan.getChildByName("RedDot")?.active === false, "审批分支熄灭后隐藏公会底栏红点");
-
-    chrome.runClose();
     hub.runClose();
     dots.reset();
-    assert(!city.getChildByName("RedDot") && !creationAnchor.getChildByName("RedDot"), "关闭时释放底栏与法阵红点");
-    chrome.runOpen();
-    await new Promise<void>(resolve => setImmediate(resolve));
-    assert(!city.getChildByName("RedDot") && !dungeon.getChildByName("RedDot"), "复开立即读取当前状态");
+    assert(!summonAnchor.getChildByName("RedDot") && !creationAnchor.getChildByName("RedDot"), "关闭时释放法阵红点");
   } finally {
-    chrome.runDispose();
     hub.runDispose();
     dots.reset();
     PrefabLoader.loadPrefab = loadPrefab;
   }
 }
 
-/** 先检查预制绑定与样式，再运行动态红点生命周期检查。 */
+/** 模拟引擎按钮截断冒泡，检查拖动不会误开窗，下一次点击照常生效。 */
+function checkDragThenTap(): void {
+  const map = new Node("CityGestureFixture");
+  const hub = map.addComponent(CityHubView);
+  const summon = new Node("spot-main_summon");
+  const mainline = new Node("BtnMainline");
+  for (const node of [summon, mainline]) {
+    node.parent = map;
+    node.addComponent(Button);
+  }
+  const clicks: string[] = [];
+  Object.assign(hub, {
+    layout: CityMapLayoutUtils.buildCityMapLayout({ main: [{ atom: "main_summon", x: 0, y: 0, zorder: 2 }] }, null, null),
+    views: new Map([[summon.name, summon]]),
+    btnMainline: mainline,
+    args: { onAtom: (atom: string) => clicks.push(atom), onMainline: () => clicks.push("mainline") },
+  });
+
+  const listeners = new Map<string, { callback: (...args: unknown[]) => void; owner: unknown; capture: boolean }>();
+  map.on = (type, callback, owner, capture = false) => listeners.set(type, { callback, owner, capture });
+  map.off = (type, callback, owner, capture = false) => {
+    const registered = listeners.get(type);
+    if (registered && registered.callback === callback && registered.owner === owner && registered.capture === capture) {
+      listeners.delete(type);
+    }
+  };
+  const hooks = hub as unknown as { bindSpots(): void; bindMainline(): void; bindDrag(): void };
+  hooks.bindSpots();
+  hooks.bindMainline();
+  hooks.bindDrag();
+
+  const { TOUCH_START, TOUCH_MOVE, TOUCH_END, TOUCH_CANCEL } = Node.EventType;
+  // 子 Button 会在处理开始、移动和结束时停止冒泡；捕获监听和地图自身触摸不受影响。
+  const touch = (target: Node, type: string, dx = 0): void => {
+    const listener = listeners.get(type);
+    if (listener && (listener.capture || target === map || type === TOUCH_CANCEL)) {
+      listener.callback.call(listener.owner, { getUIDelta: () => ({ x: dx }) });
+    }
+    if (target !== map && type === TOUCH_END) {
+      target.emit(Button.EventType.CLICK);
+    }
+  };
+  touch(summon, TOUCH_START);
+  touch(summon, TOUCH_END);
+  assert(clicks.join() === "main_summon", "地图刚打开时可点建筑入口");
+  for (const dx of [-500, 500]) {
+    touch(map, TOUCH_START);
+    touch(map, TOUCH_MOVE, dx);
+    touch(map, TOUCH_END);
+  }
+  touch(summon, TOUCH_START);
+  touch(summon, TOUCH_END);
+  assert(clicks.length === 2, "拖出又拖回后，新触摸不继承上一轮拖动标记");
+
+  touch(summon, TOUCH_START);
+  touch(summon, TOUCH_MOVE, 7);
+  touch(summon, TOUCH_MOVE, 7);
+  touch(summon, TOUCH_END);
+  assert(clicks.length === 2, "从建筑按钮起拖且累计越过阈值时，不误触建筑入口");
+  touch(mainline, TOUCH_START);
+  touch(mainline, TOUCH_END);
+  assert(clicks.join() === "main_summon,main_summon,mainline", "新的主线点击不受上一次拖动影响");
+
+  touch(summon, TOUCH_START);
+  touch(summon, TOUCH_MOVE, -100);
+  touch(summon, TOUCH_CANCEL);
+  assert(clicks.length === 3, "取消手势不打开入口");
+  hub.onClose();
+  assert(listeners.size === 0, "关闭地图时按注册阶段清理全部触摸监听");
+}
+
+/** 先检查预制绑定与样式，再复验拖动点击和动态红点生命周期。 */
 async function main(): Promise<void> {
     checkFramework();
     checkHubPrefab();
@@ -397,9 +499,9 @@ async function main(): Promise<void> {
     checkSharedRedDotPrefab();
     checkSources();
     checkTabSelection();
-    checkWideTabSize();
+    checkDragThenTap();
     await checkRedDotLifecycle();
-    console.log("city-view passed: bindings, entrance layering, red dot lifecycle, framework isolation and tab layout");
+    console.log("city-view passed: bindings, entrance layering, drag then tap, red dot lifecycle, framework isolation and tab layout");
 }
 
 void main().catch(error => {

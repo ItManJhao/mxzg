@@ -56,6 +56,8 @@ export class Protocol {
     public static readonly BATTLE_PREVIEW = "battle.preview";
     /** 主线阵型和站位保存；资产仍从统一状态同步。 */
     public static readonly FORMATION_SAVE = "formation.save";
+    /** 只读预览当前草稿队员战力，不写阵容或资产。 */
+    public static readonly FORMATION_POWER = "formation.power";
     /** 基础、友情、高级和积分召唤，回包提供真实获得的英雄实例。 */
     public static readonly HERO_SUMMON = "hero.summon";
     /** 普通单抽由服务端优先使用免费次数，其余消耗一张普通召唤券。 */
@@ -213,7 +215,7 @@ export type ReadProtocol = typeof Protocol.SESSION_HEARTBEAT | typeof Protocol.G
     | typeof Protocol.ROLE_DECORATIONS_LIST
     | typeof Protocol.MARKET_LIST | DailyDungeonRoutes["list"]
     | typeof Protocol.TOWER_STATE | typeof Protocol.ARENA_STATE | typeof Protocol.ARENA_REPLAY
-    | typeof Protocol.GUILD_LIST | typeof Protocol.CHAPTER_QUICK_BATTLE_INFO;
+    | typeof Protocol.GUILD_LIST | typeof Protocol.CHAPTER_QUICK_BATTLE_INFO | typeof Protocol.FORMATION_POWER;
 /** 具有角色归属回执的操作；查询与原命令经同一条认证连接。 */
 export type RoleOperationProtocol = typeof Protocol.HERO_SUMMON | typeof Protocol.HERO_NORMAL_SUMMON
     | typeof Protocol.HERO_FIRST_SUMMON | typeof Protocol.HERO_FIRST_SUMMON_STATUS
@@ -271,6 +273,7 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.HERO_FRAGMENT_COMBINE_STATUS, module: "背包", description: "恢复精英碎片合成回执" },
     { name: Protocol.BATTLE_PREVIEW, module: "战斗", description: "当前阵容只读试战" },
     { name: Protocol.FORMATION_SAVE, module: "阵容", description: "主线阵容保存回执" },
+    { name: Protocol.FORMATION_POWER, module: "阵容", description: "草稿队员战力预览" },
     { name: Protocol.HERO_SUMMON, module: "召唤", description: "召唤及积分兑换回执" },
     { name: Protocol.HERO_NORMAL_SUMMON, module: "召唤", description: "普通单抽" },
     { name: Protocol.HERO_FIRST_SUMMON, module: "召唤", description: "普通免费首抽" },

@@ -165,6 +165,68 @@ class GameSocketTest {
         }
     }
 
+    /** 真实连接评分未保存草稿，校验原编号、空队伍、所有权和请求后原阵容仍为空。 */
+    @Test
+    void formationDraftPowerUsesOnlyOwnedHeroesWithoutWriting() throws Exception {
+        var owner = login.login("draft_" + UUID.randomUUID().toString().substring(0, 12), "local-1");
+        var other = login.login("draft_" + UUID.randomUUID().toString().substring(0, 12), "local-1");
+        String ownerId = owner.role().id();
+        var tx = new org.springframework.transaction.support.TransactionTemplate(transactions);
+        var draft = tx.execute(status -> List.of(heroGrants.grant(ownerId, 10304004, 1).getFirst().instanceId(),
+            heroGrants.grant(ownerId, 10304012, 1).getFirst().instanceId()));
+        String foreign = tx.execute(status -> heroGrants.grant(other.role().id(), 10101001, 1).getFirst().instanceId());
+        String token = owner.session().accessToken();
+        try (var peer = new Peer()) {
+            var initial = peer.authenticate(token).path("body").path("initial");
+            long revision = initial.path("revision").asLong();
+            int individualTotal = initial.path("heroes").valueStream()
+                .mapToInt(hero -> hero.path("panelStats").path("power").asInt()).sum();
+            assertEquals(0, initial.path("role").path("power").asInt(-1));
+
+            String requestId = UUID.randomUUID().toString();
+            var preview = peer.request("formation.power", Map.of("requestId", requestId, "heroIds", draft));
+            assertTrue(preview.path("ok").asBoolean(), preview::toString);
+            var result = preview.path("body");
+            assertEquals(requestId, result.path("requestId").asString());
+            assertEquals(draft, result.path("heroIds").valueStream().map(JsonNode::asString).toList());
+            assertTrue(result.path("power").asInt() > individualTotal, "两木草稿应获得真实元素光环");
+            assertEquals(revision, result.path("assetRevision").asLong());
+
+            String emptyId = UUID.randomUUID().toString();
+            var empty = peer.request("formation.power", Map.of("requestId", emptyId, "heroIds", List.of())).path("body");
+            assertEquals(emptyId, empty.path("requestId").asString());
+            assertTrue(empty.path("heroIds").isArray());
+            assertTrue(empty.path("heroIds").isEmpty());
+            assertEquals(0, empty.path("power").asInt(-1));
+
+            var invalidDrafts = List.of(List.of(draft.getFirst(), foreign),
+                List.of(draft.getFirst(), UUID.randomUUID().toString()), List.of("invalid"),
+                List.of(draft.getFirst(), draft.getFirst()), Collections.nCopies(7, draft.getFirst()));
+            for (var invalid : invalidDrafts) {
+                var reply = peer.request("formation.power", Map.of("requestId", UUID.randomUUID().toString(), "heroIds", invalid));
+                assertFalse(reply.path("ok").asBoolean(true));
+                assertEquals("FORMATION_POWER_INVALID", reply.path("error").path("code").asString());
+                assertTrue(reply.path("body").isNull());
+            }
+            var invalidId = peer.request("formation.power", Map.of("requestId", "invalid", "heroIds", draft));
+            assertEquals("FORMATION_POWER_INVALID", invalidId.path("error").path("code").asString());
+
+            String nextId = UUID.randomUUID().toString();
+            var repeated = peer.request("formation.power", Map.of("requestId", nextId, "heroIds", draft)).path("body");
+            assertEquals(nextId, repeated.path("requestId").asString());
+            assertEquals(result.path("power"), repeated.path("power"));
+            assertEquals(revision, roles.revision(ownerId));
+            assertEquals(0, jdbc.queryForObject("SELECT max_main_power FROM game_role WHERE id=?", Integer.class, ownerId));
+            assertEquals(0, jdbc.queryForObject("SELECT current_main_power FROM game_role WHERE id=?", Integer.class, ownerId));
+            assertTrue(peer.events.isEmpty());
+        }
+        try (var recovered = new Peer()) {
+            var initial = recovered.authenticate(token).path("body").path("initial");
+            assertEquals(0, initial.path("role").path("power").asInt(-1));
+            assertTrue(initial.path("mainFormation").path("slots").isEmpty());
+        }
+    }
+
     /** 真实 WS 持券先免费再扣一张，用统一推送、相同请求重试和重登首包核实英雄与余额。 */
     @Test
     void normalSummonWithTicketPublishesAndReconnects() throws Exception {
@@ -1015,7 +1077,7 @@ class GameSocketTest {
         assertThrows(IllegalArgumentException.class,()->GameProtocolCodec.decode(new byte[GameProtocolCodec.FRAME_LIMIT+1]));
         assertThrows(IllegalArgumentException.class,()->GameProtocolCodec.encode(Map.of("version",1,"kind","request","name","session.login","body",Map.of("account","x".repeat(GameProtocolCodec.FRAME_LIMIT+1),"serverId","local-1","clientInstanceId","frame-limit-test"))));
     }
-    /** 两个真实连接覆盖公会徽章、申请者头像、同请求重试、审批、资料推送和冷重登。 */
+    /** 两个真实连接覆盖建会审批、公告广播、经验与成员主阵战力，以及冷重登恢复。 */
     @Test
     void guildMembershipSynchronizesAndRestores() throws Exception {
         var founder = player();
@@ -1029,6 +1091,8 @@ class GameSocketTest {
             leader.authenticate(founder.session().accessToken());
             var guest = member.authenticate(candidate.session().accessToken()).path("body").path("initial");
             assertEquals("", guest.path("role").path("guildName").asString());
+            int currentPower = guest.path("role").path("power").asInt();
+            assertTrue(currentPower > 0);
 
             var create = Map.of("name", guildName, "requestId", UUID.randomUUID().toString(),
                 "action", "CREATE", "badgeId", badgeId);
@@ -1044,10 +1108,15 @@ class GameSocketTest {
             var listedGuild = matching.path("body").path("guilds").get(0);
             assertEquals(guildId, listedGuild.path("id").asString());
             assertEquals(badgeId, listedGuild.path("badgeId").asInt());
+            assertEquals(1, listedGuild.path("level").asInt());
+            assertTrue(listedGuild.has("experience"));
+            assertEquals(750, listedGuild.path("nextLevelExperience").asInt());
             var application = member.request("guild.change",
                 Map.of("requestId", UUID.randomUUID().toString(), "action", "APPLY", "guildId", guildId));
             assertTrue(application.path("ok").asBoolean(), application::toString);
             leader.event("guild.updated");
+            // 模拟未再次登录的历史角色，查询申请者时应只读补算，不改写对方的行。
+            jdbc.update("UPDATE game_role SET current_main_power=NULL WHERE id=?", candidateId);
             var pending = leader.request("guild.list", Map.of());
             var applicant = pending.path("body").path("applications").get(0);
             var profile = guest.path("role").path("basics");
@@ -1056,6 +1125,8 @@ class GameSocketTest {
             assertTrue(applicant.has("borderId"));
             assertEquals(profile.path("headId"), applicant.path("headId"));
             assertEquals(profile.path("borderId"), applicant.path("borderId"));
+            assertEquals(currentPower, applicant.path("power").asInt());
+            assertNull(jdbc.queryForObject("SELECT current_main_power FROM game_role WHERE id=?", Integer.class, candidateId));
 
             var decision = leader.request("guild.change",
                 Map.of("requestId", UUID.randomUUID().toString(), "action", "APPROVE", "applicantId", candidateId));
@@ -1065,7 +1136,14 @@ class GameSocketTest {
                 .filter(person -> candidateId.equals(person.path("id").asString())).findFirst().orElseThrow();
             assertEquals(applicant.path("headId"), approved.path("headId"));
             assertEquals(applicant.path("borderId"), approved.path("borderId"));
+            assertEquals(currentPower, approved.path("power").asInt());
             assertEquals(guildName, member.event("state.changed").path("body").path("role").path("guildName").asString());
+            member.event("guild.updated");
+            var edited = leader.request("guild.change", Map.of("requestId", UUID.randomUUID().toString(),
+                "action", "UPDATE_NOTICE", "guildId", guildId, "description", "周末集合"));
+            assertEquals("周末集合", edited.path("body").path("guild").path("description").asString());
+            member.event("guild.updated");
+            assertEquals("周末集合", member.request("guild.list", Map.of()).path("body").path("guild").path("description").asString());
         }
         try (var restored = new Peer()) {
             var initial = restored.authenticate(candidate.session().accessToken()).path("body").path("initial");
@@ -1073,6 +1151,7 @@ class GameSocketTest {
             var restoredGuild = restored.request("guild.list", Map.of()).path("body");
             assertEquals(2, restoredGuild.path("members").size());
             assertEquals(badgeId, restoredGuild.path("guild").path("badgeId").asInt());
+            assertEquals("周末集合", restoredGuild.path("guild").path("description").asString());
             var left = restored.request("guild.change", Map.of("requestId", UUID.randomUUID().toString(), "action", "LEAVE"));
             assertTrue(left.path("ok").asBoolean(), left::toString);
             assertTrue(left.path("body").path("rejoinAtSeconds").asLong() > 0);

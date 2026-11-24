@@ -1,5 +1,7 @@
 /** 公会根页。未入会时管理推荐、创建与查找页签，入会后展示公会大厅和独立弹窗入口。 */
-import { _decorator, AudioSource, Button, EditBox, instantiate, Label, Node, Prefab, ScrollView, Sprite, UITransform } from "cc";
+import { _decorator, AudioSource, Button, Color, instantiate, Label, Node, Prefab, ScrollView, Sprite, UITransform } from "cc";
+import { GameConfig } from "../../../config/GameConfig";
+import { GConfig } from "../../../config/GConfig";
 import { AudioPreferences } from "../../../core/AudioPreferences";
 import { ServerClock } from "../../../core/ServerClock";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
@@ -21,6 +23,7 @@ import { GuildBadgeUtils } from "./GuildBadgeUtils";
 import { GuildCreateView } from "./GuildCreateView";
 import { GuildListCell, type GuildCellRow } from "./GuildListCell";
 import { GuildMemberView } from "./GuildMemberView";
+import { GuildTextInputView } from "./GuildTextInputView";
 
 /** 主城导航提供当前角色，用于大厅的会长入口和建会余额。 */
 export interface GuildViewArgs {
@@ -58,9 +61,13 @@ export class GuildView extends BaseView<GuildViewArgs> {
     /** 创建表单的预制体与内嵌挂点，首次打开时实例化。 */
     @property(Prefab) private _createPanel: Prefab | null = null;
     @property(Node) private _createHost: Node | null = null;
-    /** 查找内容区及名称输入。 */
+    /** 查找内容区，只有点击查找按钮才发送名称条件。 */
     @property(Node) private _searchPanel: Node | null = null;
-    @property(EditBox) private _query: EditBox | null = null;
+    /** 当前名称草稿或原版空值提示。 */
+    @property(Label) private _query: Label | null = null;
+    /** 点击名称框时打开共享输入窗。 */
+    @property(Button) private _editQuery: Button | null = null;
+    /** 用当前名称草稿重新查询第一页。 */
     @property(Button) private _search: Button | null = null;
     /** 推荐列表和查找结果各使用原版自己的视口高度。 */
     @property(SuperScroll) private _recommendList: SuperScroll | null = null;
@@ -77,9 +84,15 @@ export class GuildView extends BaseView<GuildViewArgs> {
     @property(Sprite) private _badge: Sprite | null = null;
     @property(Label) private _guildName: Label | null = null;
     @property(Label) private _leader: Label | null = null;
+    /** 服务器当前公会等级，不用角色等级或默认文案冒充。 */
+    @property(Label) private _guildLevel: Label | null = null;
+    /** 当前公会经验及对应等级的门槛。 */
+    @property(Label) private _experience: Label | null = null;
     @property(Label) private _memberCount: Label | null = null;
     @property(Label) private _notice: Label | null = null;
     @property(ScrollView) private _noticeScroll: ScrollView | null = null;
+    /** 公告卡右下编辑入口，由当前成员职务和请求状态约束。 */
+    @property(Button) private _editNotice: Button | null = null;
     @property(Button) private _members: Button | null = null;
     @property(Button) private _applications: Button | null = null;
     /** 审批提醒的可选定位节点，跟随原审批按钮层级。 */
@@ -87,6 +100,8 @@ export class GuildView extends BaseView<GuildViewArgs> {
 
     /** 当前未入会页签。入会或离开页面时回到推荐。 */
     private tab: DirectoryTab = "recommend";
+    /** 输入窗已确认但不一定提交查找的公会名。 */
+    private queryDraft = "";
     /** 已提交的名称条件。null 表示查找页还未查询。 */
     private submittedQuery: string | null = null;
     /** 最后一次绘制的公告，用于保留玩家的滚动位置。 */
@@ -94,10 +109,11 @@ export class GuildView extends BaseView<GuildViewArgs> {
     /** 当前大厅已请求的徽章编号，避免申请通知重复加载同一图。 */
     private shownBadge: number | undefined;
 
-    /** 挂载创建表单和审批提醒，绑定当次会话并请求公会状态。 */
+    /** 挂载表单、审批提醒和公告编辑入口，请求公会状态。 */
     public onOpen(args?: GuildViewArgs): void {
         super.onOpen(args);
-        if (!args?.account.snapshot.role || !this._createPanel || !this._createHost
+        if (!args?.account.snapshot.role || !this._createPanel || !this._createHost || !this._editQuery || !this._query
+            || !this._guildLevel || !this._experience || !this._editNotice
             || this._tabButtons.length !== 3 || this._tabHighlights.length !== 3) {
             throw new Error("公会资料或页面挂点缺失");
         }
@@ -109,18 +125,13 @@ export class GuildView extends BaseView<GuildViewArgs> {
             this.listen(button, () => this.selectTab((["recommend", "create", "search"] as const)[index]!));
         });
         this.listen(this._search!, () => this.search());
-        const input = this._query!.node;
-        input.on(EditBox.EventType.EDITING_RETURN, this.search, this);
-        this.ownListener(() => {
-            if (input.isValid) {
-                input.off(EditBox.EventType.EDITING_RETURN, this.search, this);
-            }
-        });
+        this.listen(this._editQuery, () => this.editQuery());
         this.listen(this._refresh!, () => this.showRecommended());
         this.listen(this._previous!, () => this.turnPage(-1));
         this.listen(this._next!, () => this.turnPage(1));
         this.listen(this._members!, () => this.openMembers());
         this.listen(this._applications!, () => this.openApplications());
+        this.listen(this._editNotice, () => this.editNotice());
         if (this._applicationDotAnchor) {
             const binding = RedDotBinding.atAnchor(this._applicationDotAnchor, GameRedDotKey.GUILD_APPLICATIONS);
             this.ownListener(() => binding.dispose());
@@ -167,8 +178,9 @@ export class GuildView extends BaseView<GuildViewArgs> {
         this.ownListener(() => node.isValid && node.off(Button.EventType.CLICK, action));
     }
 
-    /** 切到推荐立即刷新，查找保留已提交条件，创建留在当前大厅。 */
+    /** 切页关闭关联弹窗，推荐重新读取，查找保留上次已提交条件。 */
     private selectTab(tab: DirectoryTab): void {
+        UIManager.instance.closeChildren(this);
         this.tab = tab;
         if (tab === "recommend") {
             this.showRecommended();
@@ -184,12 +196,40 @@ export class GuildView extends BaseView<GuildViewArgs> {
         this._recommendList!.scrollToTop(0);
     }
 
-    /** 搜索按钮和键盘确认共用入口。查询期间保留已提交条件。 */
+    /** 输入窗回填名称草稿，留到玩家点击查找后再发送协议。 */
+    private editQuery(): void {
+        const state = GuildModel.instance.snapshot;
+        if (!state || state.guild) {
+            return;
+        }
+        const panel = this._searchPanel!;
+        void UIManager.instance.openChild(this, GuildTextInputView, {
+            initialValue: this.queryDraft,
+            maxLength: state.nameLimit,
+            onConfirm: value => {
+                if (panel.isValid && panel.activeInHierarchy) {
+                    this.queryDraft = value.trim();
+                    this.renderQuery();
+                }
+            },
+        }).catch(() => {
+            // 开窗失败已由 UIManager 提示。
+        });
+    }
+
+    /** 名称为空时在原输入框内显示提示，不另在页底重复。 */
+    private renderQuery(): void {
+        const placeholder = GameConfig.instance.requireConfig(GConfig.Language, 41344).value ?? "";
+        this._query!.string = this.queryDraft || placeholder;
+        this._query!.color = this.queryDraft ? new Color(122, 71, 45) : new Color(156, 155, 151);
+    }
+
+    /** 搜索按钮提交已确认名称；查询期间继续保留已提交的条件。 */
     private search(): void {
         if (GuildController.instance.busy) {
             return;
         }
-        const query = this._query!.string.trim();
+        const query = this.queryDraft;
         if (!query) {
             UIManager.instance.toast("请输入公会名称");
             return;
@@ -209,11 +249,12 @@ export class GuildView extends BaseView<GuildViewArgs> {
         }
     }
 
-    /** 成员页在公会大厅上独立打开，离开大厅时一同关闭。 */
+    /** 打开成员窗并刷新同一份名单，显示其他成员最近保存的主阵容战力。 */
     private openMembers(): void {
         const guild = GuildModel.instance.snapshot?.guild;
         const role = this.args?.account.snapshot.role;
         if (guild && role) {
+            GuildController.instance.list("", 1);
             void UIManager.instance.openChild(this, GuildMemberView, { guildId: guild.id, roleId: role.id }).catch(() => {});
         }
     }
@@ -227,11 +268,40 @@ export class GuildView extends BaseView<GuildViewArgs> {
         }
     }
 
-    /** 在未入会三页签与已入会大厅之间切换，期间仍由同一控制器接收服务器状态。 */
+    /** 只有当前公会会长能提交新公告；关闭输入窗不会改动大厅文字。 */
+    private editNotice(): void {
+        const state = GuildModel.instance.snapshot;
+        const guild = state?.guild;
+        if (!guild || GuildController.instance.busy) {
+            return;
+        }
+        if (!GuildModel.canApprove(state, this.args?.account.snapshot.role?.id)) {
+            UIManager.instance.toast("只有会长可以编辑公告");
+            return;
+        }
+        void UIManager.instance.openChild(this, GuildTextInputView, {
+            initialValue: guild.description ?? "",
+            maxLength: GuildModel.noticeLimit,
+            onConfirm: value => {
+                const current = GuildModel.instance.snapshot;
+                const description = value.trim();
+                if (current?.guild?.id === guild.id && description !== (current.guild.description ?? "")) {
+                    GuildController.instance.change({ action: "UPDATE_NOTICE", guildId: guild.id, description });
+                }
+            },
+        }).catch(() => {
+            // UIManager 负责开窗失败提示。
+        });
+    }
+
+    /** 响应公会状态；入会时收起目录的编辑器并清空查找草稿。 */
     private readonly render = (): void => {
         this.unschedule(this.render);
         const state = GuildModel.instance.snapshot;
         const guild = state?.guild;
+        if (guild && this._tabs!.active) {
+            UIManager.instance.closeChildren(this);
+        }
         this._tabs!.active = !guild;
         this._hall!.active = !!guild;
         this._recommend!.active = !guild && this.tab === "recommend";
@@ -240,25 +310,28 @@ export class GuildView extends BaseView<GuildViewArgs> {
         if (guild) {
             this.tab = "recommend";
             this.submittedQuery = null;
-            this._query!.string = "";
+            this.queryDraft = "";
             this.renderHall(guild, state!);
         } else {
             this.renderDirectory(state);
         }
     };
 
-    /** 展示公会资料和会长的审批入口，审批红点缺失时仍可展示大厅。 */
+    /** 展示权威等级、经验、公告及会长的审批入口；回包未提供的数值不伪造。 */
     private renderHall(guild: GuildSummary, state: GuildState): void {
         const leader = state.members.find(member => member.leader);
         this._guildName!.string = guild.name;
         this._leader!.string = leader ? "会长  " + leader.nickname : "";
+        this._guildLevel!.string = guild.level === undefined ? "" : `等级：Lv${guild.level}`;
+        this._experience!.string = guild.experience === undefined || guild.nextLevelExperience === undefined
+            ? "" : `EXP：${guild.experience}/${guild.nextLevelExperience}`;
         this._memberCount!.string = `成员  ${guild.memberCount}/${guild.capacity}`;
         const badge = guild.badgeId ?? 0;
         if (badge !== this.shownBadge) {
             this.shownBadge = badge;
             ResManager.setSprite(this._badge?.node ?? null, GuildBadgeUtils.source(badge));
         }
-        const notice = guild.description || "暂无公会公告";
+        const notice = guild.description ?? "";
         if (notice !== this.shownNotice) {
             this.shownNotice = notice;
             this._notice!.string = notice;
@@ -268,9 +341,10 @@ export class GuildView extends BaseView<GuildViewArgs> {
         }
         const manager = GuildModel.canApprove(state, this.args?.account.snapshot.role?.id);
         this._applications!.node.active = manager;
+        this._editNotice!.interactable = !GuildController.instance.busy;
     }
 
-    /** 更新当前目录的分页、空态及退会冷却。 */
+    /** 更新当前目录的查找草稿、分页状态及退会冷却。 */
     private renderDirectory(state: GuildState | null): void {
         const busy = GuildController.instance.busy;
         const tabIndex = this.tab === "recommend" ? 0 : this.tab === "create" ? 1 : 2;
@@ -285,11 +359,16 @@ export class GuildView extends BaseView<GuildViewArgs> {
         if (remaining > 0) {
             this.scheduleOnce(this.render, remaining);
         }
-        this._status!.node.active = directory;
-        this._status!.string = busy ? "正在读取公会" : remaining > 0 ? "退会冷却中"
-            : !queried ? "输入公会名查找" : state?.guilds.length ? "" : "暂无公会";
+        const status = busy ? "正在读取公会" : remaining > 0 ? "退会冷却中"
+            : queried && !state?.guilds.length ? "暂无公会" : "";
+        this._status!.node.active = directory && !!status;
+        this._status!.string = status;
         this._refresh!.interactable = !busy;
         this._search!.interactable = !busy;
+        this._editQuery!.interactable = !!state && !busy;
+        if (searching) {
+            this.renderQuery();
+        }
         this._previous!.node.active = directory && queried && !!state && state.page > 1;
         this._next!.node.active = directory && queried && !!state?.hasMore;
         this._previous!.interactable = !busy;
@@ -302,14 +381,14 @@ export class GuildView extends BaseView<GuildViewArgs> {
         }
     }
 
-    /** 以原版目录格显示徽章、等级和人数。点击加入直接发送申请。 */
+    /** 显示服务端提供的公会徽章、等级和人数；点击加入直接提交申请。 */
     private directoryRow(guild: GuildSummary, state: GuildState, disabled: boolean): GuildCellRow {
         const applied = state.appliedGuildIds.includes(guild.id);
         const full = guild.memberCount >= guild.capacity;
         return {
             title: guild.name,
             detail: `成员  ${guild.memberCount}/${guild.capacity}`,
-            levelText: "等级  1",
+            levelText: guild.level === undefined ? "" : `等级  ${guild.level}`,
             badgeId: guild.badgeId ?? 0,
             actionText: applied ? "待审批" : full ? "已满" : "加入",
             action: applied || full || disabled ? undefined : () => this.joinGuild(guild.id),

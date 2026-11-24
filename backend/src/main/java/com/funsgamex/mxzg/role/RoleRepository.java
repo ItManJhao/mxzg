@@ -55,7 +55,7 @@ public class RoleRepository {
     private final RoleRules rules;
     /** 旧英雄容量配置，只在创建角色时提供持久初值。 */
     private final com.funsgamex.mxzg.hero.HeroCapacityService heroCapacity;
-    /** 读取基础角色行、公开编号及赠礼资格，公会名由同事务的快照装配补充。 */
+    /** 读取基础资料及持久战力投影，公会名由同事务快照装配补充。 */
     private RoleProfile map(java.sql.ResultSet row,int index) throws java.sql.SQLException {
         int level = row.getInt("role_level");
         var basics = new RoleBasics(row.getLong("role_experience"), row.getInt("cup"),
@@ -63,7 +63,8 @@ public class RoleRepository {
             row.getLong("created_at_seconds"), row.getLong("last_login_at_seconds"), rules.threshold(level));
         return new RoleProfile(row.getString("id"), row.getString("nickname"), level, row.getLong("gold"),
             row.getLong("diamonds"), row.getString("server_id"), basics, row.getBoolean("first_named"),
-            row.getBoolean("welcome_gift_available"), row.getString("public_id"), null);
+            row.getBoolean("welcome_gift_available"), row.getString("public_id"), null,
+            row.getObject("current_main_power", Integer.class));
     }
     /** 资产版本与事务提交同步，由所有钱包写入共同使用。 */
     private final com.funsgamex.mxzg.network.AssetSyncService sync;
@@ -121,11 +122,22 @@ public class RoleRepository {
         }
     }
 
-    /** 角色锁内保留最高主阵容战力；此内部入场条件不改变钱包或库存版本。 */
+    /** 角色锁内写当前值，并且只有实际值更高才更新用于副本门槛的历史峰值。 */
     public int observeMainPower(String roleId, int power) {
         sync.requireTransaction();
-        jdbc.update("UPDATE game_role SET max_main_power=? WHERE id=? AND max_main_power<?", power, roleId, power);
+        jdbc.update("""
+            UPDATE game_role SET current_main_power=?,
+                max_main_power=CASE WHEN max_main_power<? THEN ? ELSE max_main_power END
+            WHERE id=? AND (current_main_power IS NULL OR current_main_power<>? OR max_main_power<?)
+            """, power, power, power, roleId, power, power);
         return jdbc.queryForObject("SELECT max_main_power FROM game_role WHERE id=?", Integer.class, roleId);
+    }
+
+    /** 持有角色锁的统一快照补齐当前投影；相同值直接保留，不写历史峰值或增加资产版本。 */
+    public void projectCurrentMainPower(String roleId, int power) {
+        sync.requireTransaction();
+        jdbc.update("UPDATE game_role SET current_main_power=? WHERE id=? AND (current_main_power IS NULL OR current_main_power<>?)",
+            power, roleId, power);
     }
     /**
      * 在调用方事务内锁定真实钱包，分别校验金币和钻石精确加法后一次保存。

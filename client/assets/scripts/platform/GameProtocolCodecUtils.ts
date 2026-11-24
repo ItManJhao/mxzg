@@ -50,7 +50,7 @@ const Frame = (mxzg as unknown as {
 const payloads = [
     "authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers",
     "gmGrant", "gmResult", "gmStatus", "gmSetRoleLevel", "gmSetChapter", "gmSetTime", "gmTime",
-    "formationSave", "formationSaved", "battlePreview", "battlePreviewed",
+    "formationSave", "formationSaved", "formationPowerRequest", "formationPower", "battlePreview", "battlePreviewed",
     "chapterChallenge", "chapterBattleId", "chapterReceipt", "chapterReplay", "idleEncounter",
     "chapterIdleClaim", "chapterIdleClaimStatusRequest", "chapterIdleClaimReceipt", "chapterIdleClaimStatus",
     "rewardNotice",
@@ -218,6 +218,7 @@ export class GameProtocolCodecUtils {
         }
         if (frame.kind === "request") {
             switch (frame.name) {
+                case Protocol.FORMATION_POWER: return "formationPowerRequest";
                 case Protocol.ROLE_HEAD_CHANGE:
                 case Protocol.ROLE_BORDER_CHANGE:
                 case Protocol.ROLE_BORDER_ACTIVATE: return "roleDecorationId";
@@ -261,6 +262,7 @@ export class GameProtocolCodecUtils {
                 case Protocol.CHAPTER_FIRST_REWARD_STATUS: return "chapterFirstRewardStatus";
                 case Protocol.BATTLE_PREVIEW: return "battlePreviewed";
                 case Protocol.FORMATION_SAVE: return "formationSaved";
+                case Protocol.FORMATION_POWER: return "formationPower";
                 case Protocol.HERO_SUMMON: return "heroSummonReceipt";
                 case Protocol.HERO_NORMAL_SUMMON:
                 case Protocol.HERO_FIRST_SUMMON: return "heroFirstSummonReceipt";
@@ -1392,6 +1394,56 @@ export class GameProtocolCodecUtils {
         }
     }
 
+    /** 草稿战力使用有界的普通队员列表，不接受位置、战力或其他角色资料写入。 */
+    private static validateFormationPower(frame: GameFrame): void {
+        if (frame.name !== Protocol.FORMATION_POWER || frame.ok === false) {
+            return;
+        }
+        const body = GameProtocolCodecUtils.messageObject(frame.body);
+        const ids = body.heroIds;
+        const request = frame.kind === "request";
+        const allowed = request ? ["requestId", "heroIds"] : ["requestId", "heroIds", "power", "assetRevision"];
+        if (Object.keys(body).some(key => !allowed.includes(key))
+            || !GameProtocolCodecUtils.isUuid(body.requestId) || !Array.isArray(ids) || ids.length > 6
+            || ids.some(id => typeof id !== "string" || !id.length || id.length > 96)
+            || new Set(ids).size !== ids.length) {
+            throw new Error("阵容战力请求或队员回显无效");
+        }
+        if (!request && (!GameProtocolCodecUtils.isIntegerInRange(body.power, 0, 0x7fffffff)
+            || !GameProtocolCodecUtils.isIntegerInRange(body.assetRevision, 0))) {
+            throw new Error("阵容战力回包无效");
+        }
+    }
+
+    /** 校验公会新增数值投影，缺失仍表示旧回包未同步，不能当作假零。 */
+    private static validateGuildProgress(frame: GameFrame): void {
+        if ((frame.name !== Protocol.GUILD_LIST && frame.name !== Protocol.GUILD_CHANGE)
+            || frame.kind !== "response" || frame.ok === false) {
+            return;
+        }
+        const state = GameProtocolCodecUtils.messageObject(frame.body);
+        const inRange = GameProtocolCodecUtils.isIntegerInRange;
+        const summaries = Array.isArray(state.guilds) ? state.guilds : [];
+        for (const summary of state.guild === undefined ? summaries : [state.guild, ...summaries]) {
+            const guild = GameProtocolCodecUtils.messageObject(summary);
+            if ((guild.level !== undefined && !inRange(guild.level, 1, 0x7fffffff))
+                || (guild.experience !== undefined && !inRange(guild.experience, 0, 0x7fffffff))
+                || (guild.nextLevelExperience !== undefined && !inRange(guild.nextLevelExperience, 0, 0x7fffffff))) {
+                throw new Error("公会等级或经验无效");
+            }
+        }
+        for (const group of [state.members, state.applications]) {
+            if (Array.isArray(group)) {
+                for (const member of group) {
+                    const { power } = GameProtocolCodecUtils.messageObject(member);
+                    if (power !== undefined && !inRange(power, 0, 0x7fffffff)) {
+                        throw new Error("公会成员战力无效");
+                    }
+                }
+            }
+        }
+    }
+
     /** 编码完整帧，校验各玩法指令和回执，返回可直接发送的独立 ArrayBuffer。 */
     public static encodeGameFrame(frame: GameFrame): ArrayBuffer {
         GameProtocolCodecUtils.validateIntegers(frame);
@@ -1408,6 +1460,8 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateProgressionBattle(frame);
         GameProtocolCodecUtils.validateQuickBattle(frame);
         GameProtocolCodecUtils.validateVip(frame);
+        GameProtocolCodecUtils.validateFormationPower(frame);
+        GameProtocolCodecUtils.validateGuildProgress(frame);
         HeroLevelData.validateFrame(frame);
         HeroLevelData.validateStageFrame(frame);
         const { body, ...envelope } = frame;
@@ -1471,6 +1525,8 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateProgressionBattle(frame);
         GameProtocolCodecUtils.validateQuickBattle(frame);
         GameProtocolCodecUtils.validateVip(frame);
+        GameProtocolCodecUtils.validateFormationPower(frame);
+        GameProtocolCodecUtils.validateGuildProgress(frame);
         HeroLevelData.validateFrame(frame);
         HeroLevelData.validateStageFrame(frame);
         GameProtocolCodecUtils.validateRoleName(frame, expected);

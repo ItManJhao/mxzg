@@ -10,12 +10,14 @@ import { RedDotFixture } from "./RedDotFixture";
 import { ApplicationRedDots } from "../assets/scripts/app/remake/ApplicationRedDots";
 import { ServerClock } from "../assets/scripts/core/ServerClock";
 import { RedDotManager } from "../assets/scripts/framework/ui/RedDotManager";
+import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import type { GameFrame } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import { SocketFailure } from "../assets/scripts/platform/GameSocketClient";
 import { Protocol, type AuthenticatedGameProtocol } from "../assets/scripts/platform/Protocol";
 import type { AccountOperations } from "../assets/scripts/features/account/AccountOperations";
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
 import { BattleReplayPreview } from "../assets/scripts/features/battle/ui/BattleReplayPreview";
+import { RulesView, type RulesArgs } from "../assets/scripts/features/common/ui/RulesView";
 import { GameRedDotKey } from "../assets/scripts/features/common/utils/GameRedDotKey";
 import { DailyDungeonController } from "../assets/scripts/features/dungeon/DailyDungeonController";
 import { DailyDungeonModel, type DailyDungeonStage, type DailyDungeonState } from "../assets/scripts/features/dungeon/DailyDungeonModel";
@@ -350,7 +352,7 @@ async function checkCardReuse(): Promise<void> {
     }
 }
 
-/** 关卡列表复用同一张卡和原五种牌匾，按钮只使用当前关卡及奖励回调。 */
+/** 验证五类导航的选中层、共用关卡卡片和当前条目的操作回调。 */
 function checkStageCellReuse(): void {
     const directory = "client/assets/bundles/module/dungeon/prefabs/";
     const page = JSON.parse(readFileSync(directory + "GoldDungeonView.prefab", "utf8"));
@@ -363,6 +365,31 @@ function checkStageCellReuse(): void {
         ["GoldTabButton", "ExperienceTabButton", "HeroTabButton", "FetterTabButton", "SpiritTabButton"]);
     assert.deepEqual(tabs.map((tab: { _lpos: { x: number } }) => tab._lpos.x), [-240, -120, 0, 120, 240]);
     assert.equal(view._tabSelection.length, 5);
+    const selectionMeta = JSON.parse(readFileSync(
+        "client/assets/bundles/module/dungeon/ui/mission-cell-bg_icon-select.png.meta", "utf8"));
+    const navigation = page[tabs[0]._parent.__id__];
+    const panel = page[navigation._parent.__id__];
+    const panelDrawOrder = panel._children.map((ref: { __id__: number }) => page[ref.__id__]._name);
+    assert(panelDrawOrder.indexOf("DailyPanelArtwork") >= 0);
+    assert(panelDrawOrder.indexOf("DailyTabsArtwork") > panelDrawOrder.indexOf("DailyPanelArtwork"),
+        "选中光效允许伸到关卡面板边缘，不被面板遮住");
+    const navDrawOrder = navigation._children.map((ref: { __id__: number }) => page[ref.__id__]);
+    for (const [index, ref] of view._tabSelection.entries()) {
+        const selection = page[ref.__id__];
+        const tab = tabs[index];
+        assert.equal(selection._active, index === 0, "初始只有金币页签选中");
+        assert.equal(selection._parent.__id__, tab._parent.__id__);
+        assert(navDrawOrder.indexOf(selection) >= 0 && navDrawOrder.indexOf(tab) > navDrawOrder.indexOf(selection),
+            "光效置于页签图案后面，不覆盖入口图标和红点");
+        assert.equal(selection._lpos.x, tab._lpos.x);
+        assert.equal(selection._lpos.y, tab._lpos.y - 6);
+        const components = selection._components.map((componentRef: { __id__: number }) => page[componentRef.__id__]);
+        const transform = components.find((component: { __type__: string }) => component.__type__ === "cc.UITransform");
+        const sprite = components.find((component: { __type__: string }) => component.__type__ === "cc.Sprite");
+        assert.equal(sprite._spriteFrame.__uuid__, selectionMeta.uuid + "@f9941");
+        assert.equal(transform._contentSize.width, selectionMeta.subMetas.f9941.userData.rawWidth);
+        assert.equal(transform._contentSize.height, selectionMeta.subMetas.f9941.userData.rawHeight);
+    }
     assert.equal(view._bannerFrames.length, 5);
     assert.equal(view._tabLocks.length, 5);
     assert.equal(view._battleFrames.length, 5);
@@ -371,6 +398,20 @@ function checkStageCellReuse(): void {
         assert.equal(view._battleFrames[index].__uuid__, map.uuid + "@f9941");
         assert(tabs[index]._children.some((ref: { __id__: number }) => ref.__id__ === view._tabLocks[index].__id__));
     }
+    const count = page[view._countLabel.__id__];
+    const countNode = page[count.node.__id__];
+    const rules = page[view._rulesButton.__id__];
+    const rulesNode = page[rules.node.__id__];
+    const rulesComponents = rulesNode._components.map((ref: { __id__: number }) => page[ref.__id__]);
+    const buttonFrame = JSON.parse(readFileSync("client/assets/bundles/module/common/ui/button_btn-info-4.png.meta", "utf8"));
+    const rulesTransform = rulesComponents.find((row: { __type__: string }) => row.__type__ === "cc.UITransform");
+    assert.equal(rules.__type__, "cc.Button");
+    assert.equal(rulesComponents.find((row: { __type__: string }) => row.__type__ === "cc.Sprite")._spriteFrame.__uuid__,
+        `${buttonFrame.uuid}@f9941`, "金色说明入口沿用旧版图标");
+    assert.equal(count._horizontalAlign, 2, "数字右对齐");
+    assert.equal(countNode._lpos.y, rulesNode._lpos.y, "说明与次数同一水平线");
+    assert(countNode._lpos.x < rulesNode._lpos.x - rulesTransform._contentSize.width / 2,
+        "次数与右侧触摸区域不重叠");
     const asset = JSON.parse(readFileSync(directory + "GoldDungeonStageCell.prefab", "utf8"));
     const binding = asset.find((row: { _ribbons?: unknown[] }) => row._ribbons);
     assert.equal(binding._ribbons.length, 5);
@@ -426,7 +467,7 @@ function checkStageCellReuse(): void {
     card.destroy();
 }
 
-/** 用真实视图和协议事件检查首帧预热、挑战提前揭幕、拒绝/重连回退、扫荡及离页取消。 */
+/** 用真实视图和协议事件检查次数、只读说明、开战、重连、扫荡和离页取消。 */
 function checkBattleEntry(): void {
     const restoreRedDot = RedDotFixture.stubLoad();
     const oldWarm = BattleReplayPreview.warmChallengeOpening;
@@ -437,6 +478,8 @@ function checkBattleEntry(): void {
     const host = new Node("BattleHost");
     const background = new Node("BattleBackground");
     background.addComponent(Sprite);
+    const rulesButton = new Node("RulesButton").addComponent(Button);
+    const count = new Node("AttemptsLabel").addComponent(Label);
     const five = Array.from({ length: 5 });
     let warmed = 0;
     let played = 0;
@@ -444,7 +487,7 @@ function checkBattleEntry(): void {
     Object.assign(page, {
         _panel: panel.addComponent(UITransform), _battleHost: host, _battleBackground: background,
         _banner: new Node().addComponent(Sprite), _backButton: new Node().addComponent(Button),
-        _retryButton: new Node().addComponent(Button), _countLabel: new Node().addComponent(Label),
+        _retryButton: new Node().addComponent(Button), _countLabel: count, _rulesButton: rulesButton,
         _retryLabel: new Node().addComponent(Label), _list: { list: { node: new Node(), setData() {} } },
         _tabButtons: five.map(() => new Node().addComponent(Button)), _tabSelection: five.map(() => new Node()),
         _tabLocks: five.map(() => new Node()), _bannerFrames: five.map(() => new SpriteFrame()),
@@ -453,13 +496,29 @@ function checkBattleEntry(): void {
     });
     const click = () => Reflect.get(page, "challenge").call(page, 1);
     const draw = () => director.emit(Director.EVENT_AFTER_DRAW);
+    const ui = UIManager.instance;
+    const openChild = ui.openChild;
+    const openedRules: RulesArgs[] = [];
+    ui.openChild = ((owner, view, args) => {
+        assert.equal(owner, page, "说明随日常副本页关闭，不独立占用窗口");
+        assert.equal(view, RulesView);
+        openedRules.push(args as RulesArgs);
+        return Promise.resolve(null);
+    }) as typeof ui.openChild;
     controller.configure(operations as unknown as AccountOperations, { restoreActual() {} });
     controller.initialize();
     ServerClock.instance.synchronize(100_000);
     requests.length = 0;
     try {
         page.runOpen({ account, backToHall() {} });
-        resolveList(requests[0], { ...canPlay, canChallenge: false });
+        assert.equal(count.string, "次数待同步");
+        resolveList(requests[0], { ...canPlay, wins: 1, canChallenge: false });
+        assert.equal(count.string, "今日剩余次数：4", "只显示服务器上限减去当日已用次数");
+        rulesButton.node.emit(Button.EventType.CLICK);
+        assert.equal(openedRules.length, 1);
+        assert.equal(openedRules[0].title, "日常副本");
+        assert.match(openedRules[0].message, /2次免费挑战次数\n3/);
+        assert.equal(requests.length, 1, "打开说明不会提交额外请求或消耗次数");
         draw();
         assert.equal(warmed, 0, "没有可挑战的关卡时不占用开场资源");
         controller.refreshVisible();
@@ -489,6 +548,8 @@ function checkBattleEntry(): void {
         assert.equal(host.active && background.active, true);
         assert.equal(played, 0, "战报装配不抢战场背景首帧");
         page.runClose();
+        rulesButton.node.emit(Button.EventType.CLICK);
+        assert.equal(openedRules.length, 1, "离页后说明按钮不再响应");
         draw();
         assert.equal(played, 0, "背景显示后离页取消下一帧的播放");
     } finally {
@@ -496,6 +557,7 @@ function checkBattleEntry(): void {
         root.destroy();
         controller.dispose();
         manager.reset();
+        ui.openChild = openChild;
         BattleReplayPreview.warmChallengeOpening = oldWarm;
         restoreRedDot();
     }

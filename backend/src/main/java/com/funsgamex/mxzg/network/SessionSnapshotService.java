@@ -1,6 +1,6 @@
 /**
  * 长连接鉴权接管与恢复快照：同一角色锁内读取钱包、库存实例、冒险点、主线已领及普通召唤冷却。
- * 登录首包和提交后 state.changed 共用本入口，公会身份与 VIP 任务在同一角色锁内读取。
+ * 登录首包和提交后 state.changed 共用本入口，角色、公会身份和当前战力均来自同次快照。
  */
 package com.funsgamex.mxzg.network;
 
@@ -42,6 +42,8 @@ public class SessionSnapshotService {
     private final SpiritInventoryService spirits;
     /** 按角色读取持久英雄实例，不在客户端生成或跨角色查询。 */
     private final HeroRepository heroes;
+    /** 根据同次名册补齐角色的主队战力投影。 */
+    private final HeroMainPowerService powers;
 
     /** 同一角色锁内读取总容量和扩容次数。 */
     private final HeroCapacityService capacity;
@@ -78,7 +80,7 @@ public class SessionSnapshotService {
     /** 当前 VIP 档位、真实任务进度及领取记录的唯一读取入口。 */
     private final VipService vip;
 
-    /** 注入各领域持久数据入口和游戏时钟，在统一读取事务内聚合状态。 */
+    /** 注入各领域入口和游戏时钟，名册与角色派生战力同事务交付。 */
     public SessionSnapshotService(SessionService sessions, RoleRepository roles, InventoryService inventory,
             TimedInventoryService timed, HeroRepository heroes, HeroCapacityService capacity,
             com.funsgamex.mxzg.lineup.MainFormationStateService formations,
@@ -86,7 +88,7 @@ public class SessionSnapshotService {
             com.funsgamex.mxzg.campaign.MainChapterIdleService idle, SpiritInventoryService spirits,
             TavernPointService tavernPoints, com.funsgamex.mxzg.campaign.MainChapterRules chapterRules,
             HeroSummonService heroSummons, HeroGodEquipmentService godEquipment, HeroArtifactService artifacts, GameClock clock,
-            RoleProfileService roleProfiles, GuildService guilds, VipService vip) {
+            RoleProfileService roleProfiles, GuildService guilds, VipService vip, HeroMainPowerService powers) {
         this.idle = idle;
         this.chapters = chapters;
         this.sessions = sessions;
@@ -95,6 +97,7 @@ public class SessionSnapshotService {
         this.timed = timed;
         this.spirits = spirits;
         this.heroes = heroes;
+        this.powers = powers;
         this.capacity = capacity;
         this.formations = formations;
         this.tavernPoints = tavernPoints;
@@ -117,7 +120,7 @@ public class SessionSnapshotService {
         return role;
     }
 
-    /** 同一角色锁内组装资产、公会身份和 VIP 任务等玩法状态。期限库存和挂机共享一次游戏时间。 */
+    /** 同一角色锁内组装角色及名册，用实际主队补齐公开战力，不改变资产版本。 */
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRES_NEW)
     public Snapshot snapshot(String token) {
         String role = sessions.requireRole(token);
@@ -136,8 +139,10 @@ public class SessionSnapshotService {
                 chapter.challengeLimit(), chapter.firstRewardProgress());
         var idleState = idle.snapshot(role, chapter.maxCleared(), now);
         idleState = idle.withLineup(role, idleState, formation);
+        var roster = heroes.list(role);
+        powers.projectCurrentFromRoster(role, roster);
         var profile = roles.findById(role).orElseThrow().withGuildName(guilds.nameForRole(role));
-        return new Snapshot(profile, heroes.list(role), inventory.list(role),
+        return new Snapshot(profile, roster, inventory.list(role),
                 roles.revision(role), timedState, capacity.current(role), formation, chapter, idleState, spiritState,
                 pointState, heroSummons.current(role), godEquipment.state(role), artifacts.state(role), vip.current(role));
     }

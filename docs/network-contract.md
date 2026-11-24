@@ -52,6 +52,7 @@
 | market.refresh | 请求/响应 | `requestId` 和 `shelfVersion`；服务端按免费次数及付费配置刷新货架 |
 | dungeon.{gold,experience,hero,fetter,spirit}.list | 请求/响应 | 空请求获取对应类型的关卡、每日胜次、下次报价、奖励预览和准入状态 |
 | dungeon.{gold,experience,hero,fetter,spirit}.challenge | 请求/响应 | `requestId`、`stageId`、`sweep`、`maxDiamonds`，回包携带原战报或扫荡结果、实际发放及该类型最新次数 |
+| formation.power | 请求/响应 | `requestId` 和最多六名当前角色持有的不同英雄 ID；用主阵容评分方式返回 `power`、`assetRevision`，并回显 `requestId`、`heroIds`。空阵容为 0；不保存草稿、不改变历史战力 |
 | formation.save | 请求/响应 | 当前角色主线阵容保存；requestId 持久幂等，回执不代替统一快照 |
 | chapter.challenge | 请求/响应 | 按服务端当前开放范围挑战（默认连续第 1～550 关），权威输入与持久战报 |
 | chapter.claim | 请求/响应 | 指定主线战报的幂等结算；不是挂机宝箱领取 |
@@ -168,11 +169,13 @@ V59 以角色与请求编号保存实际发奖回执。扣费、掉落累计、�
 
 `guild.list` 使用当前登录角色的区服。查询可传名称片段和页码，响应包含建会费用、名称长度、申请冷却和成员状态。有审批权限时才附带本公会的待审申请。
 
-`guild.change` 使用持久业务编号提交 CREATE、APPLY、APPROVE、REJECT、LEAVE。服务端从鉴权连接取得操作者，统一检查资格、权限和区服。重复提交同一编号和参数返回当前公会状态，写入和扣费只发生一次。编号已用于其他参数时拒绝。
+`guild.change` 使用持久业务编号提交 CREATE、UPDATE_NOTICE、APPLY、APPROVE、REJECT、LEAVE。服务端从鉴权连接取得操作者，统一检查资格、权限和区服。重复提交同一编号和参数返回当前公会状态，写入和扣费只发生一次。编号已用于其他参数时拒绝。UPDATE_NOTICE 必须传目标 `guildId` 及显式 `description`，空串表示清空，不携带徽章或名称；当前只有会长有权限。
 
-CREATE 可传 0 至 43 的 `badgeId`。旧请求省略该字段时沿用原版 00 徽章与原幂等摘要。公会摘要返回已保存的徽章，成员与待审申请返回角色的头像和头像框字段。
+CREATE 可传 0 至 43 的 `badgeId`。旧请求省略该字段时沿用原版 00 徽章与原幂等摘要。公会摘要返回已保存的徽章、等级 `level`、当前经验 `experience` 与本级门槛 `nextLevelExperience`；成员与待审申请可返回角色头像、头像框和当前主阵容战力。旧回包缺少扩展字段时显示未同步，已同步且没有队伍时战力为 0。
 
 公会成功变更后，相关在线角色收到 `guild.updated`。公会页收到后查询。已入会角色首次进主城、重连或公会状态变化时也用 `guild.list` 确认审批提醒，会长有待审申请时点亮公会底栏。钱包与个人空间公会名继续使用 `state.changed` 和鉴权快照。加入和离开由服务端更新角色资料。
+
+顶栏和成员使用同一当前主阵容评分，登录、恢复与 `state.changed` 随角色 `Role.power` 交付；打开成员窗时刷新名单。培养、换装等不会额外向全公会广播，历史战力峰值独立用于副本资格。见[英雄与主线阵容维护契约](hero-lineup-contract.md#当前公开战力)。
 
 ## VIP 契约任务
 

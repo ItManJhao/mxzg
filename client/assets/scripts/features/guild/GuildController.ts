@@ -18,6 +18,7 @@ declare module "../../framework/EventDispatcher" {
 /** 服务端校验的公会变更意图，模板字段只随实际操作发送。 */
 export type GuildChange =
     | { readonly action: "CREATE"; readonly name: string; readonly description?: string; readonly badgeId?: number }
+    | { readonly action: "UPDATE_NOTICE"; readonly guildId: string; readonly description: string }
     | { readonly action: "APPLY"; readonly guildId: string }
     | { readonly action: "APPROVE" | "REJECT"; readonly guildId: string; readonly applicantId: string }
     | { readonly action: "LEAVE"; readonly guildId: string };
@@ -118,7 +119,7 @@ export class GuildController extends BaseController {
             frame => ProtocolRouter.instance.dispatch(this, frame), this.visible ? this.onFailed : () => this.finish());
     }
 
-    /** 使用统一认证通道发送本次创建、申请、审批或退出。 */
+    /** 使用统一认证通道发送创建、编辑公告、申请、审批或退出。 */
     public change(command: GuildChange): void {
         if (!this.operations || this.pending) {
             return;
@@ -127,7 +128,7 @@ export class GuildController extends BaseController {
         this.operations.send(this, Protocol.GUILD_CHANGE, command, this.onFailed);
     }
 
-    /** 提交服务端公会状态并反馈申请结果，其他角色的推送只触发刷新。 */
+    /** 提交服务端公会状态并反馈已完成的申请或公告编辑，推送只触发刷新。 */
     public onNotify(protocol: ProtocolName, data: unknown): void {
         switch (protocol) {
             case Protocol.GUILD_UPDATED:
@@ -146,6 +147,7 @@ export class GuildController extends BaseController {
             }
             case Protocol.GUILD_CHANGE: {
                 const applied = this.pending === "APPLY";
+                const updatedNotice = this.pending === "UPDATE_NOTICE";
                 const state = data as GuildState;
                 const previous = GuildModel.instance.snapshot;
                 if (!state.guild && !previous?.guild && this.visible && (this.query || this.page > 1)) {
@@ -168,6 +170,9 @@ export class GuildController extends BaseController {
                 this.finish();
                 if (applied && this.visible) {
                     UIManager.instance.toast("入会申请已发送");
+                }
+                if (updatedNotice && this.visible) {
+                    UIManager.instance.toast("公会公告已更新");
                 }
                 return;
             }

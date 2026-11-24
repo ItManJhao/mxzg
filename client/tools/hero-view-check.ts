@@ -31,7 +31,7 @@ import { HeroRosterController } from "../assets/scripts/features/hero/HeroRoster
  *
  * npx --yes esbuild client/tools/hero-view-check.ts --bundle --platform=node --format=cjs --tsconfig=client/tools/tsconfig.check.json --outfile=/tmp/mxzg-hero-view-check.js && node /tmp/mxzg-hero-view-check.js
  */
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 
 import { join } from "path";
 
@@ -203,11 +203,27 @@ function checkPrefab(): void {
   assert(starTransform._contentSize.width === fullStarWidth, "星容器初始宽度等于原五子星宽、缩放、边距及间距");
   const cell = component(cellData, cellType);
   assertNode(cellData, cell.comp, "face", 19, "spr_face");
+  const faceScale = cellData[idOf(cell.comp.face)]._lscale;
+  assert(faceScale.x === 0.9 && faceScale.y === 0.9, "名册头像按 0.9 缩放，不缩小品质框和等级");
   assertComp(cellData, cell.comp, "nameLabel", 29, "cc.Label");
   assertNode(cellData, cell.comp, "elem", 31, "spr_elem");
   assertComp(cellData, cell.comp, "levelLabel", 71, "cc.Label");
   assertNode(cellData, cell.comp, "lock", 73, "spr_lock");
   assertNode(cellData, cell.comp, "battle", 79, "spr_battle");
+  const level = cellData[idOf(cell.comp.levelLabel)];
+  const levelNode = cellData[idOf(level.node)];
+  assert(levelNode._lpos.x > 0 && levelNode._lpos.y > 0 && level._enableOutline === true,
+    "名册等级位于头像右上角，白字保留描边");
+  const rosterBackground = cellData[idOf(cell.comp.rosterFrame)];
+  assert(cellData[idOf(rosterBackground.node)]._name === "spr_bg", "品质框绑定头像下方底图");
+  for (const [field, resource, count] of [
+    ["rosterFrames", "other_rare", 6], ["rosterStarFrames", "other_star", 2],
+  ] as const) {
+    const frames = cell.comp[field] as { __uuid__: string }[];
+    assert(frames.length === count && frames.every((frame, index) => frame.__uuid__
+      === metaUuid(`client/assets/bundles/module/common/ui/${resource}-${index}.png.meta`) + "@f9941"),
+      "名册使用原版品质框及亮色星级资源");
+  }
   const creationData = loadPrefab("client/assets/bundles/module/hero/prefabs/HeroCreationCellView.prefab");
   const creationType = classId(metaUuid("client/assets/scripts/features/hero/ui/HeroCreationCellView.ts.meta"));
   for (const [data, cellTypeId] of [[cellData, cellType], [creationData, creationType]] as const) {
@@ -301,6 +317,7 @@ function makeCell(node: Node, view = HeroIconCellView): void {
   cell.stars = [];
   for (let i = 0; i < 5; i++) {
     const star = new Node("star" + i);
+    star.addComponent(Sprite);
     star.parent = node;
     cell.stars.push(star);
   }
@@ -313,6 +330,23 @@ function makeCell(node: Node, view = HeroIconCellView): void {
   cell.reminderAnchor = new Node("ReminderAnchor");
   cell.reminderAnchor.parent = node;
   cell.reminderAnchor.addComponent(UITransform).setContentSize(28, 28);
+}
+
+/** 用静态名册资源装配头像格，保留其他调用方通用夹具。 */
+function makeRosterCell(node: Node): void {
+  makeCell(node);
+  const cell = node.getComponent(HeroIconCellView)!;
+  const frame = new Node("RosterFrame");
+  frame.parent = node;
+  cell.rosterFrame = frame.addComponent(Sprite);
+  cell.rosterFrames = Array.from({ length: 6 }, () => new SpriteFrame());
+  cell.rosterStarFrames = [new SpriteFrame(), new SpriteFrame()];
+  cell.rosterStarBadge = new Node("RosterStarBadge");
+  cell.rosterStarBadge.parent = node;
+  cell.rosterStarBadge.addComponent(Sprite);
+  cell.rosterStarBadgeNumber = new Node("RosterStarBadgeNumber");
+  cell.rosterStarBadgeNumber.parent = node;
+  cell.rosterStarBadgeNumber.addComponent(Sprite);
 }
 
 /** 构造真实静态层级的行为替身，业务控件直接注入HeroListView。 */
@@ -339,7 +373,7 @@ function makeBoard(node: Node) {
   board.heroScroll.getComponent(SuperScroll)!.content = board.heroContent;
   board.heroContent.getComponent(UITransform)!.setAnchorPoint(0.5,1);
   const list=board.heroContent.addComponent(SuperContent);
-  list.cellPrefab=fakePrefab(makeCell);list.columns=4;list.spacingX=12;list.spacingY=8;list.paddingLeft=60;list.paddingRight=60;
+  list.cellPrefab=fakePrefab(makeRosterCell);list.columns=4;list.spacingX=12;list.spacingY=8;list.paddingLeft=60;list.paddingRight=60;
   board.heroScroll.getComponent(SuperScroll)!.onEnable();
   const empty = new Node("lbl_empty");
   board.emptyLabel = labelOn(empty, "");
@@ -468,6 +502,10 @@ async function checkRemakeRoster(): Promise<void> {
     const cells = cellsOf(view);
     assert(cells.length === 1 && !cells[0].nameLabel!.node.active, "正式列表不在头像上叠名称");
     assert(cells[0].levelLabel!.string === "7" && cells[0].stars.filter(node => node.active).length === 4, "等级和星级来自实例");
+    assert(!cells[0].elem!.active, "仅名册格隐藏头像属性图标");
+    assert(cells[0].rosterFrame!.spriteFrame === cells[0].rosterFrames[3]
+      && cells[0].stars[0].getComponent(Sprite)!.spriteFrame === cells[0].rosterStarFrames[0],
+      "四星名册格使用紫色品质框和金星");
     cells[0].node.emit(Button.EventType.CLICK);
     assert(selectedIds.join() === "f45747b7-f032-4d00-9546-3504b9a967e5", "选择直接传入真实实例ID，不经过roster回调");
     board.elemButtons[2].node.emit(Button.EventType.CLICK); pump(1);
@@ -1109,6 +1147,19 @@ async function checkDirectTemplateLookup(): Promise<void> {
         "未知或非法模板保留明确缺失");
 }
 
+/** 按当前英雄配置核对头像，确保名册和出阵共用图标，不保留单独的名册副本。 */
+async function checkSharedHeroPortraitAssets(): Promise<void> {
+    const config = await ConfigFixtureUtils.installReal(new GameConfig());
+    const iconIds = new Set(config.getConfig(GConfig.HeroType).map(row => row.item_id).filter(id => id > 0));
+    const dir = join(root, "client/assets/bundles/module/hero/ui");
+    for (const id of iconIds) {
+        const file = join(dir, `hero-icon_${id}.png`);
+        const duplicate = join(dir, `roster-hero-icon_${id}.png`);
+        assert(existsSync(file) && existsSync(file + ".meta"), `缺少共享头像资源 ${id}`);
+        assert(!existsSync(duplicate) && !existsSync(duplicate + ".meta"), `仍保留重复的名册头像 ${id}`);
+    }
+}
+
 /** 页签复用当前英雄的红点分支，翻页和关窗不沿用上一英雄的提醒。 */
 async function checkGrowthReminderTabs(): Promise<void> {
     const data = loadPrefab("client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab");
@@ -1172,6 +1223,7 @@ async function checkGrowthReminderTabs(): Promise<void> {
 async function main() {
   await ConfigFixtureUtils.installReal();
   await checkDirectTemplateLookup();
+  await checkSharedHeroPortraitAssets();
   checkGrowthReference();
   await checkDefaultRoster();
   await checkReadonlyInfo();

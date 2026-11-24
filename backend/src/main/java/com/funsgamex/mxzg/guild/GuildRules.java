@@ -1,11 +1,12 @@
 /**
- * 公会的开放等级、初始容量、创建费用及离会冷却，统一从原策划表的运行配置读取。
+ * 公会的开放条件、各级经验和容量、创建费用及离会冷却，统一从原策划表读取。
  * 服务端验证玩家提交的名称和公告，查询与展示同用本配置。
  */
 package com.funsgamex.mxzg.guild;
 
 import com.funsgamex.mxzg.role.RoleNameRules;
 import java.io.IOException;
+import java.util.List;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
@@ -18,8 +19,16 @@ final class GuildRules {
     /** 原公告支持可见字符、中日韩文字和分段，拒绝其他控制字符。 */
     private static final Pattern NOTICE_PATTERN =
             Pattern.compile("[\\p{Graph}\\p{Space}\\p{Blank}\\p{P}\\u1100-\\uFE4F]*");
-    /** 原开放条件、一级容量与已确认的日服名称上限。 */
-    record Gate(int levelRequired, int worldLevelRequired, int capacity, int nameLimit) {}
+    /** 某一级公会的成员上限及经验栏分母。 */
+    record Level(int level, int capacity, int nextLevelExperience) {}
+
+    /** 开放条件、日服名称上限与按等级升序排列的旧表投影。 */
+    record Gate(int levelRequired, int worldLevelRequired, int nameLimit, List<Level> levels) {
+        /** 冻结启动时读取的等级表，防止运行中发生变化。 */
+        Gate {
+            levels = List.copyOf(levels);
+        }
+    }
 
     /** 新公会和主导航共用按原开放表导出的门槛。 */
     final Gate gate;
@@ -47,11 +56,25 @@ final class GuildRules {
         createRechargeRequired = setting(system, "create_clan_total_charge_require").asLong(-1);
         nameLimit = gate.nameLimit();
         rejoinSeconds = setting(system, "clan_rejoin_time").asLong(-1);
-        if (gate.levelRequired() < 1 || gate.worldLevelRequired() < 1 || gate.capacity() < 1
+        if (gate.levelRequired() < 1 || gate.worldLevelRequired() < 1 || gate.levels().isEmpty()
                 || createCostDiamonds < 0 || createRechargeRequired < 0 || nameLimit < 1 || nameLimit > 64
                 || rejoinSeconds < 0) {
             throw new IllegalStateException("公会策划配置无效");
         }
+        for (int index = 0; index < gate.levels().size(); index++) {
+            var level = gate.levels().get(index);
+            if (level.level() != index + 1 || level.capacity() <= 0 || level.nextLevelExperience() <= 0) {
+                throw new IllegalStateException("公会等级、成员容量或经验门槛无效：" + level);
+            }
+        }
+    }
+
+    /** 从连续等级表读取持久等级对应的门槛，未知等级按数据异常处理。 */
+    Level level(int level) {
+        if (level < 1 || level > gate.levels().size()) {
+            throw new IllegalStateException("公会等级缺少配置：" + level);
+        }
+        return gate.levels().get(level - 1);
     }
 
     /** 校验并规范前后空白，通过后返回实际保存的名字。 */

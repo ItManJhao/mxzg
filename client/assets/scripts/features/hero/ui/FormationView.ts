@@ -1,6 +1,6 @@
 /**
  * 共用出阵页面。主线和幻境之塔编辑各自的阵容；阵型和元素子窗只修改本页草稿。
- * 保存后由所属业务控制器确认结果，主线继续等待统一角色快照。
+ * 草稿战力由服务器按队员预览；保存后由所属业务控制器确认，主线继续等待统一角色快照。
  */
 import { _decorator, Button, EventTouch, Label, Node, UITransform, Vec3, view as ccView } from "cc";
 import { GameLog } from "../../../core/GameLog";
@@ -44,6 +44,9 @@ interface SlotGesture {
 /** 小于 12 个预制体设计单位的位移视为点击，避免按下时轻微抖动触发拖动。 */
 const SLOT_DRAG_THRESHOLD = 12;
 
+/** 连续增减草稿队员时合并预览请求，单位秒；不延迟确认保存。 */
+const POWER_DEBOUNCE_SECONDS = 0.08;
+
 /** 服务端编号 9 是独立助战位，切换阵型时不参与普通格的序位映射。 */
 const ASSISTANCE_POSITION = 9;
 /** 应用可注入关闭结果，保存成功仍留在编辑页供核对服务端同步。 */
@@ -78,12 +81,16 @@ export class FormationView extends BaseView<FormationRequest> {
     @property(Button) closeButton: Button | null = null;
     /** 确认本页阵容草稿，保存期间禁用。 */
     @property(Button) confirmButton: Button | null = null;
+    /** 普通布阵显示保存，战斗确认显示出阵。 */
+    @property(Label) confirmText: Label | null = null;
     /** 标题文字与样式保留在预制体。 */
     @property(Label) titleLabel: Label | null = null;
     /** 草稿、保存和断线提示。 */
     @property(Label) tipLabel: Label | null = null;
     /** 当前上阵数及可用阵位数。 */
     @property(Label) countLabel: Label | null = null;
+    /** 当前草稿的服务器战力；未取得匹配回包时显示字库支持的短横线。 */
+    @property(Label) powerLabel: Label | null = null;
     /** 当前草稿已经激活的同元素队伍加成，空时隐藏。 */
     @property(Label) teamBonusLabel: Label | null = null;
     /** 元素抑制入口的图标随当前草稿所激活的光环变化。 */
@@ -108,7 +115,7 @@ export class FormationView extends BaseView<FormationRequest> {
     @property maxWidthRatio = 0.94;
     /** 最大屏高占比。 */
     @property maxHeightRatio = 0.80;
-    /** 应用唯一业务模块，只发送保存意图，不管理本页。 */
+    /** 应用唯一业务模块，收发阵容协议，不持有本页草稿。 */
     private module = FormationController.instance;
     /** 当前角色权威英雄与阵容，只读。 */
     private roster = HeroRosterModel.instance;
@@ -120,6 +127,8 @@ export class FormationView extends BaseView<FormationRequest> {
     private closed = true;
     /** 当前页面草稿，绝不回写权威Model。 */
     private state: FormationState = { heroes: [], lineup: { version: 0, slots: [] }, busy: true, message: "等待阵容同步…" };
+    /** 当前草稿队员与名册版本的键，以及已发送的只读预览请求编号。 */
+    private powerDraft: { readonly key: string; readonly heroIds: readonly string[]; requestId: string | null } | null = null;
     /** 本次开窗读取的阵型说明，用当前草稿阵型查找各格的加成。 */
     private matrices: readonly FormationMatrixEntry[] = [];
     /** 当前草稿派生的说明和总加成，关闭或未取得配置时清空。 */
@@ -135,15 +144,16 @@ export class FormationView extends BaseView<FormationRequest> {
     /** 本页已点击出战，当前草稿在保存期间保持不变，等待服务器阵容确认。 */
     private submittedForBattle = false;
 
-    /** 校验静态绑定，读取阵型说明，从快照建立草稿。 */
+    /** 校验静态绑定，从快照建立草稿并监听本轮战力预览。 */
     public onOpen(args?: FormationRequest): void {
         this.args = args;
         this.done = false;
         this.submittedForBattle = false;
         this.closed = false;
         this.elem = 0;
-        const fields = { closeButton: this.closeButton, confirmButton: this.confirmButton, titleLabel: this.titleLabel,
-            tipLabel: this.tipLabel, countLabel: this.countLabel, teamBonusLabel: this.teamBonusLabel,
+        const fields = { closeButton: this.closeButton, confirmButton: this.confirmButton, confirmText: this.confirmText,
+            titleLabel: this.titleLabel, tipLabel: this.tipLabel, countLabel: this.countLabel, powerLabel: this.powerLabel,
+            teamBonusLabel: this.teamBonusLabel,
             elementBonusButton: this.elementBonusButton, heroScroll: this.heroScroll,
             formationButton: this.formationButton, formationLabel: this.formationLabel, filterMark: this.filterMark,
             panelBounds: this.panelBounds, slotInput: this.slotInput };
@@ -169,9 +179,13 @@ export class FormationView extends BaseView<FormationRequest> {
             }
         });
         EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.onAssetsChanged);
+        this.ownListener(EventDispatcher.instance.on(FormationEvent.PowerPreviewed, this, this.onPowerPreviewed));
         if (args?.title) {
             this.titleLabel!.string = args.title;
+        } else if (args?.closeAfterSave) {
+            this.titleLabel!.string = "英雄出阵";
         }
+        this.confirmText!.string = args?.closeAfterSave ? "出阵" : "保存";
         this.reload();
         if (!args?.formation) {
             EventDispatcher.instance.on(FormationEvent.SaveChanged, this, this.onSaveChanged);
@@ -314,12 +328,13 @@ export class FormationView extends BaseView<FormationRequest> {
         void this.module.save(draft);
     }
 
-    /** 重绘草稿站位、当前阵型格位加成及同元素加成，等待服务器时禁用编辑。 */
+    /** 重绘草稿、格位加成、元素光环与战力，等待保存时禁用编辑。 */
     public render(state: FormationState): void {
         this.cancelSlotGesture();
         this.state = state;
-        this.tipLabel!.string = state.message;
+        this.tipLabel!.string = state.message || "点击选择英雄，拖动换位";
         this.countLabel!.string = "已上阵 " + state.lineup.slots.length + " / " + (state.openPositions?.length ?? 0);
+        this.refreshDraftPower(state);
         this.paintElementBonus(state);
         this.formationLabel!.string = "阵型 " + (state.formationId ?? "—") + " ▼";
         const editable = this.editable();
@@ -356,8 +371,41 @@ export class FormationView extends BaseView<FormationRequest> {
             const bonus = slot.position === ASSISTANCE_POSITION ? null
                 : matrix?.slots[slot.position - 1]?.bonus ?? "";
             slot.show(state.openPositions?.includes(slot.position) === true, !editable,
-                face?.icon ?? null, bonus);
+                hero ? { face: face?.icon ?? null, stars: hero.star, level: hero.level } : null, bonus);
         });
+    }
+
+    /** 只在普通队员或权威名册变化时重新预估；筛选和仅交换站位不发包。 */
+    private refreshDraftPower(state: FormationState): void {
+        const positions = state.openPositions;
+        const heroIds = positions ? state.lineup.slots
+            .filter(slot => slot.position !== ASSISTANCE_POSITION && positions.includes(slot.position))
+            .map(slot => slot.heroId)
+            .sort() : [];
+        const key = positions ? JSON.stringify([this.roster.snapshot.revision, ...heroIds]) : null;
+        if (this.powerDraft?.key === key) {
+            return;
+        }
+        this.unschedule(this.requestDraftPower);
+        this.powerLabel!.string = "-";
+        this.powerDraft = key === null ? null : { key, heroIds, requestId: null };
+        if (this.powerDraft) {
+            this.scheduleOnce(this.requestDraftPower, POWER_DEBOUNCE_SECONDS);
+        }
+    }
+
+    /** 发送最近一次仍在显示的草稿，旧选择不再触发请求。 */
+    private readonly requestDraftPower = (): void => {
+        if (!this.closed && this.powerDraft) {
+            this.powerDraft.requestId = this.module.previewPower(this.powerDraft.heroIds);
+        }
+    };
+
+    /** 只接受当前草稿对应的结果，零是服务器确认的真实空队战力。 */
+    private onPowerPreviewed(result: { readonly requestId: string; readonly power: number | null }): void {
+        if (!this.closed && result.requestId === this.powerDraft?.requestId) {
+            this.powerLabel!.string = result.power === null ? "-" : String(result.power);
+        }
     }
 
     /** 列表派发当前英雄实例，按草稿决定上阵或撤下。 */
@@ -373,10 +421,12 @@ export class FormationView extends BaseView<FormationRequest> {
         this.args?.complete(confirmed);
     }
 
-    /** 释放视口监听、拖动预览和本页的加成展示数据，模块继续接收保存回执。 */
+    /** 释放视口、拖动与预览请求标记；模块继续接收已发送的保存回执。 */
     public onClose(): void {
         ccView.off("canvas-resize", this.fit, this);
         this.closed = true;
+        this.unschedule(this.requestDraftPower);
+        this.powerDraft = null;
         this.cancelSlotGesture();
         this.matrices = [];
         this.elementPreview = null;
@@ -390,7 +440,7 @@ export class FormationView extends BaseView<FormationRequest> {
         }
     }
     /** 仅从唯一快照复制草稿；未同步允许位置时不开放编辑。 */
-    private reload(message = "点击英雄上阵或撤下，拖动阵位中的英雄换位"): void {
+    private reload(message = ""): void {
         const snapshot = this.roster.snapshot;
         const current = this.currentFormation();
         const option = current?.options?.find(row => row.formationId === current.formationId);

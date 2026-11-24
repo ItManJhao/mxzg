@@ -11,6 +11,7 @@ import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { UIManager } from "../../../framework/ui/UIManager";
+import { UiKitUtils } from "../../../framework/ui/UiKitUtils";
 import { RolePortraitUtils } from "../../account/utils/RolePortraitUtils";
 import { CityChromeView } from "../../city/ui/CityChromeView";
 import { CityHubView } from "../../city/ui/CityHubView";
@@ -203,7 +204,7 @@ export class RemakeHomeView extends BaseView implements HomeView {
         }
     }
 
-    /** 刷新服务器角色资料、底栏选中状态和主城入口条件。 */
+    /** 从统一快照刷新角色资料和当前战力，活动与快捷组只在主城地图显示。 */
     private paintRole(): void {
         const role = this.role;
         if (!role || !this.chrome) return;
@@ -211,9 +212,9 @@ export class RemakeHomeView extends BaseView implements HomeView {
         this.chrome.setLevelBadge(String(role.level));
         this.chrome.setExperience(role.basics?.experience, role.basics?.experienceToNextLevel);
         this.paintCurrencies();
-        this.chrome.setPower(""); // 战力尚未接入，不将未知值伪装为零。
+        this.chrome.setPower(role.power === undefined ? "" : String(role.power));
         RolePortraitUtils.paint(this.chrome.avatarFace, this.chrome.avatarBorder, role.basics?.headId, role.basics?.borderId);
-        this.chrome.setCityExtras(false);
+        this.chrome.setCityExtras(this.currentFeature === "city");
         const selectedTab = ["summon", "market", "arena", "tower"].includes(this.currentFeature) ? "city" : this.currentFeature;
         this.chrome.setTabs(["city", "hero", "bag", "battle", "dungeon", "clan", "fetter"].map(id => {
             const gated = id === "dungeon" || id === "clan";
@@ -230,11 +231,11 @@ export class RemakeHomeView extends BaseView implements HomeView {
         this.city?.refreshLocks();
     }
 
-    /** 顶栏只读当前钱包和英雄经验，数据仍由账号与背包分别持有。 */
+    /** 顶栏按旧界面缩写大额资源；不影响账号／背包中的原始余额。 */
     private paintCurrencies(): void {
         if (this.role && this.chrome) {
             const secondary = this.showHeroExperience ? BagModel.instance.quantity(900101) : this.role.diamonds;
-            this.chrome.setCurrencies(String(this.role.gold), String(secondary), this.showHeroExperience);
+            this.chrome.setCurrencies(UiKitUtils.formatAmount(this.role.gold), UiKitUtils.formatAmount(secondary), this.showHeroExperience);
         }
     }
 

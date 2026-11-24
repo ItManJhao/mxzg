@@ -2452,6 +2452,74 @@
     "sha256": "de06028c228cbc733d5ea5a650bcc5839d81a85d8c167727cf94ca2df224d5be"
   },
   {
+    "path": "client/assets/bundles/module/common/prefabs/RulesView.prefab",
+    "classes": [
+      "ViewportScale",
+      "RulesView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 1,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "MessageLabel",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "MessageScroll",
+        "content": {
+          "__id__": 39
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 预览核对日常副本打开原版样式说明窗，三条说明换行完整、背景模态和右上角关闭返回正常。",
+    "sha256": "b9f2ee1d8e89b6066955cba3cea26745701b66400f10a701f09c154484efe662",
+    "acceptance": {
+      "sha256": "b9f2ee1d8e89b6066955cba3cea26745701b66400f10a701f09c154484efe662",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "Creator 预览核对日常副本打开原版样式说明窗，三条说明换行完整、背景模态和右上角关闭返回正常。",
+      "inspector": "验证范围为日常副本短文及 393×852 竖屏；不代签其他说明窗内容或长文实画。"
+    }
+  },
+  {
     "path": "client/assets/bundles/module/dungeon/prefabs/DungeonHallCardView.prefab",
     "classes": [
       "DungeonHallCardView"
@@ -2517,9 +2585,9 @@
       },
       "scale": {
         "__type__": "cc.Vec3",
-        "z": 1,
+        "x": 1,
         "y": 1,
-        "x": 1
+        "z": 1
       },
       "size": {
         "__type__": "cc.Size",
@@ -2554,7 +2622,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "61b579eb425a71eb3fcf5f16ebc94900a25628a677d229b818af4cbc87172295"
+    "sha256": "7447b7571336c4f1040897f3db104e71aa65d4468755daf38dca9a7ce5a4f9e8"
   },
   {
     "path": "client/assets/bundles/module/dungeon/prefabs/GoldDungeonStageCell.prefab",
@@ -2622,9 +2690,9 @@
       },
       "scale": {
         "__type__": "cc.Vec3",
-        "z": 1,
+        "x": 1,
         "y": 1,
-        "x": 1
+        "z": 1
       },
       "size": {
         "__type__": "cc.Size",
@@ -2647,6 +2715,13 @@
     },
     "specialAnchors": [
       {
+        "node": "AttemptsLabel",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
         "node": "Content",
         "anchor": [
           0.5,
@@ -2658,14 +2733,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "Creator 隔离会话核对 17 级英雄页签锁定、五类图标与横幅、原战场、每类首关挑战和扫荡、实际到账及重登。",
-    "sha256": "f73d6686754d3f852682423fa6f9182022e02bf3f7a01867660a0fc23057d243",
+    "visual": "Creator 独立会话核对五类页签独占光效、选中缩放、横幅切换和右侧权威次数；已覆盖 0、1、2 次及打开规则窗后保留当前页签。",
+    "sha256": "1e16d906d8a91c555598591d90d2e1871a53a890d4f179c0cf6c3828d1c8fa2a",
     "acceptance": {
-      "sha256": "f73d6686754d3f852682423fa6f9182022e02bf3f7a01867660a0fc23057d243",
-      "date": "2026-11-23",
+      "sha256": "1e16d906d8a91c555598591d90d2e1871a53a890d4f179c0cf6c3828d1c8fa2a",
+      "date": "2026-11-24",
       "status": "实际预览通过",
-      "scope": "Creator 隔离会话核对 17 级英雄页签锁定、五类图标与横幅、原战场、每类首关挑战和扫荡、实际到账及重登。",
-      "inspector": "未操作 Creator Inspector。"
+      "scope": "Creator 独立会话核对五类页签独占光效、选中缩放、横幅切换和右侧权威次数；已覆盖 0、1、2 次及打开规则窗后保留当前页签。",
+      "inspector": "393×852 竖屏使用隔离后端和真实鼠标操作，未操作 Creator Inspector。"
     }
   },
   {
@@ -3286,9 +3361,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "4852b900997ea4bf72d72982dfd563530442546eda5071434e92d4c56e2248e6"
+    "reviewStatus": "实际预览通过",
+    "visual": "按日服对齐创建页的名称框、徽章、宣言和价格按钮；宣言标题居中，正文与提示避开装饰线和编辑图标。",
+    "sha256": "3961ec10eef9f650c8aae8cb7e52a92afac039d920d539de1adac77bab09e7a4",
+    "acceptance": {
+      "sha256": "3961ec10eef9f650c8aae8cb7e52a92afac039d920d539de1adac77bab09e7a4",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "按日服对齐创建页的名称框、徽章、宣言和价格按钮；宣言标题居中，正文与提示避开装饰线和编辑图标。",
+      "inspector": "Creator 393×852 独立角色实测两处弹窗、预填宣言、取消与确认回填，创建后名称、宣言同步，实际扣 100 钻。"
+    }
   },
   {
     "path": "client/assets/bundles/module/guild/prefabs/GuildListCell.prefab",
@@ -3384,8 +3466,8 @@
       },
       "size": {
         "__type__": "cc.Size",
-        "width": 550,
-        "height": 130
+        "width": 522,
+        "height": 120
       },
       "anchor": {
         "__type__": "cc.Vec2",
@@ -3415,14 +3497,28 @@
           0,
           0.5
         ]
+      },
+      {
+        "node": "MemberPower",
+        "anchor": [
+          0,
+          0.5
+        ]
       }
     ],
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "2fc92feae629553ce03e14f7f9717de2214b0a6e5fd8051b14cbfa177b3bf62e"
+    "reviewStatus": "实际预览通过",
+    "visual": "成员格显示真实头像、等级、职务和战力；本人使用黄色原版底图。未实现的在线和贡献不显示。",
+    "sha256": "2e5d796a74acc59081f5a3294376ece62bea9e2e40374de00c41514e1d20a64e",
+    "acceptance": {
+      "sha256": "2e5d796a74acc59081f5a3294376ece62bea9e2e40374de00c41514e1d20a64e",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "成员格显示真实头像、等级、职务和战力；本人使用黄色原版底图。未实现的在线和贡献不显示。",
+      "inspector": "Creator 双角色预览核对战力一致与本人换行时高亮正确；专项覆盖真实零与复用清理。"
+    }
   },
   {
     "path": "client/assets/bundles/module/guild/prefabs/GuildMemberView.prefab",
@@ -3481,9 +3577,84 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "5c8b981ac75aaeb982909afc3334cbe1d25108ddf60da9cdd14f98eb1530d7b5"
+    "reviewStatus": "实际预览通过",
+    "visual": "成员弹窗纸面、列表和退会按钮按日服调整，右上人数使用真实成员与容量。",
+    "sha256": "65625dc37a4784df20def30bc852f1b5990ece26ad340e5067a6e5ea085f8322",
+    "acceptance": {
+      "sha256": "65625dc37a4784df20def30bc852f1b5990ece26ad340e5067a6e5ea085f8322",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "成员弹窗纸面、列表和退会按钮按日服调整，右上人数使用真实成员与容量。",
+      "inspector": "Creator 393×852 双角色实际预览核对 2/15、两项成员数据及关闭回大厅；不代替真机及满员滚动验收。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/guild/prefabs/GuildTextInputView.prefab",
+    "classes": [
+      "GuildTextInputView",
+      "ViewportScale"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 1,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "PanelAnchor",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "InputPanel",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "三处公会文本共享日服式顶部输入窗，使用项目内圆角贴图与共享模态；窗外不提交也不关闭。",
+    "sha256": "b9f26de7a7e66594b8707edf15e5b25affc8a83416ab7661f9808e3bc1c9e5ea",
+    "acceptance": {
+      "sha256": "b9f26de7a7e66594b8707edf15e5b25affc8a83416ab7661f9808e3bc1c9e5ea",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "三处公会文本共享日服式顶部输入窗，使用项目内圆角贴图与共享模态；窗外不提交也不关闭。",
+      "inspector": "Creator 393×852 Web 预览核实真实输入、回车、按钮和长度；未覆盖真机软键盘。"
+    }
   },
   {
     "path": "client/assets/bundles/module/guild/prefabs/GuildView.prefab",
@@ -3549,21 +3720,21 @@
       {
         "node": "NoticeScroll",
         "content": {
-          "__id__": 319
+          "__id__": 313
         }
       }
     ],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
-    "sha256": "0ca2e9697318541cddc78515e1d58312b957709966c3b478285a02ccb76468e8",
+    "reviewStatus": "实际预览通过",
+    "visual": "入会大厅按日服重排，左侧显示实际等级、经验和人数，右侧公告卡提供编辑入口；未入会三页和审批锚点保持。",
+    "sha256": "1b363d90fa2569323d384d29178263140595c395452eb261ce083b6d9b504147",
     "acceptance": {
-      "sha256": "0ca2e9697318541cddc78515e1d58312b957709966c3b478285a02ccb76468e8",
-      "date": "2026-11-23",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
-      "inspector": "未操作Creator Inspector"
+      "sha256": "1b363d90fa2569323d384d29178263140595c395452eb261ce083b6d9b504147",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "入会大厅按日服重排，左侧显示实际等级、经验和人数，右侧公告卡提供编辑入口；未入会三页和审批锚点保持。",
+      "inspector": "Creator 393×852 双角色实际预览核对经验 0/750、会长提交、普通成员权限提示、两端公告同步及打开成员窗。"
     }
   },
   {
@@ -3766,14 +3937,14 @@
       },
       "scale": {
         "__type__": "cc.Vec3",
-        "x": 0.85,
-        "y": 0.85,
+        "x": 1,
+        "y": 1,
         "z": 1
       },
       "size": {
         "__type__": "cc.Size",
         "width": 124,
-        "height": 134
+        "height": 126
       },
       "anchor": {
         "__type__": "cc.Vec2",
@@ -3789,19 +3960,27 @@
       "Animation": 0,
       "PrefabInstance": 0
     },
-    "specialAnchors": [],
+    "specialAnchors": [
+      {
+        "node": "LevelLabel",
+        "anchor": [
+          1,
+          0.5
+        ]
+      }
+    ],
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "随出阵页在 393×852 Creator 浏览器预览核对，上阵英雄局部压暗并显示绿勾，未上阵英雄保留原颜色。负责人已确认绿勾。证据见 docs/development-progress.md 的本机预览记录。",
-    "sha256": "ddb1c97745ae54fd6573b5c7c7dd7da88cefb2cc3cb7827d6de48da58a507791",
+    "visual": "在 393×852 Creator 独立会话检查四列名单中品质框、无元素角标、等级、金星、紫星、高星翼徽及草稿上阵的压暗绿勾。",
+    "sha256": "21223f7b888767925f10ead8a958f48b60b5fe9b50506c856c8a5e5f104ff879",
     "acceptance": {
-      "sha256": "ddb1c97745ae54fd6573b5c7c7dd7da88cefb2cc3cb7827d6de48da58a507791",
-      "date": "2026-11-18",
+      "sha256": "21223f7b888767925f10ead8a958f48b60b5fe9b50506c856c8a5e5f104ff879",
+      "date": "2026-11-24",
       "status": "实际预览通过",
-      "scope": "随出阵页在 393×852 Creator 浏览器预览核对，上阵英雄局部压暗并显示绿勾，未上阵英雄保留原颜色。负责人已确认绿勾。证据见 docs/development-progress.md 的本机预览记录。",
-      "inspector": "限所属出阵页中的头像状态，未签收三尺寸、正式包或 Inspector。"
+      "scope": "在 393×852 Creator 独立会话检查四列名单中品质框、无元素角标、等级、金星、紫星、高星翼徽及草稿上阵的压暗绿勾。",
+      "inspector": "仅限布阵窗口本机浏览器预览，未签收真机和 Inspector。"
     }
   },
   {
@@ -3933,7 +4112,7 @@
     },
     "components": {
       "Widget": 0,
-      "Layout": 0,
+      "Layout": 9,
       "Mask": 2,
       "ScrollView": 1,
       "Animation": 0,
@@ -3955,7 +4134,7 @@
         ]
       },
       {
-        "node": "node_title",
+        "node": "TitleAnchor",
         "anchor": [
           0,
           0
@@ -3969,14 +4148,14 @@
         ]
       },
       {
-        "node": "spr_bg_backpack",
+        "node": "HeroRosterPaper",
         "anchor": [
           0.5,
           0
         ]
       },
       {
-        "node": "UIMenu_1",
+        "node": "ElementFilters",
         "anchor": [
           0,
           0
@@ -3990,7 +4169,7 @@
         ]
       },
       {
-        "node": "scroll_view_backpack",
+        "node": "HeroRosterScroll",
         "anchor": [
           0.5,
           0
@@ -4011,14 +4190,14 @@
         ]
       },
       {
-        "node": "node_pannel_2",
+        "node": "FormationBoard",
         "anchor": [
           0.5,
           0
         ]
       },
       {
-        "node": "CCScale9Sprite_1",
+        "node": "FormationBoardPaper",
         "anchor": [
           0.5,
           0
@@ -4060,14 +4239,14 @@
         ]
       },
       {
-        "node": "UIMenu_2",
+        "node": "WindowActions",
         "anchor": [
           0,
           0
         ]
       },
       {
-        "node": "btn_close",
+        "node": "CloseButton",
         "anchor": [
           0.5,
           1
@@ -4114,6 +4293,69 @@
           0,
           1
         ]
+      },
+      {
+        "node": "HeroLevel",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "HeroLevel",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "HeroLevel",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "HeroLevel",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "HeroLevel",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "HeroLevel",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "HeroLevel",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "HeroLevel",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "HeroLevel",
+        "anchor": [
+          1,
+          0.5
+        ]
       }
     ],
     "scrolls": [
@@ -4127,8 +4369,15 @@
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "a104cc10b3aac3aecedc550b700a29f1590ffc736973c2e74b632af460ac55f5"
+    "visual": "同布局前一指纹已在 393×852 Creator 预览通过四列名单、阵位与战力交互。该指纹仅更新常规布阵标题为「阵型调整」，未刷新验看此处文案。",
+    "sha256": "87e060d1a0224ad75eaa04e077b636e89b56a32abbcf2b11d46b918ac5bdf892",
+    "acceptance": {
+      "sha256": "87e060d1a0224ad75eaa04e077b636e89b56a32abbcf2b11d46b918ac5bdf892",
+      "date": "2026-11-24",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "同布局前一指纹已在 393×852 Creator 预览通过四列名单、阵位与战力交互。该指纹仅更新常规布阵标题为「阵型调整」，未刷新验看此处文案。",
+      "inspector": "未操作 Creator Inspector，未签收三尺寸和正式包。"
+    }
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroArtifactView.prefab",
@@ -4873,19 +5122,27 @@
       "Animation": 0,
       "PrefabInstance": 0
     },
-    "specialAnchors": [],
+    "specialAnchors": [
+      {
+        "node": "lbl_level",
+        "anchor": [
+          1,
+          0.5
+        ]
+      }
+    ],
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "Creator 独立浏览器加载实际名册格，验证升星点亮、离屏熄灭、换条目不串亮、重回原条目时复用同一节点及原尺寸。完整滚动和跨场景复用由专项覆盖。",
-    "sha256": "8bbe70aebfaec53540417cc5fa0c7d0207cce3323e6a53cf4a65e9db7279e9dc",
+    "visual": "名册格恢复右上角等级、星级品质框、金星紫星和高星翼徽。头像按 0.9 倍缩放，格内隐藏元素图标，顶部元素筛选保留。按日服测试图集替换英雄配置使用的 109 张基础头像，出阵和名册沿用同一份资源路径及 UUID。",
+    "sha256": "088be553168b0553c8456cb78f5dbdfde35d4d529ca75645b9cb68feb4ef9dce",
     "acceptance": {
-      "sha256": "8bbe70aebfaec53540417cc5fa0c7d0207cce3323e6a53cf4a65e9db7279e9dc",
-      "date": "2026-11-23",
+      "sha256": "088be553168b0553c8456cb78f5dbdfde35d4d529ca75645b9cb68feb4ef9dce",
+      "date": "2026-11-24",
       "status": "实际预览通过",
-      "scope": "Creator 独立浏览器加载实际名册格，验证升星点亮、离屏熄灭、换条目不串亮、重回原条目时复用同一节点及原尺寸。完整滚动和跨场景复用由专项覆盖。",
-      "inspector": "验证范围限单一预览设备尺寸与红点相关行为，未操作 Creator Inspector。"
+      "scope": "名册格恢复右上角等级、星级品质框、金星紫星和高星翼徽。头像按 0.9 倍缩放，格内隐藏元素图标，顶部元素筛选保留。按日服测试图集替换英雄配置使用的 109 张基础头像，出阵和名册沿用同一份资源路径及 UUID。",
+      "inspector": "Creator 独立会话竖屏验证了 7 个不同星级样本，并确认名册和出阵加载同一 SpriteFrame；截图保留在 client/temp/project-checks/hero-roster-card-preview.png。"
     }
   },
   {
@@ -5488,7 +5745,10 @@
     "path": "client/assets/bundles/module/home/prefabs/CityChromeView.prefab",
     "classes": [
       "CityChromeShell",
-      "CityChromeView"
+      "CityChromeView",
+      "ViewportScale",
+      "ViewportScale",
+      "ViewportScale"
     ],
     "root": {
       "position": {
@@ -5505,7 +5765,7 @@
       },
       "size": {
         "__type__": "cc.Size",
-        "width": 720,
+        "width": 640,
         "height": 1280
       },
       "anchor": {
@@ -5515,26 +5775,62 @@
       }
     },
     "components": {
-      "Widget": 0,
+      "Widget": 3,
       "Layout": 0,
       "Mask": 0,
       "ScrollView": 0,
       "Animation": 0,
       "PrefabInstance": 0
     },
-    "specialAnchors": [],
+    "specialAnchors": [
+      {
+        "node": "SelectedTabArtwork",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "BottomBar",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "BottomDock",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "TopDock",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "FloatingDock",
+        "anchor": [
+          0.5,
+          0
+        ]
+      }
+    ],
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "Creator 独立浏览器加载实际底栏，验证上阵英雄升星条件点亮底栏、锁标优先、快照更新后熄灭与关闭清理。",
-    "sha256": "a3e5115e1c143a9de5c0553f317382df5afa264e9f221c8116be8f619b7e99f3",
+    "visual": "聊天按钮移至独立前景层，支持任意位置停留、完整图标边界限制，切换底栏保留位置；短点击仍执行原入口。",
+    "sha256": "d8c618837f2fc9dcd571b3429d984af3514d0a2a334a4a7c10e34db59188dd79",
     "acceptance": {
-      "sha256": "a3e5115e1c143a9de5c0553f317382df5afa264e9f221c8116be8f619b7e99f3",
-      "date": "2026-11-23",
+      "sha256": "d8c618837f2fc9dcd571b3429d984af3514d0a2a334a4a7c10e34db59188dd79",
+      "date": "2026-11-24",
       "status": "实际预览通过",
-      "scope": "Creator 独立浏览器加载实际底栏，验证上阵英雄升星条件点亮底栏、锁标优先、快照更新后熄灭与关闭清理。",
-      "inspector": "验证范围限单一预览设备尺寸与红点相关行为，未操作 Creator Inspector。"
+      "scope": "聊天按钮移至独立前景层，支持任意位置停留、完整图标边界限制，切换底栏保留位置；短点击仍执行原入口。",
+      "inspector": "Creator 393×852 独立浏览器实测真实鼠标拖放、边界夹紧、不误触、短点击和切换至 VIP 保留位置；窄屏缩放及销毁清理由专项覆盖。"
     }
   },
   {
@@ -5628,15 +5924,15 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
-    "sha256": "a8f2a5279eb34a9bad7ee76c1dc0986b06ccb5157efc69545ba68ceb399cbb63",
+    "reviewStatus": "实际预览通过",
+    "visual": "隐藏挡在左下英雄推荐上方的重复主线图标；主线入口仍由底栏战斗按钮提供，地图、特效和其他建筑位置不变。",
+    "sha256": "c0ec7d6d876592f6ad11c22a4a01b57d02e9ff813fdc27e7a67077168bd75883",
     "acceptance": {
-      "sha256": "a8f2a5279eb34a9bad7ee76c1dc0986b06ccb5157efc69545ba68ceb399cbb63",
-      "date": "2026-11-23",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
-      "inspector": "未操作Creator Inspector"
+      "sha256": "c0ec7d6d876592f6ad11c22a4a01b57d02e9ff813fdc27e7a67077168bd75883",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "隐藏挡在左下英雄推荐上方的重复主线图标；主线入口仍由底栏战斗按钮提供，地图、特效和其他建筑位置不变。",
+      "inspector": "Creator 竖屏核对重复图标不再显示，实际点击底栏战斗打开主线并返回。地图手势仍通过专项检查。"
     }
   },
   {
@@ -7010,8 +7306,8 @@
       },
       "size": {
         "__type__": "cc.Size",
-        "width": 500,
-        "height": 46
+        "width": 478,
+        "height": 42
       },
       "anchor": {
         "__type__": "cc.Vec2",
@@ -7027,13 +7323,28 @@
       "Animation": 0,
       "PrefabInstance": 0
     },
-    "specialAnchors": [],
+    "specialAnchors": [
+      {
+        "node": "Text",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "bbb4bb27933893f1bae0f7a456a384c35af6aa8f45ac7ca1ee1a32e1fe6b9219"
+    "reviewStatus": "实际预览通过",
+    "visual": "复用旧版菱形图标和金色横线，权益文案保留原配置绿色高亮，解锁项和数值项之间显示一条横线。",
+    "sha256": "b028467cf2070802f39b4855e372b146093b013b1b8978b01dc6b04eee1a4b10",
+    "acceptance": {
+      "sha256": "b028467cf2070802f39b4855e372b146093b013b1b8978b01dc6b04eee1a4b10",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "复用旧版菱形图标和金色横线，权益文案保留原配置绿色高亮，解锁项和数值项之间显示一条横线。",
+      "inspector": "Creator 393×852 独立会话实画核对 VIP1 四条、VIP2 六条、两组顺序、分隔线和数值；专项检查行复用不会遗留旧线。"
+    }
   },
   {
     "path": "client/assets/bundles/module/vip/prefabs/VipBenefitsView.prefab",
@@ -7067,7 +7378,7 @@
     "components": {
       "Widget": 0,
       "Layout": 0,
-      "Mask": 1,
+      "Mask": 2,
       "ScrollView": 0,
       "Animation": 0,
       "PrefabInstance": 0
@@ -7084,9 +7395,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "598703a96dd2192fc06263ecae26884a306925cd57a504573eb67b7c41176851"
+    "reviewStatus": "实际预览通过",
+    "visual": "原版白色金边渐隐面板、红绶带、外侧翻页箭头；共享模态，点窗外关闭，点击纸面不关闭。",
+    "sha256": "38b04f81fcba16b75c27884a9dbe15fb8a4cc62648f5b0b65310a7cd69d24ca6",
+    "acceptance": {
+      "sha256": "38b04f81fcba16b75c27884a9dbe15fb8a4cc62648f5b0b65310a7cd69d24ca6",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "原版白色金边渐隐面板、红绶带、外侧翻页箭头；共享模态，点窗外关闭，点击纸面不关闭。",
+      "inspector": "Creator 393×852 独立会话核对默认下一档、左右滑入、VIP13 最后一档和长列表滚动、关闭后任务进度不变；不代替发布包或真机验收。"
+    }
   },
   {
     "path": "client/assets/bundles/module/vip/prefabs/VipTaskCell.prefab",
@@ -7108,8 +7426,8 @@
       },
       "size": {
         "__type__": "cc.Size",
-        "width": 266,
-        "height": 116
+        "width": 286,
+        "height": 122
       },
       "anchor": {
         "__type__": "cc.Vec2",
@@ -7125,19 +7443,27 @@
       "Animation": 0,
       "PrefabInstance": 0
     },
-    "specialAnchors": [],
+    "specialAnchors": [
+      {
+        "node": "Title",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
-    "sha256": "f7cdc49e1096342c0016fe38248ea8cba61e71348b0e6ceb6d3847fa0baac3c0",
+    "reviewStatus": "实际预览通过",
+    "visual": "任务条件保留原配置的绿色高亮，奖励图和数值在左、领取按钮及公共红点在右。",
+    "sha256": "38e03f72694280d47991a58966aedc7458b798687f8839d2fcc6b6f1f10cd12b",
     "acceptance": {
-      "sha256": "f7cdc49e1096342c0016fe38248ea8cba61e71348b0e6ceb6d3847fa0baac3c0",
-      "date": "2026-11-23",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
-      "inspector": "未操作Creator Inspector"
+      "sha256": "38e03f72694280d47991a58966aedc7458b798687f8839d2fcc6b6f1f10cd12b",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "任务条件保留原配置的绿色高亮，奖励图和数值在左、领取按钮及公共红点在右。",
+      "inspector": "Creator 393×852 独立浏览器检查 VIP0 两列四卡、四个领取红点、20 钻奖励文字和真实领取后的进度。"
     }
   },
   {
@@ -7189,8 +7515,15 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "a93f1cb18e64bfa31ad99b571c1a894ea6c9b584ff41b7c983fe7da43ec458c4"
+    "reviewStatus": "实际预览通过",
+    "visual": "按日服重排女神解锁绶带、模型、技能图、特权入口及本档任务区。羁绊养成只保留入口外观和未开放提示。",
+    "sha256": "7462b4e652c495c815fe94fe24859145380f17fd644dee30be9bff3056a798e1",
+    "acceptance": {
+      "sha256": "7462b4e652c495c815fe94fe24859145380f17fd644dee30be9bff3056a798e1",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "按日服重排女神解锁绶带、模型、技能图、特权入口及本档任务区。羁绊养成只保留入口外观和未开放提示。",
+      "inspector": "Creator 393×852 独立浏览器检查 VIP1／VIP6 女神切换、VIP0 不变、特权弹窗和任务进度 0/4→1/4；未验收发布包。"
+    }
   }
 ]

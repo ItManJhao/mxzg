@@ -1,9 +1,10 @@
 /**
- * 公会浏览、创建、申请、审批和退出。由已鉴权的游戏协议调用。
+ * 公会浏览、成员管理和公告编辑，由已鉴权的游戏协议调用。
  * 角色锁先于公会锁，余额、成员、申请与命令标记在同一事务提交。
  */
 package com.funsgamex.mxzg.guild;
 
+import com.funsgamex.mxzg.hero.HeroMainPowerService;
 import com.funsgamex.mxzg.network.AssetSyncService;
 import com.funsgamex.mxzg.role.RoleProfile;
 import com.funsgamex.mxzg.role.RoleRepository;
@@ -39,7 +40,7 @@ public class GuildService {
             Pattern.compile("[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}");
 
     /** 当前已恢复的公会写操作。 */
-    public enum Action { CREATE, APPLY, APPROVE, REJECT, LEAVE }
+    public enum Action { CREATE, APPLY, APPROVE, REJECT, LEAVE, UPDATE_NOTICE }
 
     /** 当前角色的确认命令；申请提供公会 ID，审批提供真实申请者 ID。 */
     public record Command(String requestId, Action action, String guildId, String applicantId,
@@ -51,11 +52,12 @@ public class GuildService {
         }
     }
 
-    /** 区内公会的对外信息，人数为真实持久成员数。 */
-    public record Summary(String id, String name, int memberCount, int capacity, String description, int badgeId) {}
+    /** 公会的持久资料、实际人数和本级经验，容量和经验门槛来自同一等级配置。 */
+    public record Summary(String id, String name, int memberCount, int capacity, String description, int badgeId,
+                          int level, int experience, int nextLevelExperience) {}
 
-    /** 成员或申请者的当前昵称、等级、头像框及会长标记。 */
-    public record Member(String id, String nickname, int level, boolean leader, int headId, int borderId) {}
+    /** 成员或申请者的公开资料。只有未计算过主阵战力的旧角色在持久读取时暂缺 power。 */
+    public record Member(String id, String nickname, int level, boolean leader, int headId, int borderId, Integer power) {}
 
     /**
      * 公会页的权威状态。guild 为空时提供推荐、已申请标记和离会截止秒。
@@ -87,10 +89,12 @@ public class GuildService {
     private final AssetSyncService sync;
     /** 提交后公会名单更新由通信层订阅。 */
     private final ApplicationEventPublisher events;
+    /** 旧角色尚未保存战力时，只读取本队阵容补全公开资料。 */
+    private final HeroMainPowerService powers;
 
     /** 装配公会业务使用的既有角色、事件和世界状态服务。 */
     GuildService(RoleRepository roles, GuildRepository guilds, GuildRules rules, WorldLevelService world,
-                 GameClock clock, AssetSyncService sync, ApplicationEventPublisher events) {
+                 GameClock clock, AssetSyncService sync, ApplicationEventPublisher events, HeroMainPowerService powers) {
         this.roles = roles;
         this.guilds = guilds;
         this.rules = rules;
@@ -98,6 +102,7 @@ public class GuildService {
         this.clock = clock;
         this.sync = sync;
         this.events = events;
+        this.powers = powers;
     }
 
     /** 在同一只读快照内读取当前角色的公会或区服推荐页；页码从 1 开始。 */
@@ -147,6 +152,7 @@ public class GuildService {
             case APPROVE -> review(actor, command, now, true, affected);
             case REJECT -> review(actor, command, now, false, affected);
             case LEAVE -> leave(actor, command, now, affected);
+            case UPDATE_NOTICE -> updateNotice(actor, command, affected);
         }
         guilds.saveCommand(roleId, command.requestId(), key);
         if (!affected.isEmpty()) {
@@ -163,17 +169,17 @@ public class GuildService {
         }
         String name = rules.validatedName(command.name());
         String description = rules.validatedNotice(command.description());
-        var guild = new GuildRepository.Guild(UUID.randomUUID().toString(), name, actor.id(), description,
-            command.badgeId() == null ? 0 : command.badgeId());
+        String guildId = UUID.randomUUID().toString();
         try {
-            guilds.insertGuild(guild, actor.serverId(), digest(name), now);
+            guilds.insertGuild(guildId, actor.serverId(), actor.id(), name, digest(name), description,
+                command.badgeId() == null ? 0 : command.badgeId(), now);
         } catch (DuplicateKeyException duplicate) {
             throw conflict("GUILD_NAME_TAKEN");
         }
         if (rules.createCostDiamonds > 0 && !roles.debitDiamonds(actor.id(), rules.createCostDiamonds)) {
             throw conflict("GUILD_INSUFFICIENT");
         }
-        join(guild.id(), actor.id(), now, affected);
+        join(guildId, actor.id(), now, affected);
     }
 
     /** 检查申请时的身份、剩余容量与冷却，重复待审申请不写第二条。 */
@@ -188,10 +194,7 @@ public class GuildService {
 
     /** 只有现任会长可审批本公会的真实待审记录；批准时重新核对申请者与容量。 */
     private void review(RoleProfile actor, Command command, long now, boolean approve, Set<String> affected) {
-        var guild = ownGuild(actor, command.guildId());
-        if (!guild.leaderId().equals(actor.id())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "GUILD_FORBIDDEN");
-        }
+        var guild = managedGuild(actor, command.guildId());
         String target = command.applicantId();
         var applicant = roles.findById(target).orElseThrow(() -> conflict("GUILD_APPLICATION_MISSING"));
         if (!actor.serverId().equals(applicant.serverId()) || !guilds.hasApplication(guild.id(), target)) {
@@ -205,6 +208,25 @@ public class GuildService {
             guilds.deleteApplication(guild.id(), target);
             affected.add(target);
         }
+    }
+
+    /** 会长可编辑或清空本会公告；实际文本变化才通知所有在线成员刷新。 */
+    private void updateNotice(RoleProfile actor, Command command, Set<String> affected) {
+        var guild = managedGuild(actor, command.guildId());
+        String notice = rules.validatedNotice(command.description());
+        if (!notice.equals(guild.description())) {
+            guilds.updateNotice(guild.id(), notice);
+            affected.addAll(guilds.memberIds(guild.id()));
+        }
+    }
+
+    /** 在公会锁内校验当前管理身份，现有职务中只有会长可以审批或修改公告。 */
+    private GuildRepository.Guild managedGuild(RoleProfile actor, String expectedGuildId) {
+        var guild = ownGuild(actor, expectedGuildId);
+        if (!guild.leaderId().equals(actor.id())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "GUILD_FORBIDDEN");
+        }
+        return guild;
     }
 
     /** 入会后撤销同角色在本区其他公会的申请，并同步其个人资料及所有受影响名单。 */
@@ -265,7 +287,7 @@ public class GuildService {
         if (guilds.rejoinAt(roleId) >= now) {
             throw conflict("GUILD_COOLDOWN");
         }
-        if (guilds.memberCount(guild.id()) >= rules.gate.capacity()) {
+        if (guilds.memberCount(guild.id()) >= rules.level(guild.level()).capacity()) {
             throw conflict("GUILD_FULL");
         }
     }
@@ -306,28 +328,38 @@ public class GuildService {
         }
     }
 
-    /** 公会页读取成员身份、区内目录及实际徽章，待审名单由会长查询。 */
+    /** 成员页与区内目录共用公会等级和经验投影，申请名单仅交付会长。 */
     private State state(RoleProfile actor, String query, int page, String requestId) {
         int level = rules.gate.levelRequired();
-        int capacity = rules.gate.capacity();
         int cost = rules.createCostDiamonds;
         int nameLimit = rules.nameLimit;
         var guild = guilds.memberGuild(actor.id());
         if (guild != null) {
-            var members = guilds.members(guild);
-            var summary = new Summary(guild.id(), guild.name(), members.size(), capacity, guild.description(), guild.badgeId());
-            List<Member> requests = guild.leaderId().equals(actor.id()) ? guilds.applicants(guild.id()) : List.of();
+            var members = withMainPower(guilds.members(guild));
+            var summary = guild.summary(members.size(), rules);
+            List<Member> requests = guild.leaderId().equals(actor.id()) ? withMainPower(guilds.applicants(guild.id())) : List.of();
             return new State(requestId, level, cost, nameLimit, summary, members, requests, List.of(),
                 1, false, List.of(), 0);
         }
-        var found = guilds.browse(actor.serverId(), query, capacity, PAGE_SIZE + 1, (page - 1L) * PAGE_SIZE);
+        var found = guilds.browse(actor.serverId(), query, PAGE_SIZE + 1, (page - 1L) * PAGE_SIZE);
         boolean hasMore = found.size() > PAGE_SIZE;
         var visible = hasMore ? found.subList(0, PAGE_SIZE) : found;
         return new State(requestId, level, cost, nameLimit, null, List.of(), List.of(), visible, page, hasMore,
             guilds.appliedGuilds(actor.id()), guilds.rejoinAt(actor.id()));
     }
 
-    /** 校验各操作的参数形状，只有创建允许附带 0 至 43 的徽章编号。 */
+    /** 只有旧角色的持久投影为 null 才从主阵读取；空阵容的真实 0 直接交付。 */
+    private List<Member> withMainPower(List<Member> members) {
+        return members.stream().map(member -> {
+            if (member.power() != null) {
+                return member;
+            }
+            return new Member(member.id(), member.nickname(), member.level(), member.leader(), member.headId(),
+                member.borderId(), powers.readCurrentForRole(member.id()));
+        }).toList();
+    }
+
+    /** 按操作校验参数，编辑公告须显式传文本；空字符串代表主动清空。 */
     private static Command validated(Command input) {
         if (input == null || input.action() == null || !UUID_TEXT.matcher(text(input.requestId())).matches()) {
             throw invalid("GUILD_REQUEST_INVALID");
@@ -350,6 +382,7 @@ public class GuildService {
             case APPLY -> hasGuild && !hasApplicant && !hasText;
             case APPROVE, REJECT -> hasApplicant && !hasText;
             case LEAVE -> !hasApplicant && !hasText;
+            case UPDATE_NOTICE -> hasGuild && !hasApplicant && command.name().isEmpty() && input.description() != null;
         };
         // 命令摘要使用空字符分隔各字段，业务名称与公告均拒绝该字符。
         if (!shape || command.name().indexOf('\0') >= 0 || command.description().indexOf('\0') >= 0) {

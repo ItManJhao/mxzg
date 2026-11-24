@@ -3,7 +3,8 @@ import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 
-import { Button, EditBox, Label, Node, Prefab, Sprite } from "cc";
+import { Button, EditBox, Label, Node, Prefab, Sprite, UITransform, Vec3 } from "cc";
+import { CityChatDrag } from "../assets/scripts/features/city/ui/CityChatDrag";
 import { RemakeHomeView } from "../assets/scripts/features/home/ui/RemakeHomeView";
 import { RoleProfileView } from "../assets/scripts/features/account/ui/RoleProfileView";
 import { RoleSettingsView } from "../assets/scripts/features/account/ui/RoleSettingsView";
@@ -189,19 +190,132 @@ async function checkCityConfigGate(): Promise<void> {
   node.destroy();
 }
 
-/** 通过真实底栏组件检查 VIP 红点的按需挂载、锁定优先与关闭清理。 */
+/** 用缩放、位移均不同的节点验证自由拖放、点击隔离、边界和关闭清理。 */
+function checkChatDrag(): void {
+    const root = new Node("ChatViewport");
+    const viewport = root.addComponent(UITransform);
+    viewport.setContentSize(640, 1280);
+    viewport.convertToWorldSpaceAR = point => new Vec3(point.x + 320, point.y + 640, point.z);
+    viewport.convertToNodeSpaceAR = point => new Vec3(point.x - 320, point.y - 640, point.z);
+
+    const dockNode = new Node("FloatingDock");
+    dockNode.parent = root;
+    dockNode.setPosition(0, -640, 0);
+    dockNode.setScale(0.8, 0.8, 1);
+    const dock = dockNode.addComponent(UITransform);
+    dock.convertToWorldSpaceAR = point => viewport.convertToWorldSpaceAR(new Vec3(
+        dockNode.position.x + dockNode.scale.x * point.x,
+        dockNode.position.y + dockNode.scale.y * point.y, point.z,
+    ));
+    dock.convertToNodeSpaceAR = point => {
+        const local = viewport.convertToNodeSpaceAR(point);
+        return new Vec3(
+            (local.x - dockNode.position.x) / dockNode.scale.x,
+            (local.y - dockNode.position.y) / dockNode.scale.y, local.z,
+        );
+    };
+
+    const chat = new Node("BtnChat");
+    chat.parent = dockNode;
+    chat.setPosition(250, 700, 0);
+    const icon = chat.addComponent(UITransform);
+    icon.setContentSize(75, 75);
+    const button = chat.addComponent(Button);
+    let taps = 0;
+    const stop = new CityChatDrag(viewport, dock, button, icon, () => taps++).bind();
+    const { TOUCH_START, TOUCH_MOVE, TOUCH_END, TOUCH_CANCEL } = Node.EventType;
+    const touch = (type: string, x: number, y: number, id = 1) => chat.emit(type, {
+        getID: () => id, getUILocation: () => ({ x: x + 320, y: y + 640 }),
+    });
+    const point = () => viewport.convertToNodeSpaceAR(dock.convertToWorldSpaceAR(chat.position));
+    const at = (x: number, y: number, message: string) => {
+        const current = point();
+        assert(Math.abs(current.x - x) < 0.001 && Math.abs(current.y - y) < 0.001, message);
+    };
+
+    touch(TOUCH_START, 210, -85);
+    touch(TOUCH_END, 215, -85);
+    assert.equal(taps, 1, "阈值内仍可点击");
+    at(200, -80, "短按保留预制坐标");
+
+    touch(TOUCH_START, 210, -85);
+    touch(TOUCH_MOVE, 0, 0, 2);
+    touch(TOUCH_END, 0, 0, 2);
+    at(200, -80, "另一根手指不能接管手势");
+    touch(TOUCH_MOVE, 25, 65);
+    touch(TOUCH_END, 30, 90);
+    chat.emit(Button.EventType.CLICK);
+    assert.equal(taps, 1, "拖放和系统按钮回调都不触发短按操作");
+    at(20, 95, "松手停在任意位置并保留手指偏移，不吸边");
+
+    touch(TOUCH_START, 20, 95);
+    touch(TOUCH_MOVE, 500, 900);
+    touch(TOUCH_CANCEL, 500, 900);
+    assert.equal(taps, 1, "取消不产生点击");
+    at(290, 610, "拖至边界仍保留完整图标");
+    viewport.setContentSize(240, 400);
+    dockNode.setPosition(0, -200, 0);
+    at(90, 170, "窗口缩小时保证图标留在视口且不受贴底位置调整影响");
+
+    stop();
+    touch(TOUCH_START, 0, 0);
+    touch(TOUCH_MOVE, 0, 100);
+    touch(TOUCH_END, 0, 100);
+    assert.equal(taps, 1, "关闭解绑后不再响应聊天手势");
+    assert.equal(chat.position.x, 250, "关闭时恢复预制坐标");
+    assert.equal(chat.position.y, 700);
+    root.destroy();
+}
+
+/** 通过真实底栏组件检查 VIP 两套预制红点锚点、锁定优先与关闭清理。 */
 async function checkBottomRedDots(): Promise<void> {
     const root = new Node("ChromeFixture");
+    root.addComponent(UITransform);
     const chrome = root.addComponent(CityChromeView);
-    const vip = new Node("TabFetter");
-    vip.parent = root;
-    const lock = new Node("Lock");
-    lock.parent = vip;
-    lock.active = true;
-    // 只替换无关的顶底栏节点绑定，红点订阅仍经真实打开流程建立。
-    Object.assign(chrome, {
-        bindAll: () => { Object.assign(chrome, { tabs: { fetter: vip } }); },
-    });
+    const fixtureNode = (name: string, parent = root): Node => {
+        const node = new Node(name);
+        node.parent = parent;
+        return node;
+    };
+    for (const field of ["lblName", "lblSub", "lblLevel", "levelBg", "avatar", "avatarFace", "avatarBorder",
+        "goldValue", "gemValue", "powerValue", "actGroup", "utilityRow", "bottomBg"] as const) {
+        chrome[field] = fixtureNode(field);
+    }
+    const dock = fixtureNode("FloatingDock");
+    dock.addComponent(UITransform);
+    chrome.btnChat = fixtureNode("BtnChat", dock);
+    chrome.btnChat.addComponent(Button);
+    chrome.btnChat.addComponent(UITransform);
+    chrome.experienceFill = fixtureNode("ExperienceFill").addComponent(Sprite);
+    for (const field of ["btnReplay", "btnFriend", "btnMail", "btnRank", "btnMore"] as const) {
+        const button = fixtureNode(field);
+        button.addComponent(Button);
+        chrome[field] = button;
+    }
+    for (const field of ["tabCity", "tabHero", "tabBag", "tabBattle", "tabDungeon", "tabClan", "tabFetter"] as const) {
+        const button = fixtureNode(field);
+        button.addComponent(Button);
+        const normal = fixtureNode("Default", button);
+        fixtureNode("RedDotAnchor", normal);
+        const lock = fixtureNode("Lock", button);
+        fixtureNode("Lv", lock).addComponent(Label);
+        lock.active = field === "tabFetter";
+        const selected = fixtureNode(`${field}Selected`);
+        fixtureNode("RedDotAnchor", selected);
+        selected.active = false;
+        chrome[field] = button;
+        chrome.selectedTabs.push(selected);
+    }
+    const vip = chrome.tabFetter!;
+    const vipDefault = vip.getChildByName("Default")!;
+    const vipSelected = chrome.selectedTabs[6];
+    const normalAnchor = vipDefault.getChildByName("RedDotAnchor")!;
+    const selectedAnchor = vipSelected.getChildByName("RedDotAnchor")!;
+    const clicks: string[] = [];
+    const args = {
+        onTab: (id: string) => clicks.push(id),
+        actions: { openActivity() {}, openMore() {}, openMail() {} },
+    };
     const prefab = Object.assign(new Prefab(), {
         _instantiate: () => {
             const dot = new Node("RedDot");
@@ -221,8 +335,10 @@ async function checkBottomRedDots(): Promise<void> {
     const lockedTab = { ...openTab, state: "locked" } as const;
     try {
         manager.set(GameRedDotKey.VIP_TASKS, true);
-        chrome.runOpen();
+        chrome.runOpen(args);
         await chrome.whenReady();
+        vip.emit(Button.EventType.CLICK);
+        assert.deepEqual(clicks, ["fetter"], "锁定按钮仍转发点击，由主城统一处理资格提示");
         assert.equal(loads.length, 0, "VIP 锁定期间不为亮起的条件加载预制体");
 
         chrome.setTabs([openTab]);
@@ -231,46 +347,58 @@ async function checkBottomRedDots(): Promise<void> {
         chrome.setTabs([lockedTab]);
         loads[0].resolve(prefab);
         await new Promise<void>(resolve => setImmediate(resolve));
-        assert.equal(vip.getChildByName("RedDot"), null, "加载期间重新锁定则取消本次挂载");
+        assert.equal(normalAnchor.getChildByName("RedDot"), null, "加载期间重新锁定则取消本次挂载");
 
         chrome.setTabs([openTab]);
         assert.equal(loads.length, 2, "解锁后可以重新请求公共预制体");
         loads[1].resolve(prefab);
         await new Promise<void>(resolve => setImmediate(resolve));
-        const dot = vip.getChildByName("RedDot");
+        const dot = normalAnchor.getChildByName("RedDot");
         assert(dot?.active, "VIP 开放后显示已有任务红点");
-        assert.equal(dot.position.x, 28);
-        assert.equal(dot.position.y, 28);
+        assert.equal(dot.position.x, 0, "位置交给预制体锚点");
+        assert.equal(dot.position.y, 0);
+        chrome.setTabs([{ ...openTab, state: "selected" }]);
+        assert(!vipDefault.active && vipSelected.active && !dot.active, "选中时只绘制选中立绘");
+        assert.equal(loads.length, 3);
+        loads[2].resolve(prefab);
+        await new Promise<void>(resolve => setImmediate(resolve));
+        const selectedDot = selectedAnchor.getChildByName("RedDot");
+        assert(selectedDot?.active, "选中时只在对应立绘的锚点显示红点");
         chrome.setTabs([lockedTab]);
-        assert.equal(dot.active, false, "切为锁定时立即隐藏已挂载红点");
+        assert(!dot.active && !selectedDot.active, "切为锁定时立即隐藏两套立绘的红点");
         chrome.setTabs([openTab]);
         assert.equal(dot.active, true, "解除锁定时复用实例和当前聚合值");
         manager.reset();
         assert.equal(dot.active, false, "清空角色条件后隐藏红点");
         manager.set(GameRedDotKey.VIP_TASKS, true);
-        assert.equal(vip.getChildByName("RedDot"), dot, "重新点亮时复用原实例");
+        assert.equal(normalAnchor.getChildByName("RedDot"), dot, "重新点亮时复用原实例");
         assert.equal(dot.active, true);
-        assert.equal(loads.length, 2);
+        assert.equal(loads.length, 3);
 
         chrome.runClose();
-        assert.equal(vip.getChildByName("RedDot"), null, "关闭底栏释放红点实例");
+        assert.equal(normalAnchor.getChildByName("RedDot"), null, "关闭底栏释放普通红点实例");
+        assert.equal(selectedAnchor.getChildByName("RedDot"), null, "关闭底栏释放选中红点实例");
+        vip.emit(Button.EventType.CLICK);
+        assert.deepEqual(clicks, ["fetter"], "关页后不再转发点击");
         manager.set(GameRedDotKey.VIP_TASKS, false);
         manager.set(GameRedDotKey.VIP_TASKS, true);
-        assert.equal(loads.length, 2, "关闭的底栏不再响应红点树变化");
+        assert.equal(loads.length, 3, "关闭的底栏不再响应红点树变化");
 
-        chrome.runOpen();
-        assert.equal(loads.length, 3, "重开底栏读取当前红点条件");
+        chrome.runOpen(args);
+        assert.equal(loads.length, 4, "重开底栏读取当前红点条件");
         chrome.runClose();
-        chrome.runOpen();
-        assert.equal(loads.length, 4);
-        loads[2].resolve(prefab);
+        chrome.runOpen(args);
+        vip.emit(Button.EventType.CLICK);
+        assert.deepEqual(clicks, ["fetter", "fetter"], "重开底栏没有重复监听");
+        assert.equal(loads.length, 5);
+        loads[3].resolve(prefab);
         await new Promise<void>(resolve => setImmediate(resolve));
-        assert.equal(vip.getChildByName("RedDot"), null, "前一次打开的迟到资源不能挂到重新打开的底栏");
+        assert.equal(normalAnchor.getChildByName("RedDot"), null, "前一次打开的迟到资源不能挂到重新打开的底栏");
 
-        loads[3].reject(new Error("测试红点资源加载失败"));
+        loads[4].reject(new Error("测试红点资源加载失败"));
         await new Promise<void>(resolve => setImmediate(resolve));
         await chrome.whenReady();
-        assert.equal(vip.getChildByName("RedDot"), null, "提示资源失败时仍可打开底栏");
+        assert.equal(normalAnchor.getChildByName("RedDot"), null, "提示资源失败时仍可打开底栏");
     } finally {
         chrome.runDispose();
         manager.set(GameRedDotKey.VIP_TASKS, false);
@@ -300,6 +428,13 @@ async function main() {
   assert.equal(chrome.identity, "玩家甲");
   assert.deepEqual(chrome.currencies, ["0", "123"], "zero is real data, not an unavailable placeholder");
   assert.equal(chrome.level, "7"); assert.equal(chrome.power, "", "do not invent power");
+  const role = { id: "role-id", nickname: "玩家甲", level: 7, gold: 0, diamonds: 123 };
+  home.render({ busy: false, error: "", role: { ...role, power: 0 } });
+  assert.equal(chrome.power, "0", "空阵容的 0 是真实战力");
+  home.render({ busy: false, error: "", role: { ...role, power: 2294226 } });
+  assert.equal(chrome.power, "2294226", "后续快照刷新顶栏战力");
+  home.render({ busy: false, error: "", role });
+  assert.equal(chrome.power, "", "未同步的旧快照不能沿用之前的战力");
   assert(chrome.tabs.every(tab => tab.state === (tab.id === "city" ? "selected" : "locked")));
   city.completeLoading(); await home.whenReady();
   const featureUnbind = home.bind({ openFeature: () => {}, availableFeatures: ["hero"] });
@@ -407,6 +542,7 @@ async function main() {
     assert(content._components.some((r:any)=>serverPrefab[r.__id__].cellPrefab));
   }
   const hud = JSON.parse(readFileSync("client/assets/bundles/module/home/prefabs/CityChromeView.prefab","utf8"));
+  checkChatDrag();
   await checkBottomRedDots();
   const top = hud.find((row:any)=>row._name==="TopBar");
   const order = top._children.map((ref:any)=>hud[ref.__id__]._name);

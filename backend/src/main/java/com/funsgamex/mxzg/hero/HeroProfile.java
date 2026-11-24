@@ -19,7 +19,7 @@ public record HeroProfile(String id, int templateId, int level, int star, boolea
         this(id, templateId, level, star, locked, deployed, stage, baseStats, null, null, null, null, Map.of(), List.of());
     }
 
-    /** 从持久穿戴生成面板及战斗属性，将已激活的神装、圣器技能交给战斗排期。 */
+    /** 从持久穿戴生成属性和个人评分，同时保留队伍叠加与战斗排期所需输入。 */
     public HeroProfile withLoadout(HeroEquipmentRepository.State value, Gems gemSlots, Map<Integer, Long> attributes,
                                   HeroPanelRules rules, HeroSkillPanelRules skillRules,
                                   HeroEvolutionRules evolutionRules, List<HeroEvolutionRules.Skill> loadoutSkills) {
@@ -35,7 +35,7 @@ public record HeroProfile(String id, int templateId, int level, int star, boolea
         included.add("god_equipment");
         included.add("artifacts");
         panel = new HeroPanelRules.State(panel.values(), List.copyOf(included), panel.pendingSources(),
-                panel.complete(), panel.power());
+                panel.complete(), panel.power(), panel.rawAttributes());
         return new HeroProfile(id, templateId, level, star, locked, deployed, stage, baseStats, value, panel,
                 evolution, gemSlots, Map.copyOf(attributes), List.copyOf(loadoutSkills));
     }

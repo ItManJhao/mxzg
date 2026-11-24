@@ -4,7 +4,10 @@
  */
 package com.funsgamex.mxzg.guild;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -12,45 +15,70 @@ import org.springframework.stereotype.Repository;
 class GuildRepository {
     /** 同一游戏数据库中的公会及角色事务。 */
     private final JdbcTemplate jdbc;
+    /** 名册和推荐列表共用的公会等级配置。 */
+    private final GuildRules rules;
+    /** 按已校验的配置整数在数据库内判定空位，让排序先于分页。 */
+    private final String capacityByLevel;
 
     /** 成员身份读取或写操作加锁后使用的公会信息。 */
-    record Guild(String id, String name, String leaderId, String description, int badgeId) {}
+    record Guild(String id, String name, String leaderId, String description, int badgeId, int level, int experience) {
+        /** 用当前人数与持久等级生成公会概要，成员页和推荐页采用同一投影。 */
+        GuildService.Summary summary(int memberCount, GuildRules rules) {
+            var configured = rules.level(level);
+            return new GuildService.Summary(id, name, memberCount, configured.capacity(), description,
+                badgeId, level, experience, configured.nextLevelExperience());
+        }
+    }
 
-    /** 注入共享数据库连接。 */
-    GuildRepository(JdbcTemplate jdbc) {
+    /** 注入数据库与等级配置，准备区服推荐页的容量排序表达式。 */
+    GuildRepository(JdbcTemplate jdbc, GuildRules rules) {
         this.jdbc = jdbc;
+        this.rules = rules;
+        capacityByLevel = rules.gate.levels().stream()
+            .map(level -> " WHEN " + level.level() + " THEN " + level.capacity())
+            .collect(Collectors.joining("", "CASE g.guild_level", " END"));
+    }
+
+    /** 将当前持久行映射为同一公会记录，供目录、成员身份与加锁查询复用。 */
+    private static Guild readGuild(ResultSet row, int index) throws SQLException {
+        return new Guild(row.getString("id"), row.getString("name"), row.getString("leader_role_id"),
+            row.getString("description"), row.getInt("badge_id"), row.getInt("guild_level"), row.getInt("experience"));
     }
 
     /** 查角色当前公会，同区服条件同时保护跨服读取。 */
     Guild memberGuild(String roleId) {
         return jdbc.query("""
-            SELECT g.id,g.name,g.leader_role_id,g.description,g.badge_id FROM game_guild_member m
+            SELECT g.* FROM game_guild_member m
             JOIN game_guild g ON g.id=m.guild_id JOIN game_role r ON r.id=m.role_id AND r.server_id=g.server_id
             WHERE m.role_id=?
-            """, (row, index) -> new Guild(row.getString(1), row.getString(2), row.getString(3), row.getString(4), row.getInt(5)),
-            roleId).stream().findFirst().orElse(null);
+            """, GuildRepository::readGuild, roleId).stream().findFirst().orElse(null);
     }
 
     /** 锁住同区服公会，容量、会长权限及解散从这条持久行串行判断。 */
     Guild lockGuild(String serverId, String guildId) {
         return jdbc.query("""
-            SELECT id,name,leader_role_id,description,badge_id FROM game_guild WHERE server_id=? AND id=? FOR UPDATE
-            """, (row, index) -> new Guild(row.getString(1), row.getString(2), row.getString(3), row.getString(4), row.getInt(5)),
-            serverId, guildId).stream().findFirst().orElse(null);
+            SELECT * FROM game_guild WHERE server_id=? AND id=? FOR UPDATE
+            """, GuildRepository::readGuild, serverId, guildId).stream().findFirst().orElse(null);
     }
 
     /** 首次创建写入公会及选中的徽章，区服内原始名称摘要由唯一约束保护。 */
-    void insertGuild(Guild guild, String serverId, String nameKey, long now) {
+    void insertGuild(String id, String serverId, String leaderId, String name, String nameKey,
+                     String description, int badgeId, long now) {
         jdbc.update("""
             INSERT INTO game_guild(id,server_id,name,name_key,description,leader_role_id,created_at_seconds,badge_id)
             VALUES (?,?,?,?,?,?,?,?)
-            """, guild.id(), serverId, guild.name(), nameKey, guild.description(), guild.leaderId(), now, guild.badgeId());
+            """, id, serverId, name, nameKey, description, leaderId, now, badgeId);
     }
 
     /** 持有角色及公会锁时加入，角色主键禁止同时加入两个公会。 */
     void insertMember(String guildId, String roleId, long now) {
         jdbc.update("INSERT INTO game_guild_member(role_id,guild_id,joined_at_seconds) VALUES (?,?,?)",
             roleId, guildId, now);
+    }
+
+    /** 持有公会锁时保存通过审核的公告，其他资料沿用原值。 */
+    void updateNotice(String guildId, String notice) {
+        jdbc.update("UPDATE game_guild SET description=? WHERE id=?", notice, guildId);
     }
 
     /** 读取本公会当前人数，用于容量和会长退出限制。 */
@@ -63,38 +91,40 @@ class GuildRepository {
         return jdbc.queryForList("SELECT role_id FROM game_guild_member WHERE guild_id=?", String.class, guildId);
     }
 
-    /** 成员列表同查角色昵称、等级与头像框，会长优先，余下按加入顺序。 */
+    /** 同查成员资料与当前主阵战力，会长优先，余下按加入顺序。 */
     List<GuildService.Member> members(Guild guild) {
         return jdbc.query("""
-            SELECT r.id,r.nickname,r.role_level,r.head_id,r.border_id FROM game_guild_member m
+            SELECT r.id,r.nickname,r.role_level,r.head_id,r.border_id,r.current_main_power FROM game_guild_member m
             JOIN game_role r ON r.id=m.role_id WHERE m.guild_id=?
             ORDER BY CASE WHEN r.id=? THEN 0 ELSE 1 END,m.joined_at_seconds,r.id
             """, (row, index) -> new GuildService.Member(row.getString(1), row.getString(2), row.getInt(3),
-            guild.leaderId().equals(row.getString(1)), row.getInt(4), row.getInt(5)), guild.id(), guild.leaderId());
+            guild.leaderId().equals(row.getString(1)), row.getInt(4), row.getInt(5),
+            row.getObject("current_main_power", Integer.class)), guild.id(), guild.leaderId());
     }
 
-    /** 会长读取待审角色及其当前头像框，排序与提交顺序一致。 */
+    /** 会长读取申请者当前头像、头像框和主阵战力，排序与申请顺序一致。 */
     List<GuildService.Member> applicants(String guildId) {
         return jdbc.query("""
-            SELECT r.id,r.nickname,r.role_level,r.head_id,r.border_id FROM game_guild_application a
+            SELECT r.id,r.nickname,r.role_level,r.head_id,r.border_id,r.current_main_power FROM game_guild_application a
             JOIN game_role r ON r.id=a.role_id WHERE a.guild_id=? ORDER BY a.applied_at_seconds,r.id
             """, (row, index) -> new GuildService.Member(row.getString(1), row.getString(2), row.getInt(3), false,
-            row.getInt(4), row.getInt(5)),
+            row.getInt(4), row.getInt(5), row.getObject("current_main_power", Integer.class)),
             guildId);
     }
 
-    /** 区内公会结果包含实际徽章，推荐页先显示仍有空位的公会。 */
-    List<GuildService.Summary> browse(String serverId, String query, int capacity, int limit, long offset) {
+    /** 按本会等级统计真实空位后分页，搜索仍按建会顺序返回。 */
+    List<GuildService.Summary> browse(String serverId, String query, int limit, long offset) {
         return jdbc.query("""
-            SELECT g.id,g.name,g.description,g.badge_id,COUNT(m.role_id) AS member_count
+            SELECT g.id,g.name,g.leader_role_id,g.description,g.badge_id,g.guild_level,g.experience,
+                   COUNT(m.role_id) AS member_count
             FROM game_guild g LEFT JOIN game_guild_member m ON m.guild_id=g.id
             WHERE g.server_id=? AND (?='' OR LOCATE(?,g.name)>0)
-            GROUP BY g.id,g.name,g.description,g.badge_id,g.created_at_seconds
-            ORDER BY CASE WHEN ?='' AND COUNT(m.role_id)>=? THEN 1 ELSE 0 END,g.created_at_seconds DESC,g.id
+            GROUP BY g.id,g.name,g.leader_role_id,g.description,g.badge_id,g.guild_level,g.experience,g.created_at_seconds
+            ORDER BY CASE WHEN ?='' AND COUNT(m.role_id)>=(%s) THEN 1 ELSE 0 END,g.created_at_seconds DESC,g.id
             LIMIT ? OFFSET ?
-            """, (row, index) -> new GuildService.Summary(row.getString("id"), row.getString("name"),
-            row.getInt("member_count"), capacity, row.getString("description"), row.getInt("badge_id")),
-            serverId, query, query, query, capacity, limit, offset);
+            """.formatted(capacityByLevel),
+            (row, index) -> readGuild(row, index).summary(row.getInt("member_count"), rules),
+            serverId, query, query, query, limit, offset);
     }
 
     /** 查询该角色仍有效的申请标记，供推荐列表同步按钮。 */

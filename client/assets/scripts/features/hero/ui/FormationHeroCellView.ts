@@ -1,4 +1,7 @@
-/** 阵容列表专用格子：继承通用英雄格子的只读绘制和点击绑定，缩放由同名Prefab保存。 */
+/**
+ * 阵容候选列表的头像格，使用通用英雄格绘制与名册一致的品质、等级和星级。
+ * 卡片尺寸与压暗、绿勾的叠放顺序都在同名预制体中编辑。
+ */
 import { _decorator } from "cc";
 import { HeroIconCellView } from "./HeroIconCellView";
 const { ccclass } = _decorator;

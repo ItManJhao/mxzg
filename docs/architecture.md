@@ -227,6 +227,10 @@ bundles/resources收纳audio/chapter/config/effects/font/icons/maps/spine；bund
 
 主城底栏在新功能页准备成功后直接切换，旧功能页同步关闭监听并交回原缓存或销毁；准备失败仍保留原可见页面。PageTransitionUtils、PageSlideUtils及其位移、缓动、过渡取消状态已删除，视口布局不再保留动画中跳过居中的特判。主城根和共用顶底栏继续保留，页面准备意图与350毫秒慢开提示仍归HomeFeatureNavigation。
 
+`CityChromeView.prefab` 采用 640×1280 设计。`TopDock`、`BottomDock` 分别由 `Widget` 锚定视口边缘，窄屏使用公共 `ViewportScale` 等比缩放，宽屏不拉大图标或间距。七个按钮的点击区固定，普通、选中与锁定图案都在预制体内，两种红点锚点随状态切换。活动栏和快捷行只在主城地图显示，箭头与加号只切换预制布局；未接通活动不生成倒计时或红点。聊天按钮独立放在前景 `FloatingDock`，默认位置由预制体决定，拖动时只限制在视口内、不吸边；切换底栏保留当前位置，退出主界面后不保存到账号。
+
+VIP 页上方显示当前浏览女神的解锁档位、模型和技能，下方显示账号当前 VIP 等级与任务领取进度。两区不混用等级；羁绊养成入口尚未接通。「VIP 特权」使用共享模态，窗外点击关闭；默认预览下一档，满级打开最高档。解锁与数值加成按旧配置分组显示，翻档仅更新预览，不启用权益。
+
 `UILayer` 规定同一宿主从底到顶为 `Page → Battle → Hud → Popup → Dialog → Guide → System → Toast`。`Page` 走页面栈，其他层由 `hostId` 选择宿主。同一宿主内只在本层置顶，多个宿主按场景节点树绘制。主线战场使用 `Battle` 和原战场宿主，通用确认使用 `Dialog`。`Guide` 用于覆盖业务界面的引导，`System` 用于应当盖在引导上方的系统提示。
 
 弹窗只在页面注册的ViewSpec设置modal，不再在各Prefab添加蒙版或ModalLayer绑定。省略modal表示不拦截外部；`{mask:false,closeOnOutside:true}`使用透明拦截；`{mask:true,closeOnOutside:true}`显示共享蒙版并点击空白关闭。closeOnOutside可独立设为false，只阻挡外部点击。实际面板背景保留BlockInputEvents，不能给只承载坐标的大节点盲加阻挡。叠窗始终共用一份节点，颜色不叠加。

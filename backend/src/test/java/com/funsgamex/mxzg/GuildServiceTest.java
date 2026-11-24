@@ -1,4 +1,4 @@
-/** 隔离数据库验证公会授权、徽章、角色归属、幂等扣费、冷却及并发容量。 */
+/** 隔离数据库验证公会公告权限、等级容量、成员身份与幂等写入。 */
 package com.funsgamex.mxzg;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -118,6 +118,49 @@ class GuildServiceTest {
         String cjkName = "花".repeat(32);
         reject("GUILD_NAME_INVALID", () -> guilds.change(cjk, command(Action.CREATE, null, null, cjkName + "花")));
         assertEquals(cjkName, guilds.change(cjk, command(Action.CREATE, null, null, cjkName)).guild().name());
+    }
+
+    /** 公告检查真实成员身份、长度、重放和事务回滚；成员与推荐页返回相同等级配置。 */
+    @Test
+    void noticeAndGuildProgressFollowCommittedGuildState() {
+        String owner = player("local-1", 18, 100);
+        String member = player("local-1", 18, 0);
+        String visitor = player("local-1", 18, 0);
+        var guild = createGuild(owner);
+        assertEquals(1, guild.level());
+        assertEquals(0, guild.experience());
+        assertEquals(750, guild.nextLevelExperience());
+        guilds.change(member, firstApplyWithNewId(guild));
+        guilds.change(owner, command(Action.APPROVE, guild.id(), member, null));
+        var edit = new Command(UUID.randomUUID().toString(), Action.UPDATE_NOTICE, guild.id(), null, null, "周末集合");
+        reject("GUILD_FORBIDDEN", () -> guilds.change(member, edit));
+        reject("GUILD_NOT_MEMBER", () -> guilds.change(visitor, edit));
+        reject("GUILD_DESCRIPTION_INVALID", () -> guilds.change(owner, new Command(edit.requestId(),
+            Action.UPDATE_NOTICE, guild.id(), null, null, "A".repeat(302))));
+        reject("GUILD_REQUEST_INVALID", () -> guilds.change(owner, new Command(edit.requestId(),
+            Action.UPDATE_NOTICE, guild.id(), null, null, null)));
+        long before = roles.revision(owner);
+        new TransactionTemplate(transactions).executeWithoutResult(transaction -> {
+            assertEquals("周末集合", guilds.change(owner, edit).guild().description());
+            transaction.setRollbackOnly();
+        });
+        assertEquals("", guilds.list(member, "", 1).guild().description());
+        assertEquals("周末集合", guilds.change(owner, edit).guild().description());
+        assertEquals("周末集合", guilds.list(member, "", 1).guild().description());
+        reject("GUILD_REQUEST_CONFLICT", () -> guilds.change(owner, new Command(edit.requestId(),
+            Action.UPDATE_NOTICE, guild.id(), null, null, "其他公告")));
+        assertEquals("", guilds.change(owner, new Command(UUID.randomUUID().toString(), Action.UPDATE_NOTICE,
+            guild.id(), null, null, "")).guild().description());
+        assertEquals("", guilds.change(owner, edit).guild().description());
+        assertEquals(before, roles.revision(owner));
+
+        jdbc.update("UPDATE game_guild SET guild_level=2,experience=120 WHERE id=?", guild.id());
+        var summary = guilds.list(member, "", 1).guild();
+        assertEquals(2, summary.level());
+        assertEquals(120, summary.experience());
+        assertEquals(1600, summary.nextLevelExperience());
+        assertEquals(16, summary.capacity());
+        assertEquals(summary, guilds.list(visitor, guild.name(), 1).guilds().getFirst());
     }
 
     /** 双角色申请、审批、退出，其他公会的申请随入会删除，失败操作不会修改成员。 */

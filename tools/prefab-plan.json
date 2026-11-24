@@ -61,7 +61,8 @@
         "HeroRewardView",
         "RedDot",
         "RewardView",
-        "RoleUpgradeView"
+        "RoleUpgradeView",
+        "RulesView"
       ]
     },
     {
@@ -95,7 +96,7 @@
       "phases": [
         "当前已实现"
       ],
-      "reason": "公会目录与大厅、创建页签、徽章选择、成员与审批窗口及其列表格",
+      "reason": "公会目录与大厅、创建页签、单行输入窗、徽章选择、成员与审批窗口及其列表格",
       "names": [
         "GuildApprovalCell",
         "GuildApprovalView",
@@ -105,6 +106,7 @@
         "GuildListCell",
         "GuildMemberCell",
         "GuildMemberView",
+        "GuildTextInputView",
         "GuildView"
       ]
     },

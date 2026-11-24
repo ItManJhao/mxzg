@@ -19,7 +19,7 @@ public final class HeroBattleChapterScenario {
     private final HeroSkillPanelRules skills;
     /** 星级防御系数。 */
     private final HeroBattleDefenseRules defense;
-    /** 同源元素克制。 */
+    /** 同源元素克制及战力共用的队伍光环。 */
     private final HeroBattleElementRules elements;
     /** 我方已选阵型1的站位属性；怪物不走玩家FormationReceivers。 */
     private final MainFormationRules formations;
@@ -148,30 +148,9 @@ public final class HeroBattleChapterScenario {
         var result = new ArrayList<Unit>();
         for (int faction : List.of(1, 2)) {
             var team = input.stream().filter(unit -> unit.faction() == faction).toList();
-            var elements = team.stream().map(unit -> skills.battleIdentity(unit.template()).element()).toList();
-            var selected = new LinkedHashMap<Integer, JsonNode>();
-            for (var row : rows("elementaddition")) {
-                var remaining = new ArrayList<>(elements);
-                boolean matches = true;
-                for (var element : mapper.readTree(row.path("elements").asString())) {
-                    if (!remaining.remove(Integer.valueOf(element.asInt()))) {
-                        matches = false;
-                        break;
-                    }
-                }
-                if (matches) {
-                    selected.put(row.path("type").asInt(), row);
-                }
-            }
+            var aura = elements.teamAura(team.stream().map(Unit::template).toList());
             for (var unit : team) {
-                var attributes = new HashMap<>(unit.attributes());
-                for (var row : selected.values()) {
-                    for (var ability : mapper.readTree(row.path("ability").asString())) {
-                        for (var property : ability.properties()) {
-                            attributes.merge(Integer.parseInt(property.getKey()), property.getValue().asLong(), Math::addExact);
-                        }
-                    }
-                }
+                var attributes = HeroBattleElementRules.applyAura(unit.attributes(), aura);
                 result.add(new Unit(unit.id(), unit.faction(), unit.template(), unit.level(), unit.star(),
                     unit.stage(), unit.position(), attributes, HeroBattleAttributeUtils.opening(attributes), unit.skills(), unit.portraitIconId()));
             }

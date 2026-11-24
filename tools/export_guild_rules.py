@@ -1,4 +1,4 @@
-"""从原开放条件和公会等级表导出当前公会阶段的服务端门槛与人数上限。"""
+"""为公会服务导出开放条件、各等级的升级经验和成员容量。"""
 
 import argparse
 
@@ -11,18 +11,20 @@ JP_GUILD_NAME_LIMIT = 64
 
 
 def project():
-    """选择原 main_clan 入口和一级公会，只投影已接入的等级条件与人数上限。"""
+    """投影 main_clan 门槛及按等级排列的原始公会配置。"""
     gate = next(row for row in loose_rows(DEFAULT_SRC / "opencondition.xlsx", "opencondition")
                 if row["atom"] == "main_clan")
-    level = next(row for row in loose_rows(DEFAULT_SRC / "clanlevel.xlsx", "clanlevel")
-                 if row["level"] == 1)
+    levels = sorted(loose_rows(DEFAULT_SRC / "clanlevel.xlsx", "clanlevel"), key=lambda row: row["level"])
     if gate["open"] != 1 or gate["condition_type"] != 1:
         raise ValueError("公会开放条件不再是启用的角色等级门槛")
     return {
         "levelRequired": gate["condition_value"],
         "worldLevelRequired": gate["world_level"],
-        "capacity": level["member"],
         "nameLimit": JP_GUILD_NAME_LIMIT,
+        "levels": [
+            {"level": row["level"], "capacity": row["member"], "nextLevelExperience": row["need_clan_exp"]}
+            for row in levels
+        ],
     }
 
 
@@ -36,7 +38,7 @@ def main():
         TARGET.write_text(expected, encoding="utf-8")
     elif TARGET.read_text(encoding="utf-8") != expected:
         raise SystemExit("公会配置已漂移，请检查策划表或显式重新导出")
-    print("公会开放条件与人数配置一致")
+    print("公会开放条件、升级经验与成员容量配置一致")
 
 
 if __name__ == "__main__":

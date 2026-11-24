@@ -2,7 +2,7 @@
 import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
-import { Button, Color, Label, Mask, Node, Prefab, ScrollView, Sprite, UITransform, Vec2, Vec3 } from "cc";
+import { Button, Color, Label, Mask, Node, Prefab, ScrollView, Sprite, SpriteFrame, UITransform, Vec2, Vec3 } from "cc";
 import { PrefabLoader } from "../assets/scripts/framework/assets/PrefabLoader";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
@@ -26,6 +26,8 @@ import type { GameFrame } from "../assets/scripts/platform/GameProtocolCodecUtil
 
 const PAGE = "client/assets/bundles/module/hero/prefabs/FormationView.prefab";
 const CELL = "client/assets/bundles/module/hero/prefabs/FormationHeroCellView.prefab";
+/** 手动推进测试实例中的去抖任务，不让旧保存用例同时发出无人处理的预览。 */
+const scheduledPreviews = new WeakMap<FormationView, () => void>();
 /** 读取仓库真实Prefab/meta，不把测试重建结果写回资源。 */
 const read = (path: string) => JSON.parse(readFileSync(path, "utf8"));
 /** 按Creator序列化规则压缩脚本UUID，供真实Prefab找到相应组件类型。 */
@@ -258,6 +260,9 @@ function instantiateData(data: any[]): Node {
         if (Array.isArray(value)) return value.map(reference);
         if (value && typeof value === "object" && "__id__" in value) return objects.get(value.__id__);
         if (value && typeof value === "object" && "__uuid__" in value) {
+            if (value.__expectedType__ === "cc.SpriteFrame") {
+                return new SpriteFrame();
+            }
             const prefab = new Prefab() as any; prefab.data = instantiateData(read(CELL)); prefab._instantiate = () => instantiateData(read(CELL)); return prefab;
         }
         return value;
@@ -279,6 +284,14 @@ function instantiateData(data: any[]): Node {
     const root = objects.get(1);
     const screen = root.getComponent(FormationView) as FormationView | null;
     if (screen) {
+        Object.assign(screen, {
+            scheduleOnce(callback: () => void): void {
+                scheduledPreviews.set(screen, callback);
+            },
+            unschedule(): void {
+                scheduledPreviews.delete(screen);
+            },
+        });
         const roster = new HeroRosterModel(), saves = new FormationSaveModel();
         roster.reset(); saves.reset();
         roster.replace({ status: "ready", heroes: [], error: "", mainFormation: { formationId: 1,
@@ -287,6 +300,71 @@ function instantiateData(data: any[]): Node {
         screen.configure(new FormationController(saves, roster), roster, saves);
     }
     return root;
+}
+
+/** 真实阵容视图仅显示当前选人对应的回包，不因拖换位置或筛选重复预估。 */
+function checkDraftPower(): void {
+    const root = instantiateData(read(PAGE));
+    const editor = root.getComponent(FormationView)!;
+    const roster = new HeroRosterModel();
+    const model = new FormationSaveModel();
+    const controller = new FormationController(model, roster);
+    const heroes = ["a", "b"].map((id, index) => ({ id, templateId: 10105008 + index, star: 5, level: 20 }));
+    const mainFormation = { version: 1, formationId: 1, unlockedIds: [1], assistanceUnlocked: false,
+        slots: [{ position: 2, heroId: "a" }], options: [{ formationId: 1, openPositions: [2, 3, 5, 6, 7, 8] }] };
+    roster.replace({ status: "ready", heroes, mainFormation, error: "" });
+    const requests: Array<{ body: { requestId: string; heroIds: string[] }; reply: (frame: GameFrame) => void }> = [];
+    controller.initialize();
+    controller.configure({
+        async deliver(name, body, reply) {
+            assert.equal(name, Protocol.FORMATION_POWER);
+            requests.push({ body: body as typeof requests[number]["body"], reply });
+        },
+    });
+    editor.configure(controller, roster, model);
+    /** 用本轮窗口记录的任务推进一轮输入，不自行替换草稿。 */
+    const flush = (): void => {
+        const callback = scheduledPreviews.get(editor);
+        scheduledPreviews.delete(editor);
+        callback?.();
+    };
+    /** 构造与真实路由匹配的服务端同序回包。 */
+    const answer = (index: number, power: number): void => {
+        const { body, reply } = requests[index];
+        reply({ version: 1, kind: "response", name: Protocol.FORMATION_POWER, ok: true,
+            body: { ...body, power, assetRevision: 13 } });
+    };
+    try {
+        editor.runOpen({ complete: () => {} });
+        assert.equal(editor.confirmText!.string, "保存");
+        flush();
+        assert.deepEqual(requests[0].body.heroIds, ["a"]);
+        const draft: FormationState = { heroes, lineup: { version: 1, slots: [
+            { position: 2, heroId: "a" }, { position: 3, heroId: "b" },
+        ] }, busy: false, message: "", formationId: 1, openPositions: mainFormation.options[0].openPositions };
+        editor.render(draft);
+        flush();
+        assert.deepEqual(requests[1].body.heroIds, ["a", "b"]);
+        answer(1, 3000);
+        answer(0, 750);
+        assert.equal(editor.powerLabel!.string, "3000", "迟到的单人战力不能覆盖双人草稿");
+        editor.render({ ...draft, lineup: { version: 1, slots: [
+            { position: 2, heroId: "b" }, { position: 3, heroId: "a" },
+        ] } });
+        editor.elementButtons[1].node.emit(Button.EventType.CLICK);
+        flush();
+        assert.equal(requests.length, 2);
+        assert.equal(editor.powerLabel!.string, "3000");
+        editor.render({ ...draft, lineup: { version: 1, slots: [] } });
+        flush();
+        answer(2, 0);
+        assert.equal(editor.powerLabel!.string, "0");
+        assert.equal(roster.snapshot.mainFormation!.slots.length, 1, "草稿战力不能保存站位");
+    } finally {
+        editor.runClose();
+        controller.dispose();
+        root.destroy();
+    }
 }
 
 /** 验证同版鉴权与重复名册事件保留未保存站位及筛选；关页丢弃草稿且没有写请求或出战。 */
@@ -784,6 +862,7 @@ function checkDefaultListGeometry(): void {
 /** 核对真实绑定与人工编辑参数，并验证未保存草稿同版恢复、ACK确认和缺状态同步恢复。 */
 async function main(): Promise<void> {
     await ConfigFixtureUtils.installReal();
+    checkDraftPower();
     checkDefaultListGeometry();
     checkHeroSorting();
     const data = read(PAGE), authored = data.find((row: any) => row.__type__ === viewType);
@@ -816,7 +895,8 @@ async function main(): Promise<void> {
         const cells=view.heroScroll!.content!.children;
         assert.equal(cells.length,3); assert.equal(view.heroScroll!.list.columns,2);
         assert.equal(view.heroScroll!.list.spacingY,14);
-        assert.equal(view.heroScroll!.content!.getComponent(UITransform)!.width, 568, "内容宽度维持预制视口值");
+        assert.equal(view.heroScroll!.content!.getComponent(UITransform)!.width,
+            view.heroScroll!.content!.parent!.getComponent(UITransform)!.width, "内容宽度维持预制视口值");
         assert.equal((view.heroScroll!.content!.parent!.getComponent(Mask) as Mask).node,view.heroScroll!.content!.parent);
         view.runClose();
     }

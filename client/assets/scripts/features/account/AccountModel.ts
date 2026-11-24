@@ -48,6 +48,8 @@ export interface RoleProfile {
     readonly welcomeGiftAvailable?: boolean;
     /** 角色等级，不是英雄等级。 */
     readonly level: number;
+    /** 服务端已保存主阵容的当前战力，空阵为 0，旧快照缺失表示未同步。 */
+    readonly power?: number;
     /** 当前金币绝对余额。 */
     readonly gold: number;
     /** 当前钻石绝对余额。 */

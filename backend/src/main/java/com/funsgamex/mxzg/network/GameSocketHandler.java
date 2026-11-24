@@ -17,6 +17,7 @@ import com.funsgamex.mxzg.guild.GuildService;
 import com.funsgamex.mxzg.vip.VipService;
 import com.funsgamex.mxzg.hero.HeroArtifactService;
 import com.funsgamex.mxzg.hero.HeroEquipmentService;
+import com.funsgamex.mxzg.hero.HeroMainPowerService;
 import com.funsgamex.mxzg.hero.HeroGodEquipmentService;
 import com.funsgamex.mxzg.hero.HeroGodEquipmentShopService;
 import com.funsgamex.mxzg.hero.HeroJewelService;
@@ -116,6 +117,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final WelcomeGiftService welcomeGifts;
     private final SessionService sessions;
     private final SessionSnapshotService snapshots;
+    /** 按现行连接角色计算布阵草稿的只读战力。 */
+    private final HeroMainPowerService formationPower;
     private final ConcurrentMap<String, Connection> connections = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Connection> online = new ConcurrentHashMap<>();
     private final Semaphore capacity = new Semaphore(128);
@@ -143,7 +146,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         }
     }
 
-    /** 注入统一快照、游戏时钟及各领域服务，按当前连接归属路由战斗、资料和领奖。 */
+    /** 注入认证快照及各领域服务，草稿战力与其它角色操作均由当前连接分派。 */
     public GameSocketHandler(SessionService sessions, SessionSnapshotService snapshots,
             com.funsgamex.mxzg.auth.DevelopmentLoginService login,
             com.funsgamex.mxzg.server.ServerCatalog servers, com.funsgamex.mxzg.gm.GmService gm,
@@ -160,7 +163,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             HeroArtifactService heroArtifacts, HeroGodEquipmentShopService godEquipmentShop,
             MarketService market, GuildService guilds, VipService vip,
             DailyDungeonService dailyDungeon, TowerService tower, ArenaService arena,
-            RoleService roles, RoleProfileService profiles, WelcomeGiftService welcomeGifts, GameClock clock) {
+            RoleService roles, RoleProfileService profiles, WelcomeGiftService welcomeGifts, GameClock clock,
+            HeroMainPowerService formationPower) {
         this.firstRewards = firstRewards;
         this.fragments = fragments;
         this.heroLevels = heroLevels;
@@ -192,6 +196,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         this.clock = clock;
         this.sessions = sessions;
         this.snapshots = snapshots;
+        this.formationPower = formationPower;
         this.login = login;
         this.servers = servers;
         Arrays.setAll(roleLocks, index -> new ReentrantLock());
@@ -467,6 +472,10 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             handleGm(connection, request, name);
             return;
         }
+        if (name.equals("formation.power")) {
+            formationPower(connection, request);
+            return;
+        }
         if (name.equals("formation.save")) {
             var body = request.path("body");
             fields(body, Set.of("requestId", "expectedVersion", "formationId", "slots"));
@@ -490,6 +499,21 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
 
             default -> throw rejected("UNKNOWN_MESSAGE");
         }
+    }
+
+    /** 只收队伍草稿的实例列表，回显该列表和同次服务端评分。 */
+    private void formationPower(Connection connection, JsonNode request) throws IOException {
+        var body = request.path("body");
+        fields(body, Set.of("requestId", "heroIds"));
+        var heroes = body.path("heroIds");
+        if (!heroes.isArray() || heroes.size() > HeroMainPowerService.MAX_DRAFT_HEROES) {
+            throw rejected("FORMATION_POWER_INVALID");
+        }
+        var ids = new ArrayList<String>(heroes.size());
+        for (var hero : heroes) {
+            ids.add(hero.asString());
+        }
+        respond(connection, request, formationPower.previewDraft(connection.token, body.path("requestId").asString(), ids));
     }
 
     /** 查询当前角色报价，或提交一次报价凭据并回送冻结的实际发奖结果。 */

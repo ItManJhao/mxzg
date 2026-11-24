@@ -13,6 +13,12 @@ export interface GuildSummary {
     readonly description?: string;
     /** 公会选定的原徽章编号。旧资料未同步时缺失。 */
     readonly badgeId?: number;
+    /** 服务端当前公会等级，旧回包可能尚未同步。 */
+    readonly level?: number;
+    /** 当前等级累计的公会经验，零为真实初始值。 */
+    readonly experience?: number;
+    /** 旧公会等级表中本级经验门槛；和已累计经验一起显示。 */
+    readonly nextLevelExperience?: number;
 }
 
 /** 成员与待审批申请人共用的角色公开资料。 */
@@ -25,6 +31,8 @@ export interface GuildMember {
     /** 角色当前头像与佩戴框，旧回包可能尚未同步。 */
     readonly headId?: number;
     readonly borderId?: number;
+    /** 当前已保存主阵容的权威战力，缺失时不显示假数。 */
+    readonly power?: number;
 }
 
 /** 当前玩家能读取的公会数据，未加入时提供目录与本人待审批的申请。 */
@@ -46,6 +54,9 @@ export interface GuildState {
 export class GuildModel {
     /** 应用与公会页面共用的状态实例。 */
     public static readonly instance = new GuildModel();
+
+    /** 创建与入会后编辑共用的公告 UTF-16 长度上限，最终由服务端校验。 */
+    public static readonly noticeLimit = 301;
 
     /** 最近一次通过协议校验的公会数据，换角色时释放。 */
     private state: GuildState | null = null;

@@ -100,7 +100,7 @@ node client/tools/check-project.mjs
 node C:/ProgramData/cocos/editors/Creator/3.8.8/resources/app.asar.unpacked/node_modules/typescript/lib/tsc.js -p client/tools/tsconfig.remake.json
 ```
 
-依赖在忽略的 temp 中，固定 openpyxl 版本来自 tools/requirements.txt。已安装时不必重复 pip。仅发现 WindowsApps 的 python.exe 不能证明 Python 可用；启动失败与业务断言失败须分别记录。历史 gen_citychrome_prefab.py 已禁止直接执行，避免用旧生成模型覆盖人工布局；现行只读绑定检查为 client/tools/check_citychrome_shell_id.py。
+依赖在忽略的 temp 中，固定 openpyxl 版本来自 tools/requirements.txt。已安装时不必重复 pip。仅发现 WindowsApps 的 python.exe 不能证明 Python 可用；启动失败与业务断言失败须分别记录。主城顶底栏直接在 Creator 编辑 CityChromeView.prefab，旧 720 宽写入器已移除；只读绑定检查为 client/tools/check_citychrome_shell_id.py。
 
 - `python tools/test_remake_local_tools.py`：构建入口身份、禁止越界/目录列表、缓存与七种进程归属案例。
 - `python tools/test_remake_backend_control.py`：先 package 后执行；随机端口与隔离 H2 库验证拒绝其他程序、状态、停止、Maven 重启及数据保留。

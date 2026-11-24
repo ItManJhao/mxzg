@@ -163,12 +163,40 @@
       "scope": "Creator 浏览器独立 H2 角色预览。F9 显示五项入口，角色与时间、道具可打开，关闭子窗返回总菜单，F9 正常关闭菜单和子窗。见 docs/gm-development.md。",
       "inspector": "本轮核对浏览器预览，负责人 Inspector 检查待安排。"
     },
+    "client/assets/bundles/module/guild/prefabs/GuildCreateView.prefab": {
+      "sha256": "3961ec10eef9f650c8aae8cb7e52a92afac039d920d539de1adac77bab09e7a4",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "按日服对齐创建页的名称框、徽章、宣言和价格按钮；宣言标题居中，正文与提示避开装饰线和编辑图标。",
+      "inspector": "Creator 393×852 独立角色实测两处弹窗、预填宣言、取消与确认回填，创建后名称、宣言同步，实际扣 100 钻。"
+    },
+    "client/assets/bundles/module/guild/prefabs/GuildTextInputView.prefab": {
+      "sha256": "b9f26de7a7e66594b8707edf15e5b25affc8a83416ab7661f9808e3bc1c9e5ea",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "三处公会文本共享日服式顶部输入窗，使用项目内圆角贴图与共享模态；窗外不提交也不关闭。",
+      "inspector": "Creator 393×852 Web 预览核实真实输入、回车、按钮和长度；未覆盖真机软键盘。"
+    },
     "client/assets/bundles/module/guild/prefabs/GuildView.prefab": {
-      "sha256": "0ca2e9697318541cddc78515e1d58312b957709966c3b478285a02ccb76468e8",
-      "date": "2026-11-23",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
-      "inspector": "未操作Creator Inspector"
+      "sha256": "1b363d90fa2569323d384d29178263140595c395452eb261ce083b6d9b504147",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "入会大厅按日服重排，左侧显示实际等级、经验和人数，右侧公告卡提供编辑入口；未入会三页和审批锚点保持。",
+      "inspector": "Creator 393×852 双角色实际预览核对经验 0/750、会长提交、普通成员权限提示、两端公告同步及打开成员窗。"
+    },
+    "client/assets/bundles/module/guild/prefabs/GuildMemberView.prefab": {
+      "sha256": "65625dc37a4784df20def30bc852f1b5990ece26ad340e5067a6e5ea085f8322",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "成员弹窗纸面、列表和退会按钮按日服调整，右上人数使用真实成员与容量。",
+      "inspector": "Creator 393×852 双角色实际预览核对 2/15、两项成员数据及关闭回大厅；不代替真机及满员滚动验收。"
+    },
+    "client/assets/bundles/module/guild/prefabs/GuildMemberCell.prefab": {
+      "sha256": "2e5d796a74acc59081f5a3294376ece62bea9e2e40374de00c41514e1d20a64e",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "成员格显示真实头像、等级、职务和战力；本人使用黄色原版底图。未实现的在线和贡献不显示。",
+      "inspector": "Creator 双角色预览核对战力一致与本人换行时高亮正确；专项覆盖真实零与复用清理。"
     },
     "client/assets/bundles/module/hero/prefabs/FirstSummonView.prefab": {
       "sha256": "e5b072de61972569fe9c6d050198e54f2b4fa62b8a4340121a83c3be9e026313",
@@ -178,11 +206,18 @@
       "inspector": "未操作Creator Inspector"
     },
     "client/assets/bundles/module/hero/prefabs/FormationHeroCellView.prefab": {
-      "sha256": "ddb1c97745ae54fd6573b5c7c7dd7da88cefb2cc3cb7827d6de48da58a507791",
-      "date": "2026-11-18",
+      "sha256": "21223f7b888767925f10ead8a958f48b60b5fe9b50506c856c8a5e5f104ff879",
+      "date": "2026-11-24",
       "status": "实际预览通过",
-      "scope": "随出阵页在 393×852 Creator 浏览器预览核对，上阵英雄局部压暗并显示绿勾，未上阵英雄保留原颜色。负责人已确认绿勾。证据见 docs/development-progress.md 的本机预览记录。",
-      "inspector": "限所属出阵页中的头像状态，未签收三尺寸、正式包或 Inspector。"
+      "scope": "在 393×852 Creator 独立会话检查四列名单中品质框、无元素角标、等级、金星、紫星、高星翼徽及草稿上阵的压暗绿勾。",
+      "inspector": "仅限布阵窗口本机浏览器预览，未签收真机和 Inspector。"
+    },
+    "client/assets/bundles/module/hero/prefabs/FormationView.prefab": {
+      "sha256": "87e060d1a0224ad75eaa04e077b636e89b56a32abbcf2b11d46b918ac5bdf892",
+      "date": "2026-11-24",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "同布局前一指纹已在 393×852 Creator 预览通过四列名单、阵位与战力交互。该指纹仅更新常规布阵标题为「阵型调整」，未刷新验看此处文案。",
+      "inspector": "未操作 Creator Inspector，未签收三尺寸和正式包。"
     },
     "client/assets/bundles/module/hero/prefabs/HeroAttributeRow.prefab": {
       "sha256": "e70f1740881c32df1ef28d83dea85e3ab15bb115bacda8532ee9b7b47b45fa59",
@@ -227,11 +262,11 @@
       "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
     },
     "client/assets/bundles/module/hero/prefabs/HeroIconCellView.prefab": {
-      "sha256": "8bbe70aebfaec53540417cc5fa0c7d0207cce3323e6a53cf4a65e9db7279e9dc",
-      "date": "2026-11-23",
+      "sha256": "088be553168b0553c8456cb78f5dbdfde35d4d529ca75645b9cb68feb4ef9dce",
+      "date": "2026-11-24",
       "status": "实际预览通过",
-      "scope": "Creator 独立浏览器加载实际名册格，验证升星点亮、离屏熄灭、换条目不串亮、重回原条目时复用同一节点及原尺寸。完整滚动和跨场景复用由专项覆盖。",
-      "inspector": "验证范围限单一预览设备尺寸与红点相关行为，未操作 Creator Inspector。"
+      "scope": "名册格恢复右上角等级、星级品质框、金星紫星和高星翼徽。头像按 0.9 倍缩放，格内隐藏元素图标，顶部元素筛选保留。按日服测试图集替换英雄配置使用的 109 张基础头像，出阵和名册沿用同一份资源路径及 UUID。",
+      "inspector": "Creator 独立会话竖屏验证了 7 个不同星级样本，并确认名册和出阵加载同一 SpriteFrame；截图保留在 client/temp/project-checks/hero-roster-card-preview.png。"
     },
     "client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab": {
       "sha256": "e60a4e4474391f50405493742d97deeff3042e291866466455f2a9489ae53ad2",
@@ -269,18 +304,18 @@
       "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
     },
     "client/assets/bundles/module/home/prefabs/CityChromeView.prefab": {
-      "sha256": "a3e5115e1c143a9de5c0553f317382df5afa264e9f221c8116be8f619b7e99f3",
-      "date": "2026-11-23",
+      "sha256": "d8c618837f2fc9dcd571b3429d984af3514d0a2a334a4a7c10e34db59188dd79",
+      "date": "2026-11-24",
       "status": "实际预览通过",
-      "scope": "Creator 独立浏览器加载实际底栏，验证上阵英雄升星条件点亮底栏、锁标优先、快照更新后熄灭与关闭清理。",
-      "inspector": "验证范围限单一预览设备尺寸与红点相关行为，未操作 Creator Inspector。"
+      "scope": "聊天按钮移至独立前景层，支持任意位置停留、完整图标边界限制，切换底栏保留位置；短点击仍执行原入口。",
+      "inspector": "Creator 393×852 独立浏览器实测真实鼠标拖放、边界夹紧、不误触、短点击和切换至 VIP 保留位置；窄屏缩放及销毁清理由专项覆盖。"
     },
     "client/assets/bundles/module/home/prefabs/CityHubView.prefab": {
-      "sha256": "a8f2a5279eb34a9bad7ee76c1dc0986b06ccb5157efc69545ba68ceb399cbb63",
-      "date": "2026-11-23",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
-      "inspector": "未操作Creator Inspector"
+      "sha256": "c0ec7d6d876592f6ad11c22a4a01b57d02e9ff813fdc27e7a67077168bd75883",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "隐藏挡在左下英雄推荐上方的重复主线图标；主线入口仍由底栏战斗按钮提供，地图、特效和其他建筑位置不变。",
+      "inspector": "Creator 竖屏核对重复图标不再显示，实际点击底栏战斗打开主线并返回。地图手势仍通过专项检查。"
     },
     "client/assets/bundles/module/home/prefabs/RemakeHomeView.prefab": {
       "sha256": "a519a0b81a21c0ccdd0c7a0f0a2366dacef2316f34326726abcc24f9d4be978f",
@@ -352,19 +387,47 @@
       "scope": "Creator 独立 H2 本机预览，角色 1 级从主城进入市场，旧看板、六件货架、金币万位缩写、免费和付费刷新、冷重登与返回均通过。截图 client/temp/project-checks/market-shelf.png。",
       "inspector": "Creator 浏览器真实交互与序列化绑定检查。"
     },
+    "client/assets/bundles/module/vip/prefabs/VipBenefitCell.prefab": {
+      "sha256": "b028467cf2070802f39b4855e372b146093b013b1b8978b01dc6b04eee1a4b10",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "复用旧版菱形图标和金色横线，权益文案保留原配置绿色高亮，解锁项和数值项之间显示一条横线。",
+      "inspector": "Creator 393×852 独立会话实画核对 VIP1 四条、VIP2 六条、两组顺序、分隔线和数值；专项检查行复用不会遗留旧线。"
+    },
+    "client/assets/bundles/module/vip/prefabs/VipBenefitsView.prefab": {
+      "sha256": "38b04f81fcba16b75c27884a9dbe15fb8a4cc62648f5b0b65310a7cd69d24ca6",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "原版白色金边渐隐面板、红绶带、外侧翻页箭头；共享模态，点窗外关闭，点击纸面不关闭。",
+      "inspector": "Creator 393×852 独立会话核对默认下一档、左右滑入、VIP13 最后一档和长列表滚动、关闭后任务进度不变；不代替发布包或真机验收。"
+    },
     "client/assets/bundles/module/vip/prefabs/VipTaskCell.prefab": {
-      "sha256": "f7cdc49e1096342c0016fe38248ea8cba61e71348b0e6ceb6d3847fa0baac3c0",
-      "date": "2026-11-23",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
-      "inspector": "未操作Creator Inspector"
+      "sha256": "38e03f72694280d47991a58966aedc7458b798687f8839d2fcc6b6f1f10cd12b",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "任务条件保留原配置的绿色高亮，奖励图和数值在左、领取按钮及公共红点在右。",
+      "inspector": "Creator 393×852 独立浏览器检查 VIP0 两列四卡、四个领取红点、20 钻奖励文字和真实领取后的进度。"
+    },
+    "client/assets/bundles/module/vip/prefabs/VipView.prefab": {
+      "sha256": "7462b4e652c495c815fe94fe24859145380f17fd644dee30be9bff3056a798e1",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "按日服重排女神解锁绶带、模型、技能图、特权入口及本档任务区。羁绊养成只保留入口外观和未开放提示。",
+      "inspector": "Creator 393×852 独立浏览器检查 VIP1／VIP6 女神切换、VIP0 不变、特权弹窗和任务进度 0/4→1/4；未验收发布包。"
     },
     "client/assets/bundles/module/dungeon/prefabs/GoldDungeonView.prefab": {
-      "sha256": "f73d6686754d3f852682423fa6f9182022e02bf3f7a01867660a0fc23057d243",
-      "date": "2026-11-23",
+      "sha256": "1e16d906d8a91c555598591d90d2e1871a53a890d4f179c0cf6c3828d1c8fa2a",
+      "date": "2026-11-24",
       "status": "实际预览通过",
-      "scope": "Creator 隔离会话核对 17 级英雄页签锁定、五类图标与横幅、原战场、每类首关挑战和扫荡、实际到账及重登。",
-      "inspector": "未操作 Creator Inspector。"
+      "scope": "Creator 独立会话核对五类页签独占光效、选中缩放、横幅切换和右侧权威次数；已覆盖 0、1、2 次及打开规则窗后保留当前页签。",
+      "inspector": "393×852 竖屏使用隔离后端和真实鼠标操作，未操作 Creator Inspector。"
+    },
+    "client/assets/bundles/module/common/prefabs/RulesView.prefab": {
+      "sha256": "b9f2ee1d8e89b6066955cba3cea26745701b66400f10a701f09c154484efe662",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "Creator 预览核对日常副本打开原版样式说明窗，三条说明换行完整、背景模态和右上角关闭返回正常。",
+      "inspector": "验证范围为日常副本短文及 393×852 竖屏；不代签其他说明窗内容或长文实画。"
     },
     "client/assets/bundles/module/dungeon/prefabs/GoldDungeonStageCell.prefab": {
       "sha256": "4942bf91eaa8a4dc8532c1c71a11baebc33604c21c3416a172544dc5944c6205",
@@ -377,9 +440,82 @@
   "evidenceDirectories": [
     "client/temp/prefab-acceptance-20261102",
     "client/temp/prefab-followup-20261102",
+    "client/temp/formation-align-preview",
     "client/temp/project-checks"
   ],
   "supersededEntries": [
+    {
+      "path": "client/assets/bundles/module/hero/prefabs/FormationView.prefab",
+      "supersededOn": "2026-11-24",
+      "reason": "验收后只改普通布阵的标题文字；原预览记录按实际指纹留存。",
+      "record": {
+        "sha256": "d38afca0b792ea3815fe28b65f52e02bfc1887e16dfa905698d6e66a8241e39f",
+        "date": "2026-11-24",
+        "status": "实际预览通过",
+        "scope": "393×852 Creator 浏览器独立会话验证四列裁剪、品质框、等级、星级、拖换、上阵、撤下和保存，实际草稿战力为 17841 → 20304 → 18897，持久版本 1 → 2。证据见 client/temp/formation-align-preview/review.json。",
+        "inspector": "未操作 Creator Inspector，未签收三尺寸和正式包。"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/hero/prefabs/FormationHeroCellView.prefab",
+      "supersededOn": "2026-11-24",
+      "reason": "头像改为统一的品质框、等级与亮星，保留旧绿勾验收记录。",
+      "record": {
+        "sha256": "ddb1c97745ae54fd6573b5c7c7dd7da88cefb2cc3cb7827d6de48da58a507791",
+        "date": "2026-11-18",
+        "status": "实际预览通过",
+        "scope": "随出阵页在 393×852 Creator 浏览器预览核对，上阵英雄局部压暗并显示绿勾，未上阵英雄保留原颜色。负责人已确认绿勾。证据见 docs/development-progress.md 的本机预览记录。",
+        "inspector": "限所属出阵页中的头像状态，未签收三尺寸、正式包或 Inspector。"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/guild/prefabs/GuildView.prefab",
+      "supersededOn": "2026-11-24",
+      "reason": "已入会大厅重排并接公告编辑和公会经验，原未入会目录验收按旧指纹保留。",
+      "record": {
+        "sha256": "922657700ec351124c27d1b6c544f535864c5c82bd4cc9180caa223f33f16068",
+        "date": "2026-11-24",
+        "status": "实际预览通过",
+        "scope": "未入会页按日服抬高纸面、题牌及页签，推荐首行位于页签下，搜索框内保留提示；入会后大厅布局不变。",
+        "inspector": "Creator 393×852 独立会话核对三页签、编辑确认不发查询、另点查找返回真实结果、建会后进大厅。"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/guild/prefabs/GuildView.prefab",
+      "supersededOn": "2026-11-24",
+      "reason": "目录纸面和查找区调整，审批红点仍沿用原锚点；原结构检查留存。",
+      "record": {
+        "sha256": "0ca2e9697318541cddc78515e1d58312b957709966c3b478285a02ccb76468e8",
+        "date": "2026-11-23",
+        "status": "结构检查通过但视觉待验收",
+        "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+        "inspector": "未操作Creator Inspector"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/home/prefabs/CityChromeView.prefab",
+      "supersededOn": "2026-11-24",
+      "reason": "聊天按钮移出底栏成为可拖动浮层，原常驻栏布局的双尺寸验收按原指纹保留。",
+      "record": {
+        "sha256": "8fa7e6836a857e3a507741cf3d73e0d96c47e6eb02cbf11691b16e505e81eeba",
+        "date": "2026-11-24",
+        "status": "实际预览通过",
+        "scope": "按日服重排 640×1280 常驻顶底栏、活动列与快捷入口；普通、选中、锁标、红点锚点以及展开收起布局均保存于预制体。",
+        "inspector": "Creator 独立浏览器实测 393×852 与 360×800，顶底贴边、头像不裁边、切页选中、红点锁标、活动列／加号折叠和头像入口正常。"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/vip/prefabs/VipTaskCell.prefab",
+      "supersededOn": "2026-11-24",
+      "reason": "任务卡结构与红点锚点按日服调整，使用新指纹记录本机预览。",
+      "record": {
+        "sha256": "f7cdc49e1096342c0016fe38248ea8cba61e71348b0e6ceb6d3847fa0baac3c0",
+        "date": "2026-11-23",
+        "status": "结构检查通过但视觉待验收",
+        "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+        "inspector": "未操作Creator Inspector"
+      }
+    },
     {
       "path": "client/assets/bundles/module/hero/prefabs/FirstSummonView.prefab",
       "supersededOn": "2026-11-19",
@@ -1005,6 +1141,18 @@
       }
     },
     {
+      "path": "client/assets/bundles/module/home/prefabs/CityHubView.prefab",
+      "supersededOn": "2026-11-24",
+      "reason": "按正式服移除可见的重复主线图标；保留上一版红点结构检查记录。",
+      "record": {
+        "sha256": "a8f2a5279eb34a9bad7ee76c1dc0986b06ccb5157efc69545ba68ceb399cbb63",
+        "date": "2026-11-23",
+        "status": "结构检查通过但视觉待验收",
+        "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+        "inspector": "未操作Creator Inspector"
+      }
+    },
+    {
       "path": "client/assets/bundles/module/login/prefabs/RoleProfileView.prefab",
       "supersededOn": "2026-11-23",
       "reason": "公会名称由服务端角色快照刷新，旧版只展示占位。当前公会状态的界面表现待复验。",
@@ -1014,6 +1162,30 @@
         "status": "实际预览通过",
         "scope": "Creator 本机 393×852 竖屏独立测试服。公开角色编号、保存的主线英雄品质和星级，头像/形象/称号入口定位与重登通过。详见 docs/role-data-contract.md。",
         "inspector": "脚本绑定及 Creator 浏览器检查，范围为本机独立测试环境。"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/home/prefabs/CityChromeView.prefab",
+      "supersededOn": "2026-11-24",
+      "reason": "常驻栏迁至 640×1280 并按日服重排，原记录保留局部头像和等级调整的验收范围。",
+      "record": {
+        "sha256": "8238f0aefcf23a13513930bf83d7b60ed70eb9ab8953d281a9a2e0e18e4bd773",
+        "date": "2026-11-24",
+        "status": "实际预览通过",
+        "scope": "顶栏头像、边框及等级牌放大，昵称保留单行缩字；通用顶栏适配专项核对窄屏边缘、不重叠及等级对齐。",
+        "inspector": "Creator 独立浏览器竖屏实测顶栏新尺寸、边缘留白和名称间隙；主城专项覆盖 480～960 的逻辑视口宽度。"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/home/prefabs/CityChromeView.prefab",
+      "supersededOn": "2026-11-24",
+      "reason": "顶栏头像和等级尺寸调整；原记录保留此前底栏红点验收范围。",
+      "record": {
+        "sha256": "a3e5115e1c143a9de5c0553f317382df5afa264e9f221c8116be8f619b7e99f3",
+        "date": "2026-11-23",
+        "status": "实际预览通过",
+        "scope": "Creator 独立浏览器加载实际底栏，验证上阵英雄升星条件点亮底栏、锁标优先、快照更新后熄灭与关闭清理。",
+        "inspector": "验证范围限单一预览设备尺寸与红点相关行为，未操作 Creator Inspector。"
       }
     },
     {
@@ -1090,6 +1262,18 @@
     },
     {
       "path": "client/assets/bundles/module/dungeon/prefabs/GoldDungeonView.prefab",
+      "supersededOn": "2026-11-24",
+      "reason": "恢复原版页签选中绘制范围并新增次数说明入口，保留原玩法验收范围。",
+      "record": {
+        "sha256": "f73d6686754d3f852682423fa6f9182022e02bf3f7a01867660a0fc23057d243",
+        "date": "2026-11-23",
+        "status": "实际预览通过",
+        "scope": "Creator 隔离会话核对 17 级英雄页签锁定、五类图标与横幅、原战场、每类首关挑战和扫荡、实际到账及重登。",
+        "inspector": "未操作 Creator Inspector。"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/dungeon/prefabs/GoldDungeonView.prefab",
       "supersededOn": "2026-11-23",
       "reason": "扩展为五类日常副本后重新检查组件布局。",
       "record": {
@@ -1134,6 +1318,18 @@
         "status": "实际预览通过",
         "scope": "Creator 393×852 复验独立魅惑之拥战报，两个目标同一击分别显示 -905。两条原版蓝字独立放大、弹跳、渐隐并结束销毁。专项另验证末击收尾、取消和五目标并行。验收限本次飘字变化。",
         "inspector": "本批未操作 Creator Inspector。"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/hero/prefabs/HeroIconCellView.prefab",
+      "supersededOn": "2026-11-24",
+      "reason": "名册格更新等级文字位置、品质框和星级资源，原红点验收证据继续按旧指纹保存。",
+      "record": {
+        "sha256": "8bbe70aebfaec53540417cc5fa0c7d0207cce3323e6a53cf4a65e9db7279e9dc",
+        "date": "2026-11-23",
+        "status": "实际预览通过",
+        "scope": "Creator 独立浏览器加载实际名册格，验证升星点亮、离屏熄灭、换条目不串亮、重回原条目时复用同一节点及原尺寸。完整滚动和跨场景复用由专项覆盖。",
+        "inspector": "验证范围限单一预览设备尺寸与红点相关行为，未操作 Creator Inspector。"
       }
     },
     {

@@ -1,55 +1,23 @@
 /**
- * 主城顶底栏 View：绑定导航、资产显示和各功能聚合红点，不读取网络或全局角色仓库。
+ * 主城常驻顶底栏：只绑定宿主提供的角色资料、导航状态及交互。
+ * 固定结构、位置与大小由 CityChromeView.prefab 保存；代码仅适配外层视口，
+ * 顶底栏、主城快捷入口由 Prefab 的 Widget 和 ViewportScale 对齐；浮动聊天只在当前主城记住拖放位置。
  */
-import { ResManager } from "../../../framework/assets/ResManager";
-import { _decorator, Color, Label, Node, Overflow, Sprite, UITransform } from "cc";
+import { _decorator, Button, Node, Sprite, UITransform } from "cc";
 import { CITY_BAR } from "../../../config/CityNavigationUtils";
-import { ErrorUtils } from "../../../core/ErrorUtils";
-import { GameLog } from "../../../core/GameLog";
+import { ResManager } from "../../../framework/assets/ResManager";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { RedDotBinding } from "../../../framework/ui/RedDotBinding";
-import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
-import { CityChrome, CityChromeActions, CityChromeUtils, TabState } from "./CityChromeUtils";
-import { CityTabUtils } from "../utils/CityTabUtils";
-import { PrefabLoader } from "../../../framework/assets/PrefabLoader";
+import { UIManager } from "../../../framework/ui/UIManager";
 import { UiKitUtils } from "../../../framework/ui/UiKitUtils";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
+import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
+import { CityTabUtils } from "../utils/CityTabUtils";
+import { CityChatDrag } from "./CityChatDrag";
+
 const { ccclass, property } = _decorator;
-const PREFAB_TAB_SELECTED = new Color(255, 210, 140, 255);
-const PREFAB_TAB_OPEN = new Color(255, 255, 255, 255);
-const PREFAB_TAB_LOCKED = new Color(160, 164, 176, 255);
-const BOTTOM_BG_WIDTH = 724;
-/**
- * 底栏字图。副本的文件名是 skin，字是「副本」。
- * 最右一格用日服 VIP 字，不用国服「羁绊」。
- */
-const TAB_CAPTION: {
-    [id: string]: string;
-} = {
-    city: "home/ui/main-scene-lang_lbl-city",
-    hero: "home/ui/main-scene-lang_lbl-hero",
-    bag: "home/ui/main-scene-lang_lbl-backpack",
-    battle: "home/ui/main-scene-lang_lbl-battle",
-    dungeon: "home/ui/main-scene-lang_lbl-skin",
-    clan: "home/ui/main-scene-lang_lbl-clan",
-    fetter: "home/ui/main-scene-lang_lbl-fetters-unlock",
-};
-const TAB_ICON: {
-    [id: string]: string;
-} = {
-    fetter: "home/ui/main-scene_spr-fetters-unlock",
-};
-const ACTIVITY_NAMES = [
-    "ActRecommend",
-    "ActSevenDay",
-    "ActHeroArrive",
-    "ActPrivilege",
-    "ActWelfare",
-    "BtnActExpand",
-    "ActLimitGift",
-    "ActLimitTime",
-];
-/** 已接入业务状态的底栏按钮及其红点汇总路径。 */
+
+/** 底栏实际接入的红点汇总分支。 */
 const TAB_RED_DOT_PATHS: Readonly<Record<string, string | undefined>> = {
     city: GameRedDotKey.CITY,
     hero: GameRedDotKey.HERO,
@@ -59,16 +27,46 @@ const TAB_RED_DOT_PATHS: Readonly<Record<string, string | undefined>> = {
     clan: GameRedDotKey.GUILD,
     fetter: GameRedDotKey.VIP,
 };
-export interface CityChromeOpenArgs {
-    onTab: (id: string) => void;
-    actions: CityChromeActions;
+
+export interface TabState {
+    /** 对应 CITY_BAR 的导航标识。 */
+    readonly id: string;
+    /** 导航文案；固定字图由预制体提供，不从此字段拼装节点。 */
+    readonly text: string;
+    /** 宿主已经计算的选中／开放／锁定状态。 */
+    readonly state: "selected" | "open" | "locked";
+    /** 正整数等级门槛；小于等于 1 或缺失时隐藏门槛文字。 */
+    readonly lockLevel?: number;
 }
-/**
- * 顶栏和底栏。挂在 UIShell 的 chrome 层，不进页面栈。
- * 货币、战力和头像只显示 MainApp 送进来的字符串，这里不读协议。
- */
+
+export interface CityChromeOpenArgs {
+    /** 把实际按钮选择交给主城宿主。 */
+    readonly onTab: (id: string) => void;
+    /** 把活动、更多和邮件意图交给主城宿主，不在顶栏开业务窗口。 */
+    readonly actions: {
+        readonly openActivity: () => void;
+        readonly openMore: () => void;
+        readonly openMail: () => void;
+    };
+}
+
+/** 底栏两套立绘共用一个操作入口；点位和层级分开保存于预制体。 */
+interface TabBinding {
+    /** 普通状态的框、图标及文字。 */
+    readonly normal: Node;
+    /** 更高绘制层的选中框、图标及文字。 */
+    readonly selected: Node;
+    /** 锁定标识及等级要求，不影响打开条件提示。 */
+    readonly lock: Node;
+    /** 等级文字，跟随锁定状态更新。 */
+    readonly lockLevel: Node;
+    /** 普通和选中版本各自的红点绑定；换状态后刷新显隐。 */
+    readonly redDots: readonly RedDotBinding[];
+}
+
+/** 顶底栏挂在主城的常驻层，不进入页面栈。 */
 @ccclass("CityChromeView")
-export class CityChromeView extends BaseView<CityChromeOpenArgs> implements CityChrome {
+export class CityChromeView extends BaseView<CityChromeOpenArgs> {
     /** 预制体绑定的角色名称节点，未绑定时由首次打开检查报告错误。 */
     @property(Node)
     lblName: Node | null = null;
@@ -105,7 +103,7 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
     /** 主城专属工具入口行，显示状态与活动组一起切换。 */
     @property(Node)
     utilityRow: Node | null = null;
-    /** 底栏预制体背景节点，适配时只调整这张图的宽度。 */
+    /** 底栏的固定背景，由预制体保存位置和大小。 */
     @property(Node)
     bottomBg: Node | null = null;
     /** 预制体绑定的主城导航按钮，按CITY_BAR顺序登记。 */
@@ -129,9 +127,27 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
     /** 预制体绑定的VIP导航按钮，使用既有fetter入口标识。 */
     @property(Node)
     tabFetter: Node | null = null;
-    /** 按ACTIVITY_NAMES顺序绑定的活动按钮，首次打开核对数量和空引用。 */
+    /** 按 CITY_BAR 顺序绑定的选中立绘，与普通按钮分层绘制。 */
+    @property([Node])
+    selectedTabs: Node[] = [];
+    /** 活动入口；按钮及显隐由预制体保存，点击交给宿主，不假造活动状态。 */
     @property([Node])
     activityButtons: Node[] = [];
+    /** 两侧活动栏的完整展示版，从左到右与收起版对应。 */
+    @property([Node])
+    expandedActivityRails: Node[] = [];
+    /** 两侧活动栏的收起版，保留首个入口和展开按钮。 */
+    @property([Node])
+    collapsedActivityRails: Node[] = [];
+    /** 加号收起时隐藏的工具组；推荐入口和加号本身保持可见。 */
+    @property(Node)
+    utilityEntries: Node | null = null;
+    /** 已还原图案但尚未接入业务的快捷按钮，只给出统一未开放提示。 */
+    @property([Node])
+    shortcutButtons: Node[] = [];
+    /** 独立浮动层里的聊天按钮，短按和拖动由同一手势处理区分。 */
+    @property(Node)
+    btnChat: Node | null = null;
     /** 预制体绑定的录像工具按钮，当前统一转交更多入口。 */
     @property(Node)
     btnReplay: Node | null = null;
@@ -147,60 +163,50 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
     /** 预制体绑定的更多工具按钮，点击转交统一更多入口。 */
     @property(Node)
     btnMore: Node | null = null;
-    /** 主城打开时注入的导航回调；null表示尚未装配，不由本页持有导航状态。 */
-    private onTab: ((id: string) => void) | null = null;
-    /** 主城打开时注入的活动、更多与邮件操作；null时按钮只记录缺少回调。 */
-    private actions: CityChromeActions | null = null;
-    /** 导航标识到本实例按钮节点的索引，首次绑定生成，刷新样式时复用。 */
-    private tabs: {
-        [id: string]: Node;
-    } = {};
-    /** 本实例首次开始绑定后为true，后续打开只更新注入操作，不重复登记按钮。 */
-    private started = false;
-    /** 导航标识到本次开页红点绑定，关闭时清理；锁定变化时刷新对应入口。 */
-    private readonly tabRedDots = new Map<string, RedDotBinding>();
+    /** 旧主城经验条的横向填充组件，只展示服务器同步的等级内经验。 */
+    @property(Sprite)
+    experienceFill: Sprite | null = null;
+
+    /** 导航标识到预制体两套立绘与锁定节点；每次打开建立，关闭清空。 */
+    private readonly tabBindings = new Map<string, TabBinding>();
+
     /** 返回当前顶底栏节点，供主城宿主持有和显示。 */
     get root(): Node {
         return this.node;
     }
-    /** 接收导航操作并绑定公共红点。按钮只绑定一次，红点随本次开关页释放。 */
-    onOpen(args?: CityChromeOpenArgs): void {
-        if (args) {
-            this.args = args;
-            this.onTab = args.onTab;
-            this.actions = args.actions;
+
+    /** 校验已有预制体绑定并接管本次显示期的点击、红点和视口监听。 */
+    public onOpen(args?: CityChromeOpenArgs): void {
+        if (!args) {
+            throw new Error("CityChromeView 未注入导航操作");
         }
-        if (this.started) {
-            this.bindTabRedDots();
-            return;
+        this.validateBindings();
+        this.ownListener(() => this.tabBindings.clear());
+        const buttons = [this.tabCity, this.tabHero, this.tabBag, this.tabBattle, this.tabDungeon, this.tabClan, this.tabFetter];
+        for (const [index, entry] of CITY_BAR.entries()) {
+            this.bindTab(entry.id, this.requireNode(buttons[index], entry.id), this.selectedTabs[index], args.onTab);
         }
-        this.started = true;
-        this.beginOpen();
-        try {
-            this.bindAll();
-            this.bindTabRedDots();
-            this.finishOpen();
-        }
-        catch (err) {
-            const error = err instanceof Error ? err : new Error(ErrorUtils.messageOf(err));
-            GameLog.shared.classified("MODULE", "warn", "CityChromeView", "没有挂上 " + error.message);
-            this.failOpen(error);
-        }
+        this.bindShortcuts(args.actions);
+        this.bindChat();
+        this.bindActivityRails();
+        this.ownListener(ViewportLayoutUtils.bindVisibleRefresh(this.node,
+            () => ViewportLayoutUtils.fitVisibleRoot(this.node)));
     }
-    /** 更新角色名称及副标题；开发身份说明行隐藏，不在顶栏展示调试资料。 */
-    setIdentity(nameLine: string, subLine: string): void {
+
+    /** 更新角色姓名和可用副标题，不把开发身份说明绘制在顶栏。 */
+    public setIdentity(nameLine: string, subLine: string): void {
         if (this.lblName) {
             UiKitUtils.setText(this.lblName, nameLine);
         }
-        if (!this.lblSub) {
-            return;
+        if (this.lblSub) {
+            const developer = subLine.startsWith("真服 ·");
+            this.lblSub.active = !developer && subLine.length > 0;
+            UiKitUtils.setText(this.lblSub, developer ? "" : subLine);
         }
-        const debug = subLine.indexOf("真服 ·") === 0;
-        this.lblSub.active = !debug;
-        UiKitUtils.setText(this.lblSub, debug ? "" : subLine);
     }
-    /** 显示金币与宿主给定的次要资源，英雄培养页切换到预制体中的经验图标。 */
-    setCurrencies(goldLine: string, secondaryLine: string, showHeroExperience = false): void {
+
+    /** 显示实际金币和次要资源，英雄培养状态仅切换两枚预制体图标。 */
+    public setCurrencies(goldLine: string, secondaryLine: string, showHeroExperience = false): void {
         if (this.goldValue) {
             UiKitUtils.setText(this.goldValue, goldLine);
         }
@@ -215,94 +221,71 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
             }
         }
     }
-    /** 更新服务端战力文字，并在既有区域内缩放长文本；空字符串按调用方约定清空占位值。 */
-    setPower(text: string): void {
-        const node = this.powerValue;
-        if (!node) {
-            return;
+
+    /** 只写入权威战力；文字溢出和宽度由预制体设置。 */
+    public setPower(text: string): void {
+        if (this.powerValue) {
+            UiKitUtils.setText(this.powerValue, text);
         }
-        UiKitUtils.setText(node, text);
-        const label = node.getComponent(Label);
-        if (label) {
-            label.overflow = Overflow.SHRINK;
-        }
-        ViewportLayoutUtils.assignContentSize(node.getComponent(UITransform), 68, 24);
     }
+
     /** 显示已同步的等级徽章；空字符串隐藏等级文字与底图。 */
-    setLevelBadge(text: string): void {
+    public setLevelBadge(text: string): void {
         const show = text.length > 0;
         if (this.lblLevel) {
             this.lblLevel.active = show;
-            if (show) {
-                UiKitUtils.setText(this.lblLevel, text);
-            }
+            UiKitUtils.setText(this.lblLevel, text);
         }
         if (this.levelBg) {
             this.levelBg.active = show;
         }
     }
 
-    /** 旧主城经验条的横向填充组件，只展示服务器同步的等级内经验。 */
-    @property(Sprite)
-    experienceFill: Sprite | null = null;
-    /** 刷新当前经验比例；缺失资料或最高级零门槛显示空条，不自行升级。 */
-    setExperience(experience?: number, required?: number): void {
-        if (!this.experienceFill) {
-            return;
-        }
-        const valid = typeof experience === "number" && Number.isFinite(experience)
-            && typeof required === "number" && Number.isFinite(required) && required > 0;
-        this.experienceFill.fillRange = valid ? Math.max(0, Math.min(1, experience! / required!)) : 0;
-    }
-    /** 按主城提供的资源路径更新头像；null隐藏头像，不推断角色形象。 */
-    setAvatar(icon: string | null): void {
-        this.paintAvatar(icon);
-    }
-    /** 由导航状态更新选中样式、锁定等级和红点；锁定的入口暂时隐藏红点。 */
-    setTabs(tabs: TabState[]): void {
-        const paint = CityTabUtils.tabPaintState(tabs.map((tab) => tab.state));
-        for (let i = 0; i < tabs.length; i++) {
-            const tab = tabs[i];
-            const button = this.tabs[tab.id];
-            if (!button) {
-                continue;
-            }
-            const state = paint[i] === "locked" ? "locked" : paint[i] === "selected" ? "selected" : "open";
-            CityChromeUtils.setCityTabSelected(button, state === "selected");
-            PrefabLoader.tintSprite(button, CityChromeView.prefabTabColor(state));
-            const lock = button.getChildByName("Lock");
-            if (lock) {
-                const locked = tab.state === "locked";
-                lock.active = locked;
-                if (locked) {
-                    CityChromeView.paintLockLevel(lock, tab.lockLevel && tab.lockLevel > 1 ? tab.lockLevel : 0);
-                }
-            }
-            this.tabRedDots.get(tab.id)?.refresh();
+    /** 刷新当前经验比例；缺失资料或最高级零门槛显示空条。 */
+    public setExperience(experience?: number, required?: number): void {
+        if (this.experienceFill) {
+            const valid = typeof experience === "number" && Number.isFinite(experience)
+                && typeof required === "number" && Number.isFinite(required) && required > 0;
+            this.experienceFill.fillRange = valid ? Math.max(0, Math.min(1, experience / required)) : 0;
         }
     }
 
-    /** 将底栏按钮绑定到红点树。锁标优先，关闭时清理所有显示绑定。 */
-    private bindTabRedDots(): void {
-        if (this.tabRedDots.size > 0) {
-            return;
+    /** 使用已绑定的头像图片；资源管理器负责取消同节点被替换的在途图片。 */
+    public setAvatar(icon: string | null): void {
+        if (this.avatar) {
+            this.avatar.active = icon !== null;
+            ResManager.setSprite(this.avatarFace, icon);
         }
-        this.ownListener(() => {
-            for (const binding of this.tabRedDots.values()) {
-                binding.dispose();
+    }
+
+    /** 按宿主状态切换静态立绘和等级要求，并保持锁定优先于红点。 */
+    public setTabs(tabs: TabState[]): void {
+        const paint = CityTabUtils.tabPaintState(tabs.map(tab => tab.state));
+        for (const [index, tab] of tabs.entries()) {
+            const binding = this.tabBindings.get(tab.id);
+            if (!binding) {
+                continue;
             }
-            this.tabRedDots.clear();
-        });
-        for (const [id, path] of Object.entries(TAB_RED_DOT_PATHS)) {
-            const button = this.tabs[id];
-            if (path && button) {
-                const lock = button.getChildByName("Lock");
-                this.tabRedDots.set(id, new RedDotBinding(button, path, () => !lock?.active));
+            const locked = paint[index] === "locked";
+            const selected = paint[index] === "selected";
+            const level = locked && (tab.lockLevel ?? 0) > 1 ? `Lv${tab.lockLevel}` : "";
+            binding.normal.active = !selected;
+            binding.selected.active = selected;
+            binding.lock.active = locked;
+            binding.lockLevel.active = level.length > 0;
+            UiKitUtils.setText(binding.lockLevel, level);
+            const icon = binding.normal.getChildByName("Icon")?.getComponent(Sprite);
+            if (icon) {
+                icon.grayscale = locked;
+            }
+            for (const redDot of binding.redDots) {
+                redDot.refresh();
             }
         }
     }
-    /** 切换主城专属活动组和工具行的显示；进入其他功能页时由宿主隐藏。 */
-    setCityExtras(visible: boolean): void {
+
+    /** 仅切换主城快捷入口组，隐藏的未接入子节点不随分组自动开放。 */
+    public setCityExtras(visible: boolean): void {
         if (this.actGroup) {
             this.actGroup.active = visible;
         }
@@ -311,278 +294,127 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
         }
     }
 
-    /** 核对必需节点，绑定底栏与工具入口，并登记随视口刷新的布局；只在本实例首次打开执行。 */
-    private bindAll(): void {
-        this.sealBottom();
-        const tabNodes = [this.tabCity, this.tabHero, this.tabBag, this.tabBattle, this.tabDungeon, this.tabClan, this.tabFetter];
-        if (tabNodes.length !== CITY_BAR.length) {
-            throw new Error("底栏按钮数量不对");
+    /** 校验必须由预制体提供的节点及数组；缺失时由宿主报告开页失败。 */
+    private validateBindings(): void {
+        const required: Array<[Node | null, string]> = [
+            [this.lblName, "LblName"],
+            [this.lblSub, "LblSub"],
+            [this.lblLevel, "LblLevel"],
+            [this.levelBg, "LevelBg"],
+            [this.avatar, "Avatar"],
+            [this.avatarFace, "Avatar/Face"],
+            [this.avatarBorder, "Avatar/Border"],
+            [this.goldValue, "CurrencyGold/Value"],
+            [this.gemValue, "CurrencyGem/Value"],
+            [this.powerValue, "PowerSlot/Value"],
+            [this.actGroup, "ActGroup"],
+            [this.utilityRow, "UtilityRow"],
+            [this.bottomBg, "BottomBar/Bg"],
+            [this.experienceFill?.node ?? null, "ExperienceFill"],
+        ];
+        for (const [node, name] of required) {
+            this.requireNode(node, name);
         }
-        for (let i = 0; i < CITY_BAR.length; i++) {
-            const entry = CITY_BAR[i];
-            const button = tabNodes[i];
-            if (!button) {
-                throw new Error("缺少节点 " + entry.id);
+        if (this.selectedTabs.length !== CITY_BAR.length) {
+            throw new Error("CityChromeView 选中立绘没有绑全");
+        }
+    }
+
+    /** 绑定单个入口及两套红点锚点，不修改预制体层级、坐标或尺寸。 */
+    private bindTab(id: string, button: Node, selectedNode: Node, onTab: (id: string) => void): void {
+        const normal = this.requireNode(button.getChildByName("Default"), `${button.name}/Default`);
+        const selected = this.requireNode(selectedNode, `${button.name} 的选中立绘`);
+        const lock = this.requireNode(button.getChildByName("Lock"), `${button.name}/Lock`);
+        const lockLevel = this.requireNode(lock.getChildByName("Lv"), `${button.name}/Lock/Lv`);
+        const path = TAB_RED_DOT_PATHS[id];
+        const redDots = path ? [normal, selected].map(artwork => {
+            const anchor = this.requireNode(artwork.getChildByName("RedDotAnchor"), `${artwork.name}/RedDotAnchor`);
+            const dot = RedDotBinding.atAnchor(anchor, path, () => artwork.active && !lock.active);
+            this.ownListener(() => dot.dispose());
+            return dot;
+        }) : [];
+        this.bindClick(button, () => onTab(id));
+        this.tabBindings.set(id, { normal, selected, lock, lockLevel, redDots });
+    }
+
+    /** 活动和工具入口交给宿主；加号只显隐预制体中的快捷项。 */
+    private bindShortcuts(actions: CityChromeOpenArgs["actions"]): void {
+        for (const [index, node] of this.activityButtons.entries()) {
+            this.bindClick(this.requireNode(node, `活动入口 ${index + 1}`), actions.openActivity);
+        }
+        for (const [index, node] of this.shortcutButtons.entries()) {
+            this.bindClick(this.requireNode(node, `快捷入口 ${index + 1}`),
+                () => UIManager.instance.toast("功能暂未开放"));
+        }
+        const more: Array<[Node | null, string]> = [
+            [this.btnReplay, "BtnReplay"], [this.btnFriend, "BtnFriend"],
+            [this.btnRank, "BtnRank"],
+        ];
+        for (const [node, name] of more) {
+            this.bindClick(this.requireNode(node, name), actions.openMore);
+        }
+        this.bindClick(this.requireNode(this.btnMore, "BtnMore"), () => {
+            if (this.utilityEntries) {
+                this.utilityEntries.active = !this.utilityEntries.active;
+            } else {
+                actions.openMore();
             }
-            CityChromeUtils.prepareCityTab(button);
-            const lock = button.getChildByName("Lock");
-            if (lock) {
-                lock.active = false;
-            }
-            const label = button.getChildByName("Label");
-            if (label) {
-                label.active = false;
-            }
-            CityChromeView.mountTabCaption(button, TAB_CAPTION[entry.id] || "");
-            CityChromeView.mountTabIcon(button, TAB_ICON[entry.id] || "");
-            PrefabLoader.bindClick(button, () => {
-                if (this.onTab) {
-                    this.onTab(entry.id);
-                }
+        });
+        this.bindClick(this.requireNode(this.btnMail, "BtnMail"), actions.openMail);
+    }
+
+    /** 绑定预制体中的浮动聊天按钮；拖动不触发原有未开放提示。 */
+    private bindChat(): void {
+        const node = this.requireNode(this.btnChat, "BtnChat");
+        const viewport = this.node.getComponent(UITransform);
+        const dock = node.parent?.getComponent(UITransform);
+        const button = node.getComponent(Button);
+        const icon = node.getComponent(UITransform);
+        if (!viewport || !dock || !button || !icon) {
+            throw new Error("CityChromeView 聊天按钮缺少拖动所需的预制体组件");
+        }
+        this.ownListener(new CityChatDrag(viewport, dock, button, icon,
+            () => UIManager.instance.toast("功能暂未开放")).bind());
+    }
+
+    /** 各活动栏独立切换两套预制布局，展开与收起无需改节点坐标。 */
+    private bindActivityRails(): void {
+        if (this.expandedActivityRails.length !== this.collapsedActivityRails.length) {
+            throw new Error("主城活动栏展开与收起布局未成对绑定");
+        }
+        for (const [index, expanded] of this.expandedActivityRails.entries()) {
+            const collapsed = this.requireNode(this.collapsedActivityRails[index], `收起活动栏 ${index + 1}`);
+            const collapseButton = this.requireNode(expanded.getChildByName("CollapseButton"), "CollapseButton");
+            const expandButton = this.requireNode(collapsed.getChildByName("ExpandButton"), "ExpandButton");
+            this.bindClick(collapseButton, () => {
+                expanded.active = false;
+                collapsed.active = true;
             });
-            this.tabs[entry.id] = button;
+            this.bindClick(expandButton, () => {
+                collapsed.active = false;
+                expanded.active = true;
+            });
         }
-        this.bindActivity();
-        this.bindMore();
-        this.requireNode(this.lblName, "LblName");
-        this.requireNode(this.lblSub, "LblSub");
-        this.requireNode(this.goldValue, "CurrencyGold/Value");
-        this.requireNode(this.gemValue, "CurrencyGem/Value");
-        this.requireNode(this.powerValue, "PowerSlot/Value");
-        this.requireNode(this.lblLevel, "LblLevel");
-        this.requireNode(this.levelBg, "LevelBg");
-        this.requireNode(this.avatar, "Avatar");
-        this.requireNode(this.actGroup, "ActGroup");
-        this.requireNode(this.utilityRow, "UtilityRow");
-        ViewportLayoutUtils.bindVisibleRefresh(this.node, () => {
-            if (!this.node || !this.node.isValid) {
-                return;
+    }
+
+    /** 仅登记已存在的 Button；同一显示期结束后移除本次监听。 */
+    private bindClick(node: Node, action: () => void): void {
+        if (!node.getComponent(Button)) {
+            throw new Error(`CityChromeView ${node.name} 缺少 Button`);
+        }
+        node.on(Button.EventType.CLICK, action);
+        this.ownListener(() => {
+            if (node.isValid) {
+                node.off(Button.EventType.CLICK, action);
             }
-            const box = ViewportLayoutUtils.fitVisibleRoot(this.node);
-            this.fitChildren(box.width);
         });
     }
 
-    /** 核对活动按钮引用并统一转交活动列表操作，缺少注入操作时记录展示警告。 */
-    private bindActivity(): void {
-        const buttons = this.activityButtons;
-        if (!buttons || buttons.length !== ACTIVITY_NAMES.length) {
-            throw new Error("ActGroup 按钮没有绑全");
-        }
-        for (let i = 0; i < buttons.length; i++) {
-            const button = buttons[i];
-            if (!button) {
-                throw new Error("缺少节点 " + ACTIVITY_NAMES[i]);
-            }
-            PrefabLoader.bindClick(button, () => {
-                if (this.actions) {
-                    this.actions.openActivity();
-                }
-                else {
-                    GameLog.shared.classified("MODULE", "warn", "CityChromeView", "活动按钮没有回调");
-                }
-            });
-        }
-    }
-
-    /** 绑定录像、好友、排行及更多到统一更多入口，并单独转交邮件操作；不开放额外玩法。 */
-    private bindMore(): void {
-        const more = [this.btnReplay, this.btnFriend, this.btnRank, this.btnMore];
-        const names = ["BtnReplay", "BtnFriend", "BtnRank", "BtnMore"];
-        for (let i = 0; i < more.length; i++) {
-            const button = more[i];
-            if (!button) {
-                throw new Error("缺少节点 " + names[i]);
-            }
-            PrefabLoader.bindClick(button, () => {
-                if (this.actions) {
-                    this.actions.openMore();
-                }
-                else {
-                    GameLog.shared.classified("MODULE", "warn", "CityChromeView", "更多按钮没有回调");
-                }
-            });
-        }
-        const mail = this.requireNode(this.btnMail, "BtnMail");
-        PrefabLoader.bindClick(mail, () => {
-            if (this.actions) {
-                this.actions.openMail();
-            }
-            else {
-                GameLog.shared.classified("MODULE", "warn", "CityChromeView", "邮件按钮没有回调");
-            }
-        });
-    }
-
-    /** 返回已绑定的必需节点；缺失时抛出绑定错误，由开页边界记录并中止打开。 */
-    private requireNode(node: Node | null, label: string): Node {
+    /** 返回非空的预制体引用；不同入口的缺项保留明确名称。 */
+    private requireNode(node: Node | null | undefined, name: string): Node {
         if (!node) {
-            throw new Error("缺少节点 " + label);
+            throw new Error(`CityChromeView 缺少 ${name}`);
         }
         return node;
-    }
-
-    /**
-     * 底栏只用预制上的 Bg。不再铺运行时色块，避免七个键后面多一层深色垫。
-     */
-    private sealBottom(): void {
-        const bg = this.requireNode(this.bottomBg, "BottomBar/Bg");
-        const ui = bg.getComponent(UITransform);
-        const bottom = bg.parent;
-        if (!bottom) {
-            return;
-        }
-        const barUi = bottom.getComponent(UITransform);
-        const barSize = ViewportLayoutUtils.uiSize(barUi);
-        const bgSize = ViewportLayoutUtils.uiSize(ui);
-        const barW = barSize && barSize.width > BOTTOM_BG_WIDTH ? barSize.width : BOTTOM_BG_WIDTH;
-        const height = bgSize && bgSize.height > 0 ? bgSize.height : 129;
-        if (ui) {
-            ui.setContentSize(barW, height);
-        }
-        const pad = bottom.getChildByName("BgPad");
-        if (pad) {
-            pad.active = false;
-        }
-    }
-
-    /**
-     * 顶栏底栏按可见宽拉开。这里只看根的直接子节点，用来拉条，不拿来找业务节点。
-     */
-    private fitChildren(width: number): void {
-        const kids = this.node.children;
-        for (let i = 0; i < kids.length; i++) {
-            const child = kids[i];
-            if (child.name === "TopBar" || child.name === "top-bg") {
-                ViewportLayoutUtils.stretchBar(child, width, "top");
-            }
-            else if (child.name === "BottomBar" || child.name === "bottom-bg") {
-                ViewportLayoutUtils.stretchBar(child, width, "bottom");
-            }
-            else {
-                ViewportLayoutUtils.squeezeWideNode(child, width);
-            }
-        }
-        for (let i = 0; i < kids.length; i++) {
-            const child = kids[i];
-            if (child.name !== "TopBar" && child.name !== "BottomBar") {
-                continue;
-            }
-            const inner = child.children;
-            for (let j = 0; j < inner.length; j++) {
-                const node = inner[j];
-                if (node.name === "Bg" || node.name === "BgPad") {
-                    continue;
-                }
-                if (CityChromeUtils.isCityTab(node.name)) {
-                    CityChromeUtils.layoutCityTab(node, width);
-                }
-                else {
-                    ViewportLayoutUtils.squeezeWideNode(node, width);
-                }
-            }
-        }
-        CityChromeUtils.layoutCityHeader(this.node, width);
-    }
-
-    /** 复用头像容器并按路径标记更新图片，迟到的旧路径结果不能覆盖当前头像。 */
-    private paintAvatar(icon: string | null): void {
-        const avatar = this.avatar;
-        if (!avatar) {
-            return;
-        }
-        if (!icon) {
-            avatar.active = false;
-            return;
-        }
-        avatar.active = true;
-        let face = avatar.getChildByName("Face");
-        if (!face) {
-            face = UiKitUtils.uiNode("Face");
-            const ui = face.addComponent(UITransform);
-            ui.setContentSize(78, 78);
-            const sprite = face.addComponent(Sprite);
-            sprite.sizeMode = Sprite.SizeMode.CUSTOM;
-            face.setPosition(0, 0, 0);
-            face.parent = avatar;
-        }
-        const mark = face as Node & {
-            mxzgIcon?: string;
-        };
-        if (mark.mxzgIcon === icon) {
-            return;
-        }
-        mark.mxzgIcon = icon;
-        const sprite = face.getComponent(Sprite);
-        if (!sprite) {
-            return;
-        }
-        const wanted = icon;
-        ResManager.setSprite(face, [wanted], () => mark.mxzgIcon === wanted);
-    }
-
-    /** 首次绑定时在已有按钮内创建底栏文字图节点，图片资源随该节点释放。 */
-    private static mountTabCaption(button: Node, path: string): void {
-        if (!path) {
-            return;
-        }
-        const size = ViewportLayoutUtils.uiSize(button.getComponent(UITransform));
-        const plate = size ? size.height : 78;
-        const node = UiKitUtils.uiNode("Caption");
-        const captionUi = node.addComponent(UITransform);
-        captionUi.setContentSize(plate >= 90 ? 65 : 54, plate >= 90 ? 36 : 30);
-        const sprite = node.addComponent(Sprite);
-        sprite.sizeMode = Sprite.SizeMode.CUSTOM;
-        node.setPosition(0, plate >= 90 ? -46 : -36, 0);
-        node.parent = button;
-        ResManager.setSprite(sprite.node, [path]);
-    }
-
-    /** 按既有按钮节点更新图标，空路径使用预制体原图。 */
-    private static mountTabIcon(button: Node, path: string): void {
-        if (!path) {
-            return;
-        }
-        const icon = button.getChildByName("Icon");
-        const sprite = icon ? icon.getComponent(Sprite) : null;
-        if (!sprite) {
-            return;
-        }
-        ResManager.setSprite(sprite.node, [path]);
-    }
-
-    /** 在既有锁定节点显示主线等级门槛，零门槛时隐藏文字。 */
-    private static paintLockLevel(lock: Node, level: number): void {
-        const text = level > 1 ? "Lv" + level : "";
-        let node = lock.getChildByName("Lv");
-        if (!text) {
-            if (node) {
-                node.active = false;
-            }
-            return;
-        }
-        if (!node) {
-            node = UiKitUtils.createLabel(text, 16, { color: new Color(255, 244, 220, 255), width: 64, height: 22 });
-            node.name = "Lv";
-            node.setPosition(0, -20, 0);
-            node.parent = lock;
-        }
-        node.active = true;
-        UiKitUtils.setText(node, text);
-        const label = node.getComponent(Label);
-        if (label) {
-            label.overflow = Overflow.SHRINK;
-        }
-    }
-
-    /** 根据开放、选中或锁定状态返回底栏预制体的统一颜色。 */
-    private static prefabTabColor(state: TabState["state"]): Color {
-        if (state === "locked") {
-            return PREFAB_TAB_LOCKED;
-        }
-        if (state === "selected") {
-            return PREFAB_TAB_SELECTED;
-        }
-        return PREFAB_TAB_OPEN;
     }
 }

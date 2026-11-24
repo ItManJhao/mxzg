@@ -200,8 +200,8 @@
     "_name": "",
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 620,
-      "height": 860
+      "width": 638,
+      "height": 850
     },
     "_objFlags": 0,
     "__type__": "cc.UITransform",
@@ -288,8 +288,8 @@
     "_isAbsBottom": true,
     "_isAbsHorizontalCenter": true,
     "_isAbsVerticalCenter": true,
-    "_originalWidth": 620,
-    "_originalHeight": 860,
+    "_originalWidth": 638,
+    "_originalHeight": 850,
     "_alignMode": 2,
     "_lockFlags": 0,
     "_id": "",
@@ -362,7 +362,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 387,
+      "y": 382,
       "z": 0
     },
     "_objFlags": 0,
@@ -413,8 +413,8 @@
     "_name": "",
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 225,
-      "height": 72
+      "width": 174,
+      "height": 62
     },
     "_objFlags": 0,
     "__type__": "cc.UITransform",
@@ -498,7 +498,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 374,
+      "y": 377,
       "z": 0
     },
     "_objFlags": 0,
@@ -549,8 +549,8 @@
     "_name": "",
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 212,
-      "height": 43
+      "width": 168,
+      "height": 40
     },
     "_objFlags": 0,
     "__type__": "cc.UITransform",
@@ -574,7 +574,7 @@
   },
   {
     "_underlineHeight": 2,
-    "_actualFontSize": 29,
+    "_actualFontSize": 24,
     "_isItalic": false,
     "_spacingX": 0,
     "_string": "公会成员",
@@ -608,7 +608,7 @@
     "__editorExtras__": {},
     "_name": "",
     "_shadowBlur": 2,
-    "_lineHeight": 34,
+    "_lineHeight": 28,
     "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
@@ -622,7 +622,7 @@
     "_dstBlendFactor": 4,
     "_enabled": true,
     "_isUnderline": false,
-    "_fontSize": 29,
+    "_fontSize": 24,
     "_fontFamily": "Arial",
     "_id": "",
     "_objFlags": 0,
@@ -656,8 +656,8 @@
     "_id": "",
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 265,
-      "y": 402,
+      "x": 251,
+      "y": 392,
       "z": 0
     },
     "_objFlags": 0,
@@ -711,8 +711,8 @@
     "_name": "",
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 45,
-      "height": 51
+      "width": 52,
+      "height": 58
     },
     "_objFlags": 0,
     "__type__": "cc.UITransform",
@@ -853,8 +853,8 @@
     "_id": "",
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 273,
-      "y": 337,
+      "x": 191,
+      "y": 332,
       "z": 0
     },
     "_objFlags": 0,
@@ -905,8 +905,8 @@
     "_name": "",
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 170,
-      "height": 32
+      "width": 160,
+      "height": 26
     },
     "_objFlags": 0,
     "__type__": "cc.UITransform",
@@ -930,7 +930,7 @@
   },
   {
     "_underlineHeight": 2,
-    "_actualFontSize": 21,
+    "_actualFontSize": 18,
     "_isItalic": false,
     "_spacingX": 0,
     "_string": "",
@@ -964,7 +964,7 @@
     "__editorExtras__": {},
     "_name": "",
     "_shadowBlur": 2,
-    "_lineHeight": 26,
+    "_lineHeight": 22,
     "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
@@ -978,7 +978,7 @@
     "_dstBlendFactor": 4,
     "_enabled": true,
     "_isUnderline": false,
-    "_fontSize": 21,
+    "_fontSize": 18,
     "_fontFamily": "Arial",
     "_id": "",
     "_objFlags": 0,
@@ -1013,7 +1013,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 10,
+      "y": 9,
       "z": 0
     },
     "_objFlags": 0,
@@ -1068,8 +1068,8 @@
     "_name": "",
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 562,
-      "height": 642
+      "width": 542,
+      "height": 618
     },
     "_objFlags": 0,
     "__type__": "cc.UITransform",
@@ -1211,8 +1211,8 @@
     "_name": "",
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 550,
-      "height": 630
+      "width": 522,
+      "height": 602
     },
     "_objFlags": 0,
     "__type__": "cc.UITransform",
@@ -1242,10 +1242,10 @@
     "_enabled": true,
     "_alignFlags": 45,
     "_target": null,
-    "_left": 6,
-    "_right": 6,
-    "_top": 6,
-    "_bottom": 6,
+    "_left": 10,
+    "_right": 10,
+    "_top": 8,
+    "_bottom": 8,
     "_horizontalCenter": 0,
     "_verticalCenter": 0,
     "_isAbsLeft": true,
@@ -1254,8 +1254,8 @@
     "_isAbsBottom": true,
     "_isAbsHorizontalCenter": true,
     "_isAbsVerticalCenter": true,
-    "_originalWidth": 550,
-    "_originalHeight": 630,
+    "_originalWidth": 522,
+    "_originalHeight": 602,
     "_alignMode": 2,
     "_lockFlags": 0,
     "_id": "",
@@ -1342,8 +1342,8 @@
     "_name": "",
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 550,
-      "height": 630
+      "width": 522,
+      "height": 602
     },
     "_objFlags": 0,
     "__type__": "cc.UITransform",
@@ -1404,7 +1404,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 315,
+      "y": 301,
       "z": 0
     },
     "_objFlags": 0,
@@ -1455,8 +1455,8 @@
     "_name": "",
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 550,
-      "height": 630
+      "width": 522,
+      "height": 602
     },
     "_objFlags": 0,
     "__type__": "cc.UITransform",
@@ -1489,8 +1489,8 @@
     "_layoutType": 2,
     "_cellSize": {
       "__type__": "cc.Size",
-      "width": 550,
-      "height": 130
+      "width": 522,
+      "height": 120
     },
     "_startAxis": 0,
     "_paddingLeft": 0,
@@ -1516,8 +1516,8 @@
     "overrideCellSize": false,
     "explicitCellSize": {
       "__type__": "cc.Size",
-      "width": 550,
-      "height": 130
+      "width": 522,
+      "height": 120
     },
     "previewCount": 0,
     "spacingX": 0,
@@ -1588,7 +1588,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": -368,
+      "y": -357,
       "z": 0
     },
     "_objFlags": 0,
@@ -1646,8 +1646,8 @@
     "_name": "",
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 184,
-      "height": 57
+      "width": 128,
+      "height": 52
     },
     "_objFlags": 0,
     "__type__": "cc.UITransform",
@@ -1840,8 +1840,8 @@
     "_name": "",
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 176,
-      "height": 53
+      "width": 118,
+      "height": 48
     },
     "_objFlags": 0,
     "__type__": "cc.UITransform",
@@ -1865,7 +1865,7 @@
   },
   {
     "_underlineHeight": 2,
-    "_actualFontSize": 26,
+    "_actualFontSize": 21,
     "_isItalic": false,
     "_spacingX": 0,
     "_string": "退出公会",
@@ -1899,7 +1899,7 @@
     "__editorExtras__": {},
     "_name": "",
     "_shadowBlur": 2,
-    "_lineHeight": 31,
+    "_lineHeight": 25,
     "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
@@ -1913,7 +1913,7 @@
     "_dstBlendFactor": 4,
     "_enabled": true,
     "_isUnderline": false,
-    "_fontSize": 26,
+    "_fontSize": 21,
     "_fontFamily": "Arial",
     "_id": "",
     "_objFlags": 0,

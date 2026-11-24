@@ -150,7 +150,7 @@ export class AccountApi implements AccountGateway {
         });
     }
 
-    /** 校验角色归属、公开编号、钱包、命名、赠礼与公会资料，返回可提交的完整角色资料。 */
+    /** 校验身份、钱包、当前战力、命名和公会资料；可选字段缺失按未同步处理。 */
     public static readRole(value: unknown): RoleProfile {
         const row = AccountApi.record(value);
         if (typeof row.id !== "string" || !row.id || typeof row.nickname !== "string" ||
@@ -178,6 +178,10 @@ export class AccountApi implements AccountGateway {
         if (row.guildName !== undefined && (typeof row.guildName !== "string" || row.guildName.length > 128)) {
             throw new Error("角色公会资料无效");
         }
+        if (row.power !== undefined && (typeof row.power !== "number"
+            || !Number.isSafeInteger(row.power) || row.power < 0 || row.power > 2147483647)) {
+            throw new Error("角色当前战力无效");
+        }
         return {
             id: row.id,
             ...(typeof publicId === "string" ? { publicId } : {}),
@@ -186,6 +190,7 @@ export class AccountApi implements AccountGateway {
             ...(typeof row.firstNamed === "boolean" ? { firstNamed: row.firstNamed } : {}),
             ...(typeof row.welcomeGiftAvailable === "boolean" ? { welcomeGiftAvailable: row.welcomeGiftAvailable } : {}),
             level: Number(row.level),
+            ...(typeof row.power === "number" ? { power: row.power } : {}),
             gold: Number(row.gold),
             diamonds: Number(row.diamonds),
             ...(typeof serverId === "string" ? { serverId } : {}), ...(row.basics !== undefined ? { basics: AccountApi.readBasics(row.basics) } : {})

@@ -1,4 +1,4 @@
-/** 主线阵容保存入口，每次确认发送一次，成功后等待服务器阵容达到本次保存版本。 */
+/** 阵容协议入口：保存等待权威快照；草稿战力仅处理当前预览回包，不写资产。 */
 import { BaseController } from "../../framework/BaseController";
 import { EventDispatcher } from "../../framework/EventDispatcher";
 import { RequestIdUtils } from "../../core/RequestIdUtils";
@@ -19,8 +19,15 @@ interface FormationSaved {
     readonly version: number;
 }
 
+/** 服务器回显本次只读战力请求及参与计算的普通队员。 */
+interface FormationPower {
+    readonly requestId: string;
+    readonly heroIds: readonly string[];
+    readonly power: number;
+}
+
 export class FormationController extends BaseController {
-    /** 应用唯一阵容保存入口。 */
+    /** 应用唯一阵容协议入口。 */
     public static readonly instance = new FormationController(FormationSaveModel.instance, HeroRosterModel.instance);
 
     /** 当前账号提供的单次请求入口，模块销毁时释放。 */
@@ -44,9 +51,9 @@ export class FormationController extends BaseController {
         this.operations = operations;
     }
 
-    /** 登记当前请求的保存回包和权威名册更新。 */
+    /** 登记保存、预览回包和权威名册更新。 */
     protected onInitialize(): void {
-        this.ownListener(ProtocolRouter.instance.register(this, [Protocol.FORMATION_SAVE]));
+        this.ownListener(ProtocolRouter.instance.register(this, [Protocol.FORMATION_SAVE, Protocol.FORMATION_POWER]));
         this.ownListener(EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.synchronized));
     }
 
@@ -57,7 +64,7 @@ export class FormationController extends BaseController {
         this.notify();
     }
 
-    /** 只记录即时成功回包的阵容版本，等待服务器快照更新。 */
+    /** 保存回包只记录版本；预览回包只通知发起窗口，不进入名册。 */
     public onNotify(protocol: ProtocolName, data: unknown): void {
         if (protocol === Protocol.FORMATION_SAVE) {
             const { version } = data as FormationSaved;
@@ -65,7 +72,31 @@ export class FormationController extends BaseController {
             if (!this.synchronized()) {
                 this.notify();
             }
+        } else if (protocol === Protocol.FORMATION_POWER) {
+            const { requestId, power } = data as FormationPower;
+            this.emit(FormationEvent.PowerPreviewed, { requestId, power });
         }
+    }
+
+    /**
+     * 查询当前草稿的只读战力，回显实例列表必须和请求一致。
+     * @returns 本次窗口可订阅的请求编号；无已初始化的通道时返回 null。
+     */
+    public previewPower(heroIds: readonly string[]): string | null {
+        const operations = this.operations;
+        if (!this.isInitialized || !operations) {
+            return null;
+        }
+        const requestId = RequestIdUtils.create();
+        void operations.deliver(Protocol.FORMATION_POWER, { requestId, heroIds }, frame => {
+            const result = frame.body as FormationPower;
+            if (result.requestId !== requestId || result.heroIds.length !== heroIds.length
+                || result.heroIds.some((id, index) => id !== heroIds[index])) {
+                throw new Error("阵容战力回包与请求不符");
+            }
+            ProtocolRouter.instance.dispatch(this, frame);
+        }, () => this.emit(FormationEvent.PowerPreviewed, { requestId, power: null }));
+        return requestId;
     }
 
     /** 服务端阵容已达到本次保存版本时，解除等待并通知出战页。 */

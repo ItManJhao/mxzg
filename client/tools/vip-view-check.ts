@@ -1,7 +1,7 @@
 /** 使用真实配置及引擎替身检查契约任务、VIP 权益和关闭清理，无需登录或写入角色。 */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
-import { Button, Label, Node, Sprite, UITransform } from "cc";
+import { Button, Label, Node, RichText, Sprite, UITransform } from "cc";
 import { ApplicationRedDots } from "../assets/scripts/app/remake/ApplicationRedDots";
 import { ResManager } from "../assets/scripts/framework/assets/ResManager";
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
@@ -14,7 +14,7 @@ import { BattleSpineService } from "../assets/scripts/features/battle/ui/BattleS
 import { GameRedDotKey } from "../assets/scripts/features/common/utils/GameRedDotKey";
 import { VipController } from "../assets/scripts/features/vip/VipController";
 import { VipModel } from "../assets/scripts/features/vip/VipModel";
-import { VipBenefitCell } from "../assets/scripts/features/vip/ui/VipBenefitCell";
+import { VipBenefitCell, type VipBenefitDisplay } from "../assets/scripts/features/vip/ui/VipBenefitCell";
 import { VipBenefitsView } from "../assets/scripts/features/vip/ui/VipBenefitsView";
 import { VipTaskCell, type VipTaskDisplay } from "../assets/scripts/features/vip/ui/VipTaskCell";
 import { VipView } from "../assets/scripts/features/vip/ui/VipView";
@@ -46,11 +46,17 @@ function taskFixture() {
         progressLabel: new Node().addComponent(Label),
         progressFill: new Node().addComponent(Sprite),
         statusLabel: new Node().addComponent(Label),
-        portraitLabel: new Node().addComponent(Label),
+        portraitUnlock: new Node().addComponent(Label),
+        portraitArtwork: new Node("PortraitArtwork"),
+        skillIcon: new Node("SkillIcon"),
+        skillArtwork: new Node("SkillArtwork"),
         portraitSlots: Array.from({ length: 5 }, () => new Node()),
         previousPortrait: new Node().addComponent(Button),
         nextPortrait: new Node().addComponent(Button),
         benefitsButton: new Node().addComponent(Button),
+        fetterPowerButton: new Node().addComponent(Button),
+        privilegeHint: new Node().addComponent(Label),
+        privilegeBadge: new Node("PrivilegeBadge"),
         backButton: new Node().addComponent(Button),
         taskPanel: new Node(),
         tasks: list.scroll,
@@ -72,7 +78,7 @@ function taskCell(withReminder = true) {
     }
     const bindings = {
         node,
-        title: new Node().addComponent(Label),
+        title: new Node().addComponent(RichText),
         rewardFrame: new Node(),
         rewardIcon: new Node(),
         quantity: new Node().addComponent(Label),
@@ -87,7 +93,12 @@ function taskCell(withReminder = true) {
     return { cell, bindings };
 }
 
-/** 验证真实配置的等级任务、前往与领取，以及角色快照驱动的任务格和底栏红点。 */
+/** 核对卡片纯文字断言，具体颜色另由原任务标签检查。 */
+function plain(text: string): string {
+    return text.replace(/<[^>]*>/g, "");
+}
+
+/** 验证女神预览、特权公告、等级任务、领取以及服务端快照驱动的红点。 */
 async function checkTasks(): Promise<void> {
     const fixture = taskFixture();
     const { page, bindings, list } = fixture;
@@ -97,8 +108,11 @@ async function checkTasks(): Promise<void> {
     const jumps: string[] = [];
     const claims: number[] = [];
     const shown: Array<{ owner: object; view: object }> = [];
+    const hints: string[] = [];
     const portraits: string[] = [];
+    const artwork = new Map<Node, unknown>();
     const originalOpen = UIManager.instance.openChild;
+    const originalToast = UIManager.instance.toast;
     const originalSpine = BattleSpineService.instance.mountNamedSpine;
     const originalClaim = VipController.instance.claim;
     const originalSprite = ResManager.setSprite;
@@ -113,7 +127,12 @@ async function checkTasks(): Promise<void> {
         portraits.push(name);
     };
     VipController.instance.claim = id => { claims.push(id); };
-    ResManager.setSprite = () => {};
+    UIManager.instance.toast = message => { hints.push(message); };
+    ResManager.setSprite = (node, source) => {
+        if (node) {
+            artwork.set(node, source);
+        }
+    };
     list.content.parent = page.node;
     try {
         VipModel.instance.update({ level: 0, tasks: [
@@ -126,16 +145,25 @@ async function checkTasks(): Promise<void> {
         assert.equal(bindings.levelLabel.string, "VIP 0");
         assert.equal(bindings.taskPanel.active, true);
         assert.equal(bindings.progressFill.fillRange, 0.25);
-        assert.match(bindings.progressLabel.string, /VIP 1 .*1\/4/);
-        assert.match(bindings.portraitLabel.string, /妮可.*VIP 1 解锁/);
+        assert.equal(bindings.progressLabel.string, "1/4");
+        assert.equal(bindings.portraitUnlock.string, "VIP 1 解锁");
+        assert.equal(artwork.get(bindings.portraitArtwork), "vip/ui/fetters-lang_fetter-10101");
+        assert.equal(artwork.get(bindings.skillIcon), "vip/ui/fetters_skill_200010001");
+        assert.equal(artwork.get(bindings.skillArtwork), "vip/ui/fetters-lang_spr-skill-10101");
+        assert.equal(bindings.privilegeHint.string, "预览：解锁2倍战斗速度");
+        assert.equal(bindings.privilegeBadge.active, true);
         assert.deepEqual(portraits, ["10101"]);
         bindings.nextPortrait.node.emit(Button.EventType.CLICK);
-        assert.match(bindings.portraitLabel.string, /格雷.*VIP 6 解锁/);
+        assert.equal(bindings.portraitUnlock.string, "VIP 6 解锁");
+        assert.equal(artwork.get(bindings.portraitArtwork), "vip/ui/fetters-lang_fetter-10201");
+        assert.equal(artwork.get(bindings.skillIcon), "vip/ui/fetters_skill_200020001");
+        assert.equal(artwork.get(bindings.skillArtwork), "vip/ui/fetters-lang_spr-skill-10201");
         assert.deepEqual(portraits, ["10101", "10201"]);
 
         const cards = list.data();
         assert.equal(cards.length, 4);
-        assert.match(cards[0].description, /通关主线3关.*3\/3/);
+        assert.match(plain(cards[0].description), /通关主线3关.*3\/3/);
+        assert.match(cards[0].description, /<color=#159400>3<\/color>/);
         assert.deepEqual(cards[0].reward, { itemId: 900002, quantity: 20 });
         assert.equal(cards[2].status, "已领取");
         assert.equal(cards[3].status, "玩法尚未接入");
@@ -171,6 +199,9 @@ async function checkTasks(): Promise<void> {
         assert.deepEqual(claims, [100100, 100100], "缺少辅助红点时仍可绑定当前领奖操作");
         bindings.benefitsButton.node.emit(Button.EventType.CLICK);
         assert.deepEqual(shown, [{ owner: page, view: VipBenefitsView }]);
+        bindings.fetterPowerButton.node.emit(Button.EventType.CLICK);
+        assert.deepEqual(hints, ["羁绊之力暂未开放"], "羁绊养成不冒用特权弹窗");
+        assert.equal(shown.length, 1);
 
         const role = { id: "vip-tier", nickname: "契约任务测试", level: 24, gold: 0, diamonds: 0 };
         account.replace({ busy: false, error: "", role });
@@ -183,11 +214,11 @@ async function checkTasks(): Promise<void> {
         VipController.instance.onNotify(Protocol.STATE_CHANGED, { revision: 1, vip: { level: 2, tasks: unfinished } });
         applicationDots.setReady(true);
         assert.equal(bindings.levelLabel.string, "VIP 2");
-        assert.match(bindings.progressLabel.string, /VIP 3 .*0\/4/);
+        assert.equal(bindings.progressLabel.string, "0/4");
         const vipTwoCards = list.data();
         assert.deepEqual(vipTwoCards.map(card => card.destination), ["battle", "battle", "gold-dungeon", "main_summon"]);
-        assert.match(vipTwoCards[2].description, /参与1次日常副本.*0\/1/);
-        assert.match(vipTwoCards[3].description, /获得3个5星英雄.*2\/3/);
+        assert.match(plain(vipTwoCards[2].description), /参与1次日常副本.*0\/1/);
+        assert.match(plain(vipTwoCards[3].description), /获得3个5星英雄.*2\/3/);
         for (const card of vipTwoCards.slice(2)) {
             assert.equal(card.actionText, "前 往");
             list.content.emit(SuperContent.RENDER_ITEM, cellNode, card);
@@ -213,7 +244,7 @@ async function checkTasks(): Promise<void> {
         VipController.instance.onNotify(Protocol.STATE_CHANGED, { revision: 3, vip: { level: 2, tasks: firstClaimed } });
         applicationDots.refreshSnapshot();
         assert.equal(list.data()[0].status, "已领取");
-        assert.match(bindings.progressLabel.string, /VIP 3 .*1\/4/);
+        assert.equal(bindings.progressLabel.string, "1/4");
         assert(RedDotManager.instance.isVisible(GameRedDotKey.VIP), "其他任务依然可领取时底栏 VIP 保持亮起");
 
         const nextTier = [
@@ -227,7 +258,7 @@ async function checkTasks(): Promise<void> {
         });
         applicationDots.refreshSnapshot(true);
         assert.equal(bindings.levelLabel.string, "VIP 3");
-        assert.match(bindings.progressLabel.string, /VIP 4 .*0\/4/);
+        assert.equal(bindings.progressLabel.string, "0/4");
         const vipThreeCards = list.data();
         assert(vipThreeCards.every(card => !card.claimable && card.actionText === "前 往"));
         assert.deepEqual(vipThreeCards.map(card => card.destination), ["battle", "main_summon", "battle", "tower"]);
@@ -257,7 +288,8 @@ async function checkTasks(): Promise<void> {
         EventDispatcher.instance.emit(VipModel.Updated, undefined);
         assert.equal(bindings.taskPanel.active, false);
         assert.equal(bindings.statusLabel.string, "契约已全部解锁");
-        assert.match(bindings.portraitLabel.string, /出战待接入/);
+        assert.equal(bindings.portraitUnlock.string, "VIP 6 已解锁");
+        assert.equal(bindings.privilegeBadge.active, false);
         page.runDispose();
         bindings.nextPortrait.node.emit(Button.EventType.CLICK);
         assert.deepEqual(portraits, ["10101", "10201"], "切页后旧按钮不再加载预览");
@@ -271,57 +303,88 @@ async function checkTasks(): Promise<void> {
         page.runDispose();
         VipModel.instance.reset();
         UIManager.instance.openChild = originalOpen;
+        UIManager.instance.toast = originalToast;
         BattleSpineService.instance.mountNamedSpine = originalSpine;
         VipController.instance.claim = originalClaim;
         ResManager.setSprite = originalSprite;
     }
 }
 
-/** 任务卡红点位置由原预制体锚点保留，图像由公共预制体提供。 */
+/** 任务卡红点对齐正式服的领取按钮右上角，图像仍由公共预制体提供。 */
 function checkTaskRedDotAnchor(): void {
     const rows = JSON.parse(readFileSync("client/assets/bundles/module/vip/prefabs/VipTaskCell.prefab", "utf8"));
     const owner = rows.find((row: Record<string, unknown>) => row.reminderAnchor);
     const anchor = rows[owner.reminderAnchor.__id__];
     assert.equal(anchor._name, "ClaimReminderAnchor");
     assert.equal(anchor._active, true);
-    assert.deepEqual([anchor._lpos.x, anchor._lpos.y], [112, 3]);
+    assert.deepEqual([anchor._lpos.x, anchor._lpos.y], [120, 10]);
     assert.equal(anchor._components.length, 1);
     const ui = rows[anchor._components[0].__id__];
     assert.equal(ui.__type__, "cc.UITransform");
-    assert.deepEqual([ui._contentSize.width, ui._contentSize.height], [18, 18]);
+    assert.deepEqual([ui._contentSize.width, ui._contentSize.height], [26, 26]);
 }
 
-/** 核对权益预览的文案、数值、档位翻页和窗口关闭。 */
+/** 核对默认预览下一档、原高亮与分隔线、滑入边界、满级和关闭清理。 */
 function checkBenefits(): void {
     const root = new Node("VipBenefits");
     const popup = root.addComponent(VipBenefitsView);
-    const list = scrollFixture<string>(root);
-    const bindings = { panel: root.addComponent(UITransform), currentLabel: new Node().addComponent(Label),
+    const panel = new Node("Panel");
+    panel.parent = root;
+    const scroll = new Node("Scroll");
+    scroll.parent = panel;
+    scroll.addComponent(UITransform).setContentSize(478, 534);
+    const list = scrollFixture<VipBenefitDisplay>(scroll);
+    const bindings = { panel: panel.addComponent(UITransform), currentLabel: new Node().addComponent(Label),
         levelLabel: new Node().addComponent(Label), previous: new Node().addComponent(Button),
-        next: new Node().addComponent(Button), closeButton: new Node().addComponent(Button), benefitList: list.scroll };
-    bindings.panel.width = 540;
-    bindings.panel.height = 690;
+        next: new Node().addComponent(Button), benefitList: list.scroll };
+    bindings.panel.setContentSize(640, 840);
     Object.assign(popup, bindings);
     VipModel.instance.update({ level: 0, tasks: [] });
     try {
         popup.runOpen();
-        assert.equal(bindings.currentLabel.string, "当前 VIP 0");
-        assert.equal(bindings.levelLabel.string, "VIP 1 权益预览");
-        assert(list.data().some(text => /英雄背包数量上限.*25/.test(text)));
-        assert(list.data().some(text => /市场刷新次数上限.*5/.test(text)));
-        assert(list.data().some(text => /战斗2倍速度.*播放待接入/.test(text)));
-        bindings.next.node.emit(Button.EventType.CLICK);
-        assert.equal(bindings.levelLabel.string, "VIP 2 权益预览");
-        const duration = list.data().find(text => /额外挂机时间/.test(text));
-        assert.match(duration ?? "", /1小时/);
+        assert.equal(bindings.currentLabel.string, "下一级");
+        assert.equal(bindings.levelLabel.string, "VIP1");
+        assert.equal(bindings.previous.node.active, false);
+        assert.equal(bindings.next.node.active, true);
+        assert.deepEqual(list.data().map(row => plain(row.text)), [
+            "解锁羁绊女神机械纪元·妮可", "战斗2倍速度解锁", "市场刷新次数上限 +5", "英雄背包数量上限 +25",
+        ]);
+        assert.deepEqual(list.data().map(row => row.groupSeparator), [false, true, false, false]);
+        assert.match(list.data()[2].text, /<color=#0d9963> \+5<\/color>/);
         const row = new Node("BenefitRow").addComponent(VipBenefitCell);
-        const label = new Node().addComponent(Label);
-        Object.assign(row, { text: label });
-        list.content.emit(SuperContent.RENDER_ITEM, row.node, duration);
-        assert.equal(label.string, duration);
-        popup.runDispose();
+        const text = new Node().addComponent(RichText);
+        const groupSeparator = new Node("GroupSeparator");
+        Object.assign(row, { text, groupSeparator });
+        list.content.emit(SuperContent.RENDER_ITEM, row.node, list.data()[1]);
+        assert.equal(groupSeparator.active, true);
+        assert.equal(text.string, "<color=#0d9963>战斗2倍速度解锁</color>");
+
         bindings.next.node.emit(Button.EventType.CLICK);
-        assert.equal(bindings.levelLabel.string, "VIP 2 权益预览");
+        assert.equal(bindings.levelLabel.string, "VIP2");
+        assert.equal(scroll.position.x, -478);
+        bindings.next.node.emit(Button.EventType.CLICK);
+        assert.equal(bindings.levelLabel.string, "VIP2", "过渡期间连续点击不会跳档");
+        popup.update(0.5);
+        assert.equal(scroll.position.x, 0);
+        const duration = list.data().find(item => /额外挂机时间/.test(item.text));
+        assert.match(duration?.text ?? "", /1小时/);
+        list.content.emit(SuperContent.RENDER_ITEM, row.node, duration);
+        assert.equal(text.string, duration?.text);
+        assert.equal(groupSeparator.active, false, "复用到数值行时清掉旧分隔线");
+        bindings.previous.node.emit(Button.EventType.CLICK);
+        assert.equal(scroll.position.x, 478);
+        popup.runClose();
+        bindings.next.node.emit(Button.EventType.CLICK);
+        assert.equal(bindings.levelLabel.string, "VIP1", "关窗后原按钮不再操作页面");
+        VipModel.instance.update({ level: 13, tasks: [] });
+        popup.runOpen();
+        assert.equal(scroll.position.x, 0);
+        assert.equal(bindings.currentLabel.string, "已满级");
+        assert.equal(bindings.levelLabel.string, "VIP13");
+        assert.equal(bindings.next.node.active, false);
+        bindings.previous.node.emit(Button.EventType.CLICK);
+        assert.equal(bindings.levelLabel.string, "VIP12");
+        assert.equal(bindings.currentLabel.string, "已满级");
     } finally {
         popup.runDispose();
         VipModel.instance.reset();

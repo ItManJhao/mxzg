@@ -1,12 +1,14 @@
 # 主线阵容页面维护
 
-更新于 2026-11-18。当前玩法范围见 [开发进度](development-progress.md)。
+更新于 2026-11-24。当前玩法范围见 [开发进度](development-progress.md)。
 
 入口：英雄列表阵容按钮或主线出战按钮 → UIManager的remake-formation弹窗。页面参数在features/hero/ui/FormationView.ts的@UIRegistry.view定义；完整资源为client/assets/bundles/module/hero/prefabs/FormationView.prefab，列表格子为同目录FormationHeroCellView.prefab，复用HeroIconCellView与原美术。静态布局归Prefab，根窗口适配复用现有ViewportLayoutUtils。
 
 页面从 `HeroRosterModel` 的统一快照建立草稿。点击未上阵英雄时按格号填入首个开放空位，点击已上阵英雄或短按占用的阵位可以撤下。拖到开放空位会移动，拖到已占用的开放位置会交换，拖到无效位置、手势取消、关闭或重绘时头像回原位。九槽由预制体中的 `SlotInput` 统一接收触摸，同时覆盖前后排的有效格。进行中只移动原头像，更新草稿后才重新绘制。确认发送 `formation.save`，关闭放弃草稿。
 
-列表使用 SuperScroll＋SuperContent，按旧版四列纵向滚动。已保存的主线上阵英雄优先，同组按星级、等级、模板编号降序。格子、间距、边距和内收的 Mask 在 Prefab 中维护，默认视口完整显示两行英雄及星级。`FormationHeroCellView` 的 `DeploymentOverlay` 依次绘制压暗和绿色勾，随草稿中的实例 ID 更新，草稿编辑时保持列表顺序。
+列表使用 SuperScroll＋SuperContent，按旧版四列纵向滚动。已保存的主线上阵英雄优先，同组按星级、等级、模板编号降序。格子、间距、边距和内收的 Mask 在 Prefab 中维护，默认视口完整显示两行英雄及星级。名单和已上阵位一起复用英雄列表的品质框、亮星、翼徽与等级；名单格不叠元素角标。`FormationHeroCellView` 的 `DeploymentOverlay` 依次绘制压暗和绿色勾，随草稿中的实例 ID 更新，草稿编辑时保持列表顺序。标题、主队页签、战力数字和阵位均按日服位置保存在预制体；普通布阵按钮为「保存」，战前确认还是「出阵」。
+
+战力通过 `formation.power` 只读预览本页草稿，沿旧 `GReqPreComputeStrength` 的队员口径。服务端读取该角色真实的普通参战英雄，加队伍元素光环后用[主阵容同源评分](hero-lineup-contract.md#当前公开战力)逐人计分，不算阵型位置或独立助战格。只有队员集合或名册变化才重新请求；换位、筛选和旧回包不会改变当前草稿显示。此请求不保存阵容、不改顶栏已保存战力，也不更新历史峰值。空队伍由真实回包给 0。
 
 阵位开放及助战条件由服务端options投影。客户端只能编辑允许位置，不自行重算永久解锁。保存仍由服务端按旧版归一化；空阵拒绝，同模板后续条目跳过。阵型与站位同事务持久化并递增阵容版本，通过state.changed统一下发。
 

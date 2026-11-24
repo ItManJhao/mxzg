@@ -21,7 +21,7 @@ public final class GameProtocolCodec {
     private static final Set<String> PAYLOADS = Set.of(
         "authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers",
         "gmGrant", "gmResult", "gmStatus", "gmSetRoleLevel", "gmSetChapter", "gmSetTime", "gmTime",
-        "formationSave", "formationSaved", "battlePreview", "battlePreviewed",
+        "formationSave", "formationSaved", "formationPowerRequest", "formationPower", "battlePreview", "battlePreviewed",
         "chapterChallenge", "chapterBattleId", "chapterReceipt", "chapterReplay", "idleEncounter",
         "chapterIdleClaim", "chapterIdleClaimStatusRequest", "chapterIdleClaimReceipt", "chapterIdleClaimStatus",
         "rewardNotice", "chapterMilestoneClaim", "chapterMilestoneReceipt", "chapterMilestoneStatus",
@@ -98,6 +98,7 @@ public final class GameProtocolCodec {
                 case "gm.chapter.set" -> "gmSetChapter";
                 case "gm.time.set" -> "gmSetTime";
                 case "formation.save" -> "formationSave";
+                case "formation.power" -> "formationPowerRequest";
                 case "battle.preview" -> "battlePreview";
                 case "chapter.challenge" -> "chapterChallenge";
                 case "chapter.claim", "chapter.replay" -> "chapterBattleId";
@@ -197,6 +198,7 @@ public final class GameProtocolCodec {
             case "gm.level.set" -> "gmSetRoleLevel";
             case "gm.chapter.set" -> "gmSetChapter";
             case "gm.time.get", "gm.time.set" -> "gmTime";
+            case "formation.power" -> "formationPower";
             case "chapter.challenge", "chapter.claim" -> "chapterReceipt"; case "chapter.replay" -> "chapterReplay"; case "chapter.idle.encounter" -> "idleEncounter"; case "battle.preview" -> "battlePreviewed"; case "formation.save" -> "formationSaved"; case "session.heartbeat" -> "heartbeat"; case "gm.grant" -> "gmResult"; case "gm.status" -> "gmStatus";
             default -> throw new IllegalArgumentException("Unknown payload");
         };

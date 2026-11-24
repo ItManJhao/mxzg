@@ -12,27 +12,50 @@ import {ProtocolRouter} from "../assets/scripts/platform/ProtocolRouter";
 import { GameProtocolLogUtils } from "../assets/scripts/platform/GameProtocolLogUtils";
 import {mxzg} from "../assets/scripts/platform/GameProtocol.generated";
 const state={revision:2,role:{id:"role",nickname:"测试😀",level:1,gold:0,diamonds:0,serverId:"local-1"},heroes:[],heroRoster:{capacity:325,buySpaceTimes:1},inventory:[{itemId:900101,quantity:4}]};
-/** 公会空列表、审批回包、通知和角色首包继续使用同一份二进制协议。 */
+/** 公会进度、空公告及真实零战力继续走原有二进制协议。 */
 function checkGuildWire(): void {
     roundTrip({ version: 1, kind: "request", name: Protocol.GUILD_LIST, body: { query: "远征", page: 2 } });
     const command = { requestId: "aad15d1b-be88-4b9e-8c84-075cbb9a52df", action: "APPROVE", applicantId: "role" };
     roundTrip({ version: 1, kind: "request", name: Protocol.GUILD_CHANGE, body: command });
     roundTrip({ version: 1, kind: "request", name: Protocol.GUILD_CHANGE,
         body: { requestId: command.requestId, action: "CREATE", name: "远征", badgeId: 43 } });
-    const guild = { id: "guild", name: "远征", memberCount: 2, capacity: 15, description: "", badgeId: 43 };
+    roundTrip({ version: 1, kind: "request", name: Protocol.GUILD_CHANGE,
+        body: { requestId: command.requestId, action: "UPDATE_NOTICE", guildId: "guild", description: "" } });
+    const guild = { id: "guild", name: "远征", memberCount: 2, capacity: 15, description: "", badgeId: 43,
+        level: 1, experience: 0, nextLevelExperience: 750 };
     for (const name of [Protocol.GUILD_LIST, Protocol.GUILD_CHANGE]) {
         roundTrip({ version: 1, kind: "response", name, id: "req", ok: true,
             body: { ...(name === Protocol.GUILD_CHANGE ? { requestId: command.requestId, guild } : {}),
                 levelRequired: 18, createCostDiamonds: 100, nameLimit: 64,
-                members: [{ id: "role", nickname: "测试", level: 18, leader: true, headId: 1, borderId: 0 }],
+                members: [{ id: "role", nickname: "测试", level: 18, leader: true, headId: 1, borderId: 0, power: 0 }],
                 applications: [],
                 guilds: [guild], page: 1, hasMore: false, appliedGuildIds: [], rejoinAtSeconds: 0 } });
     }
     roundTrip({ version: 1, kind: "event", name: Protocol.GUILD_UPDATED, connectionId: "c", body: {} });
     for (const guildName of [guild.name, ""]) {
         roundTrip({ version: 1, kind: "event", name: Protocol.STATE_CHANGED,
-            body: { ...state, role: { ...state.role, guildName } } });
+            body: { ...state, role: { ...state.role, guildName, power: guildName ? 2294226 : 0 } } });
     }
+    const invalid: import("../assets/scripts/platform/GameProtocolCodecUtils").GameFrame = {
+        version: 1, kind: "response", name: Protocol.GUILD_LIST, id: "req", ok: true,
+        body: { levelRequired: 18, createCostDiamonds: 100, nameLimit: 64, guild, page: 1,
+            hasMore: false, rejoinAtSeconds: 0, members: [{ id: "role", nickname: "测试", level: 18, leader: true, power: -1 }] },
+    };
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame(invalid), /成员战力无效/);
+}
+
+/** 草稿战力只允许队员身份随请求交付，空队与资产版本按原值回包。 */
+function checkFormationPowerWire(): void {
+    const requestId = "aad15d1b-be88-4b9e-8c84-075cbb9a52df";
+    const request = { version: 1, kind: "request" as const, name: Protocol.FORMATION_POWER,
+        id: "formation-power-test", body: { requestId, heroIds: [] } };
+    roundTrip(request);
+    roundTrip({ version: 1, kind: "response", name: Protocol.FORMATION_POWER,
+        id: request.id, ok: true, body: { ...request.body, power: 0, assetRevision: 20 } });
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request,
+        body: { requestId, heroIds: ["hero", "hero"] } }), /队员回显无效/);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request,
+        body: { requestId, heroIds: ["hero"], power: 123 } }), /队员回显无效/);
 }
 /** VIP 首包保留未同步进度。领取回包中的原奖励只能属于同角色和资产版本。 */
 function checkVipWire(): void {
@@ -115,6 +138,7 @@ function roundTrip(frame:any){const bytes=GameProtocolCodecUtils.encodeGameFrame
 /** 验证统一状态、玩法指令和原奖励往返。显式 wire 参数只读取独立 Java 测试输出。 */
 function main(){
  checkGuildWire();
+ checkFormationPowerWire();
  checkVipWire();
  checkQuickBattleWire();
  for(const locked of [true,false]) roundTrip({version:1,kind:"event",name:Protocol.STATE_CHANGED,body:{...state,heroes:[{id:"hero",templateId:1,level:1,star:1,locked,deployed:true,stage:0,baseStats:{hp:120,atk:30,def:10,spd:100}}]}});
