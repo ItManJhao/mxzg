@@ -169,7 +169,7 @@ async function settle(): Promise<void> {
     }
 }
 
-/** 真实窗口读取Model、正确显示旧6星、禁止写操作，并在删除/记录替换/关闭后释放监听与图片。 */
+/** 检查旧六星和只读操作，验证关窗与子节点先销毁时的订阅和图片清理。 */
 async function checkViewLifecycle(): Promise<void> {
     const db = GameConfig.instance;
     const spec = UIRegistry.viewSpecOf(EquipmentInfoView)!;
@@ -219,11 +219,16 @@ async function checkViewLifecycle(): Promise<void> {
         assert.deepEqual(notices, ["装备来源暂未开放", "请在英雄详情选择装备部位"]);
         assert.equal(model.snapshot, snapshot, "只读按钮不修改唯一库存");
         const lastPaint = paints.filter(row => row.node === view.icon!.node && row.source !== null).pop()!;
+        // 模拟 Creator 先销毁装备操作子节点，再让窗口结束本次显示。
+        for (const action of [view.replaceButton!, view.removeButton!]) {
+            action.node.destroy();
+            Object.assign(action, { node: null });
+        }
         view.closeButton!.node.emit(Button.EventType.CLICK);
         assert(!UIManager.instance.isOpen(EquipmentInfoView));
         assert(!lastPaint.current(), "关闭使迟到图片候选失效");
         assert.equal(EventDispatcher.instance.listenerCount(BagEvent.BagUpdate), beforeListeners);
-        assert(paints.some(row => row.node === view.icon!.node && row.source === null), "关闭撤回动态赋图");
+        assert(paints.some(row => row.node === view.icon!.node && row.source === null), "操作子节点先销毁时仍撤回动态赋图");
 
         const reopened = await UIManager.instance.open(EquipmentInfoView, { key: "stack:9223372036854775807" });
         assert.notEqual(reopened, view, "详情cache=false，重开重建并读取最新Model");

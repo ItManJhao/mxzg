@@ -1,11 +1,12 @@
 /**
- * 主线阵容的只读战斗输入：在角色锁内读取持久阵型、站位和英雄，组装未折算属性与技能。
+ * 持久阵容的只读战斗输入：在角色锁内读取主线、挂机或独立玩法的阵型、站位和英雄，组装未折算属性与技能。
  * 阵型加成沿旧FormationReceivers加入战斗输入，不回写英雄面板；未恢复来源明确列出。
  */
 package com.funsgamex.mxzg.hero;
 
 import java.util.*;
 import com.funsgamex.mxzg.auth.SessionService;
+import com.funsgamex.mxzg.lineup.Lineup;
 import com.funsgamex.mxzg.role.RoleRepository;
 import com.funsgamex.mxzg.lineup.MainFormationRules;
 import com.funsgamex.mxzg.lineup.MainFormationStateService;
@@ -95,21 +96,36 @@ public class HeroBattleInputService {
         return read(token, true);
     }
 
-    /** 共用持久名册、属性和神装、圣器套装技能；只在挂机读取时切换阵型属性来源。 */
+    /** 将指定玩法已保存的阵容组装为同一战斗输入，调用方须依业务事务锁定角色并验证会话。 */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Input forFormation(String role, long version, int formationId, List<Lineup.Slot> slots) {
+        var formation = formations.current(role);
+        return assemble(role, formation, version, formationId, formationId, slots);
+    }
+
+    /** 主线使用所选阵型，挂机使用起源阵型的站位属性。 */
     private Input read(String token, boolean idle) {
         String role = sessions.requireRole(token);
         roles.lock(role);
         sessions.requireRole(token);
         var formation = formations.current(role);
+        int attributesFormationId = idle ? 1 : formation.formationId();
+        return assemble(role, formation, formation.version(), formation.formationId(),
+                attributesFormationId, formation.slots());
+    }
+
+    /** 复用角色名册、原站位加成及神装、圣器套装技能，校验专用阵容与同一永久解锁目录。 */
+    private Input assemble(String role, MainFormationStateService.State unlocked, long version, int formationId,
+                           int attributesFormationId, List<Lineup.Slot> slots) {
         var roster = heroes.list(role);
         var owned = new HashMap<String, HeroProfile>();
         roster.forEach(hero -> owned.put(hero.id(), hero));
         var candidates = roster.stream().map(hero -> new MainFormationRules.Hero(
             hero.id(), hero.templateId(), hero.level(), hero.star())).toList();
         var unlocks = new MainFormationRules.Unlocks(
-            new HashSet<>(formation.unlockedIds()), formation.assistanceUnlocked());
-        var validated = formationRules.normalize(formation.formationId(), unlocks, candidates, formation.slots());
-        if (!validated.equals(formation.slots())) {
+            new HashSet<>(unlocked.unlockedIds()), unlocked.assistanceUnlocked());
+        var validated = formationRules.normalize(formationId, unlocks, candidates, slots);
+        if (!validated.equals(slots)) {
             throw new IllegalStateException("持久阵容不符合已解锁阵型或英雄规则");
         }
 
@@ -117,7 +133,7 @@ public class HeroBattleInputService {
         for (var slot : validated) {
             var hero = owned.get(slot.heroId());
             var evolved = evolution.resolve(hero.templateId(), hero.evolution().type(), hero.evolution().level());
-            var position = formationRules.position(idle ? 1 : formation.formationId(), slot.position());
+            var position = formationRules.position(attributesFormationId, slot.position());
             var attributes = panels.attributes(hero.baseStats(), hero.equipment(), add -> {
                 // 旧 BattleTemplate 先设置星级基础系数，再累加其他来源的同编号属性。
                 add.accept(150, defense.coefficient(hero.star()));
@@ -135,6 +151,6 @@ public class HeroBattleInputService {
         }
         var pending = List.of("soul_talent_runes_awakening", "account_and_team_sources",
                 "battle_special_attributes_and_triggers");
-        return new Input(roles.revision(role), formation.version(), idle ? 1 : formation.formationId(), units, pending);
+        return new Input(roles.revision(role), version, attributesFormationId, units, pending);
     }
 }

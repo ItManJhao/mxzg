@@ -87,11 +87,14 @@ export class HeroSkillView extends BaseView<HeroSkillArgs> {
         }
     }
 
-    /** 清理订阅及按钮，避免关窗后收到旧角色更新。 */
+    /** 关窗清理订阅与参数，按钮仍存在时同时解除点击监听。 */
     onClose(): void {
         this.closed = true;
         EventDispatcher.instance.offTarget(this);
-        this.closeButton?.node.off(Button.EventType.CLICK, this.close, this);
+        const closeNode = this.closeButton?.node;
+        if (closeNode?.isValid) {
+            closeNode.off(Button.EventType.CLICK, this.close, this);
+        }
         this.args = undefined;
     }
 }

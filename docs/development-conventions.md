@@ -676,10 +676,12 @@ SkillAuditUtils不再维护技能演示白名单。Creator项目扩展自动提�
 
 - RemakeApp 负责启动、根页面切换和场景生命周期。AccountComposition 建立会话，ApplicationModules 接好各模块的依赖，ApplicationPages 绑定登录、主城页面和宿主。各页通过自身的 @UIRegistry.view 登记。ApplicationResources 调度三段 LoadingPlan 并持有阶段资源，DevelopmentPreview 管理开发入口。
 - RemakeHomeView 唯一持有 CityHubView / CityChromeView 子节点，负责打开、关闭、失败清理；子视图不再单独登记为 Hud。
+- UIManager 在预制体加载完成后复查打开意图。切页取消时释放已挂载但尚未就绪的页面。旧页关闭异常留在框架日志，故障实例直接释放。
+- 页面在 `onClose` 解除显示期监听，依附父页的弹窗使用 `openChild`。Creator 销毁父组件前可能已销毁子节点并清空子组件的 `node` 引用，销毁回调解绑时先判定实际节点是否仍可用。
 - 操作反馈统一调用UIManager.toast，由ToastManager复用Remake.scene的ApplicationNotice静态节点；登录前和独立技能台也可用，不另造页面提示节点。结果按有界队列去重、上浮和自动消失，页面保留加载进度/玩法状态/固定说明，不用正文承载成功或失败。换号clear，应用销毁dispose；已由UIManager报告的开窗异常不再次提示。
 - 动态图片复用原ResourcePool。ResManager.setSprite只保留当前显示及本轮在途候选作用域；同图/相同在途请求复用，新图赋值后释放旧显示，null、失效与销毁撤回拥有者，失败按候选回退。getSpriteFrame(owner)仍显式持有至owner销毁，不能用setSprite(null)撤回该引用；不直接releaseAll或释放其他页面引用。
 - ResourcePool 成功结果只持有一次引擎引用；最后拥有者退出时 decRef，全部拥有者离开后才完成的加载也须回收。在途 Promise 与已加载缓存分开，失败可重试。
-- PrefabLoader 是显式应用级缓存，每个 Prefab 一次 addRef，应用关闭页面后 clearPrefabCache。应用预热范围和主城底板缓存可保持到应用退出；不能将这种预期保留直接判为泄漏，也不能未经使用者审计就按低内存通知强制清空。
+- UIManager 管理已关闭的页面实例，PrefabLoader 单独管理模板。最后一个实例销毁后，模板开始计算闲置时间。应用定期淘汰闲置模板，应用销毁时清空加载器缓存。登录计划和主城底板各自持有的资源可复用至应用退出。具体上限和维护频率见[缓存参数](staged-resource-loading.md#人工维护入口与缓存边界)。
 - 开发预览 F8 输出 Lifecycle：通用资源池、Prefab 缓存、UI、框架事件、EventScope、已登记原生计时器和引擎资产数。计数不是 JS 堆或 GPU 显存；Home/Hero/Feature 的预热池未逐项汇入通用池计数，Cocos Scheduler/Tween 及未迁移的旧加载器也不在该计时器统计范围内。
 - 验收先预热页面，再重复打开/返回同一基线页面，比较作用域、监听、在途打开和计时器；资源数首次上涨不算泄漏，持续上涨须查明。模拟测试通过不代替 Creator 真机内存验收。
 - HeroSnapshotUtils 只做有效快照校验；已删除 HeroApi 中无调用的暂停 list 壳。其他暂停模块错误码仍标明兼容用途，不冒充当前 WS 服务端协议。

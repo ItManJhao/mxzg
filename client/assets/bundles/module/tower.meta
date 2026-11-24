@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "237ee9d7-b7f7-45c8-8964-2726f19b942b",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "tower",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

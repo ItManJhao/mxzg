@@ -41,7 +41,11 @@ public final class GameProtocolCodec {
         "roleDecorations", "roleDecorationId", "rolePeerageDisplay",
         "heroEquipmentChangeRequest", "heroEquipmentChangeReceipt",
         "marketState", "marketBuyRequest", "marketRefreshRequest", "marketReceipt",
-        "dailyDungeonState", "dailyDungeonChallengeRequest", "dailyDungeonReceipt");
+        "dailyDungeonState", "dailyDungeonChallengeRequest", "dailyDungeonReceipt",
+        "towerState", "towerFormationSave", "towerRequest", "towerSettlement",
+        "arenaState", "arenaChallengeRequest", "arenaReplayRequest", "arenaReplay", "arenaSettlement",
+        "arenaTicketBuyRequest", "arenaTicketPurchase",
+        "guildListRequest", "guildChangeRequest", "guildState", "vipClaimRequest", "vipClaimReceipt");
     /** 工具类不持有实例状态。 */
     private GameProtocolCodec() {}
 
@@ -80,7 +84,7 @@ public final class GameProtocolCodec {
         return bytes;
     }
 
-    /** 按方向和消息名选择载荷，GM 等级和关卡的请求与回执共用绝对目标结构。 */
+    /** 按方向和消息名选择载荷，业务成功回执使用各自已登记的结构。 */
     private static String payload(JsonNode frame) {
         String kind = frame.path("kind").asString(), name = frame.path("name").asString();
         if (kind.equals("response") && frame.has("ok") && !frame.path("ok").asBoolean()) return null;
@@ -118,7 +122,16 @@ public final class GameProtocolCodec {
                 case "hero.equipment.change" -> "heroEquipmentChangeRequest";
                 case "market.buy" -> "marketBuyRequest";
                 case "market.refresh" -> "marketRefreshRequest";
-                case "dungeon.gold.challenge" -> "dailyDungeonChallengeRequest";
+                case "guild.list" -> "guildListRequest";
+                case "guild.change" -> "guildChangeRequest";
+                case "vip.claim" -> "vipClaimRequest";
+                case "tower.formation.save" -> "towerFormationSave";
+                case "tower.challenge", "tower.sweep", "tower.milestone.claim" -> "towerRequest";
+                case "arena.challenge" -> "arenaChallengeRequest";
+                case "arena.replay" -> "arenaReplayRequest";
+                case "arena.ticket.buy" -> "arenaTicketBuyRequest";
+                case "dungeon.gold.challenge", "dungeon.experience.challenge", "dungeon.hero.challenge",
+                        "dungeon.fetter.challenge", "dungeon.spirit.challenge" -> "dailyDungeonChallengeRequest";
                 case "role.name.set" -> "roleName";
                 case "role.image.change" -> "roleImageChange";
                 case "role.name.rename" -> "roleRename";
@@ -130,6 +143,7 @@ public final class GameProtocolCodec {
         if (kind.equals("event") && name.equals("state.changed")) return "snapshot";
         if (kind.equals("event") && name.equals("session.kicked")) return "kicked";
         if (kind.equals("event") && name.equals("reward.granted")) return "rewardNotice";
+        if (kind.equals("event") && name.equals("guild.updated")) return "empty";
         if (kind.equals("response")) return switch (name) {
             case "session.login", "session.authenticate" -> "accepted"; case "servers.list" -> "servers";
             case "chapter.idle.claim" -> "chapterIdleClaimReceipt";
@@ -157,8 +171,18 @@ public final class GameProtocolCodec {
             case "hero.equipment.change" -> "heroEquipmentChangeReceipt";
             case "market.list" -> "marketState";
             case "market.buy", "market.refresh" -> "marketReceipt";
-            case "dungeon.gold.list" -> "dailyDungeonState";
-            case "dungeon.gold.challenge" -> "dailyDungeonReceipt";
+            case "guild.list", "guild.change" -> "guildState";
+            case "vip.claim" -> "vipClaimReceipt";
+            case "tower.state", "tower.formation.save" -> "towerState";
+            case "tower.challenge", "tower.sweep", "tower.milestone.claim" -> "towerSettlement";
+            case "arena.state", "arena.refresh" -> "arenaState";
+            case "arena.challenge" -> "arenaSettlement";
+            case "arena.replay" -> "arenaReplay";
+            case "arena.ticket.buy" -> "arenaTicketPurchase";
+            case "dungeon.gold.list", "dungeon.experience.list", "dungeon.hero.list",
+                    "dungeon.fetter.list", "dungeon.spirit.list" -> "dailyDungeonState";
+            case "dungeon.gold.challenge", "dungeon.experience.challenge", "dungeon.hero.challenge",
+                    "dungeon.fetter.challenge", "dungeon.spirit.challenge" -> "dailyDungeonReceipt";
             case "role.name.random" -> "roleName";
             case "role.name.set", "role.name.rename", "role.image.change" -> "empty";
             case "role.titles.list" -> "roleTitles";

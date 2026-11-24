@@ -3,7 +3,8 @@
  * 通过真实二进制协议、控制器和资产快照验证发包回报，只替换网络和渲染宿主。
  */
 import { strict as assert } from "node:assert";
-import { Button, Label, Node, Sprite, UITransform } from "cc";
+import { readFileSync } from "node:fs";
+import { Button, Label, Node, Prefab, Sprite, UITransform } from "cc";
 import { AssetStateBinding } from "../assets/scripts/app/remake/AssetStateBinding";
 import { ServerClock } from "../assets/scripts/core/ServerClock";
 import { HeroRosterController } from "../assets/scripts/features/hero/HeroRosterController";
@@ -17,9 +18,12 @@ import { BagModel } from "../assets/scripts/features/bag/BagModel";
 import { FirstSummonView } from "../assets/scripts/features/hero/ui/FirstSummonView";
 import { FirstSummonData } from "../assets/scripts/features/hero/data/FirstSummonData";
 import { SummonReferenceUtils } from "../assets/scripts/features/hero/utils/SummonReferenceUtils";
+import { GameRedDotKey } from "../assets/scripts/features/common/utils/GameRedDotKey";
 import type { RewardNotice } from "../assets/scripts/features/reward/data/RewardNoticeData";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
+import { PrefabLoader } from "../assets/scripts/framework/assets/PrefabLoader";
+import { RedDotManager } from "../assets/scripts/framework/ui/RedDotManager";
 import { GameProtocolCodecUtils } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import type { GameFrame } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import { SocketFailure } from "../assets/scripts/platform/GameSocketClient";
@@ -333,7 +337,7 @@ async function cancelsPendingWindow(): Promise<void> {
     }
 }
 
-/** 窗口随快照显示免费或用券操作，在途时禁用；关闭窗口不影响本次交付。 */
+/** 窗口随快照显示免费或用券操作及积分提醒，关窗释放红点但不改变请求结果。 */
 async function rendersOnlyAvailableAction(): Promise<void> {
     const app = new Harness();
     const root = new Node("FirstSummon");
@@ -349,6 +353,17 @@ async function rendersOnlyAvailableAction(): Promise<void> {
     view.poolBalances = Array.from({ length: 3 }, (_, index) => new Node(`Balance${index}`).addComponent(Label));
     view.stateLabel = new Node("Message").addComponent(Label);
     view.pointsLabel = new Node("Points").addComponent(Label);
+    const pointsAnchor = new Node("PointsReadyDotAnchor");
+    pointsAnchor.parent = root;
+    pointsAnchor.addComponent(UITransform).setContentSize(16, 16);
+    view.pointsDotAnchor = pointsAnchor;
+    const loadPrefab = PrefabLoader.loadPrefab;
+    const prefab = Object.assign(new Prefab(), { _instantiate: () => {
+        const dot = new Node("RedDot");
+        dot.addComponent(UITransform);
+        return dot;
+    } });
+    PrefabLoader.loadPrefab = async () => prefab;
     // 离线引擎没有帧调度器，保留原回调和注册周期，通过手动推进一帧核对到期与关闭。
     const timers = new Set<(dt: number) => void>();
     view.schedule = (callback, seconds) => {
@@ -363,6 +378,10 @@ async function rendersOnlyAvailableAction(): Promise<void> {
         const [normalDraw] = view.drawButtons;
         assert.equal(normalDraw.interactable, false, "尚未同步召唤时间时不可点击");
         assert.equal(timers.size, 1);
+        assert.equal(pointsAnchor.getChildByName("RedDot"), null);
+        RedDotManager.instance.set(GameRedDotKey.SUMMON_POINTS, true);
+        await new Promise<void>(resolve => setImmediate(resolve));
+        assert.equal(pointsAnchor.getChildByName("RedDot")?.getComponent(UITransform)?.width, 16);
         await app.snapshot(false);
         await waitFor(() => normalDraw.interactable, "有免费资格时未启用按钮");
         assert.equal(view.drawCosts[0].string, "免费");
@@ -375,6 +394,7 @@ async function rendersOnlyAvailableAction(): Promise<void> {
         await waitFor(() => !!answer, "召唤请求未发出");
         view.runClose();
         assert.equal(timers.size, 0, "窗口关闭后应移除计时刷新");
+        assert.equal(pointsAnchor.getChildByName("RedDot"), null, "关召唤窗时销毁已挂载的积分红点");
         answer();
         await waitFor(() => !app.summons.summoning, "关闭窗口后的回包未处理");
         assert.equal(app.queued.length, 1, "关窗不撤销正在发送的请求");
@@ -386,6 +406,10 @@ async function rendersOnlyAvailableAction(): Promise<void> {
         assert.match(view.stateLabel.string, /后免费$/);
         assert.equal(view.poolBalances[0].string, "0");
         assert.equal(view.pointsLabel.string, "3/1000");
+        await new Promise<void>(resolve => setImmediate(resolve));
+        assert.equal(pointsAnchor.getChildByName("RedDot")?.active, true, "重开可按当前资格恢复积分提醒");
+        RedDotManager.instance.set(GameRedDotKey.SUMMON_POINTS, false);
+        assert.equal(pointsAnchor.getChildByName("RedDot")?.active, false);
         ServerClock.instance.synchronize(state.normalFreeAtSeconds * 1000);
         for (const callback of timers) {
             callback.call(view, 1);
@@ -394,9 +418,27 @@ async function rendersOnlyAvailableAction(): Promise<void> {
         view.runClose();
         assert.equal(timers.size, 0);
     } finally {
+        PrefabLoader.loadPrefab = loadPrefab;
+        RedDotManager.instance.set(GameRedDotKey.SUMMON_POINTS, false);
         root.destroy();
         app.dispose();
     }
+}
+
+/** 真正的积分按钮预制体用纯定位节点保留原红点尺寸和偏移。 */
+function checksPointsAnchor(): void {
+    const objects = JSON.parse(readFileSync("client/assets/bundles/module/hero/prefabs/FirstSummonView.prefab", "utf8"));
+    const binding = objects.find((row: any) => row.pointsDotAnchor);
+    assert(binding);
+    const node = objects[binding.pointsDotAnchor.__id__];
+    assert.equal(node._active, true);
+    assert.equal(node._parent.__id__, objects[binding.pointsButton.__id__].node.__id__);
+    assert.equal(node._lpos.x, 18);
+    assert.equal(node._lpos.y, 18);
+    const transforms = node._components.map((ref: any) => objects[ref.__id__]);
+    assert.deepEqual(transforms.map((row: any) => row.__type__), ["cc.UITransform"]);
+    assert.equal(transforms[0]._contentSize.width, 16);
+    assert.equal(transforms[0]._contentSize.height, 16);
 }
 
 /** 用真实配置包核对高级钻石预算、积分和概率源。 */
@@ -419,6 +461,7 @@ function checksSummonConfiguration(): void {
 async function main(): Promise<void> {
     await ConfigFixtureUtils.installReal();
     checksSummonConfiguration();
+    checksPointsAnchor();
     await submitsOnce();
     await followsServerResult();
     await drawsAfterFirst(1, 0);

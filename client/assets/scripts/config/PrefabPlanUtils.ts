@@ -1,5 +1,7 @@
 /** 由tools/prefab-plan.json和generate_resources.cjs生成的Prefab准入查询，不手工修改。 */
 const paths = new Set<string>([
+    "bundles/module/arena/prefabs/ArenaEntryCell",
+    "bundles/module/arena/prefabs/ArenaView",
     "bundles/module/bag/prefabs/BagInfoView",
     "bundles/module/bag/prefabs/BagTabView",
     "bundles/module/bag/prefabs/BagView",
@@ -23,16 +25,27 @@ const paths = new Set<string>([
     "bundles/module/common/prefabs/CommonPanel1",
     "bundles/module/common/prefabs/ConfirmView",
     "bundles/module/common/prefabs/HeroRewardView",
+    "bundles/module/common/prefabs/RedDot",
     "bundles/module/common/prefabs/RewardView",
     "bundles/module/common/prefabs/RoleUpgradeView",
     "bundles/module/dungeon/prefabs/DungeonHallCardView",
     "bundles/module/dungeon/prefabs/DungeonHallView",
+    "bundles/module/dungeon/prefabs/GoldDungeonStageCell",
     "bundles/module/dungeon/prefabs/GoldDungeonView",
     "bundles/module/gm/prefabs/GmBattleView",
     "bundles/module/gm/prefabs/GmGrantView",
     "bundles/module/gm/prefabs/GmOptionCellView",
     "bundles/module/gm/prefabs/GmToolsView",
     "bundles/module/gm/prefabs/GmView",
+    "bundles/module/guild/prefabs/GuildApprovalCell",
+    "bundles/module/guild/prefabs/GuildApprovalView",
+    "bundles/module/guild/prefabs/GuildBadgeCell",
+    "bundles/module/guild/prefabs/GuildBadgePickerView",
+    "bundles/module/guild/prefabs/GuildCreateView",
+    "bundles/module/guild/prefabs/GuildListCell",
+    "bundles/module/guild/prefabs/GuildMemberCell",
+    "bundles/module/guild/prefabs/GuildMemberView",
+    "bundles/module/guild/prefabs/GuildView",
     "bundles/module/hero/prefabs/FirstSummonView",
     "bundles/module/hero/prefabs/FormationElementCellView",
     "bundles/module/hero/prefabs/FormationElementView",
@@ -78,7 +91,13 @@ const paths = new Set<string>([
     "bundles/module/login/prefabs/WelcomeGiftView",
     "bundles/module/market/prefabs/MarketBuyView",
     "bundles/module/market/prefabs/MarketItemCell",
-    "bundles/module/market/prefabs/MarketView"
+    "bundles/module/market/prefabs/MarketView",
+    "bundles/module/tower/prefabs/TowerFloorCell",
+    "bundles/module/tower/prefabs/TowerView",
+    "bundles/module/vip/prefabs/VipBenefitCell",
+    "bundles/module/vip/prefabs/VipBenefitsView",
+    "bundles/module/vip/prefabs/VipTaskCell",
+    "bundles/module/vip/prefabs/VipView"
 ]);
 
 /** 当前阶段允许加载的Prefab地址查询，不表示玩法全部开放。 */

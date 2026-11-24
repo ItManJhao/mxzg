@@ -7,14 +7,74 @@ import {runInNewContext} from "node:vm";
 import {readFileSync} from "node:fs";
 import { GameProtocolCodecUtils, GAME_FRAME_LIMIT } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import { Protocol } from "../assets/scripts/platform/Protocol";
+import { BattleReplayUtils } from "../assets/scripts/features/battle/utils/BattleReplayUtils";
 import {ProtocolRouter} from "../assets/scripts/platform/ProtocolRouter";
 import { GameProtocolLogUtils } from "../assets/scripts/platform/GameProtocolLogUtils";
 import {mxzg} from "../assets/scripts/platform/GameProtocol.generated";
 const state={revision:2,role:{id:"role",nickname:"测试😀",level:1,gold:0,diamonds:0,serverId:"local-1"},heroes:[],heroRoster:{capacity:325,buySpaceTimes:1},inventory:[{itemId:900101,quantity:4}]};
+/** 公会空列表、审批回包、通知和角色首包继续使用同一份二进制协议。 */
+function checkGuildWire(): void {
+    roundTrip({ version: 1, kind: "request", name: Protocol.GUILD_LIST, body: { query: "远征", page: 2 } });
+    const command = { requestId: "aad15d1b-be88-4b9e-8c84-075cbb9a52df", action: "APPROVE", applicantId: "role" };
+    roundTrip({ version: 1, kind: "request", name: Protocol.GUILD_CHANGE, body: command });
+    roundTrip({ version: 1, kind: "request", name: Protocol.GUILD_CHANGE,
+        body: { requestId: command.requestId, action: "CREATE", name: "远征", badgeId: 43 } });
+    const guild = { id: "guild", name: "远征", memberCount: 2, capacity: 15, description: "", badgeId: 43 };
+    for (const name of [Protocol.GUILD_LIST, Protocol.GUILD_CHANGE]) {
+        roundTrip({ version: 1, kind: "response", name, id: "req", ok: true,
+            body: { ...(name === Protocol.GUILD_CHANGE ? { requestId: command.requestId, guild } : {}),
+                levelRequired: 18, createCostDiamonds: 100, nameLimit: 64,
+                members: [{ id: "role", nickname: "测试", level: 18, leader: true, headId: 1, borderId: 0 }],
+                applications: [],
+                guilds: [guild], page: 1, hasMore: false, appliedGuildIds: [], rejoinAtSeconds: 0 } });
+    }
+    roundTrip({ version: 1, kind: "event", name: Protocol.GUILD_UPDATED, connectionId: "c", body: {} });
+    for (const guildName of [guild.name, ""]) {
+        roundTrip({ version: 1, kind: "event", name: Protocol.STATE_CHANGED,
+            body: { ...state, role: { ...state.role, guildName } } });
+    }
+}
+/** VIP 首包保留未同步进度。领取回包中的原奖励只能属于同角色和资产版本。 */
+function checkVipWire(): void {
+    const roleId = "d5b56852-e92e-42cd-a2c0-c1de31dbf65a";
+    const requestId = "c9f13dc0-a332-482c-8b11-caf560f7bf58";
+    const command = { requestId, taskId: 100100 };
+    const request = { version: 1, kind: "request" as const, name: Protocol.VIP_CLAIM, id: "request-vip", body: command };
+    roundTrip(request);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, body: { ...command, level: 13 } }), /请求字段/);
+    const vip = { level: 1, tasks: [{ id: 100500, target: 20, progress: 0, claimed: false },
+        { id: 100700, target: 3, claimed: false }] };
+    const snap = { version: 1, kind: "event" as const, name: Protocol.STATE_CHANGED, body: { ...state, vip } };
+    roundTrip(snap);
+    roundTrip({ ...snap, body: { ...state, vip: { level: 13, tasks: [] } } });
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...snap, body: { ...state,
+        vip: { ...vip, tasks: [...vip.tasks, vip.tasks[0]] } } }), /进度无效/);
+    const notice = { schemaVersion: 1, roleId, receiptId: "20e8c72b-51ac-450e-930b-d5d06eedd153",
+        assetRevision: 3, mode: "POPUP", requestId, items: [{ itemId: 900002, credited: 20 }], heroes: [] };
+    const response = { ...request, kind: "response" as const, ok: true,
+        body: { ...command, roleId, assetRevision: 3, notice } };
+    roundTrip(response);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...response,
+        body: { ...response.body, assetRevision: 4 } }), /回执与奖励不符/);
+    if (process.argv.includes("--vip-java")) {
+        const javaReceipt = GameProtocolCodecUtils.decodeGameFrame(readFileSync("backend/target/vip-claim-wire.pb"));
+        const javaState = GameProtocolCodecUtils.decodeGameFrame(readFileSync("backend/target/vip-state-wire.pb"));
+        const body = javaReceipt.body as typeof response.body;
+        const snapshot = javaState.body as typeof snap.body;
+        assert.equal(javaReceipt.name, Protocol.VIP_CLAIM);
+        assert.equal(javaState.name, Protocol.STATE_CHANGED);
+        assert.equal(body.roleId, snapshot.role.id);
+        assert.equal(body.assetRevision, snapshot.revision);
+        assert.deepEqual(body.notice.items, [{ itemId: 900002, credited: 20 }]);
+        assert(snapshot.vip.tasks.some(task => task.id === body.taskId && task.claimed));
+    }
+}
 /** 协议帧往返必须保持结构和整数，不截取 Buffer 池其他字节。 */
 function roundTrip(frame:any){const bytes=GameProtocolCodecUtils.encodeGameFrame(frame);assert(bytes instanceof ArrayBuffer);assert.deepEqual(GameProtocolCodecUtils.decodeGameFrame(bytes),frame);}
-/** 验证现有帧、GM 指令和实际奖励往返；显式 wire 参数只读取本次独立 Java 测试输出。 */
+/** 验证统一状态、玩法指令和原奖励往返。显式 wire 参数只读取独立 Java 测试输出。 */
 function main(){
+ checkGuildWire();
+ checkVipWire();
  for(const locked of [true,false]) roundTrip({version:1,kind:"event",name:Protocol.STATE_CHANGED,body:{...state,heroes:[{id:"hero",templateId:1,level:1,star:1,locked,deployed:true,stage:0,baseStats:{hp:120,atk:30,def:10,spd:100}}]}});
  const instance="9223372036854775807";
  roundTrip({version:1,kind:"event",name:Protocol.STATE_CHANGED,connectionId:"conn",body:{...state,
@@ -73,6 +133,7 @@ function main(){
  checkArtifactAndGodShopWire();
  checkMarketWire();
  checkDailyDungeonWire();
+ checkProgressionBattleWire();
  checkGmToolsWire();
 }
 
@@ -345,7 +406,7 @@ function checkMarketWire(): void {
     }
 }
 
-/** 金币副本使用真实战报与到账载荷，清扫无战报且战败没有发奖。 */
+/** 五类日常副本按关卡交付独立次数和结算，战报必须对应正确类型。 */
 function checkDailyDungeonWire(): void {
     const requestId = "10000000-1111-4111-8111-111111111111";
     const roleId = "20000000-2222-4222-8222-222222222222";
@@ -355,7 +416,8 @@ function checkDailyDungeonWire(): void {
     const preview = [{ itemId: 900001, quantity: 100_000 }, { itemId: 900102, quantity: 20 }];
     const state = { stageId: 1, titleLanguageId: 1, wins: 0, freeLimit: 2, totalLimit: 4,
         nextCostDiamonds: 0, resetAtSeconds: 1700000000, power: 100, requiredPower: 1,
-        cleared: false, unlocked: true, canChallenge: true, rewardPreview: preview };
+        // 空 repeated 不发送到线上，解码旧回执时仍返回空数组。
+        cleared: false, unlocked: true, canChallenge: true, rewardPreview: preview, stages: [] };
     const replay = { schemaVersion: 1, scenario: "dungeon:gold:1", outcome: "ATTACKER_WIN", rounds: 1, units: [], phases: [] };
     const actual = { roleId, items: preview.map(row => ({
         itemId: row.itemId, requested: row.quantity, credited: row.quantity, ignored: 0, reason: "NONE",
@@ -372,13 +434,68 @@ function checkDailyDungeonWire(): void {
     for (const sweep of [false, true]) {
         roundTrip({ ...request, name: Protocol.DAILY_DUNGEON_CHALLENGE, body: { requestId, sweep, maxDiamonds: 0 } });
     }
+    roundTrip({ ...request, name: Protocol.DAILY_DUNGEON_CHALLENGE,
+        body: { requestId, stageId: 2, sweep: false, maxDiamonds: 0 } });
     for (const body of [won, lost, swept]) {
         roundTrip({ ...response, name: Protocol.DAILY_DUNGEON_CHALLENGE, body });
+    }
+    const stageOne = { stageId: 1, titleLanguageId: 1, minimumLevel: 15, ribbon: 1, requiredPower: 1,
+        cleared: true, unlocked: true, canChallenge: true, rewardPreview: preview };
+    const stageTwo = { stageId: 2, titleLanguageId: 2, minimumLevel: 15, ribbon: 2, requiredPower: 30_000,
+        cleared: false, unlocked: true, canChallenge: true,
+        rewardPreview: [{ itemId: 900001, quantity: 150_000 }, { itemId: 900102, quantity: 30 }] };
+    const list = { ...state, power: 31_000, cleared: true, wins: 1, stages: [stageOne, stageTwo] };
+    roundTrip({ ...response, name: Protocol.DAILY_DUNGEON_LIST, body: list });
+    const second = { ...list, stageId: 2, titleLanguageId: 2, requiredPower: 30_000, wins: 2, nextCostDiamonds: 50,
+        rewardPreview: stageTwo.rewardPreview, stages: [stageOne, { ...stageTwo, cleared: true }] };
+    const secondResult = { ...won, replay: { ...replay, scenario: "dungeon:gold:2" }, state: second };
+    roundTrip({ ...response, name: Protocol.DAILY_DUNGEON_CHALLENGE, body: secondResult });
+    const experienceRewards = [{ itemId: 900101, quantity: 60_000 }];
+    const experience = { ...state, rewardPreview: experienceRewards,
+        stages: [{ ...stageOne, minimumLevel: 17, cleared: false, rewardPreview: experienceRewards }] };
+    roundTrip({ ...request, name: Protocol.EXPERIENCE_DUNGEON_LIST, body: {} });
+    roundTrip({ ...response, name: Protocol.EXPERIENCE_DUNGEON_LIST, body: experience });
+    roundTrip({ ...request, name: Protocol.EXPERIENCE_DUNGEON_CHALLENGE,
+        body: { requestId, stageId: 1, sweep: false, maxDiamonds: 0 } });
+    const experienceResult = { ...won,
+        replay: { ...replay, scenario: "dungeon:experience:1" },
+        state: { ...experience, cleared: true, wins: 1, stages: [{ ...experience.stages[0], cleared: true }] },
+        actual: { ...actual, items: [{ itemId: 900101, requested: 60_000, credited: 60_000, ignored: 0, reason: "NONE" }],
+            wallet: { ...actual.wallet, goldAfter: 0 } },
+    };
+    roundTrip({ ...response, name: Protocol.EXPERIENCE_DUNGEON_CHALLENGE, body: experienceResult });
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({
+        ...response, name: Protocol.EXPERIENCE_DUNGEON_CHALLENGE, body: { ...experienceResult, replay },
+    }), /战报与结算/);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({
+        ...response, name: Protocol.DAILY_DUNGEON_CHALLENGE, body: experienceResult,
+    }), /战报与结算/);
+    for (const [kind, list, challenge, level, itemId, quantity] of [
+        ["hero", Protocol.HERO_DUNGEON_LIST, Protocol.HERO_DUNGEON_CHALLENGE, 18, 20_003_000, 10],
+        ["fetter", Protocol.FETTER_DUNGEON_LIST, Protocol.FETTER_DUNGEON_CHALLENGE, 22, 901501, 4],
+        ["spirit", Protocol.SPIRIT_DUNGEON_LIST, Protocol.SPIRIT_DUNGEON_CHALLENGE, 60, 901401, 60],
+    ] as const) {
+        const rewardPreview = [{ itemId, quantity }];
+        const snapshot = { ...state, rewardPreview,
+            stages: [{ ...stageOne, minimumLevel: level, cleared: false, rewardPreview }] };
+        const receipt = { ...experienceResult, replay: { ...replay, scenario: `dungeon:${kind}:1` },
+            state: { ...snapshot, wins: 1, cleared: true, stages: [{ ...snapshot.stages[0], cleared: true }] },
+            actual: { ...experienceResult.actual,
+                items: [{ itemId, requested: quantity, credited: quantity, ignored: 0, reason: "NONE" }] } };
+        roundTrip({ ...request, name: list, body: {} });
+        roundTrip({ ...response, name: list, body: snapshot });
+        roundTrip({ ...request, name: challenge, body: { requestId, stageId: 1, sweep: false, maxDiamonds: 0 } });
+        roundTrip({ ...response, name: challenge, body: receipt });
+        assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({
+            ...response, name: challenge, body: { ...receipt, replay },
+        }), /战报与结算/);
     }
     for (const body of [
         { requestId, sweep: false, maxDiamonds: 0, roleId },
         { requestId, sweep: true, maxDiamonds: -1 },
         { requestId, maxDiamonds: 0 },
+        { requestId, stageId: 0, sweep: false, maxDiamonds: 0 },
+        { requestId, stageId: 0x80000000, sweep: false, maxDiamonds: 0 },
     ]) {
         assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, name: Protocol.DAILY_DUNGEON_CHALLENGE, body }));
     }
@@ -389,10 +506,53 @@ function checkDailyDungeonWire(): void {
         { ...won, replay: { ...replay, scenario: "audit:lineup:1" } },
         { ...won, actual: { ...actual, roleId: battleId } },
         { ...won, state: { ...state, wins: state.totalLimit + 1 } },
+        { ...secondResult, replay },
+        { ...secondResult, state: { ...second, stages: [] } },
+        { ...secondResult, state: { ...second, stages: [stageOne, stageOne] } },
+        { ...secondResult, state: { ...second, stages: [{ ...stageOne, cleared: false }, second.stages[1]] } },
+        { ...secondResult, state: { ...second, rewardPreview: preview } },
     ]) {
         const wire = Frame.encode({ ...response, name: Protocol.DAILY_DUNGEON_CHALLENGE, dailyDungeonReceipt: body }).finish();
         assert.throws(() => GameProtocolCodecUtils.decodeGameFrame(wire));
     }
+}
+
+/** 验证爬塔与竞技场的业务请求；支持逐份解码 Java 实战的冻结战报。 */
+function checkProgressionBattleWire(): void {
+    const requestId = "10000000-1111-4111-8111-111111111111";
+    const request = { version: 1, kind: "request", id: requestId };
+    roundTrip({ ...request, name: Protocol.TOWER_STATE, body: {} });
+    roundTrip({ ...request, name: Protocol.TOWER_FORMATION_SAVE, body: {
+        expectedVersion: 0, formationId: 1, slots: [{ position: 2, heroId: requestId }],
+    } });
+    roundTrip({ ...request, name: Protocol.TOWER_CHALLENGE, body: { requestId, floor: 1 } });
+    roundTrip({ ...request, name: Protocol.TOWER_SWEEP, body: { requestId, floor: 1, maxDiamonds: 0 } });
+    roundTrip({ ...request, name: Protocol.TOWER_MILESTONE_CLAIM, body: { requestId, milestoneId: 1 } });
+    roundTrip({ ...request, name: Protocol.ARENA_STATE, body: {} });
+    roundTrip({ ...request, name: Protocol.ARENA_REFRESH, body: {} });
+    roundTrip({ ...request, name: Protocol.ARENA_CHALLENGE, body: { requestId, opponentId: 1 } });
+    roundTrip({ ...request, name: Protocol.ARENA_REPLAY, body: { battleId: requestId } });
+    roundTrip({ ...request, name: Protocol.ARENA_TICKET_BUY, body: { requestId, quantity: 1 } });
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({
+        ...request, name: Protocol.TOWER_CHALLENGE, body: { requestId, floor: 1, milestoneId: 1 },
+    }));
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({
+        ...request, name: Protocol.TOWER_SWEEP, body: { requestId, floor: 1, maxDiamonds: -1 },
+    }));
+    if (!process.argv.includes("--progression-battle-java")) {
+        return;
+    }
+    const names = Array.from({ length: 10 }, (_, index) => "tower-" + (index + 1));
+    names.push("arena-loss", "arena-win-2", "arena-win-3");
+    for (const name of names) {
+        const bytes = readFileSync("backend/target/chapter-vip-" + name + ".pb");
+        const frame = GameProtocolCodecUtils.decodeGameFrame(new Uint8Array(bytes));
+        const replay = (frame.body as { replay: object }).replay;
+        const parsed = BattleReplayUtils.parse(BattleReplayUtils.encodeVerified(replay));
+        assert(parsed.steps.length > 0);
+        assert.equal(parsed.maxRounds, name.startsWith("tower") ? 15 : 20);
+    }
+    console.log("PASS Java/TS Fantasy Tower and Arena settlements and replay parsing");
 }
 
 /** 四种装备操作保留字符串实例和来源配置，回执版本与实际变更状态自洽。 */

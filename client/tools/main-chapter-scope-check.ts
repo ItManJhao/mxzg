@@ -13,6 +13,7 @@ import { MainChapterModel } from "../assets/scripts/features/battle/MainChapterM
 import type { MainChapterState } from "../assets/scripts/features/battle/MainChapterModel";
 import { MainChapterView } from "../assets/scripts/features/battle/ui/MainChapterView";
 import { BattleReplayUtils } from "../assets/scripts/features/battle/utils/BattleReplayUtils";
+import { FormationView } from "../assets/scripts/features/hero/ui/FormationView";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { GameProtocolCodecUtils } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import type { GameFrame } from "../assets/scripts/platform/GameProtocolCodecUtils";
@@ -128,11 +129,11 @@ async function pageScope(): Promise<void> {
     const model = MainChapterModel.instance;
     const before = { state: model.state, busy: model.busy, requestId: model.requestId,
         settlement: model.settlement, message: model.message, idle: model.idle, receipt: model.receipt };
-    const originalOpen = UIManager.instance.openById;
+    const originalOpen = UIManager.instance.openChild;
     const originalToast = UIManager.instance.toast;
     const host = new Node("ChapterScopeFixture");
     const page: any = host.addComponent(MainChapterView);
-    const opened: string[] = [];
+    const opened: Function[] = [];
     const formationArgs: any[] = [];
     const notices: string[] = [];
     let restored = 0;
@@ -146,10 +147,12 @@ async function pageScope(): Promise<void> {
     }
     page.challenge = async () => { restored++; };
     try {
-        UIManager.instance.openById = (async (id: string, args: any) => {
-            opened.push(id);
+        UIManager.instance.openChild = async (owner, ctor, args) => {
+            assert.equal(owner, page, "阵容窗应随本次主线页面关闭");
+            opened.push(ctor);
             formationArgs.push(args);
-        }) as any;
+            return page;
+        };
         UIManager.instance.toast = text => { notices.push(text); };
         model.busy = false;
         model.requestId = null;
@@ -162,7 +165,7 @@ async function pageScope(): Promise<void> {
         assert.equal(page.stageLabel.string, "3");
         assert.equal(page.challengeButton.interactable, true);
         await page.prepareChallenge();
-        assert.deepEqual(opened, ["remake-formation"]);
+        assert.deepEqual(opened, [FormationView]);
 
         model.state = state(3, 3);
         page.render();
@@ -221,7 +224,7 @@ async function pageScope(): Promise<void> {
         assert.equal(model.receipt, originalReceipt);
         assert.equal(staleReports, 0, "范围拒绝不能被旧BATTLE回执误触发播放");
     } finally {
-        UIManager.instance.openById = originalOpen;
+        UIManager.instance.openChild = originalOpen;
         UIManager.instance.toast = originalToast;
         Object.assign(model, before);
         host.destroy();

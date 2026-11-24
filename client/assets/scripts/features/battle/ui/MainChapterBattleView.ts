@@ -49,7 +49,7 @@ export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
     /** 本窗口已开始打开结果页，阻止重复快照或回执重复开窗；关闭时取消该打开。 */
     private resultOpening = false;
 
-    /** 使用既有BattlePage，异步准备期间允许UIManager取消打开。 */
+    /** 使用既有BattlePage，在退出时撤销适配监听并允许取消异步打开。 */
     public onOpen(args?: MainChapterBattleArgs): void {
         super.onOpen(args);
         if (!args?.report) {
@@ -60,7 +60,7 @@ export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
         this.awaitingSettlement = false;
         this.resultOpening = false;
         this.ownListener(EventDispatcher.instance.on(MainChapterController.Updated, this, this.showConfirmedSettlement));
-        ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport());
+        this.ownListener(ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport()));
         this.beginOpen();
         if (args.settlementOnly) {
             this.fitViewport();

@@ -49,7 +49,7 @@ export class FormationMatrixView extends BaseView<FormationMatrixArgs> {
     /** 当前被查看的阵型，关闭时清空，只有确认才传回父页。 */
     private selected: FormationMatrixEntry | null = null;
 
-    /** 校验预制体并登记本窗的列表、按钮和视口监听。 */
+    /** 校验预制体并登记本窗的监听，解绑时直接使用绑定时的节点。 */
     public onBind(): void {
         if (!this.panel || !this.matrices || !this.closeButton || !this.confirmButton || !this.requirementLabel
             || this.slotLocks.length !== 8 || this.slotBonuses.length !== 8
@@ -64,20 +64,23 @@ export class FormationMatrixView extends BaseView<FormationMatrixArgs> {
             throw new Error("FormationMatrixCellView.prefab 缺少阵型格或按钮组件");
         }
         cell.validateBindings();
-        list.node.on(SuperContent.RENDER_ITEM, this.renderCell, this);
-        list.node.on(SuperContent.SELECT_ITEM, this.select, this);
-        this.closeButton.node.on(Button.EventType.CLICK, this.close, this);
-        this.confirmButton.node.on(Button.EventType.CLICK, this.confirm, this);
+        const listNode = list.node;
+        const closeNode = this.closeButton.node;
+        const confirmNode = this.confirmButton.node;
+        listNode.on(SuperContent.RENDER_ITEM, this.renderCell, this);
+        listNode.on(SuperContent.SELECT_ITEM, this.select, this);
+        closeNode.on(Button.EventType.CLICK, this.close, this);
+        confirmNode.on(Button.EventType.CLICK, this.confirm, this);
         this.ownListener(() => {
-            if (list.node.isValid) {
-                list.node.off(SuperContent.RENDER_ITEM, this.renderCell, this);
-                list.node.off(SuperContent.SELECT_ITEM, this.select, this);
+            if (listNode.isValid) {
+                listNode.off(SuperContent.RENDER_ITEM, this.renderCell, this);
+                listNode.off(SuperContent.SELECT_ITEM, this.select, this);
             }
-            if (this.closeButton?.isValid) {
-                this.closeButton.node.off(Button.EventType.CLICK, this.close, this);
+            if (closeNode.isValid) {
+                closeNode.off(Button.EventType.CLICK, this.close, this);
             }
-            if (this.confirmButton?.isValid) {
-                this.confirmButton.node.off(Button.EventType.CLICK, this.confirm, this);
+            if (confirmNode.isValid) {
+                confirmNode.off(Button.EventType.CLICK, this.confirm, this);
             }
         });
         this.ownListener(ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitPanel()));

@@ -7,7 +7,7 @@ import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { UIManager } from "../../../framework/ui/UIManager";
-import { RedDotManager } from "../../../framework/ui/RedDotManager";
+import { RedDotBinding } from "../../../framework/ui/RedDotBinding";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { MainChapterController } from "../MainChapterController";
 import { MainChapterSession } from "../MainChapterSession";
@@ -18,6 +18,7 @@ import { BattleReplayPreview } from "./BattleReplayPreview";
 import { MainChapterHeroTalk } from "./MainChapterHeroTalk";
 import { MainChapterIdleDisplay } from "./MainChapterIdleDisplay";
 import { HeroRosterModel } from "../../hero/HeroRosterModel";
+import { FormationView } from "../../hero/ui/FormationView";
 import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
 import { AudioPreferences } from "../../../core/AudioPreferences";
 import { GameLog } from "../../../core/GameLog";
@@ -28,6 +29,7 @@ import { MainChapterIdleResources } from "./MainChapterIdleResources";
 import { MainChapterIdleChest, IdleChestAnimation } from "./MainChapterIdleChest";
 import { MainChapterMilestoneCard } from "./MainChapterMilestoneCard";
 import { ChapterClearRewardView } from "./ChapterClearRewardView";
+import { ChapterRewardInfoView } from "./ChapterRewardInfoView";
 import { PREVIEW } from "cc/env";
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import type { AssetScope } from "../../../framework/assets/ResourceAssetsUtils";
@@ -86,8 +88,8 @@ export class MainChapterView extends BaseView {
     @property(Button) rewardInfoButton: Button | null = null;
     /** 旧战斗页右上「通关奖励」独立入口。 */
     @property(Button) clearRewardButton: Button | null = null;
-    /** 仅服务端有可领取关卡时显示的原红点。 */
-    @property(Node) clearRewardDot: Node | null = null;
+    /** 通关奖励红点的可选定位节点，保存原尺寸与偏移。 */
+    @property(Node) clearRewardDotAnchor: Node | null = null;
     /** 静态宝箱挂点；本页只挂载一次骨骼，跨档仅切动作。 */
     @property(Node) idleChestHost: Node | null = null;
     /** 超过十分钟显示的旧计时气泡，位置和图片保存在Prefab。 */
@@ -140,7 +142,7 @@ export class MainChapterView extends BaseView {
     /** 正在准备的候选图片作用域；被新地图替代或关页时立即释放，不另造资源池。 */
     private pendingBackgroundScope: AssetScope | null = null;
 
-    /** 绑定入口和统一红点，首次进入只转交首包待结算恢复，不查询库存或主线进度。 */
+    /** 绑定主线入口和适配监听，有红点挂点时订阅显示，首次进入转交待结算恢复。 */
     public onOpen(): void {
         if (!this.battleHost || !this.panel || !this.challengeButton || !this.quickBattleButton || !this.powerButton
             || !this.stageLabel || !this.statusLabel || !this.challengeLabel || !this.idleTimeLabel
@@ -162,26 +164,26 @@ export class MainChapterView extends BaseView {
         }
         this.ownListener(UIManager.instance.setResidentHost("main-chapter-field",
             () => !this.closed && this.battleHost?.isValid ? this.battleHost : null));
-        ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport());
+        this.ownListener(ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport()));
         this.listen(this.challengeButton, () => { void this.prepareChallenge(); });
         this.listen(this.quickBattleButton, () => UIManager.instance.toast("快速战斗尚未恢复"));
         this.listen(this.powerButton, () => UIManager.instance.toast("战力提升建议尚未恢复"));
         this.listen(this.idleClaimButton, () => this.collectIdleRewards());
-        if (!this.rewardInfoButton || !this.clearRewardButton || !this.clearRewardDot) {
+        if (!this.rewardInfoButton || !this.clearRewardButton) {
             throw new Error("主线产物说明或通关奖励入口绑定缺失");
         }
         this.listen(this.rewardInfoButton, () => {
-            void UIManager.instance.openById("chapter-reward-info").catch(error => {
+            void UIManager.instance.openChild(this, ChapterRewardInfoView).catch(error => {
                 if (!this.closed && !UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
                     UIManager.instance.toast("产物说明暂不可用");
                 }
             });
         });
         this.listen(this.clearRewardButton, () => this.openClearRewards());
-        const clearRewardDot = this.clearRewardDot;
-        this.ownListener(RedDotManager.instance.watch(GameRedDotKey.CHAPTER_CLEAR, visible => {
-            clearRewardDot.active = visible;
-        }));
+        if (this.clearRewardDotAnchor) {
+            const binding = RedDotBinding.atAnchor(this.clearRewardDotAnchor, GameRedDotKey.CHAPTER_CLEAR);
+            this.ownListener(() => binding.dispose());
+        }
         if (!this.idleChestHost || !this.idleBubble || !this.idleBubbleLabel) {
             throw new Error("挂机宝箱静态绑定缺失");
         }
@@ -211,10 +213,15 @@ export class MainChapterView extends BaseView {
         });
     }
 
-    /** 按钮监听归当前页面持有，关闭由BaseView统一解除。 */
+    /** 将原始按钮节点登记到页面清理队列，节点先销毁时跳过解绑。 */
     private listen(button: Button, callback: () => void): void {
-        button.node.on(Button.EventType.CLICK, callback);
-        this.ownListener(() => { if (button.isValid) button.node.off(Button.EventType.CLICK, callback); });
+        const node = button.node;
+        node.on(Button.EventType.CLICK, callback);
+        this.ownListener(() => {
+            if (node.isValid) {
+                node.off(Button.EventType.CLICK, callback);
+            }
+        });
     }
 
     /** 只读列表直接由父页打开，切页或账号失效时一并关闭。 */
@@ -241,7 +248,7 @@ export class MainChapterView extends BaseView {
         void session.idleClaim.begin(this.idleCollectionToken);
     }
 
-    /** 正常挑战先确认阵容；未确认挑战及待领奖优先恢复，已完成开放范围时明确说明而不误开布阵。 */
+    /** 正常挑战在本页子窗确认阵容；待确认挑战和待结算优先恢复。 */
     private async prepareChallenge(): Promise<void> {
         const model = MainChapterModel.instance;
         if (this.closed || this.playing || model.busy || !model.state) {
@@ -261,7 +268,7 @@ export class MainChapterView extends BaseView {
             return;
         }
         try {
-            await UIManager.instance.openById("remake-formation", {
+            await UIManager.instance.openChild(this, FormationView, {
                 closeAfterSave: true,
                 complete: (confirmed: boolean) => {
                     if (confirmed && !this.closed) {
@@ -310,7 +317,7 @@ export class MainChapterView extends BaseView {
         }
     }
 
-    /** 显示页内战场；本应用已结束的原战斗可只继续结算，关页不取消服务端提交。 */
+    /** 显示页内战场或继续原结算；页面关闭时同步撤销显示，保留服务端提交。 */
     private async play(battleId: string, settlementOnly = false): Promise<void> {
         if (this.closed || this.playing) {
             return;
@@ -330,7 +337,6 @@ export class MainChapterView extends BaseView {
                 this.playing = false;
                 if (!this.closed) { this.panel!.active = true; this.render(); }
             }});
-            if (this.closed) UIManager.instance.closeById("main-chapter-battle");
         } catch (error) {
             this.stopReplay = null;
             if (!this.closed && !UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) UIManager.instance.toast("战报恢复失败：" + String(error));
@@ -755,6 +761,5 @@ export class MainChapterView extends BaseView {
         this.idleResources = null;
         this.stopReplay?.();
         this.stopReplay = null;
-        UIManager.instance.closeById("remake-formation");
     }
 }

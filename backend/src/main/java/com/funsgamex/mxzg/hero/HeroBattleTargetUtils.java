@@ -10,14 +10,14 @@ import java.util.function.LongSupplier;
 
 public final class HeroBattleTargetUtils {
     /** 已核对的选择器，未知类型不能降级为默认敌人。 */
-    private static final Set<Integer> SUPPORTED = Set.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 14, 22, 23);
+    private static final Set<Integer> SUPPORTED = Set.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 14, 18, 21, 22, 23);
 
     /** 纯规则工具禁止实例化。 */
     private HeroBattleTargetUtils() {}
 
-    /** 本场身份、站位与生命；攻击、速度和状态读取入口只由相应选择器调用。 */
+    /** 本场身份、站位与生命；job 为旧模板职业号，缺失仅适用于不读取职业的选择器。 */
     public record Unit(int id, int faction, int position, double attack, long hp, long maxHp,
-                       LongSupplier speed, LongSupplier currentAttack, IntPredicate hasBuff) {
+                       LongSupplier speed, LongSupplier currentAttack, IntPredicate hasBuff, Integer job) {
         /** 不使用速度选择器的已有调用无须伪造速度；14号选择器遇到缺失会明确拒绝。 */
         public Unit(int id, int faction, int position, double attack, long hp, long maxHp) {
             this(id, faction, position, attack, hp, maxHp, null);
@@ -26,9 +26,14 @@ public final class HeroBattleTargetUtils {
         public Unit(int id, int faction, int position, double attack, long hp, long maxHp, LongSupplier speed) {
             this(id, faction, position, attack, hp, maxHp, speed, null, null);
         }
+        /** 保留不需要职业的检测入口，职业选择必须由战斗身份提供。 */
+        public Unit(int id, int faction, int position, double attack, long hp, long maxHp,
+                    LongSupplier speed, LongSupplier currentAttack, IntPredicate hasBuff) {
+            this(id, faction, position, attack, hp, maxHp, speed, currentAttack, hasBuff, null);
+        }
         /** 拒绝无法用于定位或排序的单位。 */
         public Unit {
-            if (id <= 0 || position <= 0 || !Double.isFinite(attack)) {
+            if (id <= 0 || position <= 0 || !Double.isFinite(attack) || (job != null && (job < 1 || job > 5))) {
                 throw new IllegalArgumentException("战斗目标单位无效");
             }
         }
@@ -71,6 +76,9 @@ public final class HeroBattleTargetUtils {
             }
             if (selectors.contains(22) && (values.isEmpty() || !Set.of(1201, 1206).containsAll(values))) {
                 throw new IllegalArgumentException("状态顺序选择参数尚未核对：" + artId);
+            }
+            if (selectors.contains(21) && (values.isEmpty() || values.stream().anyMatch(value -> value < 1 || value > 5))) {
+                throw new IllegalArgumentException("职业顺序选择参数无效：" + artId);
             }
         }
     }
@@ -168,6 +176,15 @@ public final class HeroBattleTargetUtils {
                     replace(targets, targets.stream().sorted(Comparator.comparingLong((Unit unit) -> unit.speed().getAsLong()).reversed())
                         .limit(count).toList());
                 }
+                case 18 -> forwardColumn(source, targets);
+                case 21 -> {
+                    if (targets.stream().anyMatch(unit -> unit.job() == null)) {
+                        throw new IllegalArgumentException("职业顺序选择缺少本场职业：" + plan.artId());
+                    }
+                    replace(targets, targets.stream()
+                        .sorted(Comparator.comparingInt(unit -> jobPriority(unit, plan.values())))
+                        .limit(count).toList());
+                }
                 case 22 -> {
                     if (targets.stream().anyMatch(unit -> unit.hasBuff() == null)) {
                         throw new IllegalArgumentException("状态顺序选择缺少本场状态：" + plan.artId());
@@ -196,6 +213,25 @@ public final class HeroBattleTargetUtils {
             }
         }
         return List.copyOf(targets);
+    }
+
+    /** 旧 JobSelector 以首个职业优先级排序，没有匹配的目标按原顺序补齐。 */
+    private static int jobPriority(Unit unit, List<Integer> values) {
+        int index = values.indexOf(unit.job());
+        return index < 0 ? 100 : index;
+    }
+
+    /** 旧前方一列：优先同列，距离相同时先选列号较大的一侧，该列的全体目标按站位排序。 */
+    private static void forwardColumn(Unit source, LinkedHashSet<Unit> targets) {
+        if (targets.isEmpty()) {
+            return;
+        }
+        int sourceColumn = (source.position() - 1) % 4;
+        int column = targets.stream().map(unit -> (unit.position() - 1) % 4)
+            .min(Comparator.<Integer>comparingInt(value -> Math.abs(value - sourceColumn))
+                .thenComparing(Comparator.reverseOrder())).orElseThrow();
+        replace(targets, targets.stream().filter(unit -> (unit.position() - 1) % 4 == column)
+            .sorted(Comparator.comparingInt(Unit::position)).toList());
     }
 
     /** 旧BuffSelector按首个已有状态的配置顺序排名，无匹配权重100，同权重保持原敌方次序。 */

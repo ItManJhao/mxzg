@@ -7,6 +7,7 @@ package com.funsgamex.mxzg;
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
 import com.funsgamex.mxzg.hero.GodEquipmentRepository;
 import com.funsgamex.mxzg.hero.GodEquipmentRules;
+import com.funsgamex.mxzg.hero.HeroGrantService;
 import com.funsgamex.mxzg.hero.HeroGrowthRules;
 import com.funsgamex.mxzg.hero.HeroLevelService;
 import com.funsgamex.mxzg.hero.HeroRepository;
@@ -22,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.server.ResponseStatusException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -38,6 +40,10 @@ class HeroStarServiceTest {
     @Autowired private DevelopmentLoginService login;
     /** 真实升星事务入口。 */
     @Autowired private HeroStarService stars;
+    /** 真实共享发放入口，验证历史获得跟随外层发放事务。 */
+    @Autowired private HeroGrantService grants;
+    /** 为共享发放建立与实际奖励入口相同的外层数据库事务。 */
+    @Autowired private TransactionTemplate transactions;
     /** 真实普通升级，生成升星后需要保存的升级回执。 */
     @Autowired private HeroLevelService levels;
     /** 读取准确成长返还。 */
@@ -57,6 +63,49 @@ class HeroStarServiceTest {
 
     /** 本次测试的合成账号，不接触其他角色。 */
     private record Player(String roleId, String token) {}
+
+    /** 自然五星发放持久计数，四星资产和回滚中的五星均不计入。 */
+    @Test void countsOnlyCommittedFiveStarGrants() {
+        var player = player();
+        var other = player();
+        String role = player.roleId();
+        var fiveStars = transactions.execute(status -> {
+            grants.grant(role, 10104004, 1);
+            return grants.grant(role, 10205020, 2);
+        });
+        assertThrows(IllegalStateException.class, () -> transactions.executeWithoutResult(status -> {
+            grants.grant(role, 10205020, 1);
+            throw new IllegalStateException("测试外层发放失败");
+        }));
+        assertEquals(2, heroes.countFiveStarAcquisitions(role));
+        assertEquals(0, heroes.countFiveStarAcquisitions(other.roleId()));
+        assertEquals(3, heroes.list(role).size());
+        for (var hero : fiveStars) {
+            jdbc.update("DELETE FROM game_hero WHERE role_id=? AND id=?", role, hero.instanceId());
+        }
+        assertEquals(2, heroes.countFiveStarAcquisitions(role));
+    }
+
+    /** 四星升到五星计一次，成熟五星能否留在名册和同键重试都不影响历史进度。 */
+    @Test void countsFourToFivePromotionOnceAfterHeroLeavesRoster() {
+        var player = player();
+        String target = hero(player, 10104004, 4, 1, 0);
+        String first = hero(player, 10104004, 4, 1, 0);
+        String second = hero(player, 10104004, 4, 1, 0);
+        var fours = java.util.stream.IntStream.range(0, 5)
+                .mapToObj(index -> hero(player, 10104005, 4, 1, 0)).toList();
+        var threes = java.util.stream.IntStream.range(0, 4)
+                .mapToObj(index -> hero(player, 10103003, 3, 1, 0)).toList();
+        var request = new HeroStarService.Request(UUID.randomUUID().toString(), target, 4, List.of(
+                materials(0, first, second), new HeroStarService.Materials(1, fours, false),
+                new HeroStarService.Materials(2, threes, false)));
+        assertEquals(0, heroes.countFiveStarAcquisitions(player.roleId()));
+        var receipt = stars.upgrade(player.token(), request);
+        assertEquals(5, receipt.toStar());
+        assertEquals(receipt, stars.upgrade(player.token(), request));
+        jdbc.update("DELETE FROM game_hero WHERE role_id=? AND id=?", player.roleId(), target);
+        assertEquals(1, heroes.countFiveStarAcquisitions(player.roleId()));
+    }
 
     /** 升星后保留目标实例、删除材料、返还完整成长和装备，同键仅返回原收据。 */
     @Test void upgradesAndRefundsWhileKeepingPreviousReceipts() {
@@ -103,6 +152,7 @@ class HeroStarServiceTest {
         assertEquals(oldReceipt, levels.status(player.token(), earlier.requestId()).receipt());
         assertEquals(receipt, stars.upgrade(player.token(), request));
         assertEquals(revision + 1, roles.revision(player.roleId()));
+        assertEquals(0, heroes.countFiveStarAcquisitions(player.roleId()));
     }
 
     /** 精确拒绝异星、锁定、上阵、重复、自身和跨角色材料，变更不能产生资产到账。 */

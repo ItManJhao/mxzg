@@ -49,13 +49,13 @@ export class GmController {
         this.pending = null;
     }
 
-    /** 发放当前选择；结果不明时要求以原参数重试，保留原幂等键。 */
+    /** 发放当前选择，金币、钻石和英雄经验可大额发放。结果不明时要求以原参数重试。 */
     public async grant(kind: GmGrant["kind"], configId: number, quantity: number): Promise<void> {
         if (this.pending?.sending) {
             throw new Error("正在发放，请等待");
         }
-        // 钱包在服务端单独记账，上限按有符号整数的协议与数据库能力校验。
-        const maximum = kind === "item" && (configId === 900001 || configId === 900002) ? 2_147_483_647 : 9999;
+        const largeGrant = kind === "item" && (configId === 900001 || configId === 900002 || configId === 900101);
+        const maximum = largeGrant ? 2_147_483_647 : 9999;
         if (!Number.isSafeInteger(configId) || configId <= 0 ||
             !Number.isSafeInteger(quantity) || quantity < 1 || quantity > maximum) {
             throw new Error("请选择配置并输入 1～" + maximum + " 的整数数量");

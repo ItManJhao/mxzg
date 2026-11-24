@@ -52,22 +52,25 @@ export class HeroLevelController extends BaseController {
         ]));
     }
 
-    /** 用当前资产快照计算费用；等待升级回包时禁用按钮。 */
+    /** 有成长请求在途时禁用重复操作，原快照的报价仍可展示。 */
+    public get busy(): boolean {
+        return this.upgrading;
+    }
+
+    /** 用当前资产快照计算普通升级的条件和费用。 */
     public describe(heroId: string): HeroLevelQuote {
         const hero = this.roster.snapshot.heroes.find(row => row.id === heroId);
         const gold = this.account?.snapshot.role?.gold ?? -1;
         const heroExp = this.bag.snapshot.synced ? this.bag.quantity(HeroLevelQuoteUtils.EXPERIENCE_ITEM_ID) : -1;
-        const quote = HeroLevelQuoteUtils.describe(hero, gold, heroExp);
-        return hero && this.upgrading ? { ...quote, status: "pending" } : quote;
+        return HeroLevelQuoteUtils.describe(hero, gold, heroExp);
     }
 
-    /** 用统一快照显示当前阶的进阶等级、星级和费用，成长请求期间禁用重复提交。 */
+    /** 用统一快照显示当前阶的进阶等级、星级和费用。 */
     public describeStage(heroId: string): HeroStageQuote {
         const hero = this.roster.snapshot.heroes.find(row => row.id === heroId);
         const gold = this.account?.snapshot.role?.gold ?? -1;
         const stone = this.bag.snapshot.synced ? this.bag.quantity(HeroLevelQuoteUtils.STAGE_STONE_ITEM_ID) : -1;
-        const quote = HeroLevelQuoteUtils.describeStage(hero, gold, stone);
-        return hero && this.upgrading ? { ...quote, status: "pending" } : quote;
+        return HeroLevelQuoteUtils.describeStage(hero, gold, stone);
     }
 
     /** 根据当前英雄报价发送一次升级指令，等待回包时忽略连点。 */

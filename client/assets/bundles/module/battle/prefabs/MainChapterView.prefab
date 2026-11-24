@@ -390,7 +390,7 @@
     "clearRewardButton": {
       "__id__": 246
     },
-    "clearRewardDot": {
+    "clearRewardDotAnchor": {
       "__id__": 249
     }
   },
@@ -6297,7 +6297,7 @@
         "__id__": 224
       },
       {
-        "__id__": 255
+        "__id__": 253
       }
     ],
     "_name": "MilestoneClaimButton",
@@ -6611,8 +6611,8 @@
     "progressFill": {
       "__id__": 238
     },
-    "claimDot": {
-      "__id__": 255
+    "claimDotAnchor": {
+      "__id__": 253
     }
   },
   {
@@ -7255,7 +7255,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_active": false,
+    "_active": true,
     "_layer": 33554432,
     "_parent": {
       "__id__": 239
@@ -7275,7 +7275,7 @@
     },
     "_objFlags": 0,
     "_children": [],
-    "_name": "PendingChapterRewardDot",
+    "_name": "PendingChapterRewardDotAnchor",
     "_mobility": 0,
     "_lscale": {
       "__type__": "cc.Vec3",
@@ -7286,9 +7286,6 @@
     "_components": [
       {
         "__id__": 252
-      },
-      {
-        "__id__": 254
       }
     ],
     "_prefab": {
@@ -7345,53 +7342,8 @@
     }
   },
   {
-    "__type__": "cc.CompPrefabInfo",
-    "fileId": "864c8cd0-5c6a-4098-99a1-18f8022a4e4c"
-  },
-  {
-    "__type__": "cc.Sprite",
-    "_name": "",
-    "_objFlags": 0,
-    "__editorExtras__": {},
-    "node": {
-      "__id__": 249
-    },
-    "_enabled": true,
-    "__prefab": {
-      "__id__": 253
-    },
-    "_customMaterial": null,
-    "_srcBlendFactor": 2,
-    "_dstBlendFactor": 4,
-    "_color": {
-      "__type__": "cc.Color",
-      "r": 255,
-      "g": 255,
-      "b": 255,
-      "a": 255
-    },
-    "_spriteFrame": {
-      "__uuid__": "e44d6939-5da6-4585-9fdc-7d2f474b5554@f9941",
-      "__expectedType__": "cc.SpriteFrame"
-    },
-    "_type": 0,
-    "_fillType": 0,
-    "_sizeMode": 0,
-    "_fillCenter": {
-      "__type__": "cc.Vec2",
-      "x": 0,
-      "y": 0
-    },
-    "_fillStart": 0,
-    "_fillRange": 0,
-    "_isTrimmedMode": false,
-    "_useGrayscale": false,
-    "_atlas": null,
-    "_id": ""
-  },
-  {
     "__type__": "cc.Node",
-    "_active": false,
+    "_active": true,
     "_layer": 33554432,
     "_parent": {
       "__id__": 220
@@ -7411,7 +7363,7 @@
     },
     "_objFlags": 0,
     "_children": [],
-    "_name": "PendingMilestoneRewardDot",
+    "_name": "PendingMilestoneRewardDotAnchor",
     "_mobility": 0,
     "_lscale": {
       "__type__": "cc.Vec3",
@@ -7421,14 +7373,11 @@
     },
     "_components": [
       {
-        "__id__": 258
-      },
-      {
-        "__id__": 260
+        "__id__": 256
       }
     ],
     "_prefab": {
-      "__id__": 256
+      "__id__": 254
     },
     "__editorExtras__": {},
     "_lrot": {
@@ -7460,10 +7409,10 @@
     "_enabled": true,
     "_name": "",
     "__prefab": {
-      "__id__": 257
+      "__id__": 255
     },
     "node": {
-      "__id__": 255
+      "__id__": 253
     },
     "_contentSize": {
       "__type__": "cc.Size",
@@ -7479,50 +7428,5 @@
       "x": 0.5,
       "y": 0.5
     }
-  },
-  {
-    "__type__": "cc.CompPrefabInfo",
-    "fileId": "ec5dcb08-63f5-4774-98ef-15b14c5b9121"
-  },
-  {
-    "__type__": "cc.Sprite",
-    "_name": "",
-    "_objFlags": 0,
-    "__editorExtras__": {},
-    "node": {
-      "__id__": 255
-    },
-    "_enabled": true,
-    "__prefab": {
-      "__id__": 259
-    },
-    "_customMaterial": null,
-    "_srcBlendFactor": 2,
-    "_dstBlendFactor": 4,
-    "_color": {
-      "__type__": "cc.Color",
-      "r": 255,
-      "g": 255,
-      "b": 255,
-      "a": 255
-    },
-    "_spriteFrame": {
-      "__uuid__": "e44d6939-5da6-4585-9fdc-7d2f474b5554@f9941",
-      "__expectedType__": "cc.SpriteFrame"
-    },
-    "_type": 0,
-    "_fillType": 0,
-    "_sizeMode": 0,
-    "_fillCenter": {
-      "__type__": "cc.Vec2",
-      "x": 0,
-      "y": 0
-    },
-    "_fillStart": 0,
-    "_fillRange": 0,
-    "_isTrimmedMode": false,
-    "_useGrayscale": false,
-    "_atlas": null,
-    "_id": ""
   }
 ]

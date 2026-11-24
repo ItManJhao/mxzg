@@ -11,7 +11,7 @@ import type { AccountModel } from "../account/AccountModel";
 import type { AccountOperations } from "../account/AccountOperations";
 import type { RewardBinding } from "../reward/RewardBinding";
 import { HeroRosterModel } from "./HeroRosterModel";
-import type { HeroStarRecipe } from "./utils/HeroStarUtils";
+import { HeroStarUtils, type HeroStarRecipe } from "./utils/HeroStarUtils";
 
 /** 用户提交原配方行与实际材料，替代品成本在服务端按配方计算。 */
 export interface HeroStarMaterials {
@@ -67,11 +67,7 @@ export class HeroStarController extends BaseController {
     public eligible(recipe: HeroStarRecipe): boolean {
         const role = this.account?.snapshot.role;
         const roster = HeroRosterModel.instance.snapshot;
-        if (!role || (role.level < recipe.roleLevel && (roster.godEquipment?.worldLevel ?? 0) < recipe.worldLevel)) {
-            return false;
-        }
-        return recipe.minimumOwnedHeroes === 0
-            || roster.heroes.filter(hero => hero.star >= recipe.minimumOwnedStar).length >= recipe.minimumOwnedHeroes;
+        return !!role && HeroStarUtils.eligible(recipe, roster.heroes, role.level, roster.godEquipment?.worldLevel ?? 0);
     }
 
     /** 提交配方行中的选择，客户端不修改任何英雄或库存。 */

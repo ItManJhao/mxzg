@@ -172,7 +172,11 @@ export class GmToolsView extends BaseView<GmToolsArgs> {
     private bindButton(button: Button, action: () => void): void {
         const node = button.node;
         node.on(Button.EventType.CLICK, action);
-        this.ownListener(() => node.off(Button.EventType.CLICK, action));
+        this.ownListener(() => {
+            if (node.isValid) {
+                node.off(Button.EventType.CLICK, action);
+            }
+        });
     }
 
     /** 撤销窗口的反馈权，不打断已发送的服务端操作。 */

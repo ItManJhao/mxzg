@@ -13,6 +13,12 @@ export class GmOptionCellView extends Component {
     show(text: string, action: () => void): void { this.clear(); this.caption!.string = text; this.tap = action; this.button!.node.on(Button.EventType.CLICK, action); }
     /** 销毁时释放回调。 */
     onDestroy(): void { this.clear(); }
-    /** 解绑旧条目，避免一次点击选择多个配置。 */
-    private clear(): void { if (this.tap) this.button?.node?.off(Button.EventType.CLICK, this.tap); this.tap = null; }
+    /** 释放旧条目回调；停用复用时主动解绑，按钮节点已销毁时只清引用。 */
+    private clear(): void {
+        const node = this.button?.node;
+        if (this.tap && node?.isValid) {
+            node.off(Button.EventType.CLICK, this.tap);
+        }
+        this.tap = null;
+    }
 }

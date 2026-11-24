@@ -1,4 +1,7 @@
-/** 校验主线、金币副本和历史样本的Protobuf战报，整理有序播放步骤；服务端负责伤害和奖励。 */
+/** 校验配置关卡、竞技场和历史样本的 Protobuf 战报，整理有序播放步骤；服务端负责伤害和奖励。 */
+import { ARENA_REPLAY_ROSTERS } from "../../../config/ArenaReplayRoster.generated";
+import { DAILY_DUNGEON_REPLAY_ROSTERS } from "../../../config/DailyGoldReplayRoster.generated";
+import { TOWER_REPLAY_ROSTERS } from "../../../config/TowerReplayRoster.generated";
 import { mxzg } from "../../../platform/GameProtocol.generated";
 
 /** 生成器运行时64位值；校验时显式转换，实例身份保持字符串。 */
@@ -93,6 +96,8 @@ export interface ParsedBattleReplay {
     readonly units: readonly BattleReplayUnit[];
     /** 开战时保存的双方名称，缺失为null，保留已记录的空串。 */
     readonly names: Readonly<{ attacker: string | null; defender: string | null }>;
+    /** 当前战斗类型的最大回合数，用于显示播放进度。 */
+    readonly maxRounds: number;
 }
 
 export class BattleReplayUtils {
@@ -171,7 +176,7 @@ export class BattleReplayUtils {
     }
 
     /**
-     * 解码并完整校验关卡、副本战报及旧具名样本，一次返回步骤、名册及冻结名称。
+     * 解码并校验各玩法战报及旧具名样本，一次返回步骤、名册、冻结名称及上限。
      * 死亡到可行动的血量变化只给有技能上下文的同阵营复活事件。
      * 同阶段保留权威反击顺序，回合伤害先于过期时按死亡移除已登记实例。
      * 校验失败保留原错误，不交付部分结果。成功仅确认战报数据有效，技能表现资源另行核对。
@@ -193,15 +198,16 @@ export class BattleReplayUtils {
         }
         const chapter = this.chapterScenario(report.scenario);
         const idleMission = chapter?.idle ? chapter.index : 0;
-        const goldDungeon = report.scenario === "dungeon:gold:1";
-        const indexedRoster = !!chapter || goldDungeon;
+        const configuredRoster = this.configuredRoster(report.scenario);
+        const indexedRoster = !!chapter || !!configuredRoster;
+        const maxRounds = configuredRoster && report.scenario.startsWith("arena:") ? 20 : 15;
         if (report.schemaVersion !== 1 || (!indexedRoster && ["main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:charm", "audit:charm-death", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed"].indexOf(report.scenario) < 0)
-            || (!indexedRoster && report.units.length !== ((["audit:control-teams", "audit:charm", "audit:charm-death"].includes(report.scenario)) ? 4 : (report.scenario === "main:1:1:3" || report.scenario === "audit:frozen") ? 3 : 2)) || report.rounds < 1 || report.rounds > 15) {
+            || (!indexedRoster && report.units.length !== ((["audit:control-teams", "audit:charm", "audit:charm-death"].includes(report.scenario)) ? 4 : (report.scenario === "main:1:1:3" || report.scenario === "audit:frozen") ? 3 : 2)) || report.rounds < 1 || report.rounds > maxRounds) {
             throw new Error("战报版本或场景不支持");
         }
         const roster = this.validateUnits(report.units);
-        if (goldDungeon) {
-            this.validateGoldDungeonRoster(roster);
+        if (configuredRoster) {
+            this.validateConfiguredRoster(report.scenario, roster, configuredRoster);
         }
         const hp = new Map<number, number>();
         const faction = new Map(roster.map(unit => [unit.unitId, unit.faction]));
@@ -279,9 +285,9 @@ export class BattleReplayUtils {
                 }
                 if (event.kind === "buff.remove") {
                     this.required(event, ["removalReason"]);
-                    // 仅接纳当前服务端真实产出的原因；补齐既有链，不以任意字符串放开未知效果。
+                    // 仅接纳服务端真实产出的原因，诅咒被引爆时由服务端消费现有实例。
                     if (["expire", "death", "replace", "dispel", "trigger-limit", "shield-depleted",
-                        "break-ice", "pure-heart", "counter-crit", "wake"].indexOf(event.removalReason) < 0) {
+                        "break-ice", "pure-heart", "counter-crit", "wake", "detonate"].indexOf(event.removalReason) < 0) {
                         throw new Error("Buff移除原因无效");
                     }
                     if (event.removalReason === "shield-depleted"
@@ -409,11 +415,12 @@ export class BattleReplayUtils {
         const attackersAlive = roster.some(unit => unit.faction === 1 && hp.get(unit.unitId)! > 0);
         const defendersAlive = roster.some(unit => unit.faction === 2 && hp.get(unit.unitId)! > 0);
         const outcome = !attackersAlive ? "DEFENDER_WIN" : !defendersAlive ? "ATTACKER_WIN"
-            : round === 15 ? "DEFENDER_WIN" : "ONGOING";
+            : round === maxRounds ? "DEFENDER_WIN" : "ONGOING";
         if (outcome === "ONGOING" || report.outcome !== outcome) throw new Error("战报胜负无效");
         return Object.freeze({
             steps: Object.freeze(steps),
             units: roster,
+            maxRounds,
             names: Object.freeze({
                 attacker: Object.prototype.hasOwnProperty.call(report, "attackerName") ? report.attackerName! : null,
                 defender: Object.prototype.hasOwnProperty.call(report, "defenderName") ? report.defenderName! : null,
@@ -421,18 +428,32 @@ export class BattleReplayUtils {
         });
     }
 
-    /** 核对金币首关冻结守军，六个站位均须出现；我方沿用原阵容及通用身份校验。 */
-    private static validateGoldDungeonRoster(roster: readonly BattleReplayUnit[]): void {
+    /** 按场景定位日常副本、塔楼和竞技场的同源守军，未知挑战无对应名册。 */
+    private static configuredRoster(scenario: string): readonly (readonly [number, number, number, number])[] | undefined {
+        const indexed = /^(tower|arena):([1-9][0-9]*)$/.exec(scenario);
+        if (indexed) {
+            const source = indexed[1] === "tower" ? TOWER_REPLAY_ROSTERS : ARENA_REPLAY_ROSTERS;
+            return source[Number(indexed[2])];
+        }
+        const match = /^dungeon:([a-z]+):([1-9][0-9]*)$/.exec(scenario);
+        if (!match) {
+            return undefined;
+        }
+        const kind = match[1] as keyof typeof DAILY_DUNGEON_REPLAY_ROSTERS;
+        return Object.prototype.hasOwnProperty.call(DAILY_DUNGEON_REPLAY_ROSTERS, kind)
+            ? DAILY_DUNGEON_REPLAY_ROSTERS[kind][Number(match[2])]
+            : undefined;
+    }
+
+    /** 按同源配置核对冻结的守军；我方沿用出战阵容的通用身份校验。 */
+    private static validateConfiguredRoster(scenario: string, roster: readonly BattleReplayUnit[],
+        expected: readonly (readonly [number, number, number, number])[]): void {
         const enemies = roster.filter(unit => unit.faction === 2);
-        const expected = [
-            [2, 10405005, 5], [3, 10104004, 4], [5, 10204005, 4],
-            [6, 10204004, 4], [7, 10104004, 4], [8, 10403001, 3],
-        ];
-        if (enemies.length !== expected.length || expected.some(([position, template, star]) => {
+        if (enemies.length !== expected.length || expected.some(([position, template, level, star]) => {
             const unit = enemies.find(enemy => enemy.position === position);
-            return !unit || unit.templateId !== template || unit.star !== star || unit.level !== 5;
+            return !unit || unit.templateId !== template || unit.star !== star || unit.level !== level;
         })) {
-            throw new Error("金币副本首关战报名册不符");
+            throw new Error(scenario.startsWith("dungeon:") ? "日常副本战报名册与原关卡不符" : "战报守军与原配置不符");
         }
     }
 

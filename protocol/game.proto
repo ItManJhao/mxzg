@@ -101,6 +101,22 @@ message Frame {
     HeroArtifactChangeReceipt hero_artifact_change_receipt = 91;
     GodEquipmentShopBuyRequest god_equipment_shop_buy_request = 92;
     GodEquipmentShopBuyReceipt god_equipment_shop_buy_receipt = 93;
+    GuildListRequest guild_list_request = 94;
+    GuildChangeRequest guild_change_request = 95;
+    GuildState guild_state = 96;
+    VipClaimRequest vip_claim_request = 97;
+    VipClaimReceipt vip_claim_receipt = 98;
+    TowerState tower_state = 99;
+    TowerFormationSave tower_formation_save = 100;
+    TowerRequest tower_request = 101;
+    TowerSettlement tower_settlement = 102;
+    ArenaState arena_state = 103;
+    ArenaChallengeRequest arena_challenge_request = 104;
+    ArenaReplayRequest arena_replay_request = 105;
+    BattleReplay arena_replay = 106;
+    ArenaSettlement arena_settlement = 107;
+    ArenaTicketBuyRequest arena_ticket_buy_request = 108;
+    ArenaTicketPurchase arena_ticket_purchase = 109;
   }
 }
 message Empty {}
@@ -152,7 +168,69 @@ message MarketReceipt {
   required MarketState state = 4;
 }
 
-// 本期仅开放金币副本首关。资格、历史阵容战力及当日胜场均由服务端给出。
+// 公会查询只接受当前区服中的名称筛选。页码从 1 开始。
+message GuildListRequest {
+  optional string query = 1;
+  optional uint32 page = 2;
+}
+// 角色来自鉴权连接，幂等键区分同一角色的不同操作。
+message GuildChangeRequest {
+  required string request_id = 1;
+  required string action = 2;
+  optional string guild_id = 3;
+  optional string applicant_id = 4;
+  optional string name = 5;
+  optional string description = 6;
+  // 建会时选择的公会徽章，编号 0 至 43。
+  optional uint32 badge_id = 7;
+}
+message GuildSummary {
+  required string id = 1;
+  required string name = 2;
+  required uint32 member_count = 3;
+  required uint32 capacity = 4;
+  required string description = 5;
+  optional uint32 badge_id = 6;
+}
+message GuildMember {
+  required string id = 1;
+  required string nickname = 2;
+  required uint32 level = 3;
+  required bool leader = 4;
+  optional uint32 head_id = 5;
+  optional uint32 border_id = 6;
+}
+// 统一返回当前成员状态。审批列表仅对有权限的成员交付。
+message GuildState {
+  optional string request_id = 1;
+  required uint32 level_required = 2;
+  required uint32 create_cost_diamonds = 3;
+  required uint32 name_limit = 4;
+  optional GuildSummary guild = 5;
+  repeated GuildMember members = 6;
+  repeated GuildMember applications = 7;
+  repeated GuildSummary guilds = 8;
+  required uint32 page = 9;
+  required bool has_more = 10;
+  repeated string applied_guild_ids = 11;
+  required int64 rejoin_at_seconds = 12;
+}
+
+// 单个日常副本关卡的原展示和资格。每日胜场、次数与报价在同类关卡间共用。
+// 金币、经验、英雄、羁绊和精灵副本共用关卡结构，类型来自消息名。
+message DailyDungeonStageState {
+  required uint32 stage_id = 1;
+  required uint32 title_language_id = 2;
+  required uint32 minimum_level = 3;
+  required int64 required_power = 4;
+  required bool cleared = 5;
+  required bool unlocked = 6;
+  required bool can_challenge = 7;
+  repeated ChapterReward reward_preview = 8;
+  required uint32 ribbon = 9;
+}
+
+// 金币和经验副本共用消息结构，类型由协议入口决定。顶层关卡用于查询默认值或对应实际结算。
 message DailyDungeonState {
   required uint32 stage_id = 1;
   required uint32 title_language_id = 2;
@@ -168,13 +246,16 @@ message DailyDungeonState {
   required bool unlocked = 11;
   required bool can_challenge = 12;
   repeated ChapterReward reward_preview = 13;
+  repeated DailyDungeonStageState stages = 14;
 }
 
-// request_id 为持久幂等键。最高确认价格只限制扣费，胜负与奖励由服务端决定。
+// request_id 在同一角色的全部日常副本中保持唯一。价格只限制扣费，胜负与奖励由服务端决定。
 message DailyDungeonChallengeRequest {
   required string request_id = 1;
   required bool sweep = 2;
   required int64 max_diamonds = 3;
+  // 旧客户端请求和已冻结的首关回执沿用关卡 1。
+  optional uint32 stage_id = 4;
 }
 
 // 开战与结算在同一服务端事务完成，重试只返回原回执。清扫成功不重算战报。
@@ -188,6 +269,126 @@ message DailyDungeonReceipt {
   optional BattleReplay replay = 7;
   required DailyDungeonState state = 8;
   optional RewardGrantResult actual = 9;
+}
+
+// 幻境之塔的专用布阵、最高层、体力、扫荡及里程碑均由服务端持有。
+message TowerState {
+  required uint32 minimum_level = 1;
+  required uint32 highest_cleared = 2;
+  required uint32 max_floor = 3;
+  required uint32 energy = 4;
+  required uint32 max_energy = 5;
+  required int64 next_energy_at_seconds = 6;
+  required uint32 recharge_seconds = 7;
+  required uint32 sweeps = 8;
+  required uint32 sweep_limit = 9;
+  required int64 next_sweep_cost_diamonds = 10;
+  required int64 sweep_reset_at_seconds = 11;
+  required int64 formation_version = 12;
+  required uint32 formation_id = 13;
+  repeated FormationSlot slots = 14;
+  repeated TowerFloor floors = 15;
+  required TowerMilestone milestone = 16;
+}
+message TowerFloor {
+  required uint32 floor = 1;
+  repeated ChapterReward first_rewards = 2;
+  repeated ChapterReward sweep_rewards = 3;
+  required int64 recommended_power = 4;
+  repeated TowerEnemy enemies = 5;
+}
+message TowerEnemy {
+  required uint32 position = 1;
+  required uint32 template_id = 2;
+  required uint32 level = 3;
+  required uint32 star = 4;
+}
+message TowerMilestone {
+  required uint32 id = 1;
+  required uint32 floor = 2;
+  required bool claimed = 3;
+  repeated ChapterReward rewards = 4;
+}
+message TowerFormationSave {
+  required int64 expected_version = 1;
+  required uint32 formation_id = 2;
+  repeated FormationSlot slots = 3;
+}
+// 依消息名只允许 floor、floor 与 max_diamonds、或 milestone_id。
+message TowerRequest {
+  required string request_id = 1;
+  optional uint32 floor = 2;
+  optional int64 max_diamonds = 3;
+  optional uint32 milestone_id = 4;
+}
+message TowerSettlement {
+  required string request_id = 1;
+  required string role_id = 2;
+  required int64 asset_revision = 3;
+  required string action = 4;
+  required uint32 floor = 5;
+  required bool won = 6;
+  optional BattleReplay replay = 7;
+  required TowerState state = 8;
+  optional RewardGrantResult actual = 9;
+}
+
+// 新手竞技场的累计胜场与真实已结算场次分开保存；历史战报只按原战斗编号查询。
+message ArenaState {
+  required uint32 score = 1;
+  required uint32 free_remaining = 2;
+  required uint32 robot_wins = 3;
+  required uint32 settled_challenges = 4;
+  required int64 reset_at_seconds = 5;
+  required bool newcomer_active = 6;
+  repeated ArenaOpponent opponents = 7;
+  repeated ArenaHistoryEntry history = 8;
+  required int64 ticket_balance = 9;
+  required uint32 ticket_price_diamonds = 10;
+}
+message ArenaOpponent {
+  required uint32 id = 1;
+  required string name = 2;
+  required uint32 level = 3;
+  required uint32 score = 4;
+  required int64 power = 5;
+  required uint32 avatar_id = 6;
+}
+message ArenaHistoryEntry {
+  required string battle_id = 1;
+  required uint32 opponent_id = 2;
+  required string opponent_name = 3;
+  required bool won = 4;
+  required int32 score_delta = 5;
+  required int64 settled_at_seconds = 6;
+}
+message ArenaChallengeRequest {
+  required string request_id = 1;
+  required uint32 opponent_id = 2;
+}
+message ArenaReplayRequest {
+  required string battle_id = 1;
+}
+message ArenaSettlement {
+  required string request_id = 1;
+  required string role_id = 2;
+  required int64 asset_revision = 3;
+  required ArenaHistoryEntry record = 4;
+  required BattleReplay replay = 5;
+  required ArenaState state = 6;
+  optional RewardGrantResult actual = 7;
+}
+message ArenaTicketBuyRequest {
+  required string request_id = 1;
+  required uint32 quantity = 2;
+}
+message ArenaTicketPurchase {
+  required string request_id = 1;
+  required string role_id = 2;
+  required int64 asset_revision = 3;
+  required uint32 quantity = 4;
+  required int64 spent_diamonds = 5;
+  required RewardGrantResult actual = 6;
 }
 
 // 通用发奖反馈仅描述已提交的实际到账，不更新客户端资产；资产仍走Snapshot。
@@ -263,6 +464,8 @@ message Role {
   optional bool welcome_gift_available = 9;
   // 对外显示的十进制角色编号。角色、会话及资产归属继续使用 id。
   optional string public_id = 10;
+  // 空字符串表示已同步且未参加公会。缺失表示采集此快照时尚无该字段。
+  optional string guild_name = 11;
 }
 // 候选昵称仅用于填入表单；成功保存后的昵称仍由统一角色快照交付。
 message RoleName { required string nickname = 1; }
@@ -356,6 +559,35 @@ message Snapshot {
   optional HeroGodEquipmentState god_equipment = 13;
   // 圣器激活格位与独立实例随名册一起同步。
   optional HeroArtifactState artifacts = 14;
+  // 当前女神 VIP 与任务进度随同一角色事务恢复。
+  optional VipState vip = 15;
+}
+
+message VipState {
+  required uint32 level = 1;
+  repeated VipTask tasks = 2;
+}
+
+message VipTask {
+  required uint32 id = 1;
+  required uint32 target = 2;
+  // 没有接通权威进度来源时省略。明确的 0 代表已同步且没有进度。
+  optional uint32 progress = 3;
+  required bool claimed = 4;
+}
+
+message VipClaimRequest {
+  required string request_id = 1;
+  required uint32 task_id = 2;
+}
+
+message VipClaimReceipt {
+  required string request_id = 1;
+  required string role_id = 2;
+  required int64 asset_revision = 3;
+  required uint32 task_id = 4;
+  // 与通用奖励推送共用回执标识，历史回包不会再次发放。
+  required RewardNotice notice = 5;
 }
 
 message HeroSummonState {

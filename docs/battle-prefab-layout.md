@@ -11,7 +11,7 @@
 - 正常胜利奖励区在`ChapterEndView.prefab/MainVictoryPanel/MainVictoryRewards`，600×260、顶部锚点，顶边y=260，content顶对齐y=0。四列、间距、边距和Cell仍由SuperContent保存；增加奖励数量只滚动，不把奖励或确认按钮向下推。此前y=130是居中坐标残留，会让列表跨出底板并压到确认按钮。
 - 主线对阵和倍数位置由`BattlePage.prefab/LayerHud/ChapterInfoDock`维护。Dock的Widget贴底并居中，底部留白150；其`ChapterMatchInfoAnchor`与`ChapterTopBarAnchor`分别保存264.5、369.5的局部y。信息栏放在原宝箱上方，VS和姓名底条避开底板上沿，不再放在战场中央。
 - `BattlePageUtils.alignChapterInfo`只把Widget目标接到当前战场可见区域，更新约束后将挂点世界坐标换回HUD局部坐标。原视口刷新先更新统一比例，再执行对齐；角色、血条和技能特效不随信息栏迁移。修改布局先改以上Prefab参数，不能再在播放器另加一套位置常量。
-- 正式出场仍先等资源就绪并播放ZDKS，再并行播放双方15帧出场特效。第9帧完整播放结束后释放60%进度，开始1秒模型渐入；完整特效与双方渐入都完成后才显示血条并播放战报。0.45秒是9×0.05的名义值，实际调度延迟时以帧进度为准，不用独立计时器抢跑。挂机原出场时序保持。
+- 正式挑战的战报交付后就可播放 ZDKS。轨道达到 70%，且模型和出场图就绪时，双方并行播放 15 帧出场特效。第 9 帧完整播完后开始 1 秒模型渐入，出场和渐入结束才显示血条。后续技能在上一组动作播放时预取。日常副本点击到开场的流程见[战报显示依赖](architecture.md#战报显示依赖与冻结统计)。
 
 本批源码、检查与实际预览范围见[显示调整记录](validation/battle-display-adjustment-review-20261117.json)。下方日期段落为历史依据，不覆盖本节当前入口。
 
@@ -92,12 +92,12 @@ E. 正式服标准/窄长/平板尺寸逐项对照，独立测试环境验证挑
 ## BattlePage 节点契约
 
 - Bg：map01_B 远景；CampaignFloor：map01_F 地板，位于角色之前。
-- LayerField/AllySlots、EnemySlots：角色与头顶 Buff 的父层。
-- LayerHud/HpBars：旧血条资源，Fill 使用水平 FILLED 裁切，更新 fillRange 不重新拉伸图片。Label 显示等级，不显示剩余血量数字。
+- LayerField/AllySlots、EnemySlots：角色模型及角色持续特效的父层。
+- LayerHud/HpBars：血条及状态图标随站位移动，统一绘制在双方模型上层。Fill 使用水平 FILLED 裁切，Label 显示等级。
 - LayerHud/TopBar/RoundLabel：暂保留绑定路径，位置已移至下方；名称迁移需同步所有引用。
 - LayerHud/BtnSkip、BtnRetreat：当前独立测试的开始、退出控件；不表示正式服有这两个按钮。
 - LayerFloat：真实伤害飘字。静态占位数字清空；LayerAppear、SkillBars 默认隐藏。
-- HeadAnchor/BuffRow：Buff 实例图标；默认隐藏，由真实事件开启。
+- LayerHud/HpBars 各站位的 BuffRow 保存三枚 30×30 状态图标及间距。默认隐藏，由真实事件开启。与血条一起随死亡、复活更新可见性，重复实例仍合并在同一图标并显示层数。
 
 ## 尚未完成的对齐
 

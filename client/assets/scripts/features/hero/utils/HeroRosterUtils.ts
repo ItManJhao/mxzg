@@ -4,19 +4,24 @@ import { GameConfig } from "../../../config/GameConfig";
 import type { HeroCellModel, HeroListModel } from "../ui/HeroListPresentation";
 import { HeroCatalog } from "./HeroCatalog";
 import type { HeroRosterState } from "../HeroRosterModel";
+import type { OwnedHero } from "../data/HeroSnapshotUtils";
 
 /** 只负责名册展示规则；实例身份、顺序和服务器容量均从真实数据读取。 */
 export class HeroRosterUtils {
     /** 纯工具类不创建实例。 */
     private constructor() {}
 
+    /** 已保存的主线上阵英雄优先，再按星级、等级和模板 ID 降序排列。 */
+    public static compareOwned(left: OwnedHero, right: OwnedHero): number {
+        return Number(right.deployed === true) - Number(left.deployed === true)
+            || right.star - left.star || right.level - left.level || right.templateId - left.templateId;
+    }
+
     /** 按元素筛选并排序名册；模板按需读取同一配置仓库，只复制当前列表投影，不保存配置索引。 */
     public static present(state: HeroRosterState, elem: number, config: GameConfig = GameConfig.instance): HeroListModel {
         const cells: HeroCellModel[] = [];
         if (state.status === "ready") {
-            const sorted = state.heroes.slice().sort((a, b) =>
-                Number(b.deployed === true) - Number(a.deployed === true) ||
-                b.star - a.star || b.level - a.level || b.templateId - a.templateId);
+            const sorted = state.heroes.slice().sort(HeroRosterUtils.compareOwned);
             for (const hero of sorted) {
                 const template = HeroCatalog.find(hero.templateId, config);
                 if (!template) {

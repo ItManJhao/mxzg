@@ -185,7 +185,7 @@ function gmRequests(
     };
 }
 
-/** 检查幂等重试和编码，并验证大额限制只放宽给钱包货币。 */
+/** 检查幂等重试和编码，确认金币、钻石及英雄经验可大额发放。 */
 async function checkRequests(): Promise<void> {
     const bodies: { requestId: string; kind: string; configId: number; quantity: number }[] = [];
     let failed = true;
@@ -220,9 +220,12 @@ async function checkRequests(): Promise<void> {
     }
     await gm.grant("item", 900001, 10_000_000);
     await gm.grant("item", 900002, 20_000);
-    assert(bodies[3].quantity === 10_000_000 && bodies[4].quantity === 20_000, "金币和钻石高于 9999 仍照常发包");
-    const rejected = await gm.grant("item", 900101, 10_000).then(() => false, () => true);
-    assert(rejected && bodies.length === 5, "普通道具仍保持 9999 上限，超限不发包");
+    await gm.grant("item", 900101, 2_147_483_647);
+    assert(bodies[3].quantity === 10_000_000 && bodies[4].quantity === 20_000
+        && bodies[5].quantity === 2_147_483_647, "金币、钻石和英雄经验高于 9999 仍照常发包");
+    const rejected = await gm.grant("item", 900102, 10_000).then(() => false, () => true);
+    const overflow = await gm.grant("item", 900101, 2_147_483_648).then(() => false, () => true);
+    assert(rejected && overflow && bodies.length === 6, "超过道具上限或协议上限时不发包");
 }
 
 /** 实际点按钮检查等级、关卡、北京时间、读时飘字、恢复和关窗迟到响应。 */

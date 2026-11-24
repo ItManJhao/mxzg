@@ -27,8 +27,13 @@ class HeroBattleChapterSkillPrerequisiteTest {
 
     /** 创建可执行真实技能的切片战场；施法者初始损血，守方职业由原模板提供。 */
     private HeroBattleHealingExecutor engine(int source, int target, int active, int general) {
+        return engine(source, target, active, general, 1);
+    }
+
+    /** 为专项选择技能原等级，守方始终使用原模板职业。 */
+    private HeroBattleHealingExecutor engine(int source, int target, int active, int general, int skillLevel) {
         var rules = new HeroSkillPanelRules(mapper);
-        var skills = rules.battleSchedule(List.of(new Skill(active, 1), new Skill(general, 0)));
+        var skills = rules.battleSchedule(List.of(new Skill(active, skillLevel), new Skill(general, 0)));
         var engine = new HeroBattleHealingExecutor(rules, List.of(
             new State(new Actor(1, skills), 1, 2, 1000, 10000, 1000, 0, 0, 0),
             new State(new Actor(2, List.of()), 2, 2, 10000, 10000, 0, 0, 0, 0)));
@@ -91,5 +96,42 @@ class HeroBattleChapterSkillPrerequisiteTest {
         cast(differentJob, probability -> probability >= 0.3D);
         assertEquals(4081401, differentJob.lastControl(2).spec().id());
         assertTrue(differentJob.damages().stream().map(Damage::buffId).noneMatch(id -> id == 4081601));
+    }
+
+    /** 亚瑟的两条后续按目标职业分别使用原概率，条件不改变已经结算的主体伤害。 */
+    @Test
+    void arthurUsesDifferentStunChanceByTargetJob() {
+        var other = engine(10205009, 10101001, 102050091, 102050090);
+        cast(other, probability -> probability >= 0.5D);
+        assertNull(other.lastControl(2));
+        assertTrue(other.damages().stream().anyMatch(damage -> damage.buffId() == 2091301));
+
+        var fighter = engine(10205009, 10104005, 102050091, 102050090);
+        cast(fighter, probability -> probability >= 0.5D);
+        assertEquals(2091701, fighter.lastControl(2).spec().id());
+
+        var lowerThreshold = engine(10205009, 10101001, 102050091, 102050090);
+        cast(lowerThreshold, probability -> probability >= 0.35D);
+        assertEquals(2091601, lowerThreshold.lastControl(2).spec().id());
+    }
+
+    /** 菲林德之翼三级只给职业4追加眩晕与独立持续伤害，安装回合不提前扣血。 */
+    @Test
+    void filindAppliesStunAndPeriodicDamageToJobFourOnly() {
+        DoublePredicate hit = probability -> probability >= 0.5D;
+        var selected = engine(10305018, 10304004, 103050181, 103050180, 3);
+        cast(selected, hit);
+        assertEquals(3181503, selected.lastControl(2).spec().id());
+        assertTrue(selected.buffs(2).stream().anyMatch(entry -> entry.spec().id() == 3181603));
+        assertFalse(selected.damages().stream().anyMatch(damage -> damage.buffId() == 3181603));
+        selected.beginRound(2, List.of(1, 2), elements, hit);
+        assertEquals(3181603, selected.damages().getLast().buffId());
+        assertEquals(650L, selected.damages().getLast().incoming());
+
+        var other = engine(10305018, 10101001, 103050181, 103050180, 3);
+        cast(other, hit);
+        assertNull(other.lastControl(2));
+        assertFalse(other.buffs(2).stream().anyMatch(entry -> entry.spec().id() == 3181603));
+        assertTrue(other.damages().stream().anyMatch(damage -> damage.buffId() == 3181303));
     }
 }

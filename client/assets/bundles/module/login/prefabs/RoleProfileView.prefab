@@ -1086,7 +1086,7 @@
     },
     "_objFlags": 0,
     "_children": [],
-    "_name": "lbl_clan_name_title",
+    "_name": "GuildTitleLabel",
     "_mobility": 0,
     "_lscale": {
       "__type__": "cc.Vec3",
@@ -1245,7 +1245,7 @@
     },
     "_objFlags": 0,
     "_children": [],
-    "_name": "lbl_clan_name",
+    "_name": "GuildNameLabel",
     "_mobility": 0,
     "_lscale": {
       "__type__": "cc.Vec3",
@@ -4412,6 +4412,9 @@
     },
     "level": {
       "__id__": 38
+    },
+    "guildLabel": {
+      "__id__": 50
     },
     "face": {
       "__id__": 151

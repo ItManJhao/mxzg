@@ -17,6 +17,7 @@ import { HeroTalkUtils } from "../assets/scripts/features/battle/utils/HeroTalkU
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { Button, Label, Mask, Node, Prefab, SpriteFrame, Tween, UITransform, view as screenView } from "cc";
 import { MainChapterView } from "../assets/scripts/features/battle/ui/MainChapterView";
+import { FormationView } from "../assets/scripts/features/hero/ui/FormationView";
 import { MainChapterIdleChest } from "../assets/scripts/features/battle/ui/MainChapterIdleChest";
 import { BattleSpineService } from "../assets/scripts/features/battle/ui/BattleSpineService";
 import type { IdleClaimConfirmation, IdleClaimReceipt } from "../assets/scripts/features/battle/data/MainChapterIdleClaimData";
@@ -246,21 +247,21 @@ function checkRewardRowEvents(): void {
         owner.destroy();
     }
 }
-/** 核对战斗按钮每种不可操作状态有清晰文案；阶段上限不影响旧请求/待结算恢复，也不误开第四关布阵。 */
+/** 核对战斗按钮状态、布阵子窗归属和待确认挑战或结算的恢复入口。 */
 async function checkChallengeButtonAvailability(page: any): Promise<void> {
     const model = MainChapterModel.instance;
     const before = { state: model.state, requestId: model.requestId, busy: model.busy,
         message: model.message, playing: page.playing, closed: page.closed };
-    const originalOpen = UIManager.instance.openById;
+    const originalOpen = UIManager.instance.openChild;
     const originalToast = UIManager.instance.toast;
     const originalChallenge = page.challenge;
-    const openings: { id: string; args: any }[] = [];
+    const openings: { owner: MainChapterView; view: typeof FormationView; args: any }[] = [];
     const notices: string[] = [];
     let recoveries = 0;
     try {
-        UIManager.instance.openById = (async (id: string, args: unknown) => {
-            openings.push({ id, args });
-        }) as typeof UIManager.instance.openById;
+        UIManager.instance.openChild = (async (owner: MainChapterView, view: typeof FormationView, args: unknown) => {
+            openings.push({ owner, view, args });
+        }) as typeof UIManager.instance.openChild;
         UIManager.instance.toast = text => notices.push(text);
         page.challenge = async () => { recoveries++; };
         page.closed = false;
@@ -276,8 +277,8 @@ async function checkChallengeButtonAvailability(page: any): Promise<void> {
             await page.prepareChallenge();
         }
         assert.equal(openings.length, 2);
-        assert(openings.every(row => row.id === "remake-formation" && row.args.closeAfterSave
-            && typeof row.args.complete === "function"), "正常挑战进入实际阵容确认流程");
+        assert(openings.every(row => row.owner === page && row.view === FormationView && row.args.closeAfterSave
+            && typeof row.args.complete === "function"), "挑战布阵由发起的主线实例持有");
         model.state = { maxCleared: 3, pendingBattleId: null, assetRevision: 1, challengeLimit: 3 };
         page.render();
         assert.equal(page.challengeLabel.string, "已通关", "封顶不能仍显示普通战斗文案而无响应");
@@ -330,7 +331,7 @@ async function checkChallengeButtonAvailability(page: any): Promise<void> {
         page.render();
         assert.equal(notices.filter(text => text === model.message).length, 2, "新操作允许反馈同一失败");
     } finally {
-        UIManager.instance.openById = originalOpen;
+        UIManager.instance.openChild = originalOpen;
         UIManager.instance.toast = originalToast;
         page.challenge = originalChallenge;
         model.state = before.state;
@@ -339,6 +340,41 @@ async function checkChallengeButtonAvailability(page: any): Promise<void> {
         model.message = before.message;
         page.playing = before.playing;
         page.closed = before.closed;
+    }
+}
+
+/** 旧战场成功打开的通知晚到时，不能再次调用全局关闭而取消新一轮战场。 */
+async function checkLateBattleOpen(): Promise<void> {
+    const ui = UIManager.instance;
+    const model = MainChapterModel.instance;
+    const originalOpen = ui.openById;
+    const originalClose = ui.closeById;
+    const originalReplay = model.replay;
+    const root = new Node("MainChapterCloseTest");
+    const chapter = root.addComponent(MainChapterView);
+    const page = chapter as unknown as { play(battleId: string, settlementOnly: boolean): Promise<void>; render(): void };
+    const battle = new Node("OldBattle").addComponent(MainChapterBattleView);
+    const closures: string[] = [];
+    const oldOpen = Promise.resolve(battle);
+    try {
+        ui.openById = (() => oldOpen) as typeof ui.openById;
+        ui.closeById = id => {
+            closures.push(id);
+            return true;
+        };
+        model.replay = { battleId: "test-battle", mission: 1, pending: [], bytes: new Uint8Array() };
+        page.render = () => {};
+        const playing = page.play("test-battle", true);
+        chapter.onClose();
+        assert.deepEqual(closures, ["main-chapter-battle"], "旧主线关闭时同步取消战场");
+        await playing;
+        assert.deepEqual(closures, ["main-chapter-battle"], "旧打开任务继续执行时不能关闭同类新战场");
+    } finally {
+        model.replay = originalReplay;
+        ui.openById = originalOpen;
+        ui.closeById = originalClose;
+        root.destroy();
+        battle.node.destroy();
     }
 }
 
@@ -441,7 +477,7 @@ function checkIdleCollectionPresentation(): void {
     page.fitViewport = () => {};
     page.playChestClick = () => { clicks++; };
     for (const key of ["panel", "battleHost", "idleChestHost", "idleBubble", "resourceFlightHost",
-        "resourceFlightTemplate", "resourceFlightTarget", "clearRewardDot"]) {
+        "resourceFlightTemplate", "resourceFlightTarget", "clearRewardDotAnchor"]) {
         page[key] = new Node(key);
         page[key].parent = node;
     }
@@ -537,7 +573,10 @@ function checkIdleCollectionPresentation(): void {
         const closedActions = actions.length;
         emit(context);
         assert.equal(actions.length, closedActions, "已关闭页面不接收迟到成功");
+        page.clearRewardDotAnchor = null;
         page.runOpen();
+        assert.equal(EventDispatcher.instance.listenerCount("main-chapter.idle-collection"), 1,
+            "缺少通关红点时仍正常打开主线");
         page.idleChest = new MainChapterIdleChest(() => skeleton);
         const reopenedActions = actions.length;
         emit(context);
@@ -676,12 +715,21 @@ function checkChapterNextTargetPresentation(): void {
         UIManager.instance.openChild = openChild;
         page.node.destroy();
     }
-    for (const flags of [{ persistentChapter: false, won: true }, { persistentChapter: true, won: false }]) {
+    for (const flags of [
+        { persistentChapter: false, won: true },
+        { persistentChapter: true, won: false },
+        { persistentChapter: false, won: false, settledBattle: true, notice: "竞技场积分 +0" },
+    ]) {
         const mode: any = new Node("UnchangedReadonlyResult").addComponent(ChapterEndView);
         mode.panel = new Node("Panel");
         mode.panel.parent = mode.node;
         const confirm = new Node("ConfirmButton");
         confirm.parent = mode.panel;
+        const report = new Node("SettledReportButton");
+        report.parent = mode.panel;
+        report.active = false;
+        const summaryAnchor = new Node("VictoryCloseHintAnchor");
+        summaryAnchor.parent = mode.panel;
         for (const key of ["victory", "defeatWing", "defeatTitle", "defeatContent", "readonlyNotice"]) {
             mode[key] = new Node(key);
             mode[key].parent = mode.panel;
@@ -708,10 +756,15 @@ function checkChapterNextTargetPresentation(): void {
             assert.equal(mode.panel.active, true);
             assert.equal(mode.mainVictoryPanel.active, false);
             assert.equal(mode.nextTarget.node.active, false);
-            assert.equal(mode.defeatContent.active, !flags.won);
+            assert.equal(mode.defeatContent.active, !flags.won && !flags.settledBattle);
             assert.equal(mode.victoryCountdown, false);
             assert.equal(mode.seconds, 5, "本批目标恢复不能改动失败五秒或演示无胜利倒计时的分支");
-            if (!flags.persistentChapter) {
+            if (flags.settledBattle) {
+                assert.equal(confirm.active, true);
+                assert.equal(originalNotice.active, true);
+                assert.equal(originalNotice.getComponent(Label).string, flags.notice);
+                assert.equal(mode.closeHint.string, "点击空白处关闭");
+            } else if (!flags.persistentChapter) {
                 assert.equal(mode.readonlyNotice.getComponent(Label).string, "只读演示说明");
             }
         } finally {
@@ -1265,6 +1318,7 @@ async function main(): Promise<void> {
     assert.equal(restored, battleId, "待结算从战斗按钮恢复，不依赖已移除的重播按钮");
     rewardView.play = realPlay;
     await checkChallengeButtonAvailability(rewardView);
+    await checkLateBattleOpen();
     shared.receipt = null;
     const idle = { serverTime: 1000, startedAt: 900, maxSeconds: 120, frequency: 5,
         rewardStage: shared.state!.maxCleared, rates: [{ itemId: 900001, quantity: 10 },

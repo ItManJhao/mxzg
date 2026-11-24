@@ -7,7 +7,7 @@ import { CITY_BAR } from "../../../config/CityNavigationUtils";
 import { ErrorUtils } from "../../../core/ErrorUtils";
 import { GameLog } from "../../../core/GameLog";
 import { BaseView } from "../../../framework/ui/BaseView";
-import { RedDotManager } from "../../../framework/ui/RedDotManager";
+import { RedDotBinding } from "../../../framework/ui/RedDotBinding";
 import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
 import { CityChrome, CityChromeActions, CityChromeUtils, TabState } from "./CityChromeUtils";
 import { CityTabUtils } from "../utils/CityTabUtils";
@@ -56,6 +56,8 @@ const TAB_RED_DOT_PATHS: Readonly<Record<string, string | undefined>> = {
     bag: GameRedDotKey.BAG,
     battle: GameRedDotKey.BATTLE,
     dungeon: GameRedDotKey.DUNGEON,
+    clan: GameRedDotKey.GUILD,
+    fetter: GameRedDotKey.VIP,
 };
 export interface CityChromeOpenArgs {
     onTab: (id: string) => void;
@@ -155,13 +157,13 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
     } = {};
     /** 本实例首次开始绑定后为true，后续打开只更新注入操作，不重复登记按钮。 */
     private started = false;
-    /** 是否正在监听底栏红点，关闭时由页面监听作用域复位。 */
-    private watchingRedDots = false;
+    /** 导航标识到本次开页红点绑定，关闭时清理；锁定变化时刷新对应入口。 */
+    private readonly tabRedDots = new Map<string, RedDotBinding>();
     /** 返回当前顶底栏节点，供主城宿主持有和显示。 */
     get root(): Node {
         return this.node;
     }
-    /** 接收导航操作并订阅底栏红点。按钮只绑定一次，红点监听随本次开关页释放。 */
+    /** 接收导航操作并绑定公共红点。按钮只绑定一次，红点随本次开关页释放。 */
     onOpen(args?: CityChromeOpenArgs): void {
         if (args) {
             this.args = args;
@@ -169,14 +171,14 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
             this.actions = args.actions;
         }
         if (this.started) {
-            this.watchTabRedDots();
+            this.bindTabRedDots();
             return;
         }
         this.started = true;
         this.beginOpen();
         try {
             this.bindAll();
-            this.watchTabRedDots();
+            this.bindTabRedDots();
             this.finishOpen();
         }
         catch (err) {
@@ -276,32 +278,28 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
                     CityChromeView.paintLockLevel(lock, tab.lockLevel && tab.lockLevel > 1 ? tab.lockLevel : 0);
                 }
             }
-            const dotPath = TAB_RED_DOT_PATHS[tab.id];
-            if (dotPath) {
-                this.paintTabRedDot(button, RedDotManager.instance.isVisible(dotPath));
-            }
+            this.tabRedDots.get(tab.id)?.refresh();
         }
     }
 
-    /** 订阅已接业务的入口树节点，离开主城顶底栏时统一解绑。 */
-    private watchTabRedDots(): void {
-        if (this.watchingRedDots) {
+    /** 将底栏按钮绑定到红点树。锁标优先，关闭时清理所有显示绑定。 */
+    private bindTabRedDots(): void {
+        if (this.tabRedDots.size > 0) {
             return;
         }
-        this.watchingRedDots = true;
-        this.ownListener(() => { this.watchingRedDots = false; });
+        this.ownListener(() => {
+            for (const binding of this.tabRedDots.values()) {
+                binding.dispose();
+            }
+            this.tabRedDots.clear();
+        });
         for (const [id, path] of Object.entries(TAB_RED_DOT_PATHS)) {
             const button = this.tabs[id];
             if (path && button) {
-                this.ownListener(RedDotManager.instance.watch(path, visible => this.paintTabRedDot(button, visible)));
+                const lock = button.getChildByName("Lock");
+                this.tabRedDots.set(id, new RedDotBinding(button, path, () => !lock?.active));
             }
         }
-    }
-
-    /** 用统一管理器的结果刷新已有红点挂点，优先显示同一位置的锁标。 */
-    private paintTabRedDot(button: Node, visible: boolean): void {
-        const dot = PrefabLoader.requireNode(button, "RedDot");
-        dot.active = visible && !button.getChildByName("Lock")?.active;
     }
     /** 切换主城专属活动组和工具行的显示；进入其他功能页时由宿主隐藏。 */
     setCityExtras(visible: boolean): void {

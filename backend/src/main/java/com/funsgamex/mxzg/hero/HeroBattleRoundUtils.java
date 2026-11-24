@@ -6,6 +6,8 @@ import java.util.*;
 public final class HeroBattleRoundUtils {
     /** 旧普通战斗回合上限，主线没有额外覆盖。 */
     public static final int MAX_ROUNDS = 15;
+    /** 旧战斗类型 4 的回合上限，竞技场超时同样判攻方负。 */
+    public static final int ARENA_MAX_ROUNDS = 20;
     /** 默认普通SkillDo没有能量写入路径；保留0，不根据未使用常量发明能量收支。 */
     public static final long NORMAL_SKILL_ENERGY = 0;
     /** 当前排序所需速度与单位编号；输入顺序为攻方在前、守方在后。 */
@@ -23,6 +25,11 @@ public final class HeroBattleRoundUtils {
 
     /** 先检查攻方全灭，再检查守方；打满15回合仍未结束默认守方胜，不算平局。 */
     public static Outcome outcome(boolean attackerAlive, boolean defenderAlive, int completedRounds) {
+        return outcome(attackerAlive, defenderAlive, completedRounds, MAX_ROUNDS);
+    }
+
+    /** 按战斗类型的原回合上限判定，双方同时死亡仍优先判攻方失败。 */
+    static Outcome outcome(boolean attackerAlive, boolean defenderAlive, int completedRounds, int maxRounds) {
         if (completedRounds < 0) {
             throw new IllegalArgumentException("已完成回合不能为负");
         }
@@ -32,7 +39,7 @@ public final class HeroBattleRoundUtils {
         if (!defenderAlive) {
             return Outcome.ATTACKER_WIN;
         }
-        return completedRounds >= MAX_ROUNDS ? Outcome.DEFENDER_WIN : Outcome.ONGOING;
+        return completedRounds >= maxRounds ? Outcome.DEFENDER_WIN : Outcome.ONGOING;
     }
 
     /** 旧kind1直接赋值；kind2按原值乘万分比而不是增加万分比，逐项向零截断。 */

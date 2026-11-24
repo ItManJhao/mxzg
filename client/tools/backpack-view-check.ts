@@ -3,6 +3,7 @@
  * 读取真实Prefab及配置核对绑定；格子、页签和详情的生命周期用引擎替身验证，几何显示另由本机预览检查。
  */
 import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
+import { RedDotFixture } from "./RedDotFixture";
 import { existsSync, readFileSync } from "fs";
 
 /** 夹具按Bundle真实源目录读取配置，游戏加载键仍保持config/物品等原值。 */
@@ -248,8 +249,11 @@ function checkPrefabBindings(): void {
   assertNodeRef(cellData, cell.comp, "icon", 17, "spr_icon");
   assertCompRef(cellData, cell.comp, "count", 27, "cc.Label");
   assertNodeRef(cellData, cell.comp, "selectMark", 11, "spr_select");
-  const shardDot = cellData[idOf(cell.comp.shardRedDot)!];
-  assert(shardDot?._name === "PendingPieceComposeDot" && shardDot._active === false, "可合成格子红点由静态预制体绑定且初始隐藏");
+  const shardDot = cellData[idOf(cell.comp.shardReminderAnchor)!];
+  const shardDotUi = cellData[shardDot?._components[0].__id__];
+  assert(shardDot?._name === "PendingPieceComposeAnchor" && shardDot._active && shardDot._components.length === 1
+    && shardDotUi.__type__ === "cc.UITransform" && shardDotUi._contentSize.width === 23 && shardDotUi._contentSize.height === 23
+    && shardDot._lpos.x === 43.2 && shardDot._lpos.y === 43.2, "碎片格只保存原红点尺寸和偏移");
   const slotPlate = "5e56f13c-937b-4e86-a0d7-b8abb2aa05fb@f9941";
   const selectMeta = JSON.parse(read("client/assets/bundles/module/common/item-atlas/backpack_spr-select.png.meta"));
   const selectFrame = selectMeta.subMetas.f9941.uuid;
@@ -279,8 +283,11 @@ function checkPrefabBindings(): void {
   assertRootOwns(tabData, tab.index);
   assertCompRef(tabData, tab.comp, "title", 13, "cc.Label");
   assertCompRef(tabData, tab.comp, "button", 7, "cc.Button");
-  const tabDot = tabData[idOf(tab.comp.redDot)!];
-  assert(tabDot?._name === "PendingPieceTabDot" && tabDot._active === false, "碎片分类红点由静态预制体绑定且初始隐藏");
+  const tabDot = tabData[idOf(tab.comp.pieceDotAnchor)!];
+  const tabDotUi = tabData[tabDot?._components[0].__id__];
+  assert(tabDot?._name === "PendingPieceTabDotAnchor" && tabDot._active && tabDot._components.length === 1
+    && tabDotUi.__type__ === "cc.UITransform" && tabDotUi._contentSize.width === 23 && tabDotUi._contentSize.height === 23
+    && tabDot._lpos.x === 45.36 && tabDot._lpos.y === 12, "碎片页签只保存原红点尺寸和偏移");
 
   const infoData = prefabAt("client/assets/bundles/module/bag/prefabs/BagInfoView.prefab");
   const info = componentOn(infoData, INFO_TYPE);
@@ -441,8 +448,9 @@ function makeView(): BagView {
     cell.shardIcon.parent = node;
     cell.shardCorner = new Node("ShardCorner");
     cell.shardCorner.parent = node;
-    cell.shardRedDot = new Node("PendingPieceComposeDot");
-    cell.shardRedDot.parent = node;
+    cell.shardReminderAnchor = new Node("PendingPieceComposeAnchor");
+    cell.shardReminderAnchor.parent = node;
+    cell.shardReminderAnchor.addComponent(UITransform).setContentSize(23, 23);
     cell.shardStars = Array.from({ length: 5 }, (_, index) => {
       const star = new Node("ShardStar" + index);
       star.parent = node;
@@ -468,9 +476,9 @@ function makeView(): BagView {
     if (tab.title.node) tab.title.node.parent = node;
     tab.button = buttonOn("btn");
     if (tab.button.node) tab.button.node.parent = node;
-    tab.redDot = new Node("PendingPieceTabDot");
-    tab.redDot.parent = node;
-    tab.redDot.active = false;
+    tab.pieceDotAnchor = new Node("PendingPieceTabDotAnchor");
+    tab.pieceDotAnchor.parent = node;
+    tab.pieceDotAnchor.addComponent(UITransform).setContentSize(23, 23);
   });
   const detailPrefab = fakePrefab((node) => {
     const cardUi = node.addComponent(UITransform);
@@ -1302,28 +1310,43 @@ async function checkShardRedDot(): Promise<void> {
   const path = GameRedDotKey.bagPiece(itemId);
   noteBag([{ itemId, quantity: 30 }, { itemId: 900102, quantity: 1 }]);
   manager.set(path, true);
+  const restoreRedDot = RedDotFixture.stubLoad();
   const page = await openView();
   try {
     const [, items, pieces] = tabs(page);
-    assert(pieces.redDot!.active, "碎片分类首次打开读取已算好的红点");
+    await Promise.resolve();
+    const tabAnchor = pieces.pieceDotAnchor!;
+    assert(tabAnchor.getChildByName("RedDot")?.active, "碎片分类首次打开读取已算好的红点");
     pieces.node.emit(Button.EventType.CLICK);
-    assert(cells(page)[0].shardRedDot!.active, "真实精英碎片对应格亮点");
+    const shardCell = cells(page)[0];
+    shardCell.onEnable();
+    await Promise.resolve();
+    const cellAnchor = shardCell.shardReminderAnchor!;
+    const dot = cellAnchor.getChildByName("RedDot");
+    assert(dot?.active && dot.position.x === 0 && dot.position.y === 0
+      && (dot.getComponent(UITransform) as UITransform).width === 23, "碎片格按原锚点尺寸点亮红点");
+    shardCell.onDisable();
+    assert(!dot!.active, "离屏立即熄灭碎片格红点");
+    shardCell.onEnable();
+    assert(dot!.active && cellAnchor.children.length === 1, "同格回到视口复用原实例");
     items.node.emit(Button.EventType.CLICK);
-    assert(!cells(page)[0].shardRedDot!.active, "虚拟格复用为普通物品必须熄灭");
+    assert(!cells(page)[0].shardReminderAnchor!.getChildByName("RedDot")?.active, "虚拟格复用为普通物品必须熄灭");
     manager.set(path, false);
     noteBag([{ itemId, quantity: 29 }]);
-    assert(!pieces.redDot!.active, "来源清空后分类即时熄灭");
+    assert(!tabAnchor.getChildByName("RedDot")?.active, "来源清空后分类即时熄灭");
     pieces.node.emit(Button.EventType.CLICK);
-    assert(!cells(page)[0].shardRedDot!.active, "数量不足时格子熄灭");
+    assert(!cells(page)[0].shardReminderAnchor!.getChildByName("RedDot")?.active, "数量不足时格子熄灭");
     page.runClose();
     manager.set(path, true);
-    assert(!pieces.redDot!.active, "关页取消碎片分类订阅");
+    assert(!tabAnchor.getChildByName("RedDot"), "关页取消碎片分类订阅并销毁实例");
     noteBag([{ itemId, quantity: 30 }]);
     page.runOpen();
     await page.whenReady();
     pump(1);
-    assert(pieces.redDot!.active, "缓存重开按最新状态恢复红点");
+    await Promise.resolve();
+    assert(tabAnchor.getChildByName("RedDot")?.active, "缓存重开按最新状态恢复红点");
   } finally {
+    restoreRedDot();
     page.runDispose();
     page.node.destroy();
     manager.reset();

@@ -21,7 +21,7 @@ import { FormationMatrixView } from "../assets/scripts/features/hero/ui/Formatio
 import { FormationSlotView } from "../assets/scripts/features/hero/ui/FormationSlotView";
 import { HeroIconCellView } from "../assets/scripts/features/hero/ui/HeroIconCellView";
 import { HeroCatalog } from "../assets/scripts/features/hero/utils/HeroCatalog";
-import type { FormationSaveRequest } from "../assets/scripts/features/hero/data/FormationData";
+import type { FormationSaveRequest, FormationState } from "../assets/scripts/features/hero/data/FormationData";
 import type { GameFrame } from "../assets/scripts/platform/GameProtocolCodecUtils";
 
 const PAGE = "client/assets/bundles/module/hero/prefabs/FormationView.prefab";
@@ -61,6 +61,56 @@ function clickHero(editor: FormationView, index: number): void {
     heroCellAt(editor, index).button!.node.emit(Button.EventType.CLICK);
 }
 
+/** 核对真实列表的英雄排序、元素筛选与草稿选择互不干扰。 */
+function checkHeroSorting(): void {
+    const heroes = Object.freeze([
+        { id: "level-first", templateId: 10105010, star: 4, level: 100 },
+        { id: "template-low", templateId: 10105008, star: 5, level: 20 },
+        { id: "deployed", templateId: 10205020, star: 5, level: 1, deployed: true },
+        { id: "template-high", templateId: 10105010, star: 5, level: 20 },
+        { id: "higher-level", templateId: 10105008, star: 5, level: 21 },
+        { id: "equal-template", templateId: 10105008, star: 5, level: 21 },
+    ]);
+    const root = instantiateData(read(PAGE));
+    const editor = root.getComponent(FormationView)!;
+    const roster = new HeroRosterModel();
+    const saves = new FormationSaveModel();
+    const controller = new FormationController(saves, roster);
+    roster.replace({ status: "ready", heroes, error: "", mainFormation: {
+        formationId: 1, unlockedIds: [1], assistanceUnlocked: false, version: 0,
+        slots: [{ position: 2, heroId: "deployed" }],
+        options: [{ formationId: 1, openPositions: [2, 3, 5, 6, 7, 8] }],
+    } });
+    editor.configure(controller, roster, saves);
+    const listNode = editor.heroScroll!.list.node;
+    const rendered = new Map<number, string>();
+    /** 保存格子实际收到的英雄身份，按列表索引覆盖同一轮重复渲染。 */
+    const collect = (_node: Node, hero: (typeof heroes)[number], index: number) => {
+        rendered.set(index, hero.id);
+    };
+    /** 按列表实际索引读取最近一轮绑定，忽略虚拟化的渲染顺序。 */
+    const ids = () => [...rendered.keys()].sort((left, right) => left - right).map(index => rendered.get(index));
+    listNode.on(SuperContent.RENDER_ITEM, collect);
+    const expected = ["deployed", "higher-level", "equal-template", "template-high", "template-low", "level-first"];
+    try {
+        editor.runOpen({ complete: () => {} });
+        assert.deepEqual(ids(), expected, "已保存出阵优先，同组按星级、等级、模板降序且相同项稳定");
+        rendered.clear();
+        clickHero(editor, 4);
+        assert.deepEqual(ids(), expected, "编辑草稿只更新选择状态，英雄顺序不跳动");
+        assert.equal(heroCellAt(editor, 4).battle!.active, true);
+        rendered.clear();
+        editor.elementButtons[1].node.emit(Button.EventType.CLICK);
+        assert.deepEqual(ids(), expected.slice(1), "筛选火系后保留同一排序口径");
+        assert.deepEqual(roster.snapshot.heroes.map(hero => hero.id), heroes.map(hero => hero.id), "不重排权威名册");
+    } finally {
+        editor.runClose();
+        listNode.off(SuperContent.RENDER_ITEM, collect);
+        controller.dispose();
+        root.destroy();
+    }
+}
+
 /** 补足本专项用到的向量运算，保持公共引擎替身不变。 */
 class FixtureVec3 extends Vec3 {
     /** 返回独立的坐标，供拖动保留原位置。 */
@@ -95,6 +145,12 @@ function uiTransformOf(node: Node): { x: number; y: number; scaleX: number; scal
         scaleY *= current.scale.y;
     }
     return { x, y, scaleX, scaleY };
+}
+
+/** 从页面草稿读取格位实例，验证换位时无需依赖显示属性的标签。 */
+function draftHeroAt(editor: FormationView, position: number): string | undefined {
+    const state = Reflect.get(editor, "state") as FormationState;
+    return state.lineup.slots.find(slot => slot.position === position)?.heroId;
 }
 
 /** 在Prefab的阵位触摸区派发手势，落点取目标格中心或两个格子间的空隙。 */
@@ -210,6 +266,12 @@ function instantiateData(data: any[]): Node {
         const value = objects.get(id); if (!value) return;
         if (row.__type__ === "cc.Node") { if (objects.has(row._parent?.__id__)) value.parent=objects.get(row._parent.__id__); return; }
         if (row.__type__ === "cc.ScrollView" || row.__type__ === scrollType) { value.content=reference(row._content); value.horizontal=row.horizontal; value.vertical=row.vertical; }
+        if (row.__type__ === contentType) {
+            // SuperContent 沿用 Creator Layout 的持久字段，测试须读取引擎实际使用的值。
+            for (const field of ["spacingX", "spacingY", "paddingTop", "paddingBottom", "paddingLeft", "paddingRight"]) {
+                value[field] = row["_" + field];
+            }
+        }
         if ([viewType,slotType,cellType,contentType].includes(row.__type__)) for (const [key, field] of Object.entries(row)) {
             if (!key.startsWith("_") && key !== "node") value[key]=reference(field);
         }
@@ -329,8 +391,7 @@ async function checkUnsavedDraftRecovery(heroes: Parameters<FormationView["rende
 async function checkDragDraft(heroes: Parameters<FormationView["render"]>[0]["heroes"]): Promise<void> {
     const [first, second] = heroes;
     const rosterHeroes = [first, { ...second, templateId: 10304012 }];
-    const names = rosterHeroes.map(hero => HeroCatalog.find(hero.templateId)?.name);
-    assert(names[0] && names[1] && names[0] !== names[1], "换位夹具需要两位名称不同的真实英雄");
+    assert.notEqual(first.id, second.id, "换位夹具需要两个不同的英雄实例");
     const root = instantiateData(read(PAGE));
     const editor = root.getComponent(FormationView) as FormationView;
     const roster = new HeroRosterModel();
@@ -356,24 +417,23 @@ async function checkDragDraft(heroes: Parameters<FormationView["render"]>[0]["he
     editor.configure(module, roster, saves);
     try {
         editor.runOpen({ closeAfterSave: true, complete: ok => { if (ok) confirmed++; } });
-        const caption = (position: number): string => slotAt(editor, position).caption!.string;
         const source = slotAt(editor, 8).portrait!;
         const sourceParent = source.parent;
         const sourcePosition = { ...source.position };
 
         dragSlot(editor, 2, 8);
         assert.equal(slotAt(editor, 2).portrait!.active, false, "前排原位移到后排后应为空");
-        assert.equal(caption(8), names[0], "可拖到不同排的开放空位");
+        assert.equal(draftHeroAt(editor, 8), first.id, "可拖到不同排的开放空位");
 
         dragSlot(editor, 3, 8);
-        assert.equal(caption(8), names[1], "命中已有英雄时目标位得到拖动的英雄");
-        assert.equal(caption(3), names[0], "原位得到刚才目标位的英雄");
+        assert.equal(draftHeroAt(editor, 8), second.id, "命中已有英雄时目标位得到拖动的英雄");
+        assert.equal(draftHeroAt(editor, 3), first.id, "原位得到刚才目标位的英雄");
 
         dragSlot(editor, 8, 4);
         dragSlot(editor, 3, null);
         dragSlot(editor, 8, 6, Node.EventType.TOUCH_CANCEL);
-        assert.equal(caption(3), names[0], "未命中时回到拖动前阵位");
-        assert.equal(caption(8), names[1], "锁位或触摸取消不得改变草稿");
+        assert.equal(draftHeroAt(editor, 3), first.id, "未命中时回到拖动前阵位");
+        assert.equal(draftHeroAt(editor, 8), second.id, "锁位或触摸取消不得改变草稿");
         assert.equal(slotAt(editor, 4).portrait!.active, false, "拖放不能写入关闭位");
         assert.equal(slotAt(editor, 6).portrait!.active, false, "取消拖放不能写入原目标位");
         assert.equal(source.parent, sourceParent, "无效拖放应恢复头像节点归属");
@@ -409,8 +469,7 @@ async function checkDragDraft(heroes: Parameters<FormationView["render"]>[0]["he
 async function checkFormationMatrix(heroes: Parameters<FormationView["render"]>[0]["heroes"]): Promise<void> {
     const [first, second, assistance] = heroes;
     const rosterHeroes = [first, { ...second, templateId: 10304012 }, { ...assistance, templateId: 10105007 }];
-    const names = rosterHeroes.map(hero => HeroCatalog.find(hero.templateId)?.name);
-    assert(names.every(Boolean) && new Set(names).size === names.length, "切阵型夹具需要不同名称的真实英雄");
+    assert(rosterHeroes.every(hero => HeroCatalog.find(hero.templateId)), "切阵型夹具使用已配置的英雄");
 
     const { rows }: { rows: { type: number; position: number; is_open: number }[] } =
         read("client/assets/bundles/resources/config/battlematrixaddition.json");
@@ -480,11 +539,19 @@ async function checkFormationMatrix(heroes: Parameters<FormationView["render"]>[
     try {
         editor.runOpen({ complete: () => {} });
         assert.equal(editor.formationButton!.interactable, true, "只有基础阵型解锁也可以预览");
+        const bonus = (position: number): Label => slotAt(editor, position).caption!;
+        assert.equal(bonus(1).node.active, false, "关闭格隐藏加成");
+        assert.equal(draftHeroAt(editor, 2), undefined);
+        assert.equal(bonus(2).string, "免伤+3%", "开放空格也显示旧阵型加成");
+        assert.equal(bonus(2).node.active, true);
+        assert.equal(bonus(5).string, "生命+3%");
+        assert.equal(bonus(6).string, "治疗+5%");
+        assert.equal(bonus(9).string, "助阵");
         const cancelled = await openSelection();
         assert.equal(cancelled.args.formationId, 1);
         assert.deepEqual(cancelled.args.unlockedIds, [1]);
         ui.close(cancelled.view);
-        assert.equal(slotAt(editor, 5).caption!.string, names[1], "取消预览不改出阵草稿");
+        assert.equal(draftHeroAt(editor, 5), second.id, "取消预览不改出阵草稿");
         confirmSelection(await openSelection(), 2);
         assert.equal(editor.formationLabel!.string, "阵型 1 ▼", "锁定阵型的结果不能改草稿");
         assert.equal(submissions.length, 0);
@@ -494,18 +561,23 @@ async function checkFormationMatrix(heroes: Parameters<FormationView["render"]>[
         EventDispatcher.instance.emit(HeroRosterEvent.Updated, { revision: roster.version });
         confirmSelection(await openSelection(), 2);
         assert.equal(editor.formationLabel!.string, "阵型 2 ▼");
-        assert.equal(slotAt(editor, 7).caption!.string, names[0], "旧第六个开放普通位对应新第六个开放普通位");
-        assert.equal(slotAt(editor, 3).caption!.string, names[1], "旧第三个开放普通位对应新第三个开放普通位");
+        assert.equal(draftHeroAt(editor, 7), first.id, "旧第六个开放普通位对应新第六个开放普通位");
+        assert.equal(draftHeroAt(editor, 3), second.id, "旧第三个开放普通位对应新第三个开放普通位");
         assert.equal(slotAt(editor, 1).portrait!.active, false, "首个开放格仍保持空位");
-        assert.equal(slotAt(editor, 9).caption!.string, names[2], "双方允许的助战位保持独立");
+        assert.equal(draftHeroAt(editor, 9), assistance.id, "双方允许的助战位保持独立");
+        assert.equal(bonus(1).node.active, true);
+        assert.equal(bonus(1).string, "免伤+8%", "切换阵型后立即显示新空格的加成");
+        assert.equal(bonus(5).node.active, false);
+        assert.equal(bonus(7).string, "免伤+6%");
 
         const reverse = await openSelection();
         assert.equal(reverse.args.formationId, 2, "重开选择窗从当前草稿阵型开始");
         confirmSelection(reverse, 1);
         assert.equal(editor.formationLabel!.string, "阵型 1 ▼");
-        assert.equal(slotAt(editor, 8).caption!.string, names[0], "反向切换恢复原序位");
-        assert.equal(slotAt(editor, 5).caption!.string, names[1]);
-        assert.equal(slotAt(editor, 9).caption!.string, names[2]);
+        assert.equal(draftHeroAt(editor, 8), first.id, "反向切换恢复原序位");
+        assert.equal(draftHeroAt(editor, 5), second.id);
+        assert.equal(draftHeroAt(editor, 9), assistance.id);
+        assert.equal(bonus(5).string, "生命+3%");
 
         const outdated = await openSelection();
         // 注入新版快照及较窄的目标选项，覆盖迟到确认和关闭格处理。
@@ -525,8 +597,9 @@ async function checkFormationMatrix(heroes: Parameters<FormationView["render"]>[
         assert.equal(editor.formationLabel!.string, "阵型 1 ▼", "重开后不接收上一轮确认");
 
         confirmSelection(await openSelection(), 2);
-        assert.equal(slotAt(editor, 3).caption!.string, names[1]);
+        assert.equal(draftHeroAt(editor, 3), second.id);
         assert.equal(slotAt(editor, 7).portrait!.active, false, "缺失同序位时保持关闭格为空");
+        assert.equal(bonus(7).node.active, false, "服务端关闭格位时隐藏配置加成");
         assert.equal(slotAt(editor, 9).portrait!.active, false, "目标阵型关闭助战位时不保留助战英雄");
         assert.deepEqual(roster.snapshot.mainFormation!.slots, original);
         assert.equal(submissions.length, 0, "阵型往返和迁移不能提前保存");
@@ -618,9 +691,101 @@ async function checkElementDraft(heroes: Parameters<FormationView["render"]>[0][
     }
 }
 
+/** 幻境沿用原出阵交互，但另存专用站位；关闭后不因迟到保存回复启动战斗。 */
+function checkIndependentFormation(heroes: Parameters<FormationView["render"]>[0]["heroes"]): void {
+    const root = instantiateData(read(PAGE));
+    const editor = root.getComponent(FormationView) as FormationView;
+    const roster = new HeroRosterModel();
+    const saves = new FormationSaveModel();
+    const main = {
+        formationId: 1, unlockedIds: [1], assistanceUnlocked: false, version: 4,
+        slots: [{ position: 3, heroId: heroes[0].id }],
+        options: [{ formationId: 1, openPositions: [2, 3, 5, 6, 7, 8] }],
+    };
+    roster.replace({ status: "ready", heroes, error: "", mainFormation: main });
+    const module = new FormationController(saves, roster);
+    editor.configure(module, roster, saves);
+    let confirmed = 0;
+    let pending: ((saved: boolean) => void) | undefined;
+    editor.runOpen({
+        title: "幻境之塔出阵",
+        formation: {
+            read: () => ({ ...main, version: 9, slots: [{ position: 2, heroId: heroes[0].id }] }),
+            save(draft, done) {
+                assert.equal(draft.expectedVersion, 9);
+                assert.equal(draft.formationId, 1);
+                assert.deepEqual(draft.slots, [{ position: 5, heroId: heroes[0].id }]);
+                pending = done;
+            },
+        },
+        complete: saved => { if (saved) { confirmed++; } },
+    });
+    assert.equal(editor.titleLabel!.string, "幻境之塔出阵");
+    assert.equal(slotAt(editor, 2).portrait!.active, true);
+    assert.equal(slotAt(editor, 3).portrait!.active, false);
+    dragSlot(editor, 2, 5);
+    editor.confirmButton!.node.emit(Button.EventType.CLICK);
+    assert.equal(confirmed, 0);
+    assert.equal(editor.confirmButton!.interactable, false);
+    assert.equal(roster.snapshot.mainFormation!.slots[0].position, 3);
+    editor.runClose();
+    pending?.(true);
+    assert.equal(confirmed, 0);
+    root.destroy();
+}
+
+/** 检查原预制视口在列表首尾均能显示两整行英雄，包含头像和星级。 */
+function checkDefaultListGeometry(): void {
+    const root = instantiateData(read(PAGE));
+    const scroll = (root.getComponent(FormationView) as FormationView).heroScroll!;
+    const port = scroll.content!.parent!;
+    const cells = new Map<number, Node>();
+    /** 用锚点和父链缩放换算预制节点边界，比较同一坐标空间。 */
+    const bounds = (node: Node) => {
+        const transform = uiTransformOf(node);
+        const ui = node.getComponent(UITransform)!;
+        const width = ui.width * transform.scaleX;
+        const height = ui.height * transform.scaleY;
+        const left = transform.x - width * ui.anchorX;
+        const bottom = transform.y - height * ui.anchorY;
+        return { left, right: left + width, bottom, top: bottom + height };
+    };
+    const viewport = bounds(port);
+    /** 检查指定范围内的格子及星级都处在裁剪边界以内。 */
+    const assertVisibleRows = (first: number) => {
+        for (let index = first; index < first + 8; index++) {
+            const cell = cells.get(index)!;
+            assert(cell.activeInHierarchy);
+            for (const node of [cell, cell.getChildByName("Stars")!]) {
+                const item = bounds(node);
+                assert(item.left >= viewport.left && item.right <= viewport.right
+                    && item.bottom >= viewport.bottom && item.top <= viewport.top,
+                `第 ${index + 1} 格的 ${node.name} 不得超出裁剪区`);
+            }
+        }
+    };
+    scroll.onEnable();
+    try {
+        scroll.list.setData(Array.from({ length: 12 }, (_, index) => index), (node, index) => cells.set(index, node));
+        assert.equal(scroll.list.columns, 4);
+        assert(scroll.vertical && !scroll.horizontal && port.getComponent(Mask)?.enabled);
+        assert.equal(scroll.getMaxScrollOffset().x, 0);
+        assertVisibleRows(0);
+        const end = scroll.getMaxScrollOffset();
+        assert(end.y > 0, "第三行英雄可向上滑动查看");
+        scroll.restorePosition(end);
+        assertVisibleRows(4);
+    } finally {
+        scroll.onDisable();
+        root.destroy();
+    }
+}
+
 /** 核对真实绑定与人工编辑参数，并验证未保存草稿同版恢复、ACK确认和缺状态同步恢复。 */
 async function main(): Promise<void> {
     await ConfigFixtureUtils.installReal();
+    checkDefaultListGeometry();
+    checkHeroSorting();
     const data = read(PAGE), authored = data.find((row: any) => row.__type__ === viewType);
     for (const slot of data.filter((row: any) => row.__type__ === slotType)) {
         const portrait = data[slot.portrait.__id__];
@@ -632,7 +797,10 @@ async function main(): Promise<void> {
     // Simulate ordinary Inspector edits in serialized authoring data.
     const title = data[authored.titleLabel.__id__]; title._fontSize=44; title._string="人工修改标题";
     const button = data[data[authored.confirmButton.__id__].node.__id__]; button._lpos.x=344; button._lpos.y=96;
-    const listData=data.find((row:any)=>row.__type__===contentType);listData.columns=2;listData.spacingX=18;listData.spacingY=14;
+    const listData = data.find((row: any) => row.__type__ === contentType);
+    listData.columns = 2;
+    listData._spacingX = 18;
+    listData._spacingY = 14;
     const root=instantiateData(data), view=root.getComponent(FormationView) as FormationView;
     const fixedChildren=root.children.map(node=>node.name);
     const heroes=[1,2,3].map(id=>({id:"00000000-0000-4000-8000-"+String(id).padStart(12,"0"),templateId:10101001,level:1,star:1}));
@@ -648,7 +816,7 @@ async function main(): Promise<void> {
         const cells=view.heroScroll!.content!.children;
         assert.equal(cells.length,3); assert.equal(view.heroScroll!.list.columns,2);
         assert.equal(view.heroScroll!.list.spacingY,14);
-        assert.equal((view.heroScroll!.content!.getComponent(UITransform) as UITransform).width,580,"content width remains authored");
+        assert.equal(view.heroScroll!.content!.getComponent(UITransform)!.width, 568, "内容宽度维持预制视口值");
         assert.equal((view.heroScroll!.content!.parent!.getComponent(Mask) as Mask).node,view.heroScroll!.content!.parent);
         view.runClose();
     }
@@ -748,6 +916,7 @@ async function main(): Promise<void> {
     await checkDragDraft(heroes);
     await checkFormationMatrix(heroes);
     await checkElementDraft(heroes);
+    checkIndependentFormation(heroes);
     console.log("formation-view-check passed: real Prefab bindings, automatic placement, drag, matrix, live draft bonuses and authoritative save confirmation");
 }
 void main().catch(error=>{console.error(error);process.exitCode=1;});

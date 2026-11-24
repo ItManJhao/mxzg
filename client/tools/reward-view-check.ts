@@ -6,6 +6,7 @@ import { strict as assert } from "node:assert";
 import { readFileSync, existsSync } from "node:fs";
 import { AudioClip, AudioSource, Button, Label, Node, Size, Sprite, SpriteFrame, Tween, UIOpacity, UITransform, view as screenView } from "cc";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
+import { GameLog } from "../assets/scripts/core/GameLog";
 import { ResManager } from "../assets/scripts/framework/assets/ResManager";
 import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
@@ -417,14 +418,14 @@ async function checkAbnormalClose(): Promise<void> {
             (fixture.view as any).ownListener(() => { listenersCleared = true; });
             if (brokenAudio) {
                 fixture.view.rewardAudio!.stop = () => { throw new Error("audio teardown fixture"); };
-                assert.throws(() => fixture.view.onDestroy(), /audio teardown fixture/);
-            } else {
-                fixture.view.onDestroy();
             }
+            assert.doesNotThrow(() => fixture.view.onDestroy());
             await Promise.resolve();
             fixture.view.onDestroy();
             await Promise.resolve();
             assert.equal(closed, 1);
+            assert.equal(GameLog.shared.recent().filter(line => line.tag === "BaseView" && line.level === "error"
+                && line.message.includes("audio teardown fixture")).length, brokenAudio ? 1 : 0);
             assert.equal(fixture.view.rewardAudio!.clip, null);
             assert.equal(fixture.view.titleEffect!.spriteFrame, null);
             assert.equal(fixture.view.confetti!.spriteFrame, null);

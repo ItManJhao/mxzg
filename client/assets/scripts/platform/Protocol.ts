@@ -11,6 +11,19 @@ export class Protocol {
         return ProtocolDefinitions.find(value => value.name === name);
     }
 
+    /** 定位已登记的日常副本协议，用于将同一载荷绑定到正确的副本类型。 */
+    public static dailyDungeonRoute(name: string): { kind: DailyDungeonKind; operation: "list" | "challenge" } | undefined {
+        for (const [kind, route] of Object.entries(DAILY_DUNGEON_PROTOCOLS)) {
+            if (route.list === name) {
+                return { kind: kind as DailyDungeonKind, operation: "list" };
+            }
+            if (route.challenge === name) {
+                return { kind: kind as DailyDungeonKind, operation: "challenge" };
+            }
+        }
+        return undefined;
+    }
+
     /** 当前角色主线挑战，使用持久幂等键。 */
     public static readonly CHAPTER_CHALLENGE = "chapter.challenge";
     /** 领取指定战报奖励，重复领取返回历史回执。 */
@@ -77,10 +90,54 @@ export class Protocol {
     public static readonly MARKET_BUY = "market.buy";
     /** 使用当前货架版本刷新商品，服务端判断免费或付费。 */
     public static readonly MARKET_REFRESH = "market.refresh";
-    /** 读取金币副本首关资格、原产物及当天挑战次数。 */
+    /** 查询本区公会与当前成员状态。 */
+    public static readonly GUILD_LIST = "guild.list";
+    /** 创建、申请、审批或退出公会，按同一业务编号去重。 */
+    public static readonly GUILD_CHANGE = "guild.change";
+    /** 已提交的公会状态发生变化，通知打开的公会页更新。 */
+    public static readonly GUILD_UPDATED = "guild.updated";
+    /** 领取当前 VIP 档位已达成的契约任务奖励。 */
+    public static readonly VIP_CLAIM = "vip.claim";
+    /** 读取金币副本的关卡资格、原产物及当天挑战次数。 */
     public static readonly DAILY_DUNGEON_LIST = "dungeon.gold.list";
-    /** 通过持久请求编号提交副本挑战或清扫并取得权威结算。 */
+    /** 提交金币副本的挑战或扫荡并取得权威结算。 */
     public static readonly DAILY_DUNGEON_CHALLENGE = "dungeon.gold.challenge";
+    /** 读取经验副本的关卡资格、产物及独立每日次数。 */
+    public static readonly EXPERIENCE_DUNGEON_LIST = "dungeon.experience.list";
+    /** 提交经验副本的挑战或扫荡并取得权威结算。 */
+    public static readonly EXPERIENCE_DUNGEON_CHALLENGE = "dungeon.experience.challenge";
+    /** 读取英雄副本的关卡资格、碎片产物及独立每日次数。 */
+    public static readonly HERO_DUNGEON_LIST = "dungeon.hero.list";
+    /** 提交英雄副本的挑战或扫荡并取得权威结算。 */
+    public static readonly HERO_DUNGEON_CHALLENGE = "dungeon.hero.challenge";
+    /** 读取羁绊副本的关卡资格、产物及独立每日次数。 */
+    public static readonly FETTER_DUNGEON_LIST = "dungeon.fetter.list";
+    /** 提交羁绊副本的挑战或扫荡并取得权威结算。 */
+    public static readonly FETTER_DUNGEON_CHALLENGE = "dungeon.fetter.challenge";
+    /** 读取精灵副本的关卡资格、产物及独立每日次数。 */
+    public static readonly SPIRIT_DUNGEON_LIST = "dungeon.spirit.list";
+    /** 提交精灵副本的挑战或扫荡并取得权威结算。 */
+    public static readonly SPIRIT_DUNGEON_CHALLENGE = "dungeon.spirit.challenge";
+    /** 查询幻境之塔的布阵、已通关层数、体力和扫荡报价。 */
+    public static readonly TOWER_STATE = "tower.state";
+    /** 保存幻境之塔的专用出阵。 */
+    public static readonly TOWER_FORMATION_SAVE = "tower.formation.save";
+    /** 挑战幻境之塔的下一层并返回原战报及实际结算。 */
+    public static readonly TOWER_CHALLENGE = "tower.challenge";
+    /** 扫荡已通关的最高层，服务端校验次数及价格。 */
+    public static readonly TOWER_SWEEP = "tower.sweep";
+    /** 领取幻境之塔里程碑奖励。 */
+    public static readonly TOWER_MILESTONE_CLAIM = "tower.milestone.claim";
+    /** 查询新手竞技场的对手、次数、积分与历史。 */
+    public static readonly ARENA_STATE = "arena.state";
+    /** 请求重新匹配一组配置对手。 */
+    public static readonly ARENA_REFRESH = "arena.refresh";
+    /** 对已匹配的竞技场对手发起真实挑战。 */
+    public static readonly ARENA_CHALLENGE = "arena.challenge";
+    /** 按原战斗编号读取竞技场的历史战报。 */
+    public static readonly ARENA_REPLAY = "arena.replay";
+    /** 购买原竞技场门票，余额由资产快照提交。 */
+    public static readonly ARENA_TICKET_BUY = "arena.ticket.buy";
     /** 查询本机 GM 实际开关。 */
     public static readonly GM_STATUS = "gm.status";
     /** 向当前角色发放开发资产；服务端持久幂等。 */
@@ -132,13 +189,27 @@ export class Protocol {
     /** 会话：服务端通知当前连接被替换，停止重连并回登录。 */
     public static readonly SESSION_KICKED = "session.kicked";
 }
+/** 旧客户端页签顺序及对应的真实协议，列表、挑战和战报共用类型名。 */
+export const DAILY_DUNGEON_PROTOCOLS = {
+    gold: { list: Protocol.DAILY_DUNGEON_LIST, challenge: Protocol.DAILY_DUNGEON_CHALLENGE },
+    experience: { list: Protocol.EXPERIENCE_DUNGEON_LIST, challenge: Protocol.EXPERIENCE_DUNGEON_CHALLENGE },
+    hero: { list: Protocol.HERO_DUNGEON_LIST, challenge: Protocol.HERO_DUNGEON_CHALLENGE },
+    fetter: { list: Protocol.FETTER_DUNGEON_LIST, challenge: Protocol.FETTER_DUNGEON_CHALLENGE },
+    spirit: { list: Protocol.SPIRIT_DUNGEON_LIST, challenge: Protocol.SPIRIT_DUNGEON_CHALLENGE },
+} as const;
+/** 可定位独立进度、发奖和战报的日常副本类型。 */
+export type DailyDungeonKind = keyof typeof DAILY_DUNGEON_PROTOCOLS;
+/** 五类副本共用请求载荷，按实际协议名区分查询和资产命令。 */
+type DailyDungeonRoutes = typeof DAILY_DUNGEON_PROTOCOLS[DailyDungeonKind];
 /** 已实现消息标识集合，预留玩法不伪装成可调用协议。 */
 export type ProtocolName = Extract<typeof Protocol[keyof typeof Protocol], string>;
 /** 当前只允许读取的业务请求；鉴权首帧由连接层单独处理。 */
 export type ReadProtocol = typeof Protocol.SESSION_HEARTBEAT | typeof Protocol.GM_STATUS | typeof Protocol.GM_TIME_GET
     | typeof Protocol.ROLE_NAME_RANDOM | typeof Protocol.ROLE_TITLES_LIST | typeof Protocol.ROLE_IMAGES_LIST
     | typeof Protocol.ROLE_DECORATIONS_LIST
-    | typeof Protocol.MARKET_LIST | typeof Protocol.DAILY_DUNGEON_LIST;
+    | typeof Protocol.MARKET_LIST | DailyDungeonRoutes["list"]
+    | typeof Protocol.TOWER_STATE | typeof Protocol.ARENA_STATE | typeof Protocol.ARENA_REPLAY
+    | typeof Protocol.GUILD_LIST;
 /** 具有角色归属回执的操作；查询与原命令经同一条认证连接。 */
 export type RoleOperationProtocol = typeof Protocol.HERO_SUMMON | typeof Protocol.HERO_NORMAL_SUMMON
     | typeof Protocol.HERO_FIRST_SUMMON | typeof Protocol.HERO_FIRST_SUMMON_STATUS
@@ -154,7 +225,9 @@ export type RoleOperationProtocol = typeof Protocol.HERO_SUMMON | typeof Protoco
     | typeof Protocol.HERO_GOD_EQUIPMENT_SHOP_BUY
     | typeof Protocol.HERO_EQUIPMENT_CHANGE | typeof Protocol.MARKET_BUY | typeof Protocol.MARKET_REFRESH
     | typeof Protocol.CHAPTER_FIRST_REWARD_CLAIM | typeof Protocol.CHAPTER_FIRST_REWARD_STATUS
-    | typeof Protocol.ROLE_WELCOME_CLAIM | typeof Protocol.DAILY_DUNGEON_CHALLENGE;
+    | typeof Protocol.ROLE_WELCOME_CLAIM | DailyDungeonRoutes["challenge"] | typeof Protocol.GUILD_CHANGE
+    | typeof Protocol.VIP_CLAIM | typeof Protocol.TOWER_CHALLENGE | typeof Protocol.TOWER_SWEEP
+    | typeof Protocol.TOWER_MILESTONE_CLAIM | typeof Protocol.ARENA_CHALLENGE | typeof Protocol.ARENA_TICKET_BUY;
 
 /** 现行主线请求，包括历史回执和只读战报。 */
 export type ChapterProtocol = Extract<ProtocolName, `chapter.${string}`>;
@@ -162,6 +235,7 @@ export type ChapterProtocol = Extract<ProtocolName, `chapter.${string}`>;
 /** 已完成登录后允许从业务模块发出的请求；连接握手和推送由传输层单独处理。 */
 export type AuthenticatedGameProtocol = ReadProtocol | RoleOperationProtocol | ChapterProtocol
     | typeof Protocol.BATTLE_PREVIEW | typeof Protocol.FORMATION_SAVE | typeof Protocol.GM_GRANT
+    | typeof Protocol.TOWER_FORMATION_SAVE | typeof Protocol.ARENA_REFRESH
     | typeof Protocol.GM_LEVEL_SET | typeof Protocol.GM_CHAPTER_SET | typeof Protocol.GM_TIME_SET
     | typeof Protocol.ROLE_NAME_SET | typeof Protocol.ROLE_RENAME | typeof Protocol.ROLE_IMAGE_CHANGE
     | typeof Protocol.ROLE_HEAD_CHANGE | typeof Protocol.ROLE_BORDER_CHANGE | typeof Protocol.ROLE_BORDER_ACTIVATE
@@ -211,8 +285,30 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.MARKET_LIST, module: "商店", description: "普通市场当前货架及刷新次数" },
     { name: Protocol.MARKET_BUY, module: "商店", description: "购买当前货架商品" },
     { name: Protocol.MARKET_REFRESH, module: "商店", description: "刷新普通市场货架" },
-    { name: Protocol.DAILY_DUNGEON_LIST, module: "副本", description: "读取金币副本首关资格和每日次数" },
+    { name: Protocol.GUILD_LIST, module: "公会", description: "查询本区公会和成员状态" },
+    { name: Protocol.GUILD_CHANGE, module: "公会", description: "创建、申请、审批或退出公会" },
+    { name: Protocol.GUILD_UPDATED, module: "公会", description: "公会状态已提交更新" },
+    { name: Protocol.VIP_CLAIM, module: "VIP", description: "领取当前档位的契约任务奖励" },
+    { name: Protocol.DAILY_DUNGEON_LIST, module: "副本", description: "读取金币副本关卡资格和共享每日次数" },
     { name: Protocol.DAILY_DUNGEON_CHALLENGE, module: "副本", description: "金币副本挑战或清扫与结算回执" },
+    { name: Protocol.EXPERIENCE_DUNGEON_LIST, module: "副本", description: "读取经验副本关卡资格和独立每日次数" },
+    { name: Protocol.EXPERIENCE_DUNGEON_CHALLENGE, module: "副本", description: "经验副本挑战或扫荡与结算回执" },
+    { name: Protocol.HERO_DUNGEON_LIST, module: "副本", description: "读取英雄副本关卡、碎片产物及每日次数" },
+    { name: Protocol.HERO_DUNGEON_CHALLENGE, module: "副本", description: "英雄副本挑战或扫荡与结算回执" },
+    { name: Protocol.FETTER_DUNGEON_LIST, module: "副本", description: "读取羁绊副本关卡、产物及每日次数" },
+    { name: Protocol.FETTER_DUNGEON_CHALLENGE, module: "副本", description: "羁绊副本挑战或扫荡与结算回执" },
+    { name: Protocol.SPIRIT_DUNGEON_LIST, module: "副本", description: "读取精灵副本关卡、产物及每日次数" },
+    { name: Protocol.SPIRIT_DUNGEON_CHALLENGE, module: "副本", description: "精灵副本挑战或扫荡与结算回执" },
+    { name: Protocol.TOWER_STATE, module: "幻境之塔", description: "读取专用阵容、通关、体力及扫荡状态" },
+    { name: Protocol.TOWER_FORMATION_SAVE, module: "幻境之塔", description: "保存专用阵容" },
+    { name: Protocol.TOWER_CHALLENGE, module: "幻境之塔", description: "挑战下一层及结算" },
+    { name: Protocol.TOWER_SWEEP, module: "幻境之塔", description: "扫荡已通关最高层" },
+    { name: Protocol.TOWER_MILESTONE_CLAIM, module: "幻境之塔", description: "领取通关里程碑奖励" },
+    { name: Protocol.ARENA_STATE, module: "竞技场", description: "读取新手对手、积分、次数与战报列表" },
+    { name: Protocol.ARENA_REFRESH, module: "竞技场", description: "刷新新手对手" },
+    { name: Protocol.ARENA_CHALLENGE, module: "竞技场", description: "发起挑战并结算积分与奖励" },
+    { name: Protocol.ARENA_REPLAY, module: "竞技场", description: "读取冻结战报" },
+    { name: Protocol.ARENA_TICKET_BUY, module: "竞技场", description: "购买挑战门票" },
     { name: Protocol.GM_STATUS, module: "开发GM", description: "GM 开关" },
     { name: Protocol.GM_GRANT, module: "开发GM", description: "当前角色资产发放回执" },
     { name: Protocol.GM_LEVEL_SET, module: "开发GM", description: "设置当前角色等级" },

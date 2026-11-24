@@ -1,7 +1,7 @@
 /**
  * 可信奖励的英雄实例入库领域，依据旧HeroProcessor和HeroService的奖励创建链。
  * 由共享发奖事务调用，保持模板原星级、一级零阶，加入原角色锁、阵容刷新和统一版本。
- * 奖励沿旧链允许超出名册显示容量；召唤及开发GM的入口限制不归本服务，不开放召唤玩法。
+ * 奖励沿旧链允许超出名册显示容量；召唤及开发 GM 在各自入口检查容量。
  */
 package com.funsgamex.mxzg.hero;
 
@@ -29,7 +29,7 @@ public class HeroGrantService {
     private final RoleRepository roles;
     /** 同源初始成长校验，不从客户端接收星级或属性。 */
     private final HeroGrowthRules growth;
-    /** 新英雄在发放事务内登记历史最高图鉴星级。 */
+    /** 新英雄在发放事务内登记图鉴和五星获得进度。 */
     private final HeroRepository heroes;
     /** 新实例提交前刷新原永久阵容资格，不建立另一份名册。 */
     private final MainFormationStateService formations;
@@ -92,7 +92,7 @@ public class HeroGrantService {
     }
 
     /**
-     * 在原角色锁事务创建独立英雄并登记图鉴，成功返回原实例身份供同事务冻结回执。
+     * 在原角色锁事务创建独立英雄，登记图鉴与五星获得并返回实例身份供同事务冻结回执。
      * 奖励不做旧召唤入口的容量拦截；后续任一发奖失败由外层整体回滚。
      */
     @Transactional(propagation = Propagation.MANDATORY)
@@ -109,6 +109,9 @@ public class HeroGrantService {
             var hero = new Granted(UUID.randomUUID().toString(), templateId, 1, star, 0);
             jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,?,?,?,?)",
                     hero.instanceId(), roleId, hero.templateId(), hero.level(), hero.star(), hero.stage());
+            if (star == 5) {
+                heroes.recordFiveStarGrant(roleId, hero.instanceId());
+            }
             created.add(hero);
         }
         heroes.recordIllustration(roleId, templateId, star);

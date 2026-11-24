@@ -1,6 +1,6 @@
 /** 按旧 G_BATTLE_ACTIONS 覆盖及 BattleActionUtils 解析近身、场地移动、投掷和独立特效时序，由战报播放器消费。 */
 export interface BattleAttackPlan {
-    /** true为type2/11近身移动；false为type3原地施法，不能瞬移到目标。 */
+    /** true 为 type2/11 近身移动；type3/4 原地施法，不移动到目标。 */
     readonly melee: boolean;
     /** 1为空动作，6/7/9只播放独立特效，不覆盖施法骨骼；6定位施法者，7定位各目标，9定位战场。 */
     readonly effectOnly: boolean;
@@ -243,9 +243,218 @@ export class BattleAttackUtils {
             sound: JSON.stringify(entry.sound ? [entry.sound] : []) }));
     }
 
-    /** 按旧 G_BATTLE_ACTIONS 的声明顺序返回动作，保留不同等级的施法节奏及替换普攻暗屏。 */
+    /** 按旧 G_BATTLE_ACTIONS 的声明顺序返回动作，保留各等级及普攻的时序、暗屏、特效和音效。 */
     private static verifiedLegacyActions(id: number): readonly LegacyAttackAction[] | null {
         switch (id) {
+            case 1130100:
+                return [
+                    { type: 5, delay: 0, dimly: 0, base: { attack_time: 0.4, action_time: 0.4,
+                        format: "skill-101050130/%d.png", scale_x: 2, scale_y: 2 },
+                        files: ["skill-101050130"], sounds: ["skill-101050130"] },
+                    { type: 1, delay: 0, dimly: 0, base: {}, files: [], sounds: [] },
+                ];
+            case 1150100:
+                // 空动作单独控制暗屏，原地普攻仍从技能起点播放。
+                return [
+                    { type: 1, delay: 9, dimly: 1, base: {}, files: [], sounds: [] },
+                    { type: 3, delay: 0, dimly: 0, base: { attack_time: 0.3, action_time: 1.5,
+                        format: "skill-101050150/%d.png", duration: 0.04, scale_x: 3, scale_y: 3, anchor_y: 0.4 },
+                        files: ["skill-101050150"], sounds: ["skill-101050150"] },
+                ];
+            case 2100100:
+                return [
+                    { type: 4, delay: 0, dimly: 0, base: { action_time: 1.5 }, files: [], sounds: [] },
+                    { type: 7, delay: 15, dimly: 0, base: { format: "skill-102050100/%d.png", anchor_y: 0.3,
+                        anchor_x: 0.35, duration: 0.03, scale_x: 2.5, scale_y: 2.5, flipped: 1 },
+                        files: ["skill-102050100"], sounds: ["skill-102050100"] },
+                ];
+            case 2101101:
+                return [
+                    { type: 3, delay: 0, dimly: 1, base: { attack_time: 1, action_time: 1.5,
+                        format: "skill-102050101/%d.png", duration: 0.1, scale_x: 3, scale_y: 3,
+                        anchor_y: 0.15, anchor_x: 0.5 }, files: ["skill-102050101"], sounds: ["skill-102050101"] },
+                    { type: 6, delay: 20, dimly: 0, base: { format: "skill-102050101-1/%d.png",
+                        anchor_x: 0, anchor_y: 0.28, duration: 0.02, scale_x: 1.2, scale_y: 1.2 },
+                        files: ["skill-102050101-1"], sounds: [] },
+                ];
+            case 2201101:
+                return [
+                    { type: 10, delay: 0, dimly: 0, base: { action: "skill", attack_time: 1.8, action_time: 2,
+                        format: "skill-102050201-1/%d.png", duration: 0.05, scale_x: 1, scale_y: 1,
+                        offset_x: 0.7, offset_y: 0.4 }, files: ["skill-102050201-1"], sounds: ["skill-102050201-1"] },
+                    { type: 9, delay: 120, dimly: 0, base: { format: "skill-102050201-2/%d.png",
+                        anchor_y: 0.5, anchor_x: 0.5, scale_x: 2, scale_y: 2, offset_x: 0.8, offset_y: 0.4 },
+                        files: ["skill-102050201-2"], sounds: [] },
+                    { type: 6, delay: 60, dimly: 0, base: { format: "skill-102050201-3/%d.png",
+                        anchor_x: 0.3, anchor_y: 0.4, duration: 0.025, scale_x: 1, scale_y: 1 },
+                        files: ["skill-102050201-3"], sounds: [] },
+                ];
+            case 3200100:
+                return [
+                    { type: 5, delay: 0, dimly: 0, base: { attack_time: 0.3, action_time: 1,
+                        format: "skill-103050200-1/%d.png", scale_x: 2, scale_y: 2, duration: 0.05 },
+                        files: ["skill-103050200-1"], sounds: ["skill-103050200-1"] },
+                    { type: 7, delay: 40, dimly: 0, base: { format: "skill-103050200-2/%d.png", anchor_y: 0.5,
+                        duration: 0.1, scale_x: 1, scale_y: 1 }, files: ["skill-103050200-2"], sounds: [] },
+                ];
+            case 3210100:
+                return [
+                    { type: 5, delay: 0, dimly: 0, base: { attack_time: 0.3, action_time: 1,
+                        format: "skill-103050210-1/%d.png", anchor_x: 0.7, scale_x: 2, scale_y: 2, duration: 0.05 },
+                        files: ["skill-103050210-1"], sounds: ["skill-103050210-1"] },
+                    { type: 7, delay: 38, dimly: 0, base: { format: "skill-103050210-2/%d.png", anchor_x: 0.5,
+                        anchor_y: 0.5, duration: 0.05, scale_x: 4, scale_y: 4 },
+                        files: ["skill-103050210-2"], sounds: [] },
+                ];
+            case 3211101:
+                // 空 format 的旧投掷段只播骨骼，附身和场地帧各按自己的延迟出现。
+                return [
+                    { type: 5, delay: 0, dimly: 0, base: { action: "skill", attack_time: 0.2, action_time: 1 },
+                        files: [], sounds: [] },
+                    { type: 9, delay: 95, dimly: 0, base: { format: "skill-103050211/%d.png",
+                        anchor_y: 0.5, anchor_x: 0.5, scale_x: 2, scale_y: 2, offset_x: 0.7, offset_y: 0.4 },
+                        files: ["skill-103050211"], sounds: ["skill-103050211"] },
+                    { type: 6, delay: 10, dimly: 0, base: { format: "skill-103050211-1/%d.png",
+                        anchor_y: 0.1, anchor_x: 0.5, duration: 0.03, scale_x: 1, scale_y: 1 },
+                        files: ["skill-103050211-1"], sounds: [] },
+                ];
+            case 3231201:
+            case 3231501: {
+                // 凤凰两种形态共用近身和附身帧，最后一段使用各自冰火素材及音效。
+                const form = id === 3231201 ? "skill-103050231-2" : "skill-103050231-1";
+                return [
+                    { type: 2, delay: 0, dimly: 0, base: { action: "skill", move_time: 0.1,
+                        move_back: 0.3, action_time: 1.2 }, files: [], sounds: [] },
+                    { type: 6, delay: 40, dimly: 0, base: { format: "skill-103050231-3/%d.png",
+                        anchor_x: 0.5, anchor_y: 0.4, duration: 0.05, scale_x: 1, scale_y: 1 },
+                        files: ["skill-103050231-3"], sounds: [] },
+                    { type: 6, delay: 45, dimly: 0, base: { format: form + "/%d.png",
+                        anchor_x: 0.5, anchor_y: 0.4, duration: 0.05, scale_x: 2, scale_y: 2 },
+                        files: [form], sounds: [form] },
+                ];
+            }
+            case 4071201:
+                return [
+                    { type: 3, delay: 0, dimly: 1, base: { action: "skill", attack_time: 1.5, action_time: 1.6,
+                        format: "skill-104050071/%d.png", duration: 0.06, scale_x: 1.5, scale_y: 1.5, anchor_x: 0.5,
+                        anchor_y: 0.3 }, files: ["skill-104050071"], sounds: ["skill-104050071"] },
+                    { type: 6, delay: 85, dimly: 0, base: { format: "skill-104050071-1/%d.png",
+                        anchor_x: 0.3, anchor_y: 0.2, duration: 0.02, scale_x: 1, scale_y: 1 },
+                        files: ["skill-104050071-1"], sounds: [] },
+                ];
+            case 5090100:
+                // 两段特效均沿原帧顺序，两份同名旧音频在现存源资源中缺失。
+                return [
+                    { type: 5, delay: 0, dimly: 0, base: { attack_time: 0.3, action_time: 1,
+                        format: "skill-105050090-1/%d.png", anchor_x: 0.8, scale_x: 1, scale_y: 1 },
+                        files: ["skill-105050090-1"], sounds: [] },
+                    { type: 7, delay: 30, dimly: 0, base: { format: "skill-105050090-2/%d.png", anchor_x: 0.2,
+                        anchor_y: 0.45, duration: 0.1, scale_x: 2, scale_y: 2 },
+                        files: ["skill-105050090-2"], sounds: [] },
+                ];
+            case 1010100:
+                // 旧附身动作没有 format，不出帧，仅在第 25 帧出声。
+                return [
+                    { type: 2, delay: 0, dimly: 0, base: { move_time: 0.1, attack_delay: 0, move_back: 1 },
+                        files: [], sounds: [] },
+                    { type: 6, delay: 25, dimly: 0, base: {}, files: [], sounds: ["skill-101030030"] },
+                ];
+            case 1073101:
+                // 烈焰骑士第三技能的源音效同一级主动缺失，完整施法和附身帧仍保留。
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: { action: "skill2", action_time: 2 },
+                        files: [], sounds: [] },
+                    { type: 6, delay: 60, dimly: 0, base: { format: "skill-101050073/%d.png",
+                        anchor_x: 0.5, anchor_y: 0.2, duration: 0.03, scale_x: 2, scale_y: 2 },
+                        files: ["skill-101050073"], sounds: [] },
+                ];
+            case 1075101:
+                return [
+                    { type: 2, delay: 0, dimly: 0, base: { action: "skill", move_time: 0.1,
+                        move_back: 0.6, attack_delay: 0.1, action_time: 2 },
+                        files: [], sounds: ["skill-101050111"] },
+                    { type: 6, delay: 30, dimly: 0, base: { format: "skill-101050071/%d.png",
+                        anchor_x: 0.4, anchor_y: 0.3, duration: 0.03, scale_x: 2.5, scale_y: 2.5 },
+                        files: ["skill-101050071"], sounds: [] },
+                ];
+            case 1083101:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: { action: "skill2", action_time: 2 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 70, dimly: 0, base: { format: "skill-101050083/%d.png",
+                        anchor_x: 0.5, anchor_y: 0.4, duration: 0.1, scale_x: 1.2, scale_y: 1.2 },
+                        files: ["skill-101050083"], sounds: ["skill-101050083"] },
+                ];
+            case 3010100:
+                return [
+                    { type: 2, delay: 0, dimly: 0, base: { move_time: 0.1, move_back: 1.5, attack_delay: 0.4 },
+                        files: [], sounds: ["skill-103030030"] },
+                    { type: 6, delay: 30, dimly: 0, base: { format: "skill-103030030/%d.png",
+                        anchor_y: 0.35, anchor_x: 0.6, duration: 0.06, scale_x: 1.4, scale_y: 1.4 },
+                        files: ["skill-103030030"], sounds: [] },
+                ];
+            case 3073101:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: { action: "skill2", attack_time: 0.6, action_time: 1 },
+                        files: [], sounds: [] },
+                    { type: 9, delay: 60, dimly: 0, base: { format: "skill-103050073/%d.png",
+                        anchor_y: 0.5, anchor_x: 0.6, duration: 0.05, scale_x: 3, scale_y: 3,
+                        offset_x: 0.8, offset_y: 0.4 },
+                        files: ["skill-103050073"], sounds: ["skill-103050073"] },
+                ];
+            case 4053101:
+                // 战争女神原覆盖为原地施法，投影表的 type8 无坐标而且不会进入旧客户端实际播放。
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: { action: "skill2", action_time: 2 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 60, dimly: 0, base: { format: "skill-104050053/%d.png",
+                        anchor_x: 0.5, anchor_y: 0.2, duration: 0.05, scale_x: 1.5, scale_y: 1.5 },
+                        files: ["skill-104050053"], sounds: ["skill-104050053"] },
+                ];
+            case 4060100:
+                return [
+                    { type: 2, delay: 0, dimly: 0, base: { move_time: 0.1, move_back: 1, attack_delay: 0.3 },
+                        files: [], sounds: [] },
+                    { type: 6, delay: 20, dimly: 0, base: { format: "skill-104050060/%d.png",
+                        anchor_x: 0.1, anchor_y: 0.4, duration: 0.06, scale_x: 3, scale_y: 3 },
+                        files: ["skill-104050060"], sounds: ["skill-104050060"] },
+                ];
+            case 4061101:
+                return [
+                    { type: 3, delay: 0, dimly: 1, base: { action: "skill", attack_time: 1, action_time: 1.5,
+                        format: "skill-104050061/%d.png", duration: 0.06, scale_x: 2.6, scale_y: 2.6, anchor_y: 0.2 },
+                        files: ["skill-104050061"], sounds: [] },
+                    { type: 6, delay: 40, dimly: 0, base: { format: "skill-104050061-1/%d.png",
+                        anchor_x: 0.45, anchor_y: 0.2, duration: 0.025, scale_x: 1.6, scale_y: 1.6 },
+                        files: ["skill-104050061-1"], sounds: [] },
+                ];
+            case 4063101:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: { action: "skill2", action_time: 2 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 80, dimly: 0, base: { format: "skill-104050063/%d.png",
+                        anchor_x: 0.55, anchor_y: 0.25, duration: 0.025, scale_x: 2, scale_y: 2 },
+                        files: ["skill-104050063"], sounds: ["skill-104050063"] },
+                ];
+            case 5050100:
+                return [
+                    { type: 2, delay: 0, dimly: 0, base: { move_time: 0.1, move_back: 2, attack_delay: 0.1 },
+                        files: [], sounds: [] },
+                    { type: 6, delay: 30, dimly: 0, base: { format: "skill-105050050/%d.png",
+                        anchor_x: 0.4, anchor_y: 0.4, duration: 0.06, scale_x: 3, scale_y: 3 },
+                        files: ["skill-105050050"], sounds: ["skill-105050050"] },
+                ];
+            case 5063101:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: { action: "skill", attack_time: 0.6, action_time: 1.8 },
+                        files: [], sounds: [] },
+                    { type: 9, delay: 50, dimly: 1, base: { format: "skill-105050061/%d.png",
+                        anchor_y: 0.5, duration: 0.1, scale_x: 1.5, scale_y: 1.5, offset_x: 0.8, offset_y: 0.5 },
+                        files: ["skill-105050061"], sounds: [] },
+                    { type: 6, delay: 50, dimly: 0, base: { format: "skill-105050061-1/%d.png",
+                        anchor_x: 0.35, anchor_y: 0.2, duration: 0.02, scale_x: 1, scale_y: 1 },
+                        files: ["skill-105050061-1"], sounds: [] },
+                ];
             case 2041401:
                 return [
                     { type: 6, delay: 15, dimly: 1, base: { format: "skill-102040041/%d.png", anchor_x: 0.7,
@@ -254,6 +463,93 @@ export class BattleAttackUtils {
                     { type: 10, delay: 30, dimly: 0, base: { attack_time: 0.3, action_time: 0.5,
                         format: "skill-102040041/arrow-%d.png", scale_x: 1.5, scale_y: 1.5,
                         offset_x: 0.8, offset_y: 0.4, duration: 0.1 }, files: [], sounds: [] },
+                ];
+            case 1070100:
+                // 烈焰骑士普攻只做近身和返回，沿用旧配置指定的音效。
+                return [
+                    {
+                        type: 2, delay: 0, dimly: 0,
+                        base: { move_time: 0.1, move_back: 0.8, attack_delay: 0.2 },
+                        files: [], sounds: ["skill-102050060"],
+                    },
+                ];
+            case 1071101:
+                // 烈焰骑士施法使用第三个攻击动作，第 30 帧挂附身特效；旧音效 skill-102050073 缺少源文件。
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: { action: "skill2", attack_time: 0.6, action_time: 1 },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 6, delay: 30, dimly: 0,
+                        base: { format: "skill-101050073/%d.png", anchor_x: 0.4, anchor_y: 0.3,
+                            duration: 0.03, scale_x: 3, scale_y: 3 },
+                        files: ["skill-101050073"], sounds: [],
+                    },
+                ];
+            case 3070100:
+                // 圣光精灵普攻在目标侧播放旧版逐帧特效。
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: { attack_time: 0.3, action_time: 1.7, format: "skill-103050070/%d.png",
+                            duration: 0.04, scale_x: 1, scale_y: 1, anchor_x: 0.5, anchor_y: 0.22 },
+                        files: ["skill-103050070"], sounds: ["skill-103050070"],
+                    },
+                ];
+            case 3071101:
+                // 圣光精灵施法暗屏，第 20 帧显示战场特效，第 55 帧在施法者位置接附身特效。
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 1,
+                        base: { action: "skill", attack_time: 0.6, action_time: 1 },
+                        files: [], sounds: ["skill-103050071"],
+                    },
+                    {
+                        type: 9, delay: 20, dimly: 0,
+                        base: { format: "skill-103050071/%d.png", anchor_x: 0.51, anchor_y: 0.35,
+                            duration: 0.05, scale_x: 1.8, scale_y: 1.8, offset_x: 0.8, offset_y: 0.4 },
+                        files: ["skill-103050071"], sounds: [],
+                    },
+                    {
+                        type: 6, delay: 55, dimly: 0,
+                        base: { format: "skill-103050071-1/%d.png", anchor_x: 0.2, anchor_y: 0.15,
+                            duration: 0.02, scale_x: 1, scale_y: 1 },
+                        files: ["skill-103050071-1"], sounds: [],
+                    },
+                ];
+            case 5040100:
+            case 5042201:
+                // 爱德华普通与替换普攻共用同一战斗表现，各自保留服务器报出的技能和命中事件。
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: { attack_time: 0.3, action_time: 1.7, format: "skill-105050040/%d.png",
+                            duration: 0.1, scale_x: 2, scale_y: 2, anchor_x: 0.55, anchor_y: 0.35 },
+                        files: ["skill-105050040"], sounds: ["skill-105050040"],
+                    },
+                ];
+            case 5041101:
+                // 爱德华一级主动依次声明暗屏施法、20 帧战场特效、零帧附身特效；战场图集由实际播放段预载。
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 1,
+                        base: { action: "skill", attack_time: 0.6, action_time: 2 },
+                        files: [], sounds: ["skill-105050041"],
+                    },
+                    {
+                        type: 9, delay: 20, dimly: 1,
+                        base: { format: "skill-105050041/%d.png", anchor_x: 0.4, anchor_y: 0.5,
+                            duration: 0.1, scale_x: 1.8, scale_y: 1.8, offset_x: 0.6, offset_y: 0.5 },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 6, delay: 0, dimly: 0,
+                        base: { format: "skill-105050041-1/%d.png", anchor_x: 0.5, anchor_y: 0.2,
+                            duration: 0.035, scale_x: 1, scale_y: 1 },
+                        files: ["skill-105050041-1"], sounds: [],
+                    },
                 ];
             case 4050100:
                 return [
@@ -376,12 +672,13 @@ export class BattleAttackUtils {
                     },
                 ];
             case 4030100:
-                // 赛拉近身普攻在第 40 帧挂随身镜像特效，旧两段均无音效。
+            case 4040100:
+                // 赛拉和卡伊在第 40 帧共用随身镜像特效，只有卡伊的近身动作播放音效。
                 return [
                     {
                         type: 2, delay: 0, dimly: 0,
                         base: { move_time: 0.1, move_back: 1, attack_delay: 0.3 },
-                        files: [], sounds: [],
+                        files: [], sounds: id === 4040100 ? ["skill-104050040"] : [],
                     },
                     {
                         type: 6, delay: 40, dimly: 0,
@@ -405,6 +702,27 @@ export class BattleAttackUtils {
                         files: ["skill-104040031"], sounds: [],
                     },
                 ];
+            case 4041101:
+                // 卡伊暗屏施法后分别在第 90 帧和第 100 帧播放随身与目标特效。
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 1,
+                        base: { action: "skill", attack_time: 0.6, action_time: 1 },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 7, delay: 100, dimly: 0,
+                        base: { format: "skill-104050041/%d.png", anchor_x: 0.2, anchor_y: 0.35,
+                            duration: 0.1, scale_x: 1.3, scale_y: 1.3, flipped: 1 },
+                        files: ["skill-104050041"], sounds: ["skill-104050041"],
+                    },
+                    {
+                        type: 6, delay: 90, dimly: 0,
+                        base: { format: "skill-104050041-1/%d.png", anchor_x: 0.4, anchor_y: 0.35,
+                            duration: 0.025, scale_x: 1, scale_y: 1 },
+                        files: ["skill-104050041-1"], sounds: [],
+                    },
+                ];
             case 5010300:
                 return [
                     { type: 7, delay: 0, dimly: 0,
@@ -422,6 +740,36 @@ export class BattleAttackUtils {
                     { type: 6, delay: 15, dimly: 1,
                         base: {"format": "skill-105030011/%d.png", "anchor_x": 0.7, "anchor_y": 0.4, "duration": 0.1, "scale_x": 1.8, "scale_y": 1.8},
                         files: [], sounds: [] },
+                ];
+            case 5060100:
+                // 末日使者的近身和第 15 帧随身特效在旧配置中分别播放同一音效。
+                return [
+                    {
+                        type: 2, delay: 0, dimly: 0,
+                        base: { move_time: 0.1, move_back: 1, attack_delay: 0.3 },
+                        files: ["skill-105050060"], sounds: ["skill-105050060"],
+                    },
+                    {
+                        type: 6, delay: 15, dimly: 0,
+                        base: { format: "skill-105050060/%d.png", anchor_x: 0.77, anchor_y: 0.4,
+                            duration: 0.1, scale_x: 2, scale_y: 2 },
+                        files: ["skill-105050060"], sounds: ["skill-105050060"],
+                    },
+                ];
+            case 5061201:
+                // 末日使者一级主动使用第三个攻击骨骼动作，目标特效取旧 063 图集。
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: { action: "skill2" },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 7, delay: 50, dimly: 0,
+                        base: { format: "skill-105050063/%d.png", anchor_x: 0.5, anchor_y: 0.3,
+                            duration: 0.1, scale_x: 3, scale_y: 3 },
+                        files: ["skill-105050063"], sounds: ["skill-105050063"],
+                    },
                 ];
             case 5080100:
                 return [
@@ -1112,7 +1460,7 @@ export class BattleAttackUtils {
 
     /** 判断该表现是否由通用攻击动作播放器解析，供资源准备与播放共用。 */
     public static isActionType(type: number): boolean {
-        return [1, 2, 3, 5, 6, 7, 8, 9, 10, 11].includes(type);
+        return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].includes(type);
     }
 
     /** 解析同源 Buff 动作和已核对的帧格式，拒绝未支持的动画资源或动作参数。 */
@@ -1131,8 +1479,9 @@ export class BattleAttackUtils {
         }
         const values = base as Record<string, unknown>;
         if (row.type === 1 && (Object.keys(values).length || files.length || sounds.length
-            || (row.shake !== undefined && row.shake !== 0) || (row.dimly !== undefined && row.dimly !== 0))) {
-            // 当前仅恢复真正空动作；旧可选位移及其他领域带音效type1仍须另行核实，不能假装已经支持。
+            || (row.shake !== undefined && row.shake !== 0)
+            || (row.dimly !== undefined && ![0, 1].includes(row.dimly)))) {
+            // 旧空段允许公共层先执行暗屏，尚未接入带位移、帧或音效的空段。
             throw new Error("空动作包含尚未恢复的位移、特效、音效或画面副作用");
         }
         const known = ["move_time", "attack_time", "attack_delay", "action_time", "move_back", "action", "format", "duration", "scale_x", "scale_y", "anchor_x", "anchor_y", "flipped"];
@@ -1186,18 +1535,24 @@ export class BattleAttackUtils {
                 "skill-102030031": 8,
                 "skill-103020021": 15, "skill-103030030": 12,
                 "skill-103040041": 11, "skill-103040050": 8, "skill-103040051": 10,
+                "skill-103050070": 16, "skill-103050071": 14, "skill-103050071-1": 20,
+                "skill-103050073": 17, "skill-101050071": 26, "skill-101050083": 11,
                 "skill-103040120": 11, "skill-103040121": 21,
                 "skill-102020021": 14, "skill-102040050": 11, "skill-102040051": 10,
                 "skill-101030030": 6,
                 "skill-103030031": 9, "skill-104040020": 9, "skill-104040021": 9, "skill-104030011": 6,
-                "skill-104040031": 9, "skill-104050040": 6,
+                "skill-104040031": 9, "skill-104050040": 6, "skill-104050041": 11, "skill-104050041-1": 13,
                 "skill-104050050": 7, "skill-104050051": 11, "skill-104050051-1": 45,
+                "skill-104050053": 10, "skill-104050060": 14, "skill-104050061": 18,
+                "skill-104050061-1": 42, "skill-104050063": 11,
                 "skill-105040030": 9, "skill-105030011": 6,
-                "skill-105050080": 10, "skill-105050081": 17,
+                "skill-105050040": 10, "skill-105050041": 18, "skill-105050041-1": 57,
+                "skill-105050050": 12, "skill-105050061": 9, "skill-105050061-1": 24,
+                "skill-105050060": 8, "skill-105050063": 11, "skill-105050080": 10, "skill-105050081": 17,
                 "skill-101050080-1": 6, "skill-101050080-2": 12,
                 "skill-101050081": 25, "skill-101050081-1": 29,
                 "skill-102050140": 15, "skill-102050141": 22, "skill-102050141-1": 53,
-                "skill-101050060": 11, "skill-101050061": 23, "skill-101050090": 18,
+                "skill-101050060": 11, "skill-101050061": 23, "skill-101050073": 19, "skill-101050090": 18,
                 "skill-101050091": 24, "skill-101050091-1": 22, "skill-101050100": 23,
                 "skill-101050101": 21, "skill-102040130": 9, "skill-102040131": 28,
                 "skill-102050060": 8, "skill-102050061": 11, "skill-102050071": 17,
@@ -1212,12 +1567,20 @@ export class BattleAttackUtils {
                 "skill-103050100": 10, "skill-103050101": 13, "skill-103050103": 14,
                 "skill-103050110": 14, "skill-103050111": 11, "skill-104050080": 8,
                 "skill-104050081": 10, "skill-105040021": 18, "skill-105040031": 8,
+                "skill-101050130": 8, "skill-101050150": 9,
+                "skill-102050100": 18, "skill-102050101": 14, "skill-102050101-1": 16,
+                "skill-102050201-1": 5, "skill-102050201-2": 10, "skill-102050201-3": 39,
+                // 原 %d.png 在 5 号首次遭遇大写后缀，旧逐帧读取在此停止。
+                "skill-103050200-1": 7, "skill-103050200-2": 9, "skill-103050210-1": 7, "skill-103050210-2": 5,
+                "skill-103050211": 17, "skill-103050211-1": 52, "skill-104050071": 6, "skill-104050071-1": 20,
+                "skill-103050231-1": 9, "skill-103050231-2": 9, "skill-103050231-3": 13,
+                "skill-105050090-1": 3, "skill-105050090-2": 4,
             };
             const knownArrow = row.type === 10 && format === "skill-102040041/arrow-%d.png";
             const file = knownArrow ? "skill-102040041" : directFrames ? format.slice(0, -frameSuffix.length) : files[0];
             const count = knownArrow ? 5 : typeof file === "string" ? counts[file] : 0;
-            if (!count || (row.type === 10 && !knownArrow) || (knownArrow ? files.length !== 0
-                : (!directFrames && files.length !== 1) || format !== file + frameSuffix || row.type === 2)) {
+            if (!count || (knownArrow ? files.length !== 0
+                : (!directFrames && files.length !== 1) || format !== file + frameSuffix || [2, 4].includes(row.type))) {
                 throw new Error("战斗帧资源尚未核对：type=" + row.type + "，file=" + JSON.stringify(files));
             }
             const interval = this.seconds(values, "duration", 0.05);
@@ -1239,7 +1602,7 @@ export class BattleAttackUtils {
                 scaleX: (typeof values.scale_x === "number" && Number.isFinite(values.scale_x) ? values.scale_x : 1) * (values.flipped === 1 ? -1 : 1), scaleY: this.seconds(values, "scale_y", 1),
                 anchorX: values.flipped === 1 ? 1 - anchorX : anchorX, anchorY,
             });
-        } else if (values.format !== undefined || row.type === 5) {
+        } else if (values.format !== undefined) {
             throw new Error("投射或序列帧缺少资源");
         }
         return Object.freeze({
@@ -1294,6 +1657,17 @@ export class BattleAttackUtils {
             throw new Error("战斗效果延迟无效");
         }
         return row.delay / 60;
+    }
+
+    /** 估算命中特效的时点，用于同一目标有多个表现时选主命中。实际伤害还等对应表现到位。 */
+    public static impactSeconds(plan: BattleAttackPlan): number | null {
+        if (plan.melee) {
+            return plan.moveSeconds + plan.attackSeconds;
+        }
+        if (!plan.effect || plan.onSource || plan.projectileOffset) {
+            return null;
+        }
+        return plan.attackSeconds + (plan.projectile ? plan.effect.flightSeconds : 0);
     }
 
     /** 旧暗屏淡入、停留、淡出参数；读取效果自身ani_base，零秒配置有效。 */

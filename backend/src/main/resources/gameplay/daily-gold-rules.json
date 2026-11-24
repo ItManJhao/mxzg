@@ -1,8 +1,4 @@
 {
-  "stageId": 1,
-  "titleLanguageId": 2951,
-  "minimumLevel": 15,
-  "requiredPower": 1,
   "freeLimit": 2,
   "vipLimits": {
     "0": 2,
@@ -26,16 +22,6 @@
     "3": 50,
     "4": 50
   },
-  "rewardPreview": [
-    {
-      "itemId": 900001,
-      "quantity": 100000
-    },
-    {
-      "itemId": 900102,
-      "quantity": 20
-    }
-  ],
   "clergy": [
     {
       "level": 1,
@@ -43,66 +29,717 @@
       "chance": 10000
     }
   ],
-  "enemies": [
+  "stages": [
     {
-      "configId": 1,
-      "position": 2,
-      "template": 10405005,
-      "level": 5,
-      "star": 5,
-      "modifiers": "[]",
-      "equipment": "[]",
-      "runes": "[]"
+      "stageId": 1,
+      "titleLanguageId": 2951,
+      "minimumLevel": 15,
+      "requiredPower": 1,
+      "ribbon": 1,
+      "rewardPreview": [
+        {
+          "itemId": 900001,
+          "quantity": 100000
+        },
+        {
+          "itemId": 900102,
+          "quantity": 20
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 1,
+          "position": 2,
+          "template": 10405005,
+          "level": 5,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 2,
+          "position": 3,
+          "template": 10104004,
+          "level": 5,
+          "star": 4,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 3,
+          "position": 5,
+          "template": 10204005,
+          "level": 5,
+          "star": 4,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 4,
+          "position": 6,
+          "template": 10204004,
+          "level": 5,
+          "star": 4,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 5,
+          "position": 7,
+          "template": 10104004,
+          "level": 5,
+          "star": 4,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 6,
+          "position": 8,
+          "template": 10403001,
+          "level": 5,
+          "star": 3,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
     },
     {
-      "configId": 2,
-      "position": 3,
-      "template": 10104004,
-      "level": 5,
-      "star": 4,
-      "modifiers": "[]",
-      "equipment": "[]",
-      "runes": "[]"
+      "stageId": 2,
+      "titleLanguageId": 2952,
+      "minimumLevel": 15,
+      "requiredPower": 30000,
+      "ribbon": 2,
+      "rewardPreview": [
+        {
+          "itemId": 900001,
+          "quantity": 150000
+        },
+        {
+          "itemId": 900102,
+          "quantity": 30
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 7,
+          "position": 2,
+          "template": 10505006,
+          "level": 20,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 8,
+          "position": 3,
+          "template": 10405004,
+          "level": 20,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 9,
+          "position": 5,
+          "template": 10301001,
+          "level": 20,
+          "star": 1,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 10,
+          "position": 6,
+          "template": 10202002,
+          "level": 20,
+          "star": 2,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 11,
+          "position": 7,
+          "template": 10304005,
+          "level": 20,
+          "star": 4,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 12,
+          "position": 8,
+          "template": 10301001,
+          "level": 20,
+          "star": 1,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
     },
     {
-      "configId": 3,
-      "position": 5,
-      "template": 10204005,
-      "level": 5,
-      "star": 4,
-      "modifiers": "[]",
-      "equipment": "[]",
-      "runes": "[]"
+      "stageId": 3,
+      "titleLanguageId": 2953,
+      "minimumLevel": 15,
+      "requiredPower": 52500,
+      "ribbon": 2,
+      "rewardPreview": [
+        {
+          "itemId": 900001,
+          "quantity": 200000
+        },
+        {
+          "itemId": 900102,
+          "quantity": 40
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 13,
+          "position": 2,
+          "template": 10404003,
+          "level": 40,
+          "star": 4,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 14,
+          "position": 3,
+          "template": 10205007,
+          "level": 40,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 15,
+          "position": 5,
+          "template": 10305007,
+          "level": 40,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 16,
+          "position": 6,
+          "template": 10105007,
+          "level": 40,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 17,
+          "position": 7,
+          "template": 10505004,
+          "level": 40,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 18,
+          "position": 8,
+          "template": 10104004,
+          "level": 40,
+          "star": 4,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
     },
     {
-      "configId": 4,
-      "position": 6,
-      "template": 10204004,
-      "level": 5,
-      "star": 4,
-      "modifiers": "[]",
-      "equipment": "[]",
-      "runes": "[]"
+      "stageId": 4,
+      "titleLanguageId": 2954,
+      "minimumLevel": 15,
+      "requiredPower": 82500,
+      "ribbon": 3,
+      "rewardPreview": [
+        {
+          "itemId": 900001,
+          "quantity": 250000
+        },
+        {
+          "itemId": 900102,
+          "quantity": 50
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 19,
+          "position": 2,
+          "template": 10105006,
+          "level": 80,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 20,
+          "position": 3,
+          "template": 10305007,
+          "level": 80,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 21,
+          "position": 5,
+          "template": 10102002,
+          "level": 80,
+          "star": 2,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 22,
+          "position": 6,
+          "template": 10103003,
+          "level": 80,
+          "star": 3,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 23,
+          "position": 7,
+          "template": 10105006,
+          "level": 80,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 24,
+          "position": 8,
+          "template": 10204005,
+          "level": 80,
+          "star": 4,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
     },
     {
-      "configId": 5,
-      "position": 7,
-      "template": 10104004,
-      "level": 5,
-      "star": 4,
-      "modifiers": "[]",
-      "equipment": "[]",
-      "runes": "[]"
+      "stageId": 5,
+      "titleLanguageId": 2955,
+      "minimumLevel": 15,
+      "requiredPower": 127500,
+      "ribbon": 3,
+      "rewardPreview": [
+        {
+          "itemId": 900001,
+          "quantity": 300000
+        },
+        {
+          "itemId": 900102,
+          "quantity": 60
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 25,
+          "position": 2,
+          "template": 10303003,
+          "level": 100,
+          "star": 3,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 26,
+          "position": 3,
+          "template": 10404003,
+          "level": 100,
+          "star": 4,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 27,
+          "position": 5,
+          "template": 10102002,
+          "level": 100,
+          "star": 2,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 28,
+          "position": 6,
+          "template": 10503001,
+          "level": 100,
+          "star": 3,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 29,
+          "position": 7,
+          "template": 10204005,
+          "level": 100,
+          "star": 4,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 30,
+          "position": 8,
+          "template": 10405005,
+          "level": 100,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
     },
     {
-      "configId": 6,
-      "position": 8,
-      "template": 10403001,
-      "level": 5,
-      "star": 3,
-      "modifiers": "[]",
-      "equipment": "[]",
-      "runes": "[]"
+      "stageId": 6,
+      "titleLanguageId": 2956,
+      "minimumLevel": 15,
+      "requiredPower": 210000,
+      "ribbon": 4,
+      "rewardPreview": [
+        {
+          "itemId": 900001,
+          "quantity": 350000
+        },
+        {
+          "itemId": 900102,
+          "quantity": 70
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 31,
+          "position": 2,
+          "template": 10405005,
+          "level": 120,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 32,
+          "position": 3,
+          "template": 10104004,
+          "level": 120,
+          "star": 4,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 33,
+          "position": 5,
+          "template": 10404003,
+          "level": 120,
+          "star": 4,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 34,
+          "position": 6,
+          "template": 10503001,
+          "level": 120,
+          "star": 3,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 35,
+          "position": 7,
+          "template": 10205007,
+          "level": 120,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 36,
+          "position": 8,
+          "template": 10202002,
+          "level": 120,
+          "star": 2,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "stageId": 7,
+      "titleLanguageId": 2957,
+      "minimumLevel": 15,
+      "requiredPower": 322500,
+      "ribbon": 4,
+      "rewardPreview": [
+        {
+          "itemId": 900001,
+          "quantity": 400000
+        },
+        {
+          "itemId": 900102,
+          "quantity": 80
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 37,
+          "position": 2,
+          "template": 10404003,
+          "level": 130,
+          "star": 4,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 38,
+          "position": 3,
+          "template": 10103003,
+          "level": 130,
+          "star": 3,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 39,
+          "position": 5,
+          "template": 10305007,
+          "level": 130,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 40,
+          "position": 6,
+          "template": 10404002,
+          "level": 130,
+          "star": 4,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 41,
+          "position": 7,
+          "template": 10405006,
+          "level": 130,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 42,
+          "position": 8,
+          "template": 10404002,
+          "level": 130,
+          "star": 4,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "stageId": 8,
+      "titleLanguageId": 2958,
+      "minimumLevel": 15,
+      "requiredPower": 450000,
+      "ribbon": 5,
+      "rewardPreview": [
+        {
+          "itemId": 900001,
+          "quantity": 450000
+        },
+        {
+          "itemId": 900102,
+          "quantity": 90
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 43,
+          "position": 2,
+          "template": 10105008,
+          "level": 150,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 44,
+          "position": 3,
+          "template": 10505004,
+          "level": 150,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 45,
+          "position": 5,
+          "template": 10305008,
+          "level": 150,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 46,
+          "position": 6,
+          "template": 10103003,
+          "level": 150,
+          "star": 3,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 47,
+          "position": 7,
+          "template": 10102002,
+          "level": 150,
+          "star": 2,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 48,
+          "position": 8,
+          "template": 10305008,
+          "level": 150,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "stageId": 9,
+      "titleLanguageId": 2959,
+      "minimumLevel": 15,
+      "requiredPower": 570000,
+      "ribbon": 5,
+      "rewardPreview": [
+        {
+          "itemId": 900001,
+          "quantity": 500000
+        },
+        {
+          "itemId": 900102,
+          "quantity": 100
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 49,
+          "position": 2,
+          "template": 10504002,
+          "level": 180,
+          "star": 4,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 50,
+          "position": 3,
+          "template": 10202002,
+          "level": 180,
+          "star": 2,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 51,
+          "position": 5,
+          "template": 10404002,
+          "level": 180,
+          "star": 4,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 52,
+          "position": 6,
+          "template": 10405006,
+          "level": 180,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 53,
+          "position": 7,
+          "template": 10302002,
+          "level": 180,
+          "star": 2,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 54,
+          "position": 8,
+          "template": 10105008,
+          "level": 180,
+          "star": 5,
+          "modifiers": "[]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
     }
   ]
 }

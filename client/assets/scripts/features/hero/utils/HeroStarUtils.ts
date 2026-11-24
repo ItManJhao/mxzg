@@ -127,6 +127,66 @@ export class HeroStarUtils {
             && (element === 0 || config.requireConfig(GConfig.HeroType, hero.templateId).elem === element));
     }
 
+    /** 按服务端规则核对角色或世界等级，以及升 14 星时必须拥有的高星英雄数。 */
+    public static eligible(recipe: HeroStarRecipe, owned: readonly OwnedHero[], roleLevel: number, worldLevel: number): boolean {
+        if (roleLevel < recipe.roleLevel && worldLevel < recipe.worldLevel) {
+            return false;
+        }
+        return recipe.minimumOwnedHeroes === 0
+            || owned.filter(hero => hero.star >= recipe.minimumOwnedStar).length >= recipe.minimumOwnedHeroes;
+    }
+
+    /**
+     * 从已提交的名册和库存判断是否有一组合法升星材料。
+     * @param hero 当前待升星本体；材料复用原选择窗的星级、上阵和锁定筛选。
+     * @param recipe 当前实例的下一星配方；替代物和固定费用使用同一份库存预算。
+     * @returns 是否能备齐所有行，提示不预留或扣除材料。
+     */
+    public static canPrepareMaterials(hero: OwnedHero, recipe: HeroStarRecipe, owned: readonly OwnedHero[],
+        quantity: (itemId: number) => number, config = GameConfig.instance): boolean {
+        const costs = new Map(recipe.costs.map(cost => [cost.itemId, cost.quantity]));
+        if (recipe.costs.some(cost => quantity(cost.itemId) < cost.quantity)) {
+            return false;
+        }
+        const choices: string[][] = [];
+        for (const row of recipe.rows) {
+            const candidates = this.candidates(hero, row, owned, [], config).map(candidate => `hero:${candidate.id}`);
+            const substitute = row.replacementItemId;
+            if (substitute !== null && row.count === 1) {
+                const remaining = quantity(substitute) - (costs.get(substitute) ?? 0);
+                // 一行最多用一件替代品，可参与分配的份数不会超过配方总行数。
+                for (let index = 0; index < Math.min(remaining, recipe.rows.length); index++) {
+                    candidates.push(`item:${substitute}:${index}`);
+                }
+            }
+            if (candidates.length < row.count) {
+                return false;
+            }
+            for (let index = 0; index < row.count; index++) {
+                choices.push(candidates);
+            }
+        }
+        const assigned = new Map<string, number>();
+        return choices.every((_, slot) => this.assignMaterial(slot, choices, assigned, new Set()));
+    }
+
+    /** 尝试给当前材料位分配唯一素材。通用与指定材料重叠时可替换先前分配。 */
+    private static assignMaterial(slot: number, choices: readonly string[][], assigned: Map<string, number>,
+        tried: Set<string>): boolean {
+        for (const material of choices[slot]) {
+            if (tried.has(material)) {
+                continue;
+            }
+            tried.add(material);
+            const previous = assigned.get(material);
+            if (previous === undefined || this.assignMaterial(previous, choices, assigned, tried)) {
+                assigned.set(material, slot);
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** 与旧 14 星条件共用系统策划规则，值依次是最低星级及要求数量。 */
     private static ownedRequirement(config: GameConfig): readonly [number, number] {
         const table = config.getFileByPath("config/system") as { rows: readonly { key: string; value: unknown }[] } | null;

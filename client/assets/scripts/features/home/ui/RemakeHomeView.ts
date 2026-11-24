@@ -47,20 +47,26 @@ export class RemakeHomeView extends BaseView implements HomeView {
     private closed = false;
     private extraUnbind: Array<() => void> = [];
     /** 主城内容区当前显示的页面，默认显示地图。 */
-    private currentFeature: "city" | "hero" | "bag" | "battle" | "summon" | "market" | "dungeon" = "city";
+    private currentFeature: "city" | "hero" | "bag" | "battle" | "summon" | "market" | "dungeon" | "clan" | "fetter" | "arena" | "tower" = "city";
     /** 英雄详情将顶栏右侧资源切到英雄经验，离开时立即复原为钻石。 */
     private showHeroExperience = false;
     /** 主城加载后绑定的循环音源。进入战斗专属页面时停止，关主城时清理。 */
     private musicSource: AudioSource | null = null;
 
     get featureHost(): Node | null { return this.cityHost; }
-    /** 切换功能页并同步主城音乐和顶栏资源，英雄详情沿旧版显示英雄经验。 */
-    showFeature(id: "city" | "hero" | "bag" | "battle" | "summon" | "market" | "dungeon", showHeroExperience = false): void {
+    /** 切换主城或功能页并刷新底栏选中、音乐和顶栏。英雄详情显示英雄经验。 */
+    showFeature(
+        id: "city" | "hero" | "bag" | "battle" | "summon" | "market" | "dungeon" | "clan" | "fetter" | "arena" | "tower",
+        showHeroExperience = false,
+    ): void {
         if (this.closed) return;
         this.currentFeature = id;
         this.showHeroExperience = showHeroExperience;
         this.syncMusic();
-        if (this.city?.node.isValid) this.city.node.active = id === "city";
+        const cityNode = this.city?.node;
+        if (cityNode?.isValid) {
+            cityNode.active = id === "city";
+        }
         UIManager.instance.closeById("role-profile");
         this.showNotice("");
         this.paintRole();
@@ -78,7 +84,7 @@ export class RemakeHomeView extends BaseView implements HomeView {
         void this.openCity();
     }
 
-    /** 加载原主城及顶栏、绑定资料入口。背景音乐异步加载，失败不拦截页面打开。 */
+    /** 加载主城及顶栏，登记仍存活的入口节点；等子页就绪后完成打开。 */
     private async openCity(): Promise<void> {
         try {
             if (!this.cityPrefab || !this.chromePrefab || !this.cityHost || !this.chromeHost) throw new Error("RemakeHome 未绑定主城 Prefab 或宿主");
@@ -110,18 +116,28 @@ export class RemakeHomeView extends BaseView implements HomeView {
             if (!avatar) throw new Error("顶栏头像入口未绑定");
             const openProfile = () => { if (this.role) this.actions?.openFeature("role-profile"); };
             avatar.on(Button.EventType.CLICK, openProfile);
-            this.extraUnbind.push(() => avatar.off(Button.EventType.CLICK, openProfile));
+            this.extraUnbind.push(() => {
+                if (avatar.isValid) {
+                    avatar.off(Button.EventType.CLICK, openProfile);
+                }
+            });
             const shell = chromeNode.getComponent(CityChromeShell);
             if (shell?.monthCard) shell.monthCard.active = false;
             for (const button of [shell?.btnAddGold, shell?.btnAddGem]) {
                 if (!button) continue;
                 const open = () => this.actions?.openFeature("currency");
                 button.on(Button.EventType.CLICK, open);
-                this.extraUnbind.push(() => button.off(Button.EventType.CLICK, open));
+                this.extraUnbind.push(() => {
+                    if (button.isValid) {
+                        button.off(Button.EventType.CLICK, open);
+                    }
+                });
             }
             this.paintRole();
             await Promise.all([this.city.whenReady(), this.chrome.whenReady()]);
-            if (this.closed) return;
+            if (this.closed || !this.node?.isValid) {
+                return;
+            }
             this.finishOpen();
             void this.loadMusic();
         } catch (error) {
@@ -134,11 +150,11 @@ export class RemakeHomeView extends BaseView implements HomeView {
         }
     }
 
-    /** 读取旧版主城原曲，由主城持有音频资源，页面已关闭时不再创建音源。 */
+    /** 读取旧版主城原曲，异步返回时仅给仍打开且存活的页面创建音源。 */
     private async loadMusic(): Promise<void> {
         try {
             const clip = await ResourceAssetsUtils.forNode(this.node).loadPath("audio/bgm-main-city", "AudioClip");
-            if (this.closed || !this.node.isValid) {
+            if (this.closed || !this.node?.isValid) {
                 return;
             }
             const source = this.node.addComponent(AudioSource);
@@ -153,13 +169,14 @@ export class RemakeHomeView extends BaseView implements HomeView {
         }
     }
 
-    /** 主城音乐服务旧版共用场景，战斗和副本原有专属配乐，进入后停掉主城曲。 */
+    /** 进入各自持有音源的功能区域后暂停主城配乐。 */
     private syncMusic(): void {
         const source = this.musicSource;
         if (!source) {
             return;
         }
-        if (this.currentFeature === "battle" || this.currentFeature === "dungeon") {
+        if (this.currentFeature === "battle" || this.currentFeature === "dungeon" || this.currentFeature === "clan"
+            || this.currentFeature === "arena" || this.currentFeature === "tower") {
             AudioPreferences.stopMusic(source);
         } else {
             AudioPreferences.playMusic(source);
@@ -197,16 +214,17 @@ export class RemakeHomeView extends BaseView implements HomeView {
         this.chrome.setPower(""); // 战力尚未接入，不将未知值伪装为零。
         RolePortraitUtils.paint(this.chrome.avatarFace, this.chrome.avatarBorder, role.basics?.headId, role.basics?.borderId);
         this.chrome.setCityExtras(false);
-        const selectedTab = this.currentFeature === "summon" || this.currentFeature === "market" ? "city" : this.currentFeature;
-        const dungeonGate = CityNavigationUtils.bottomGate("dungeon");
-        const dungeonOpen = !!dungeonGate && EntryGateUtils.isEntryOpen(dungeonGate, role.level, 0);
+        const selectedTab = ["summon", "market", "arena", "tower"].includes(this.currentFeature) ? "city" : this.currentFeature;
         this.chrome.setTabs(["city", "hero", "bag", "battle", "dungeon", "clan", "fetter"].map(id => {
-            const available = id === "city" || (this.actions?.availableFeatures?.includes(id) && (id !== "dungeon" || dungeonOpen));
+            const gated = id === "dungeon" || id === "clan";
+            const gate = gated ? CityNavigationUtils.bottomGate(id) : undefined;
+            const gateOpen = !gated || !!gate && EntryGateUtils.isEntryOpen(gate, role.level, 0);
+            const available = id === "city" || (this.actions?.availableFeatures?.includes(id) && gateOpen);
             return {
                 id,
                 text: "",
                 state: id === selectedTab ? "selected" : available ? "open" : "locked",
-                lockLevel: id === "dungeon" ? dungeonGate?.level : undefined,
+                lockLevel: gate?.level,
             };
         }));
         this.city?.refreshLocks();

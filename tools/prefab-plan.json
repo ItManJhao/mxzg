@@ -58,6 +58,7 @@
         "CommonPanel1",
         "ConfirmView",
         "HeroRewardView",
+        "RedDot",
         "RewardView",
         "RoleUpgradeView"
       ]
@@ -67,11 +68,43 @@
       "phases": [
         "当前已实现"
       ],
-      "reason": "底栏副本大厅、原奖励预览及已接通的金币首关",
+      "reason": "底栏副本大厅、原奖励预览及按关卡复用的金币副本关卡列表",
       "names": [
         "DungeonHallCardView",
         "DungeonHallView",
+        "GoldDungeonStageCell",
         "GoldDungeonView"
+      ]
+    },
+    {
+      "directory": "bundles/module/vip/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "VIP 契约任务、档位权益与各自的可复用列表格",
+      "names": [
+        "VipBenefitCell",
+        "VipBenefitsView",
+        "VipTaskCell",
+        "VipView"
+      ]
+    },
+    {
+      "directory": "bundles/module/guild/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "公会目录与大厅、创建页签、徽章选择、成员与审批窗口及其列表格",
+      "names": [
+        "GuildApprovalCell",
+        "GuildApprovalView",
+        "GuildBadgeCell",
+        "GuildBadgePickerView",
+        "GuildCreateView",
+        "GuildListCell",
+        "GuildMemberCell",
+        "GuildMemberView",
+        "GuildView"
       ]
     },
     {
@@ -168,6 +201,28 @@
         "ServerPickerView",
         "UpdateLayer",
         "WelcomeGiftView"
+      ]
+    },
+    {
+      "directory": "bundles/module/tower/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "主城幻境之塔、守军层卡及正式战场挂点",
+      "names": [
+        "TowerFloorCell",
+        "TowerView"
+      ]
+    },
+    {
+      "directory": "bundles/module/arena/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "主城竞技场新手对手与冻结战斗历史",
+      "names": [
+        "ArenaEntryCell",
+        "ArenaView"
       ]
     }
   ]

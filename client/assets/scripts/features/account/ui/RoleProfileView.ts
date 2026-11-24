@@ -53,6 +53,8 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
     @property(Label) roleId: Label | null = null;
     /** 角色等级，不是英雄等级。 */
     @property(Label) level: Label | null = null;
+    /** 当前所属公会名称，随角色统一快照更新。 */
+    @property(Label) guildLabel: Label | null = null;
     /** 独立头像资源节点。 */
     @property(Node) face: Node | null = null;
     /** 独立头像框资源节点。 */
@@ -161,14 +163,15 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
         });
     }
 
-    /** 用最新角色更新昵称、编号、等级和头像，在窗口中只保留显示所需的数据。 */
+    /** 用最新角色更新昵称、编号、等级、公会与头像。 */
     private render(role: Readonly<RoleProfile>): void {
-        if (!this.nickname || !this.roleId || !this.level) {
+        if (!this.nickname || !this.roleId || !this.level || !this.guildLabel) {
             throw new Error("角色详情资料未绑定");
         }
         this.nickname.string = role.nickname;
         this.roleId.string = "角色 ID：" + (role.publicId ?? "未同步");
         this.level.string = String(role.level);
+        this.guildLabel.string = role.guildName === undefined ? "暂未同步" : role.guildName || "未加入";
         RolePortraitUtils.paint(this.face, this.border, role.basics?.headId, role.basics?.borderId);
     }
 

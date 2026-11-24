@@ -29,12 +29,14 @@ public class GmService {
  private static final int SUPPORTED_SPIRIT_ITEM = 2_000_002;
  /** 单次精灵准备的技术批量上限，与实例服务保持一致；不是持有容量，不裁剪请求。 */
  private static final int MAX_SPIRIT_GRANT_QUANTITY = 1_000;
- /** 除金币、钻石外，保留当前普通道具和各实例类别的单次上限。 */
+ /** 普通道具单次发放上限。金币、钻石和英雄经验使用协议数量范围。 */
  private static final int MAX_ITEM_GRANT_QUANTITY = 9_999;
  /** 金币钱包对应的配置 ID。 */
  private static final int GOLD_ITEM = 900001;
  /** 钻石钱包对应的配置 ID。 */
  private static final int DIAMOND_ITEM = 900002;
+ /** 英雄经验的普通库存配置 ID，可按货币的数量范围准备。 */
+ private static final int HERO_EXPERIENCE_ITEM = 900101;
  /** 服务端开关；local配置默认开启，缺少本配置时兜底关闭，production不装配本服务。 */
  private final boolean enabled;
  /** 当前连接身份验证入口。 */
@@ -55,18 +57,16 @@ public class GmService {
  private final TavernPointService tavernPoints;
  /** 递增资产版本并提交后同步。 */
  private final AssetSyncService sync;
- /** 英雄初始属性校验规则。 */
- private final HeroGrowthRules growth;
- /** 真实 GM 英雄也在发放事务内登记图鉴最高星级。 */
- private final HeroRepository heroRepository;
+ /** 共享英雄写入口，按原配置创建实例并记录真实获得。 */
+ private final HeroGrantService heroGrants;
  /** 持久英雄容量查询。 */
  private final HeroCapacityService capacity;
- /** 英雄新增后在同事务内更新永久解锁。 */
- private final com.funsgamex.mxzg.lineup.MainFormationStateService formations;
  /** 与登录、期限物品共用的游戏时钟，批量发放只读取一次。 */
  private final GameClock clock;
  /** 启动加载的可信配置索引，不存玩家资产。 */
- private final Map<Integer,JsonNode> heroes=new HashMap<>(),items=new HashMap<>();
+ private final Map<Integer,JsonNode> items=new HashMap<>();
+ /** 可信英雄模板编号，用于保持 GM 的非法英雄提示。 */
+ private final Set<Integer> heroTemplates = new HashSet<>();
  /** 需要逐件发放的期限配置 ID。 */
  private final Set<Integer> timedIds=new HashSet<>();
  /** 成功回执；资产仍由 state.changed 更新。 */
@@ -76,12 +76,11 @@ public class GmService {
  /** 区分共享回执表中的操作类型；重放时类型也必须一致。 */
  private enum AdjustmentKind { ROLE_LEVEL, CHAPTER }
 
- /** 注入同库角色、主线、图鉴和资产入口，读取原策划配置及游戏时钟。 */
+ /** 注入同库角色、主线、英雄和其他资产入口，读取可信配置及游戏时钟。 */
  public GmService(@Value("${mxzg.gm.enabled:false}") boolean enabled, SessionService sessions,
      RoleRepository roles, JdbcTemplate jdbc, InventoryService inventory, TimedInventoryService timed,
-     SpiritInventoryService spirits, TavernPointService tavernPoints, AssetSyncService sync, HeroGrowthRules growth,
-     HeroCapacityService capacity, HeroRepository heroRepository,
-     com.funsgamex.mxzg.lineup.MainFormationStateService formations,
+     SpiritInventoryService spirits, TavernPointService tavernPoints, AssetSyncService sync,
+     HeroCapacityService capacity, HeroGrantService heroGrants,
      ObjectMapper mapper, MainChapterService chapters, GameClock clock) {
   this.enabled = enabled;
   this.sessions = sessions;
@@ -93,14 +92,12 @@ public class GmService {
   this.spirits = spirits;
   this.tavernPoints = tavernPoints;
   this.sync = sync;
-  this.growth = growth;
-  this.heroRepository = heroRepository;
+  this.heroGrants = heroGrants;
   this.capacity = capacity;
-  this.formations = formations;
   this.clock = clock;
   for (var row : rows(mapper, "herotype")) {
    if (row.path("type").isIntegralNumber()) {
-    heroes.put(row.path("type").asInt(), row);
+    heroTemplates.add(row.path("type").asInt());
    }
   }
   for (var row : rows(mapper, "item")) {
@@ -114,12 +111,13 @@ public class GmService {
  }
  /** 查询实际服务端开关，不能由客户端开启。 */
  public boolean enabled(){return enabled;}
- /** 当前角色锁内原子发放并存回执；真实英雄同步更新图鉴，其余保留原发放保护。 */
+ /** 当前角色锁内原子发放及保存回执，金币、钻石和英雄经验允许大额发放。 */
  @Transactional(isolation = Isolation.READ_COMMITTED)
  public Result grant(String token, String requestId, String kind, int configId, int quantity) {
   requireEnabledRequest(requestId);
   boolean walletCurrency = "item".equals(kind) && (configId == GOLD_ITEM || configId == DIAMOND_ITEM);
-  if (quantity < 1 || (quantity > MAX_ITEM_GRANT_QUANTITY && !walletCurrency) || configId <= 0) {
+  boolean largeGrant = walletCurrency || ("item".equals(kind) && configId == HERO_EXPERIENCE_ITEM);
+  if (quantity < 1 || (quantity > MAX_ITEM_GRANT_QUANTITY && !largeGrant) || configId <= 0) {
    throw rejected("GM_INVALID");
   }
   if (!"hero".equals(kind) && !"item".equals(kind)) {
@@ -136,23 +134,15 @@ public class GmService {
    return previous.getFirst();
   }
   if (kind.equals("hero")) {
-   var rule = heroes.get(configId);
-   if (rule == null || quantity > 20) {
+   if (!heroTemplates.contains(configId) || quantity > 20) {
     throw rejected("GM_INVALID_HERO");
    }
-   int star = rule.path("star").asInt();
-   growth.stats(configId, star, 1, 0);
+   heroGrants.requireSupported(configId);
    int owned = jdbc.queryForObject("SELECT COUNT(*) FROM game_hero WHERE role_id=?", Integer.class, role);
    if ((long) owned + quantity > capacity.current(role).capacity()) {
     throw rejected("GM_CAPACITY_FULL");
    }
-   for (int index = 0; index < quantity; index++) {
-    jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,?,1,?)",
-        UUID.randomUUID().toString(), role, configId, star);
-   }
-   heroRepository.recordIllustration(role, configId, star);
-   formations.refresh(role);
-   sync.changed(role);
+   heroGrants.grant(role, configId, quantity);
   } else {
    if (!items.containsKey(configId)) {
     throw rejected("GM_UNKNOWN_ITEM");

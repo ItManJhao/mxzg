@@ -150,7 +150,7 @@ export class AccountApi implements AccountGateway {
         });
     }
 
-    /** 校验角色归属、公开编号、钱包、命名和赠礼状态，返回可提交的完整角色资料。 */
+    /** 校验角色归属、公开编号、钱包、命名、赠礼与公会资料，返回可提交的完整角色资料。 */
     public static readRole(value: unknown): RoleProfile {
         const row = AccountApi.record(value);
         if (typeof row.id !== "string" || !row.id || typeof row.nickname !== "string" ||
@@ -175,9 +175,13 @@ export class AccountApi implements AccountGateway {
             || (row.welcomeGiftAvailable === true && row.firstNamed !== true)) {
             throw new Error("角色新手赠礼资格无效");
         }
+        if (row.guildName !== undefined && (typeof row.guildName !== "string" || row.guildName.length > 128)) {
+            throw new Error("角色公会资料无效");
+        }
         return {
             id: row.id,
             ...(typeof publicId === "string" ? { publicId } : {}),
+            ...(typeof row.guildName === "string" ? { guildName: row.guildName } : {}),
             nickname: row.nickname,
             ...(typeof row.firstNamed === "boolean" ? { firstNamed: row.firstNamed } : {}),
             ...(typeof row.welcomeGiftAvailable === "boolean" ? { welcomeGiftAvailable: row.welcomeGiftAvailable } : {}),

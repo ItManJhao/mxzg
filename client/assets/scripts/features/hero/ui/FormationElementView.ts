@@ -42,7 +42,7 @@ export class FormationElementView extends BaseView<FormationElementArgs> {
     /** 克制图中的五个方向，根据实际配置结果显隐。 */
     @property([Node]) restraintArrows: Node[] = [];
 
-    /** 校验静态绑定并建立列表和视口监听。 */
+    /** 校验静态绑定，列表回调依附于绑定时的列表节点。 */
     public onBind(): void {
         if (!this.panel || !this.groups || !this.restraintLabel || !this.summaryLabel
                 || this.restraintArrows.length !== ARROW_RELATIONS.length
@@ -57,10 +57,11 @@ export class FormationElementView extends BaseView<FormationElementArgs> {
             throw new Error("FormationElementCellView.prefab 缺少档位组组件");
         }
         cell.validateBindings();
-        list.node.on(SuperContent.RENDER_ITEM, this.renderGroup, this);
+        const listNode = list.node;
+        listNode.on(SuperContent.RENDER_ITEM, this.renderGroup, this);
         this.ownListener(() => {
-            if (list.node.isValid) {
-                list.node.off(SuperContent.RENDER_ITEM, this.renderGroup, this);
+            if (listNode.isValid) {
+                listNode.off(SuperContent.RENDER_ITEM, this.renderGroup, this);
             }
         });
         this.ownListener(ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitPanel()));

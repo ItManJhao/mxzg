@@ -1,5 +1,103 @@
 [
   {
+    "path": "client/assets/bundles/module/arena/prefabs/ArenaEntryCell.prefab",
+    "classes": [
+      "ArenaEntryCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 572,
+        "height": 100
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "f0fb70030c79ba79b729b001c1ca84eb7278dc07541861e68e883ab870e9b670"
+  },
+  {
+    "path": "client/assets/bundles/module/arena/prefabs/ArenaView.prefab",
+    "classes": [
+      "ArenaView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 2,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "0b1cf9e2c52d7a2d47e6b8044466a12552f35853934f7a325d2f24db3fc75cca"
+  },
+  {
     "path": "client/assets/bundles/module/bag/prefabs/BagInfoView.prefab",
     "classes": [
       "BagInfoView",
@@ -185,9 +283,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "fb74c15e3745b621ea06386eb140aeb7976c77b6688e7cc7c27829cd77b2cb2f"
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+    "sha256": "5bf4e566f5c88604b8e69e8e84d8623369cf4345441a0f5478910989e3be4f29",
+    "acceptance": {
+      "sha256": "5bf4e566f5c88604b8e69e8e84d8623369cf4345441a0f5478910989e3be4f29",
+      "date": "2026-11-23",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+      "inspector": "未操作Creator Inspector"
+    }
   },
   {
     "path": "client/assets/bundles/module/bag/prefabs/BagView.prefab",
@@ -1159,16 +1264,9 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "Creator 393×852 复验独立魅惑之拥战报，两个目标同一击分别显示 -905。两条原版蓝字独立放大、弹跳、渐隐并结束销毁。专项另验证末击收尾、取消和五目标并行。验收限本次飘字变化。",
-    "sha256": "24eef8b17d5c49743c2735a3d97c3557ff6cb4c928f315aafd6f348bfaef6e96",
-    "acceptance": {
-      "sha256": "24eef8b17d5c49743c2735a3d97c3557ff6cb4c928f315aafd6f348bfaef6e96",
-      "date": "2026-11-20",
-      "status": "实际预览通过",
-      "scope": "Creator 393×852 复验独立魅惑之拥战报，两个目标同一击分别显示 -905。两条原版蓝字独立放大、弹跳、渐隐并结束销毁。专项另验证末击收尾、取消和五目标并行。验收限本次飘字变化。",
-      "inspector": "本批未操作 Creator Inspector。"
-    }
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "138643d33e371818924f9177b1c31e9ffbf6b9f8b57d58c5fb78b65e7a910f55"
   },
   {
     "path": "client/assets/bundles/module/battle/prefabs/ChapterClearRewardCell.prefab",
@@ -1430,15 +1528,15 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "仅本批MainVictoryRewards首行越框修复：600×260列表顶锚y260、content.y0，真实7项奖励在实际挑战及原参数只读窗口核实底275高于确认按钮顶219，关闭清理通过。证据docs/validation/battle-display-adjustment-review-20261117.json。此记录不签收三尺寸、全奖励详情、全关卡或Inspector。",
-    "sha256": "b82fcf1b9cdbc41ee172efa2213d738bb1231cd185ba050ed6049ea2fff270e6",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "共用结算新增幻境及竞技场胜负统计入口。竞技场败场支持显示已确认积分和奖励。实际画面待 Creator 复验。",
+    "sha256": "2b628c90eb6a3f3f3380927374e6778dd330903de36bfedf3f1ef441ab326b9a",
     "acceptance": {
-      "sha256": "b82fcf1b9cdbc41ee172efa2213d738bb1231cd185ba050ed6049ea2fff270e6",
-      "date": "2026-11-17",
-      "status": "实际预览通过",
-      "scope": "仅本批MainVictoryRewards首行越框修复：600×260列表顶锚y260、content.y0，真实7项奖励在实际挑战及原参数只读窗口核实底275高于确认按钮顶219，关闭清理通过。证据docs/validation/battle-display-adjustment-review-20261117.json。此记录不签收三尺寸、全奖励详情、全关卡或Inspector。",
-      "inspector": "未操作Creator原生Inspector；仅限定Creator本机浏览器实际显示。"
+      "sha256": "2b628c90eb6a3f3f3380927374e6778dd330903de36bfedf3f1ef441ab326b9a",
+      "date": "2026-11-23",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "共用结算新增幻境及竞技场胜负统计入口。竞技场败场支持显示已确认积分和奖励。实际画面待 Creator 复验。",
+      "inspector": "未操作 Creator 原生 Inspector。"
     }
   },
   {
@@ -1655,15 +1753,15 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "Creator 393×852 独立测试服首关可领时点亮通关奖励，真实领取消除页面和底栏红点。第15关里程碑领取后自身熄灭，仍有可领通关奖励时父级保持。全部领完由专项验证。",
-    "sha256": "9b3cb8549d3025fbc5e9502f5ed8c26a079e8a7ba652c67517e35f571e4e578f",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+    "sha256": "c8cdc22fe91c6f2bcaeaf5e565209480814b06a7924cbd46ab004a083f55d121",
     "acceptance": {
-      "sha256": "9b3cb8549d3025fbc5e9502f5ed8c26a079e8a7ba652c67517e35f571e4e578f",
-      "date": "2026-11-20",
-      "status": "实际预览通过",
-      "scope": "Creator 393×852 独立测试服首关可领时点亮通关奖励，真实领取消除页面和底栏红点。第15关里程碑领取后自身熄灭，仍有可领通关奖励时父级保持。全部领完由专项验证。",
-      "inspector": "本轮未操作 Creator Inspector。"
+      "sha256": "c8cdc22fe91c6f2bcaeaf5e565209480814b06a7924cbd46ab004a083f55d121",
+      "date": "2026-11-23",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+      "inspector": "未操作Creator Inspector"
     }
   },
   {
@@ -1917,15 +2015,15 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "Creator 393×852 独立测试服核对精英碎片在格子、页签和底栏亮起，真实合成后同时消失。其他用途和虚拟格复用由背包专项覆盖。",
-    "sha256": "3ec937e2464e5ef393f7a7043d8e957b3393aeab78aeb09eb5a1dd15a4a7f365",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+    "sha256": "9bea2a44a683aa2a55dd51e4d4d21e2cb818afddfe3a2e743bb9e03f853d3ba8",
     "acceptance": {
-      "sha256": "3ec937e2464e5ef393f7a7043d8e957b3393aeab78aeb09eb5a1dd15a4a7f365",
-      "date": "2026-11-20",
-      "status": "依赖所属页面检查的组合资源",
-      "scope": "Creator 393×852 独立测试服核对精英碎片在格子、页签和底栏亮起，真实合成后同时消失。其他用途和虚拟格复用由背包专项覆盖。",
-      "inspector": "本轮未操作 Creator Inspector。"
+      "sha256": "9bea2a44a683aa2a55dd51e4d4d21e2cb818afddfe3a2e743bb9e03f853d3ba8",
+      "date": "2026-11-23",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+      "inspector": "未操作Creator Inspector"
     }
   },
   {
@@ -2091,6 +2189,56 @@
       "status": "实际预览通过",
       "scope": "Creator以15关真实回执获得唯一10105007五星实例；保存后的两路原Spine PMA修复已用同一回执只读重放确认，无黑三角或过亮白片，未再次发奖。技能子窗打开、关父窗联动清理及3个专属runtimePack释放已验。仅该五星样本，4星/低星保留专项，不代签发布/真机。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
       "inspector": "未操作Creator原生Inspector；仅上述限定实际预览。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/common/prefabs/RedDot.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 28,
+        "y": 28,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 28,
+        "height": 28
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "公共模板沿用原底栏红点图片、尺寸及相对位置，实际挂载画面待复验。",
+    "sha256": "c7353f7603f283f1cd07b19f9021a9ecc39db01f1a74a6f405aff504c3f5873e",
+    "acceptance": {
+      "sha256": "c7353f7603f283f1cd07b19f9021a9ecc39db01f1a74a6f405aff504c3f5873e",
+      "date": "2026-11-23",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "公共模板沿用原底栏红点图片、尺寸及相对位置，实际挂载画面待复验。",
+      "inspector": "本轮未操作 Creator Inspector。"
     }
   },
   {
@@ -2291,8 +2439,15 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "b20e44a3b8cfbfb1ba326d5ccb412e9ba8df39c6bacd2f3d7707b66ef1e6dd77"
+    "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+    "sha256": "0847ba9dcd9a39f537656d9e5450ca0796205b0f18047581c730d4420fd852b7",
+    "acceptance": {
+      "sha256": "0847ba9dcd9a39f537656d9e5450ca0796205b0f18047581c730d4420fd852b7",
+      "date": "2026-11-23",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+      "inspector": "未操作Creator Inspector"
+    }
   },
   {
     "path": "client/assets/bundles/module/dungeon/prefabs/DungeonHallView.prefab",
@@ -2348,6 +2503,58 @@
     "sha256": "61b579eb425a71eb3fcf5f16ebc94900a25628a677d229b818af4cbc87172295"
   },
   {
+    "path": "client/assets/bundles/module/dungeon/prefabs/GoldDungeonStageCell.prefab",
+    "classes": [
+      "GoldDungeonStageCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 570,
+        "height": 145
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 隔离会话核对五类首关及滚动到各类第 9 关，确认关卡牌匾、配置材料、先后锁定和通关后的扫荡按钮。",
+    "sha256": "4942bf91eaa8a4dc8532c1c71a11baebc33604c21c3416a172544dc5944c6205",
+    "acceptance": {
+      "sha256": "4942bf91eaa8a4dc8532c1c71a11baebc33604c21c3416a172544dc5944c6205",
+      "date": "2026-11-23",
+      "status": "实际预览通过",
+      "scope": "Creator 隔离会话核对五类首关及滚动到各类第 9 关，确认关卡牌匾、配置材料、先后锁定和通关后的扫荡按钮。",
+      "inspector": "未操作 Creator Inspector。"
+    }
+  },
+  {
     "path": "client/assets/bundles/module/dungeon/prefabs/GoldDungeonView.prefab",
     "classes": [
       "GoldDungeonView"
@@ -2379,18 +2586,33 @@
     "components": {
       "Widget": 2,
       "Layout": 0,
-      "Mask": 0,
+      "Mask": 1,
       "ScrollView": 0,
       "Animation": 0,
       "PrefabInstance": 0
     },
-    "specialAnchors": [],
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "f08672ce5c35db24df1aaec1cd267044fea48fc768f556dd7e0103a7ff7883a3"
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 隔离会话核对 17 级英雄页签锁定、五类图标与横幅、原战场、每类首关挑战和扫荡、实际到账及重登。",
+    "sha256": "f73d6686754d3f852682423fa6f9182022e02bf3f7a01867660a0fc23057d243",
+    "acceptance": {
+      "sha256": "f73d6686754d3f852682423fa6f9182022e02bf3f7a01867660a0fc23057d243",
+      "date": "2026-11-23",
+      "status": "实际预览通过",
+      "scope": "Creator 隔离会话核对 17 级英雄页签锁定、五类图标与横幅、原战场、每类首关挑战和扫荡、实际到账及重登。",
+      "inspector": "未操作 Creator Inspector。"
+    }
   },
   {
     "path": "client/assets/bundles/module/gm/prefabs/GmBattleView.prefab",
@@ -2758,6 +2980,539 @@
     }
   },
   {
+    "path": "client/assets/bundles/module/guild/prefabs/GuildApprovalCell.prefab",
+    "classes": [
+      "GuildApprovalCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 540,
+        "height": 100
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ApplicantName",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "ApplicantLevel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "e168af184f95928fa18fa03201ee3981b79624ab8005092e4de5fe4567249e4b"
+  },
+  {
+    "path": "client/assets/bundles/module/guild/prefabs/GuildApprovalView.prefab",
+    "classes": [
+      "ViewportScale",
+      "GuildApprovalView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 2,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "408f8f0bc8112c3143c0e73bb76ccc1949ef594fe2b163693cb31190f6562fb1"
+  },
+  {
+    "path": "client/assets/bundles/module/guild/prefabs/GuildBadgeCell.prefab",
+    "classes": [
+      "GuildBadgeCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 72,
+        "height": 72
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "25c8fdee3837eba01ef8a70aa2f677dc17d981eb99a6490fbe614c18bc4dbafa"
+  },
+  {
+    "path": "client/assets/bundles/module/guild/prefabs/GuildBadgePickerView.prefab",
+    "classes": [
+      "GuildBadgePickerView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 1,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "8cf5e2a0b2b040e510b9ced427df62a278fb462a5b982139ba8388a142016512"
+  },
+  {
+    "path": "client/assets/bundles/module/guild/prefabs/GuildCreateView.prefab",
+    "classes": [
+      "GuildCreateView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 860
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "4852b900997ea4bf72d72982dfd563530442546eda5071434e92d4c56e2248e6"
+  },
+  {
+    "path": "client/assets/bundles/module/guild/prefabs/GuildListCell.prefab",
+    "classes": [
+      "GuildListCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 540,
+        "height": 130
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "TitleLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "DetailLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "LevelLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "NameDivider",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "62c581429a2e2b60c788b46655ba5ea6fe7cc8d486788f334fce9cb05962f65d"
+  },
+  {
+    "path": "client/assets/bundles/module/guild/prefabs/GuildMemberCell.prefab",
+    "classes": [
+      "GuildMemberCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 550,
+        "height": 130
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "MemberName",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "MemberPosition",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "2fc92feae629553ce03e14f7f9717de2214b0a6e5fd8051b14cbfa177b3bf62e"
+  },
+  {
+    "path": "client/assets/bundles/module/guild/prefabs/GuildMemberView.prefab",
+    "classes": [
+      "ViewportScale",
+      "GuildMemberView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 2,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "MemberCount",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "5c8b981ac75aaeb982909afc3334cbe1d25108ddf60da9cdd14f98eb1530d7b5"
+  },
+  {
+    "path": "client/assets/bundles/module/guild/prefabs/GuildView.prefab",
+    "classes": [
+      "GuildView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 3,
+      "Layout": 0,
+      "Mask": 3,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "NoticeText",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "NoticeScroll",
+        "content": {
+          "__id__": 319
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+    "sha256": "0ca2e9697318541cddc78515e1d58312b957709966c3b478285a02ccb76468e8",
+    "acceptance": {
+      "sha256": "0ca2e9697318541cddc78515e1d58312b957709966c3b478285a02ccb76468e8",
+      "date": "2026-11-23",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+      "inspector": "未操作Creator Inspector"
+    }
+  },
+  {
     "path": "client/assets/bundles/module/hero/prefabs/FirstSummonView.prefab",
     "classes": [
       "FirstSummonView"
@@ -2798,20 +3553,15 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "Creator 本机竖屏与窄屏预览。独立 H2 角色点击主城法阵、检查三个奖池、返回和顶底栏；六项抽取、余额与积分刷新均通过。高级十连可确认混合扣费。负责人已确认隐藏旧首周横幅。",
-    "sha256": "936497356828d5a7889caabf2c49408f10d04a30fcdf8a23dbd89d131479e37d",
-    "acceptanceFingerprintDifference": {
-      "difference": "仅CRLF/LF差异",
-      "recordedSha256": "4fb45f38f0c1afd2fddde541b9b7b425f312a3038cd70927f66a95a3ca211196",
-      "normalizedLfSha256": "4fb45f38f0c1afd2fddde541b9b7b425f312a3038cd70927f66a95a3ca211196"
-    },
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+    "sha256": "e5b072de61972569fe9c6d050198e54f2b4fa62b8a4340121a83c3be9e026313",
     "acceptance": {
-      "sha256": "4fb45f38f0c1afd2fddde541b9b7b425f312a3038cd70927f66a95a3ca211196",
-      "date": "2026-11-19",
-      "status": "实际预览通过",
-      "scope": "Creator 本机竖屏与窄屏预览。独立 H2 角色点击主城法阵、检查三个奖池、返回和顶底栏；六项抽取、余额与积分刷新均通过。高级十连可确认混合扣费。负责人已确认隐藏旧首周横幅。",
-      "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
+      "sha256": "e5b072de61972569fe9c6d050198e54f2b4fa62b8a4340121a83c3be9e026313",
+      "date": "2026-11-23",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+      "inspector": "未操作Creator Inspector"
     }
   },
   {
@@ -3322,16 +4072,9 @@
     ],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "实际预览通过",
-    "visual": "仅 Creator 浏览器 393×852 预览。出阵草稿两名火系显示生命与攻击各加 3%，三名各加 5% 且只高亮三人档，跨排拖动保持加成，从三名依次撤到两名与一名时退档并清除。元素窗展示五向克制的伤害与命中倍率、各组光环与五元素混合档。点击窗外只关闭元素子窗。证据见 docs/development-progress.md 的本机预览记录。",
-    "sha256": "852cdcae8b79191188e691f4f8516d53f319318e7d7d1d99cfddd31e2a1f1329",
-    "acceptance": {
-      "sha256": "852cdcae8b79191188e691f4f8516d53f319318e7d7d1d99cfddd31e2a1f1329",
-      "date": "2026-11-18",
-      "status": "实际预览通过",
-      "scope": "仅 Creator 浏览器 393×852 预览。出阵草稿两名火系显示生命与攻击各加 3%，三名各加 5% 且只高亮三人档，跨排拖动保持加成，从三名依次撤到两名与一名时退档并清除。元素窗展示五向克制的伤害与命中倍率、各组光环与五元素混合档。点击窗外只关闭元素子窗。证据见 docs/development-progress.md 的本机预览记录。",
-      "inspector": "验收限上述本机浏览器操作。Inspector、发布包和真机待独立验收。"
-    }
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "a104cc10b3aac3aecedc550b700a29f1590ffc736973c2e74b632af460ac55f5"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroArtifactView.prefab",
@@ -3377,7 +4120,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "d994129d34a2a850d742d11ecb9cf79876fe1a74f6db03688977cc9f8d97edf9"
+    "sha256": "c45d187f542811d932dbb93103adb752503810a68abf222573e603324bf075d7"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroAttributeRow.prefab",
@@ -3540,9 +4283,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "8c3d3559f3a8ef227659d79ab74396e8ae2f800a002ee8f9adb75e504eac237f"
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+    "sha256": "40032b2254c95fde0aebdd34b5342453c875396f190513fb6c6f4a0e495a79a7",
+    "acceptance": {
+      "sha256": "40032b2254c95fde0aebdd34b5342453c875396f190513fb6c6f4a0e495a79a7",
+      "date": "2026-11-23",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+      "inspector": "未操作Creator Inspector"
+    }
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroCreationView.prefab",
@@ -3594,8 +4344,15 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "1301f52612273d15ba1c5b36e435e980b8a03f0d566a51278fd82b80a82c46a0"
+    "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+    "sha256": "f25b733c9822123bd577d09ed9623ed176d26651af35a9efb34d969a26d76995",
+    "acceptance": {
+      "sha256": "f25b733c9822123bd577d09ed9623ed176d26651af35a9efb34d969a26d76995",
+      "date": "2026-11-23",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+      "inspector": "未操作Creator Inspector"
+    }
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroEquipmentPickerRow.prefab",
@@ -3760,7 +4517,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "依赖所属页面检查的组合资源",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "d319f47377788e8072e229af0dc5b7d7a4b2d1c8efedabc33924d53df0d81e40"
+    "sha256": "f87d92b640d2ae89a9c723eb446f8a61136557d8b0361d3ee9412f402f91d717"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroGodEquipmentCatalogView.prefab",
@@ -3820,7 +4577,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "5770112d81642285dd9dadb512776808a7667414f34a7bed06771b1fa203d17f"
+    "sha256": "723d3559c6e0269ffcf70aae179579f9d3de772a51fca9f5edd9721ce14d1f3b"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroGodEquipmentShopCell.prefab",
@@ -3865,7 +4622,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "依赖所属页面检查的组合资源",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "e7605ae25f1590dbf0663acb6d9ac27ec71087b6b3d5b5f38c78834046c45ffc"
+    "sha256": "9033dff451701c78d43f49954275d2035143c1ad165bccb1fe26eb06e90bee2e"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroGodEquipmentShopView.prefab",
@@ -3925,7 +4682,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "a165ee7f82b015dbffbdbef9751f5af7a48cef808c53ddb3902e4e4b27918fb7"
+    "sha256": "99f67aac23011870ce92f26e84d0328af3d056d03db9e9af761827961fdc90b2"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroGodEquipmentTabCell.prefab",
@@ -3970,7 +4727,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "依赖所属页面检查的组合资源",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "beaf6ffc38f2aa5cda262aaf63dbff81c420692fecd04ca351d15768b84b1154"
+    "sha256": "e975ada3f6eec686e4b18cf79353acd5e8a9571354f9c7318fc5ffeb1ae0d986"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroGrowthPickerView.prefab",
@@ -4066,9 +4823,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "b7ec7c19e5e196d0f692f8222447a9ee6d26e88216b1bc92f11233d4c693bc42"
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 独立浏览器加载实际名册格，验证升星点亮、离屏熄灭、换条目不串亮、重回原条目时复用同一节点及原尺寸。完整滚动和跨场景复用由专项覆盖。",
+    "sha256": "8bbe70aebfaec53540417cc5fa0c7d0207cce3323e6a53cf4a65e9db7279e9dc",
+    "acceptance": {
+      "sha256": "8bbe70aebfaec53540417cc5fa0c7d0207cce3323e6a53cf4a65e9db7279e9dc",
+      "date": "2026-11-23",
+      "status": "实际预览通过",
+      "scope": "Creator 独立浏览器加载实际名册格，验证升星点亮、离屏熄灭、换条目不串亮、重回原条目时复用同一节点及原尺寸。完整滚动和跨场景复用由专项覆盖。",
+      "inspector": "验证范围限单一预览设备尺寸与红点相关行为，未操作 Creator Inspector。"
+    }
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab",
@@ -4322,15 +5086,15 @@
     ],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "已核对英雄详情的节点、组件及资源引用。此指纹的完整布局和入口交互待视觉复验。",
-    "sha256": "5579f7e2efc3ef71d45e054fbacceb4146c500fa75787a58f213b85bdc2d39c7",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 独立浏览器使用测试快照，实测升星、宝石、神装页签及宝石槽和一键镶嵌提醒，更新到已完成的快照后熄灭，关闭后清理。截图见 client/temp/project-checks/red-dot-preview-star.png 与 red-dot-preview-jewels.png。",
+    "sha256": "e60a4e4474391f50405493742d97deeff3042e291866466455f2a9489ae53ad2",
     "acceptance": {
-      "sha256": "5579f7e2efc3ef71d45e054fbacceb4146c500fa75787a58f213b85bdc2d39c7",
+      "sha256": "e60a4e4474391f50405493742d97deeff3042e291866466455f2a9489ae53ad2",
       "date": "2026-11-23",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "已核对英雄详情的节点、组件及资源引用。此指纹的完整布局和入口交互待视觉复验。",
-      "inspector": "本轮仅核对序列化资源与代码绑定。"
+      "status": "实际预览通过",
+      "scope": "Creator 独立浏览器使用测试快照，实测升星、宝石、神装页签及宝石槽和一键镶嵌提醒，更新到已完成的快照后熄灭，关闭后清理。截图见 client/temp/project-checks/red-dot-preview-star.png 与 red-dot-preview-jewels.png。",
+      "inspector": "验证范围限单一预览设备尺寸与红点相关行为，未操作 Creator Inspector。"
     }
   },
   {
@@ -4709,14 +5473,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "Creator 393×852 独立测试服验证召唤、可合成碎片与通关奖励汇总到底栏，合成和领奖后熄灭，装备到账点亮上阵英雄入口，换号无旧点。副本权限变化由专项验证。",
-    "sha256": "ff798f95f0a4b071d3aa233d183fa4f2912c33d440b41d2108c8f5b3ed1eb6bc",
+    "visual": "Creator 独立浏览器加载实际底栏，验证上阵英雄升星条件点亮底栏、锁标优先、快照更新后熄灭与关闭清理。",
+    "sha256": "a3e5115e1c143a9de5c0553f317382df5afa264e9f221c8116be8f619b7e99f3",
     "acceptance": {
-      "sha256": "ff798f95f0a4b071d3aa233d183fa4f2912c33d440b41d2108c8f5b3ed1eb6bc",
-      "date": "2026-11-20",
+      "sha256": "a3e5115e1c143a9de5c0553f317382df5afa264e9f221c8116be8f619b7e99f3",
+      "date": "2026-11-23",
       "status": "实际预览通过",
-      "scope": "Creator 393×852 独立测试服验证召唤、可合成碎片与通关奖励汇总到底栏，合成和领奖后熄灭，装备到账点亮上阵英雄入口，换号无旧点。副本权限变化由专项验证。",
-      "inspector": "本轮未操作 Creator Inspector。"
+      "scope": "Creator 独立浏览器加载实际底栏，验证上阵英雄升星条件点亮底栏、锁标优先、快照更新后熄灭与关闭清理。",
+      "inspector": "验证范围限单一预览设备尺寸与红点相关行为，未操作 Creator Inspector。"
     }
   },
   {
@@ -4811,14 +5575,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "已核对主城入口的红点挂点及绑定。此指纹的完整布局和红点表现待视觉复验。",
-    "sha256": "bc3ce55599cd78bdcda9fdbc347ef45176416233571948601a750d5103cff13a",
+    "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+    "sha256": "a8f2a5279eb34a9bad7ee76c1dc0986b06ccb5157efc69545ba68ceb399cbb63",
     "acceptance": {
-      "sha256": "bc3ce55599cd78bdcda9fdbc347ef45176416233571948601a750d5103cff13a",
+      "sha256": "a8f2a5279eb34a9bad7ee76c1dc0986b06ccb5157efc69545ba68ceb399cbb63",
       "date": "2026-11-23",
       "status": "结构检查通过但视觉待验收",
-      "scope": "已核对主城入口的红点挂点及绑定。此指纹的完整布局和红点表现待视觉复验。",
-      "inspector": "本轮仅核对序列化资源与代码绑定。"
+      "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+      "inspector": "未操作Creator Inspector"
     }
   },
   {
@@ -5292,15 +6056,15 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "Creator 本机 393×852 竖屏独立测试服。公开角色编号、保存的主线英雄品质和星级，头像/形象/称号入口定位与重登通过。详见 docs/role-data-contract.md。",
-    "sha256": "d5995445c71ad3d4a7c6b97f1844a6383a0dc7d59cd79629615c6585fdb3319d",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "绑定现有公会名称标签，按角色快照显示真实公会名或未加入。保留预制体 UUID 和布局。",
+    "sha256": "a344a8b4ee0bec1df5f4ff583571e36247520bd34f568d6f6023850be7fdfa7e",
     "acceptance": {
-      "sha256": "d5995445c71ad3d4a7c6b97f1844a6383a0dc7d59cd79629615c6585fdb3319d",
-      "date": "2026-11-20",
-      "status": "实际预览通过",
-      "scope": "Creator 本机 393×852 竖屏独立测试服。公开角色编号、保存的主线英雄品质和星级，头像/形象/称号入口定位与重登通过。详见 docs/role-data-contract.md。",
-      "inspector": "脚本绑定及 Creator 浏览器检查，范围为本机独立测试环境。"
+      "sha256": "a344a8b4ee0bec1df5f4ff583571e36247520bd34f568d6f6023850be7fdfa7e",
+      "date": "2026-11-23",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "绑定现有公会名称标签，按角色快照显示真实公会名或未加入。保留预制体 UUID 和布局。",
+      "inspector": "待 Creator 预览。"
     }
   },
   {
@@ -5975,5 +6739,306 @@
       "scope": "Creator 独立 H2 本机预览，角色 1 级从主城进入市场，旧看板、六件货架、金币万位缩写、免费和付费刷新、冷重登与返回均通过。截图 client/temp/project-checks/market-shelf.png。",
       "inspector": "Creator 浏览器真实交互与序列化绑定检查。"
     }
+  },
+  {
+    "path": "client/assets/bundles/module/tower/prefabs/TowerFloorCell.prefab",
+    "classes": [
+      "TowerFloorCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 620,
+        "height": 164
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "36397a9cf29029ec584382631c48a0951348c86a821830e30287f38e830b4cb5"
+  },
+  {
+    "path": "client/assets/bundles/module/tower/prefabs/TowerView.prefab",
+    "classes": [
+      "TowerView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 2,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "fd026f5b506aeb33f05677cae0968ab710e2502ca6402448add7256ba1374e83"
+  },
+  {
+    "path": "client/assets/bundles/module/vip/prefabs/VipBenefitCell.prefab",
+    "classes": [
+      "VipBenefitCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 500,
+        "height": 46
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "bbb4bb27933893f1bae0f7a456a384c35af6aa8f45ac7ca1ee1a32e1fe6b9219"
+  },
+  {
+    "path": "client/assets/bundles/module/vip/prefabs/VipBenefitsView.prefab",
+    "classes": [
+      "VipBenefitsView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "598703a96dd2192fc06263ecae26884a306925cd57a504573eb67b7c41176851"
+  },
+  {
+    "path": "client/assets/bundles/module/vip/prefabs/VipTaskCell.prefab",
+    "classes": [
+      "VipTaskCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 266,
+        "height": 116
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+    "sha256": "f7cdc49e1096342c0016fe38248ea8cba61e71348b0e6ceb6d3847fa0baac3c0",
+    "acceptance": {
+      "sha256": "f7cdc49e1096342c0016fe38248ea8cba61e71348b0e6ceb6d3847fa0baac3c0",
+      "date": "2026-11-23",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+      "inspector": "未操作Creator Inspector"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/vip/prefabs/VipView.prefab",
+    "classes": [
+      "VipView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 1,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "a93f1cb18e64bfa31ad99b571c1a894ea6c9b584ff41b7c983fe7da43ec458c4"
   }
 ]

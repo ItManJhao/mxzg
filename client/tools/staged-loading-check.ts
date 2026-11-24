@@ -9,6 +9,7 @@ import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/Resource
 import { PrefabLoader } from "../assets/scripts/framework/assets/PrefabLoader";
 import { GConfig } from "../assets/scripts/config/GConfig";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
+import { CityNavigationUtils } from "../assets/scripts/config/CityNavigationUtils";
 import { BaseView } from "../assets/scripts/framework/ui/BaseView";
 import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
 import { UILayer } from "../assets/scripts/framework/ui/UILayer";
@@ -22,7 +23,7 @@ const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs")
 class PlannedPage extends BaseView { }
 class UnregisteredPage extends BaseView { }
 
-/** 通过受控完成回调验证进度，不使用延时伪造网络完成。 */
+/** 验证加载进度、前后台复用和取消，并以现行底栏解锁表核对不同角色等级的后台请求。 */
 async function main(): Promise<void> {
     const bag = ResourceAssetsUtils.describe("bag", "prefabs/BagView", "Prefab", "bundles/module/bag/prefabs/BagView");
     const detail = ResourceAssetsUtils.describe("bag", "prefabs/BagInfoView", "Prefab", "bundles/module/bag/prefabs/BagInfoView");
@@ -110,7 +111,7 @@ async function main(): Promise<void> {
             "物理父目录不参与前后台Bundle加载键");
         assert(!requests.includes(detail.bundle + ":" + detail.loadPath), "阶段不扩大到详情");
         let yields = 0;
-        await app.prepareBackground(async () => { yields++; }, () => true);
+        await app.prepareBackground(async () => { yields++; }, () => true, 1);
         assert.equal(yields, 3);
         assert.deepEqual(app.backgroundStatus(), { total: 3, completed: 2, failed: 1, running: false });
         assert(requests.includes("uuid:" + uuid.uuid), "合图帧按UUID加载");
@@ -122,9 +123,9 @@ async function main(): Promise<void> {
         assert.equal(requests.filter(value => value.startsWith("uuid:")).length, uuidRequests,
             "远程Bundle失败不能绕过下载路径按UUID加载");
         failDetail = false;
-        await app.prepareBackground(async () => {}, () => true);
+        await app.prepareBackground(async () => {}, () => true, 1);
         assert.deepEqual(app.backgroundStatus(), { total: 1, completed: 1, failed: 0, running: false });
-        await app.prepareBackground(async () => {}, () => true);
+        await app.prepareBackground(async () => {}, () => true, 1);
         assert.equal(app.backgroundStatus().total, 0);
         LOADING_PLAN.login = [{ bundle: "", path: "missing", type: "SpriteFrame" }];
         await assert.rejects(app.prepareStage("login", () => {}, () => true), /必须指定Bundle/);
@@ -143,7 +144,7 @@ async function main(): Promise<void> {
     }
     const stopped = new ApplicationResources();
     const before = requests.length;
-    await stopped.prepareBackground(async () => { stopped.stopBackground(); }, () => true);
+    await stopped.prepareBackground(async () => { stopped.stopBackground(); }, () => true, 1);
     assert.equal(requests.length, before, "停止后不继续排队，也不读取全目录索引");
     const deferredImage = ResourceAssetsUtils.describe("common", "ui/other_rare-6", "SpriteFrame");
     assert(!requests.includes(deferredImage.bundle + ":" + deferredImage.loadPath), "未配置资源不提前加载");
@@ -151,6 +152,20 @@ async function main(): Promise<void> {
     await demand.load(deferredImage);
     assert(requests.includes(deferredImage.bundle + ":" + deferredImage.loadPath), "未配置资源仍可在实际使用时加载");
     demand.dispose();
+    await GameConfig.instance.prepare([GConfig.OpenCondition]);
+    const dungeonLevel = CityNavigationUtils.bottomGate("dungeon")!.level;
+    const guildLevel = CityNavigationUtils.bottomGate("clan")!.level;
+    const beforeBasePages = requests.length;
+    await stopped.prepareBackground(async () => {}, () => true, Math.min(dungeonLevel, guildLevel) - 1);
+    assert.deepEqual(requests.slice(beforeBasePages), [
+        "hero:prefabs/HeroListView", "battle:prefabs/MainChapterView", "vip:prefabs/VipView",
+        "bag:prefabs/BagInfoView", "hero:prefabs/HeroInfoView",
+    ], "锁定入口不占队列，已开放的一级页先于详情加载");
+    const beforeUnlocked = requests.length;
+    await stopped.prepareBackground(async () => {}, () => true, Math.max(dungeonLevel, guildLevel));
+    assert.deepEqual(requests.slice(beforeUnlocked), [
+        "dungeon:prefabs/DungeonHallView", "guild:prefabs/GuildView",
+    ], "后续准备只加载现已解锁且从未预载的页面");
     stopped.dispose();
     assert.equal(ResourceAssetsUtils.snapshot().owners, 0);
     console.log("staged-loading-check passed: explicit phases, raw JSON versus config commit, shared download, on-demand boundary, real progress, retry, atlas UUID and cancellation");

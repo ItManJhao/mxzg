@@ -1,7 +1,7 @@
 /** 副本大厅的可复用入口卡。大厅提供配置后的文案、解锁与奖励，卡片负责现有预制控件的绑定。 */
 import { _decorator, Button, Component, Label, Node, Sprite, SpriteFrame } from "cc";
 import { ResManager } from "../../../framework/assets/ResManager";
-import { RedDotManager } from "../../../framework/ui/RedDotManager";
+import { RedDotBinding } from "../../../framework/ui/RedDotBinding";
 import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
 
 /** 一张已按当前角色等级装配的大厅卡；后续开放横幅没有副本入口。 */
@@ -27,8 +27,8 @@ export class DungeonHallCardView extends Component {
     @property(Node) private _lockOverlay: Node | null = null;
     /** 原等级开启文案。 */
     @property(Label) private _lockLabel: Label | null = null;
-    /** 原日常副本卡右上角的红点，默认关闭。 */
-    @property(Node) private _reminderDot: Node | null = null;
+    /** 日常副本卡右上角的红点锚点，预告卡无需绑定。 */
+    @property(Node) private _reminderAnchor: Node | null = null;
     /** 按奖励配置顺序绑定的四张道具图。 */
     @property([Sprite]) private _rewardIcons: Sprite[] = [];
     /** 对应四个奖励位置的品质框。 */
@@ -39,8 +39,8 @@ export class DungeonHallCardView extends Component {
     private current: DungeonHallCard | null = null;
     /** 大厅提供的道具说明入口，预告卡上没有可调用条目。 */
     private showReward: ((itemId: number, quantity: number) => void) | null = null;
-    /** 当前卡片条目的红点订阅，复用、停用或离开大厅时释放。 */
-    private stopReminder: (() => void) | null = null;
+    /** 当前卡片可复用的公共红点绑定，停用时暂停订阅，销毁时释放。 */
+    private reminder: RedDotBinding | null = null;
 
     /** 只登记一次子奖励按钮事件；卡片主体由 SuperContent 管理选择。 */
     protected onLoad(): void {
@@ -87,19 +87,20 @@ export class DungeonHallCardView extends Component {
 
     /** 滚出可见范围或大厅关闭时释放旧条目订阅。 */
     protected onDisable(): void {
-        this.stopReminder?.();
-        this.stopReminder = null;
+        this.reminder?.bindPath(null);
     }
 
-    /** 将当前条目绑定到静态红点节点，复用为其他卡时同时清空旧显示。 */
+    /** 销毁卡片时释放红点实例和订阅。 */
+    protected onDestroy(): void {
+        this.reminder?.dispose();
+    }
+
+    /** 仅订阅当前有提醒的卡，复用为锁定或预告卡时清除旧显示。 */
     private bindReminder(): void {
-        this.stopReminder?.();
-        this.stopReminder = null;
-        const dot = this._reminderDot!;
-        dot.active = false;
-        const path = this.current?.reminderPath;
-        if (path) {
-            this.stopReminder = RedDotManager.instance.watch(path, visible => { dot.active = visible; });
+        const path = this.current?.reminderPath ?? null;
+        if (path && !this.reminder && this._reminderAnchor?.isValid) {
+            this.reminder = RedDotBinding.atAnchor(this._reminderAnchor);
         }
+        this.reminder?.bindPath(path);
     }
 }

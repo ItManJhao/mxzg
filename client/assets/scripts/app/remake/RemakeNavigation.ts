@@ -45,7 +45,7 @@ export class RemakeNavigation implements PageNav {
             throw new Error("页面未准备好：" + id);
         }
         if (featureParent?.isValid && this.current && this.currentHost) {
-            const previous = this.root ? {id: this.current, host: this.currentHost} : null;
+            const previous = this.root ? this.current : null;
             if (!this.root) {
                 this.root = {id: this.current, host: this.currentHost};
             }
@@ -54,27 +54,20 @@ export class RemakeNavigation implements PageNav {
             this.currentHost = next;
             this.features?.changed(id);
             if (previous) {
-                this.closePage(previous.id, previous.host);
+                this.ui.noteClosed(previous);
             }
             return;
         }
         // 准备失败不会进入挂载阶段，原可见页面继续保留，避免失败时出现空白。
         const previous = this.current;
-        const previousHost = this.currentHost;
         next.parent = this.parent;
         this.current = id;
         this.currentHost = next;
         if (previous) {
             this.ui.noteClosed(previous);
         }
-        if (previousHost?.isValid) {
-            previousHost.destroy();
-        }
         if (this.root) {
             this.ui.noteClosed(this.root.id);
-            if (this.root.host.isValid) {
-                this.root.host.destroy();
-            }
             this.root = null;
         }
         this.ui.clearCached();
@@ -89,12 +82,11 @@ export class RemakeNavigation implements PageNav {
         }
         this.ui.keepOnly(root.id);
         const previousId = this.current!;
-        const previousHost = this.currentHost!;
         this.current = root.id;
         this.currentHost = root.host;
         this.root = null;
         this.features?.changed(null);
-        this.closePage(previousId, previousHost);
+        this.ui.noteClosed(previousId);
         return true;
     }
 
@@ -104,27 +96,12 @@ export class RemakeNavigation implements PageNav {
         if (this.current) {
             this.ui.noteClosed(this.current);
         }
-        if (this.currentHost?.isValid) {
-            this.currentHost.destroy();
-        }
         if (this.root) {
             this.ui.noteClosed(this.root.id);
-            if (this.root.host.isValid) {
-                this.root.host.destroy();
-            }
             this.root = null;
         }
         this.current = null;
         this.currentHost = null;
         this.ui.uninstall(this);
-    }
-
-    /** 切换时立即关闭旧功能页；缓存页交回管理器，其他页面销毁并释放节点作用域。 */
-    private closePage(id: string, host: Node): void {
-        const retained = this.ui.retainOnClose(host);
-        this.ui.noteClosed(id);
-        if (!retained && host.isValid) {
-            host.destroy();
-        }
     }
 }

@@ -71,15 +71,51 @@ const payloads = [
     "heroEquipmentChangeRequest", "heroEquipmentChangeReceipt",
     "marketState", "marketBuyRequest", "marketRefreshRequest", "marketReceipt",
     "dailyDungeonState", "dailyDungeonChallengeRequest", "dailyDungeonReceipt",
+    "towerState", "towerFormationSave", "towerRequest", "towerSettlement",
+    "arenaState", "arenaChallengeRequest", "arenaReplayRequest", "arenaReplay", "arenaSettlement",
+    "arenaTicketBuyRequest", "arenaTicketPurchase",
+    "guildListRequest", "guildChangeRequest", "guildState", "vipClaimRequest", "vipClaimReceipt",
 ];
 /** 无状态协议转换工具；不会持有会话、角色或网络连接。 */
 export class GameProtocolCodecUtils {
     /** 仅通过静态方法使用，禁止创建实例。 */
     private constructor() { }
 
-    /** 按方向和名称选择强类型载荷，GM 等级与关卡的请求和回执共用目标。 */
+    /** 按方向和名称选择已登记的强类型业务载荷。 */
     private static payloadName(frame: GameFrame): string | null {
         if (frame.kind === "response" && frame.ok === false) {
+            return null;
+        }
+        const request = frame.kind === "request";
+        if (request || frame.kind === "response") {
+            switch (frame.name) {
+                case Protocol.TOWER_STATE:
+                    return request ? "empty" : "towerState";
+                case Protocol.TOWER_FORMATION_SAVE:
+                    return request ? "towerFormationSave" : "towerState";
+                case Protocol.TOWER_CHALLENGE:
+                case Protocol.TOWER_SWEEP:
+                case Protocol.TOWER_MILESTONE_CLAIM:
+                    return request ? "towerRequest" : "towerSettlement";
+                case Protocol.ARENA_STATE:
+                case Protocol.ARENA_REFRESH:
+                    return request ? "empty" : "arenaState";
+                case Protocol.ARENA_CHALLENGE:
+                    return request ? "arenaChallengeRequest" : "arenaSettlement";
+                case Protocol.ARENA_REPLAY:
+                    return request ? "arenaReplayRequest" : "arenaReplay";
+                case Protocol.ARENA_TICKET_BUY:
+                    return request ? "arenaTicketBuyRequest" : "arenaTicketPurchase";
+            }
+        }
+        const dungeonRoute = Protocol.dailyDungeonRoute(frame.name);
+        if (dungeonRoute) {
+            if (frame.kind === "request") {
+                return dungeonRoute.operation === "list" ? "empty" : "dailyDungeonChallengeRequest";
+            }
+            if (frame.kind === "response") {
+                return dungeonRoute.operation === "list" ? "dailyDungeonState" : "dailyDungeonReceipt";
+            }
             return null;
         }
         if (frame.kind === "request" && frame.name === Protocol.CHAPTER_CHALLENGE) {
@@ -154,9 +190,6 @@ export class GameProtocolCodecUtils {
         if (frame.kind === "request" && frame.name === Protocol.MARKET_REFRESH) {
             return "marketRefreshRequest";
         }
-        if (frame.kind === "request" && frame.name === Protocol.DAILY_DUNGEON_CHALLENGE) {
-            return "dailyDungeonChallengeRequest";
-        }
         if (frame.kind === "request" && frame.name === Protocol.ROLE_NAME_SET) {
             return "roleName";
         }
@@ -184,6 +217,9 @@ export class GameProtocolCodecUtils {
                 case Protocol.ROLE_BORDER_CHANGE:
                 case Protocol.ROLE_BORDER_ACTIVATE: return "roleDecorationId";
                 case Protocol.ROLE_PEERAGE_DISPLAY: return "rolePeerageDisplay";
+                case Protocol.GUILD_LIST: return "guildListRequest";
+                case Protocol.GUILD_CHANGE: return "guildChangeRequest";
+                case Protocol.VIP_CLAIM: return "vipClaimRequest";
                 case Protocol.GM_LEVEL_SET: return "gmSetRoleLevel";
                 case Protocol.GM_CHAPTER_SET: return "gmSetChapter";
                 case Protocol.GM_TIME_SET: return "gmSetTime";
@@ -200,6 +236,9 @@ export class GameProtocolCodecUtils {
         }
         if (frame.kind === "event" && frame.name === Protocol.SESSION_KICKED) {
             return "kicked";
+        }
+        if (frame.kind === "event" && frame.name === Protocol.GUILD_UPDATED) {
+            return "empty";
         }
         if (frame.kind === "response") {
             switch (frame.name) {
@@ -238,8 +277,9 @@ export class GameProtocolCodecUtils {
                 case Protocol.MARKET_LIST: return "marketState";
                 case Protocol.MARKET_BUY:
                 case Protocol.MARKET_REFRESH: return "marketReceipt";
-                case Protocol.DAILY_DUNGEON_LIST: return "dailyDungeonState";
-                case Protocol.DAILY_DUNGEON_CHALLENGE: return "dailyDungeonReceipt";
+                case Protocol.GUILD_LIST:
+                case Protocol.GUILD_CHANGE: return "guildState";
+                case Protocol.VIP_CLAIM: return "vipClaimReceipt";
                 case Protocol.ROLE_NAME_RANDOM: return "roleName";
                 case Protocol.ROLE_NAME_SET:
                 case Protocol.ROLE_RENAME:
@@ -373,20 +413,21 @@ export class GameProtocolCodecUtils {
         return typeof value === "number" && Number.isSafeInteger(value) && value >= minimum && value <= maximum;
     }
 
-    /** 副本挑战只接受原请求编号、清扫选择及确认价格。成功回包校验结算、战报和发奖的对应关系。 */
+    /** 校验日常副本关卡与报价，确认成功回包、战报类型和发奖归属于同一结算。 */
     private static validateDailyDungeon(frame: GameFrame): void {
-        const list = frame.name === Protocol.DAILY_DUNGEON_LIST;
-        if ((!list && frame.name !== Protocol.DAILY_DUNGEON_CHALLENGE)
-                || (frame.kind === "response" && frame.ok === false)) {
+        const route = Protocol.dailyDungeonRoute(frame.name);
+        if (!route || (frame.kind === "response" && frame.ok === false)) {
             return;
         }
+        const list = route.operation === "list";
         const body = GameProtocolCodecUtils.messageObject(frame.body);
         const integer = GameProtocolCodecUtils.isIntegerInRange;
         if (frame.kind === "request") {
-            const fields = list ? [] : ["requestId", "sweep", "maxDiamonds"];
+            const fields = list ? [] : ["requestId", "stageId", "sweep", "maxDiamonds"];
             if (Object.keys(body).some(key => !fields.includes(key))
                     || (!list && (!GameProtocolCodecUtils.isUuid(body.requestId)
-                        || typeof body.sweep !== "boolean" || !integer(body.maxDiamonds, 0)))) {
+                        || typeof body.sweep !== "boolean" || !integer(body.maxDiamonds, 0)
+                        || (body.stageId !== undefined && !integer(body.stageId, 1, 0x7fffffff))))) {
                 throw new Error("副本请求字段无效");
             }
             return;
@@ -405,7 +446,8 @@ export class GameProtocolCodecUtils {
         }
         if (body.replay !== undefined) {
             const replay = GameProtocolCodecUtils.messageObject(body.replay);
-            if (replay.schemaVersion !== 1 || replay.scenario !== "dungeon:gold:" + state.stageId
+            const expectedScene = `dungeon:${route.kind}:${state.stageId}`;
+            if (replay.schemaVersion !== 1 || replay.scenario !== expectedScene
                     || replay.outcome !== (body.won ? "ATTACKER_WIN" : "DEFENDER_WIN")) {
                 throw new Error("副本战报与结算胜负不一致");
             }
@@ -420,7 +462,7 @@ export class GameProtocolCodecUtils {
         }
     }
 
-    /** 检查副本当日计数、重置时间和原配置奖励预览，使界面只使用有效服务器状态。 */
+    /** 检查共享次数和当前关卡，并确认关卡列表按原进度顺序下发。历史首关回执可没有列表。 */
     private static validateDailyDungeonState(state: Record<string, unknown>): void {
         const integer = GameProtocolCodecUtils.isIntegerInRange;
         if (!integer(state.stageId, 1, 0xffffffff) || !integer(state.titleLanguageId, 1, 0xffffffff)
@@ -428,15 +470,167 @@ export class GameProtocolCodecUtils {
                 || !integer(state.wins, 0, state.totalLimit) || !integer(state.nextCostDiamonds, 0)
                 || !integer(state.resetAtSeconds, 1) || !integer(state.power, 0) || !integer(state.requiredPower, 0)
                 || typeof state.cleared !== "boolean" || typeof state.unlocked !== "boolean"
-                || typeof state.canChallenge !== "boolean" || (state.canChallenge && (!state.unlocked || state.wins >= state.totalLimit))
-                || !Array.isArray(state.rewardPreview) || state.rewardPreview.length === 0) {
+                || typeof state.canChallenge !== "boolean" || (state.canChallenge && (!state.unlocked || state.wins >= state.totalLimit
+                    || state.power <= state.requiredPower))) {
             throw new Error("副本次数、准入或预览状态无效");
         }
-        for (const value of state.rewardPreview) {
+        const expected = GameProtocolCodecUtils.validateDailyDungeonRewards(state.rewardPreview);
+        const stages = state.stages ?? [];
+        if (!Array.isArray(stages)) {
+            throw new Error("日常副本关卡列表无效");
+        }
+        if (!stages.length) {
+            if (state.stageId !== 1) {
+                throw new Error("日常副本关卡列表缺失");
+            }
+            return;
+        }
+        if (state.stageId > stages.length) {
+            throw new Error("日常副本当前关卡不在列表中");
+        }
+        let previousCleared = true;
+        for (const [index, value] of stages.entries()) {
+            const stage = GameProtocolCodecUtils.messageObject(value);
+            const power = stage.requiredPower;
+            if (stage.stageId !== index + 1 || !integer(stage.titleLanguageId, 1, 0xffffffff)
+                    || !integer(stage.minimumLevel, 1, 0xffffffff) || !integer(stage.ribbon, 1, 0xffffffff)
+                    || !integer(power, 0) || typeof stage.cleared !== "boolean" || typeof stage.unlocked !== "boolean"
+                    || typeof stage.canChallenge !== "boolean" || (!previousCleared && (stage.cleared || stage.unlocked))
+                    || (stage.canChallenge && (!stage.unlocked || state.wins >= state.totalLimit || state.power <= power))) {
+                throw new Error("日常副本关卡资格无效");
+            }
+            previousCleared = stage.cleared;
+            const rewards = GameProtocolCodecUtils.validateDailyDungeonRewards(stage.rewardPreview);
+            if (stage.stageId === state.stageId && (stage.titleLanguageId !== state.titleLanguageId || power !== state.requiredPower
+                    || stage.cleared !== state.cleared || stage.unlocked !== state.unlocked || stage.canChallenge !== state.canChallenge
+                    || rewards.length !== expected.length || rewards.some((reward, position) => reward[0] !== expected[position][0]
+                        || reward[1] !== expected[position][1]))) {
+                throw new Error("日常副本选定关卡与列表不一致");
+            }
+        }
+    }
+
+    /** 副本原配置奖励必须有准确的物品编号与正数量。 */
+    private static validateDailyDungeonRewards(values: unknown): ReadonlyArray<readonly [number, number]> {
+        const integer = GameProtocolCodecUtils.isIntegerInRange;
+        if (!Array.isArray(values) || values.length === 0) {
+            throw new Error("副本奖励预览缺失");
+        }
+        return values.map(value => {
             const reward = GameProtocolCodecUtils.messageObject(value);
             if (!integer(reward.itemId, 1, 0xffffffff) || !integer(reward.quantity, 1)) {
                 throw new Error("副本奖励预览无效");
             }
+            return [reward.itemId, reward.quantity];
+        });
+    }
+
+    /** 核对爬塔和竞技场的指令字段、战报来源及结算结果的角色归属。 */
+    private static validateProgressionBattle(frame: GameFrame): void {
+        const isTower = frame.name.startsWith("tower.");
+        if ((!isTower && !frame.name.startsWith("arena."))
+                || (frame.kind !== "request" && frame.kind !== "response") || frame.ok === false) {
+            return;
+        }
+        const body = this.messageObject(frame.body);
+        const integer = this.isIntegerInRange;
+        if (frame.kind === "request") {
+            switch (frame.name) {
+                case Protocol.TOWER_CHALLENGE:
+                case Protocol.TOWER_SWEEP:
+                case Protocol.TOWER_MILESTONE_CLAIM: {
+                    const index = frame.name === Protocol.TOWER_MILESTONE_CLAIM ? "milestoneId" : "floor";
+                    const sweep = frame.name === Protocol.TOWER_SWEEP;
+                    const fields = sweep ? ["requestId", index, "maxDiamonds"] : ["requestId", index];
+                    if (Object.keys(body).some(key => !fields.includes(key)) || !this.isUuid(body.requestId)
+                            || !integer(body[index], 1, 0x7fffffff) || (sweep && !integer(body.maxDiamonds, 0))) {
+                        throw new Error("幻境之塔请求无效");
+                    }
+                    break;
+                }
+                case Protocol.ARENA_CHALLENGE:
+                case Protocol.ARENA_TICKET_BUY: {
+                    const field = frame.name === Protocol.ARENA_CHALLENGE ? "opponentId" : "quantity";
+                    if (!this.isUuid(body.requestId) || !integer(body[field], 1, 0x7fffffff)) {
+                        throw new Error("竞技场请求无效");
+                    }
+                    break;
+                }
+                case Protocol.ARENA_REPLAY:
+                    if (!this.isUuid(body.battleId)) {
+                        throw new Error("竞技场战报编号无效");
+                    }
+                    break;
+                default:
+                    break;
+            }
+            return;
+        }
+        switch (frame.name) {
+            case Protocol.TOWER_CHALLENGE:
+            case Protocol.TOWER_SWEEP:
+            case Protocol.TOWER_MILESTONE_CLAIM: {
+                const action = frame.name === Protocol.TOWER_CHALLENGE ? "CHALLENGE"
+                    : frame.name === Protocol.TOWER_SWEEP ? "SWEEP" : "MILESTONE";
+                this.validateBattleSettlement(body, body.won === false ? 0 : 1);
+                if (body.action !== action || !integer(body.floor, 1, 0x7fffffff) || typeof body.won !== "boolean"
+                        || (body.won !== (body.actual !== undefined))
+                        || (action !== "CHALLENGE" && (!body.won || body.replay !== undefined))) {
+                    throw new Error("幻境之塔结算无效");
+                }
+                if (action === "CHALLENGE") {
+                    this.validateProgressionReplay(body.replay, `tower:${body.floor}`, body.won);
+                }
+                break;
+            }
+            case Protocol.ARENA_CHALLENGE: {
+                this.validateBattleSettlement(body);
+                const entry = this.messageObject(body.record);
+                if (!this.isUuid(entry.battleId) || !integer(entry.opponentId, 1, 0x7fffffff)
+                        || typeof entry.won !== "boolean") {
+                    throw new Error("竞技场结算记录无效");
+                }
+                this.validateProgressionReplay(body.replay, `arena:${entry.opponentId}`, entry.won);
+                break;
+            }
+            case Protocol.ARENA_REPLAY:
+                if (body.schemaVersion !== 1 || typeof body.scenario !== "string"
+                        || !/^arena:[1-9][0-9]*$/.test(body.scenario)) {
+                    throw new Error("竞技场历史战报来源无效");
+                }
+                break;
+            case Protocol.ARENA_TICKET_BUY:
+                this.validateBattleSettlement(body);
+                if (!integer(body.quantity, 1) || !integer(body.spentDiamonds, 1) || body.actual === undefined) {
+                    throw new Error("竞技场门票购买回执无效");
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    /** 两项玩法及门票使用相同的回执身份和通用发奖结构。 */
+    private static validateBattleSettlement(body: Record<string, unknown>, minimumRevision = 1): void {
+        if (!this.isUuid(body.requestId) || !this.isUuid(body.roleId)
+                || !this.isIntegerInRange(body.assetRevision, minimumRevision)) {
+            throw new Error("战斗玩法结算归属无效");
+        }
+        if (body.actual !== undefined) {
+            const actual = this.messageObject(body.actual);
+            if (actual.roleId !== body.roleId || !Array.isArray(actual.items) || !Array.isArray(actual.heroes)) {
+                throw new Error("战斗玩法发奖与结算不一致");
+            }
+            this.validateHeroGrants(actual.heroes, actual.items);
+        }
+    }
+
+    /** 结算携带原场景和实际胜负，播放器继续校验真实名册和事件。 */
+    private static validateProgressionReplay(value: unknown, scenario: string, won: boolean): void {
+        const replay = this.messageObject(value);
+        if (replay.schemaVersion !== 1 || replay.scenario !== scenario
+                || replay.outcome !== (won ? "ATTACKER_WIN" : "DEFENDER_WIN")) {
+            throw new Error("战报与结算不一致");
         }
     }
 
@@ -591,6 +785,61 @@ export class GameProtocolCodecUtils {
         const notice = GameProtocolCodecUtils.validateRewardNotice(frame.body);
         if (frame.error !== undefined || notice.mode !== "POPUP" || notice.requestId !== undefined) {
             throw new Error("新手赠礼回执格式无效");
+        }
+    }
+
+    /** 校验 VIP 请求、领取回包与快照，保留没有权威进度来源的状态。 */
+    private static validateVip(frame: GameFrame): void {
+        if (frame.kind === "response" && frame.ok === false) {
+            return;
+        }
+        if (frame.name === Protocol.VIP_CLAIM) {
+            const body = this.messageObject(frame.body);
+            if (!this.isUuid(body.requestId)) {
+                throw new Error("VIP 请求标识无效");
+            }
+            this.validatePositiveVersion(body.taskId);
+            if (frame.kind === "request") {
+                if (Object.keys(body).length !== 2) {
+                    throw new Error("VIP 请求字段无效");
+                }
+                return;
+            }
+            const notice = this.validateRewardNotice(body.notice);
+            this.validatePositiveVersion(body.assetRevision);
+            if (!this.isUuid(body.roleId) || notice.roleId !== body.roleId
+                || notice.assetRevision !== body.assetRevision || notice.requestId !== body.requestId
+                || notice.mode !== "POPUP") {
+                throw new Error("VIP 任务回执与奖励不符");
+            }
+            return;
+        }
+        let state: Record<string, unknown>;
+        if (frame.name === Protocol.STATE_CHANGED && frame.kind === "event") {
+            state = this.messageObject(frame.body);
+        } else if (frame.kind === "response"
+                && (frame.name === Protocol.SESSION_LOGIN || frame.name === Protocol.SESSION_AUTHENTICATE)) {
+            state = this.messageObject(this.messageObject(frame.body).initial);
+        } else {
+            return;
+        }
+        if (state.vip === undefined) {
+            return;
+        }
+        const { level, tasks } = this.messageObject(state.vip);
+        if (!Number.isSafeInteger(level) || Number(level) < 0 || !Array.isArray(tasks)) {
+            throw new Error("VIP 状态无效");
+        }
+        const ids = new Set<number>();
+        for (const value of tasks) {
+            const { id, target, progress, claimed } = this.messageObject(value);
+            this.validatePositiveVersion(id);
+            this.validatePositiveVersion(target);
+            if (ids.has(id) || typeof claimed !== "boolean"
+                || (progress !== undefined && (!Number.isSafeInteger(progress) || Number(progress) < 0))) {
+                throw new Error("VIP 任务进度无效");
+            }
+            ids.add(id);
         }
     }
 
@@ -1102,7 +1351,7 @@ export class GameProtocolCodecUtils {
         }
     }
 
-    /** 编码完整帧并限制大小；返回独立 ArrayBuffer，微信小游戏可直接发送，不使用 Base64 包装。 */
+    /** 编码完整帧，校验各玩法指令和回执，返回可直接发送的独立 ArrayBuffer。 */
     public static encodeGameFrame(frame: GameFrame): ArrayBuffer {
         GameProtocolCodecUtils.validateIntegers(frame);
         GameProtocolCodecUtils.validateIdleClaim(frame);
@@ -1115,6 +1364,8 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateHeroGrowth(frame);
         GameProtocolCodecUtils.validateMarket(frame);
         GameProtocolCodecUtils.validateDailyDungeon(frame);
+        GameProtocolCodecUtils.validateProgressionBattle(frame);
+        GameProtocolCodecUtils.validateVip(frame);
         HeroLevelData.validateFrame(frame);
         HeroLevelData.validateStageFrame(frame);
         const { body, ...envelope } = frame;
@@ -1138,7 +1389,7 @@ export class GameProtocolCodecUtils {
         return copy.buffer;
     }
 
-    /** 只解码二进制帧；拒绝文本、截断数据、缺失必填字段和消息名/oneof 载荷不匹配。 */
+    /** 解码并校验二进制帧，拒绝截断、缺失字段及载荷、协议名或结算结果的错配。 */
     public static decodeGameFrame(raw: unknown): GameFrame {
         const bytes = raw instanceof ArrayBuffer ? new Uint8Array(raw)
             : raw instanceof Uint8Array ? raw : null;
@@ -1175,6 +1426,8 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateHeroGrowth(frame);
         GameProtocolCodecUtils.validateMarket(frame);
         GameProtocolCodecUtils.validateDailyDungeon(frame);
+        GameProtocolCodecUtils.validateProgressionBattle(frame);
+        GameProtocolCodecUtils.validateVip(frame);
         HeroLevelData.validateFrame(frame);
         HeroLevelData.validateStageFrame(frame);
         GameProtocolCodecUtils.validateRoleName(frame, expected);

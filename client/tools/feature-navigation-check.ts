@@ -4,7 +4,11 @@
  */
 import { strict as assert } from "node:assert";
 import { HomeFeatureNavigation } from "../assets/scripts/app/remake/HomeFeatureNavigation";
+import { CityNavigationUtils } from "../assets/scripts/config/CityNavigationUtils";
+import type { OpenConditionRow } from "../assets/scripts/config/GConfig";
+import { AccountModel } from "../assets/scripts/features/account/AccountModel";
 import { OpenCancelled, UIManager } from "../assets/scripts/framework/ui/UIManager";
+import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 
 /** 创建可控Promise，测试只决定真实then/catch何时运行，不伪造导航结果。 */
 function deferred() {
@@ -64,7 +68,7 @@ function controlledClock() {
 }
 
 /** 页面宿主只提供当前页面和原Promise，不复制UIManager或资源缓存实现。 */
-function fixture() {
+function fixture(account?: AccountModel) {
     const state = {
         current: "remake-home", authorized: true, instant: false, backs: 0,
         shared: null as ReturnType<typeof deferred> | null,
@@ -90,6 +94,7 @@ function fixture() {
             return job.promise;
         },
     }, {
+        account,
         current: () => state.current,
         authorized: () => state.authorized,
         notice: text => {
@@ -108,15 +113,49 @@ function fixture() {
     };
 }
 
-/** 检查门槛、缓存瞬开和当前页去重，所有完成路径不得留下计时器。 */
+/** 检查底栏门槛、VIP 正常进入、缓存瞬开和当前页去重，打开完成须撤销提示计时器。 */
 async function timing(clock: ReturnType<typeof controlledClock>): Promise<void> {
     const gate = fixture();
     gate.state.authorized = false;
-    assert.equal(gate.flow.open("clan"), false);
+    assert.equal(gate.flow.open("clan"), true);
     assert.equal(gate.flow.open("hero"), true);
     assert.equal(gate.state.opens.length, 0);
     assert.equal(clock.pending(), 0);
     gate.flow.dispose();
+
+    const account = new AccountModel();
+    const role = { id: "player", nickname: "公会测试", gold: 0, diamonds: 0, level: 17 };
+    account.replace({ busy: false, error: "", role });
+    const guild = fixture(account);
+    const originalGate = CityNavigationUtils.bottomGate;
+    CityNavigationUtils.bottomGate = id => {
+        assert.equal(id, "clan");
+        return { condition_type: 1, level: 18, open_server_day: 0 } as OpenConditionRow;
+    };
+    try {
+        guild.flow.open("clan");
+        assert.deepEqual(guild.messages(), ["角色达到 18 级开启公会"]);
+        assert.equal(guild.state.opens.length, 0);
+        account.replace({ busy: false, error: "", role: { ...role, level: 18 } });
+        guild.state.instant = true;
+        guild.flow.open("clan");
+        await settle();
+        assert.equal(guild.state.opens[0].id, "guild");
+        assert.equal(HomeFeatureNavigation.tabForPage("guild"), "clan");
+    } finally {
+        guild.flow.dispose();
+        CityNavigationUtils.bottomGate = originalGate;
+    }
+
+    account.replace({ busy: false, error: "", role: { ...role, level: 1 } });
+    const vip = fixture(account);
+    vip.state.instant = true;
+    assert.equal(vip.flow.open("fetter"), true);
+    await settle();
+    assert.equal(vip.state.opens[0].id, "vip");
+    assert.equal(HomeFeatureNavigation.tabForPage("vip"), "fetter");
+    assert.deepEqual(vip.messages(), [], "角色一级即可进入 VIP 契约任务");
+    vip.flow.dispose();
 
     const cached = fixture();
     cached.state.instant = true;
@@ -253,6 +292,44 @@ async function failures(clock: ReturnType<typeof controlledClock>): Promise<void
     }
 }
 
+/** 主城及 VIP 前往复用旧入口门槛，日常副本直达关卡页。 */
+async function cityPlays(): Promise<void> {
+    await ConfigFixtureUtils.installReal();
+    const account = new AccountModel();
+    const role = { id: "player", nickname: "主城玩法测试", gold: 0, diamonds: 0, level: 7 };
+    const city = fixture(account);
+    city.state.instant = true;
+    try {
+        account.replace({ busy: false, error: "", role });
+        assert.equal(city.flow.open("main_pvp"), true);
+        assert.equal(city.flow.open("main_fantasy_tower"), true);
+        assert.equal(city.flow.open("gold-dungeon"), true);
+        assert.deepEqual(city.messages(), [
+            "角色达到 8 级开启竞技场",
+            "角色达到 16 级开启幻境之塔",
+            "角色达到 15 级开启日常副本",
+        ]);
+        assert.equal(city.state.opens.length, 0);
+        account.replace({ busy: false, error: "", role: { ...role, level: 8 } });
+        city.flow.open("main_pvp");
+        await settle();
+        assert.equal(city.state.opens[0].id, "arena");
+        account.replace({ busy: false, error: "", role: { ...role, level: 15 } });
+        city.flow.open("gold-dungeon");
+        await settle();
+        assert.equal(city.state.opens[1].id, "gold-dungeon");
+        city.flow.open("main_summon");
+        await settle();
+        assert.equal(city.state.opens[2].id, "first-summon");
+        account.replace({ busy: false, error: "", role: { ...role, level: 16 } });
+        city.flow.open("main_fantasy_tower");
+        await settle();
+        assert.equal(city.state.opens[3].id, "tower");
+    } finally {
+        city.flow.dispose();
+    }
+}
+
 /** 控制计时不改变生产路径，成功和失败退出均恢复全局入口。 */
 async function main(): Promise<void> {
     const clock = controlledClock();
@@ -260,6 +337,7 @@ async function main(): Promise<void> {
         await timing(clock);
         await lifecycle(clock);
         await failures(clock);
+        await cityPlays();
         assert.equal(clock.pending(), 0, "专项结束没有导航计时器残留");
         console.log("feature-navigation-check passed: real wait threshold, instant cache, stale intent, lifecycle cleanup, shared retry and failure deduplication");
     } finally {

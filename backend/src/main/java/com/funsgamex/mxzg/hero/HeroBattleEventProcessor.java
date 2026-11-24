@@ -9,7 +9,7 @@ import java.util.*;
 public final class HeroBattleEventProcessor {
     /** 本批明确支持的旧事件编号；其他类型不得当作已执行。 */
     private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170, 171, 186, 206, 199, 200, 311, 174,
-        175, 177, 178, 179, 181, 182, 184, 190, 194, 201, 185, 207, 208, 209, 1004, 1014, 234, 180);
+        143, 175, 176, 177, 178, 179, 181, 182, 184, 190, 194, 201, 185, 207, 208, 209, 1004, 1014, 1204, 231, 234, 235, 180);
     /** 战斗是否已结束，触发处理器在每个监听前读取。 */
     private boolean ended;
     /** 当前事件所属回合，行动调度或战场回合入口显式设置。 */
@@ -304,9 +304,9 @@ public final class HeroBattleEventProcessor {
         return true;
     }
 
-    /** 按旧监听快照稳定排序：外来Buff先执行，自身其次；本批通用类型priority均为0。 */
+    /** 按旧监听快照稳定排序：外来Buff先执行，自身其次；受击及扣血前的专用守护沿原事件执行。 */
     public void dispatch(int event, Actor carrier, int target, Executor executor) {
-        if (!SUPPORTED.contains(event) && !Set.of(187, 188, 189, 191, 176, 183, 204, 185, 207).contains(event)) {
+        if (!SUPPORTED.contains(event) && !Set.of(187, 188, 189, 191, 176, 183, 195, 204, 185, 207).contains(event)) {
             throw new IllegalArgumentException("尚未支持的战斗事件：" + event);
         }
         Objects.requireNonNull(executor);
@@ -314,9 +314,9 @@ public final class HeroBattleEventProcessor {
             return;
         }
         var pending = carrier.listeners.stream().filter(row -> row.definition().event() == event
-            || (event == 171 && Set.of(1004, 1014).contains(row.definition().event()))
+            || (event == 171 && Set.of(1004, 1014, 1204, 235).contains(row.definition().event()))
             || (event == 206 && row.definition().event() == 200)
-            || (event == 189 && Set.of(199, 234).contains(row.definition().event())))
+            || (event == 189 && Set.of(143, 199, 231, 234).contains(row.definition().event())))
             .sorted(Comparator.comparing(row -> row.sourceId() == carrier.id)).toList();
         for (var listener : pending) {
             var definition = listener.definition();
@@ -340,7 +340,7 @@ public final class HeroBattleEventProcessor {
                 carrier.restore();
                 continue;
             }
-            if (Set.of(1004, 1014, 199, 234, 200, 311).contains(definition.event())) {
+            if (Set.of(1004, 1014, 1204, 143, 176, 199, 231, 234, 235, 200, 311).contains(definition.event())) {
                 // 旧专用trigger不经过AbstractArtTrigger的战斗结束检查。
                 executor.special(listener, carrier, target);
             } else if (!ended && (event != 173 || definition.skillFilter() == 0

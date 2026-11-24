@@ -1,5 +1,5 @@
 /**
- * 战斗表现专项独享的确定性Tween时钟，模拟生产Preview使用的延迟、更新回调、数值渐变和取消。
+ * 战斗表现专项独享的确定性Tween时钟，模拟生产Preview使用的延迟、数值与位置渐变、回调和取消。
  * 统一检查仅为battle-opening替换cc入口，其他专项继续拒绝动画替身，不能据此宣布Creator渲染通过。
  * 时钟不定义业务阶段或出场时长；所有动画指令来自被测BattleReplayPreview。
  */
@@ -32,10 +32,10 @@ export class Material {
     }
 }
 
-/** 一段由真实生产调用创建的延迟、数值渐变或即时回调。 */
+/** 一段由真实生产调用创建的延迟、数值或位置渐变及即时回调。 */
 type ClockStep = {
     duration: number;
-    values?: Record<string, number>;
+    values?: Record<string, number | BaseVec3>;
     callback?: () => void;
     onUpdate?: (target: Record<string, any>, progress: number) => void;
 };
@@ -50,8 +50,8 @@ interface RunningStep {
     ends: number;
     /** 生产链式调用传入的当前指令。 */
     step: ClockStep;
-    /** 渐变开始前的各目标数字值，不能引用后续已修改的值。 */
-    before: Record<string, number>;
+    /** 渐变开始前的值，向量复制后不随目标更新。 */
+    before: Record<string, number | BaseVec3>;
 }
 
 /** 当前专项的数字时钟及任务集，测试结束必须明确清空。 */
@@ -87,7 +87,10 @@ export class OpeningClockRuntime {
             throw new Error("测试调度附加耗时必须是非负有限秒数");
         }
         const scheduled = extra ? { ...step, duration: step.duration + extra } : step;
-        const before = Object.fromEntries(Object.keys(step.values || {}).map(key => [key, tween.target[key]]));
+        const before = Object.fromEntries(Object.keys(step.values || {}).map(key => {
+            const value = tween.target[key];
+            return [key, step.values![key] instanceof BaseVec3 ? new Vec3(value.x, value.y, value.z) : value];
+        }));
         OpeningClockRuntime.running.add({
             tween,
             step: scheduled,
@@ -115,12 +118,21 @@ export class OpeningClockRuntime {
             const next = Math.min(destination, ...Array.from(OpeningClockRuntime.running, row => row.ends));
             OpeningClockRuntime.now = next;
             for (const row of Array.from(OpeningClockRuntime.running)) {
-                const progress = row.step.duration ? Math.min(1, (next - row.started) / row.step.duration) : 1;
+                const completed = row.ends <= next + 1e-8;
+                const progress = completed ? 1 : (next - row.started) / row.step.duration;
                 for (const [key, value] of Object.entries(row.step.values || {})) {
-                    row.tween.target[key] = row.before[key] + (value - row.before[key]) * progress;
+                    const start = row.before[key];
+                    if (typeof start === "number" && typeof value === "number") {
+                        row.tween.target[key] = start + (value - start) * progress;
+                    } else if (start instanceof BaseVec3 && value instanceof BaseVec3) {
+                        row.tween.target[key] = new Vec3(start.x + (value.x - start.x) * progress,
+                            start.y + (value.y - start.y) * progress, start.z + (value.z - start.z) * progress);
+                    } else {
+                        throw new Error("测试渐变值和初始值的类型不一致：" + key);
+                    }
                 }
                 row.step.onUpdate?.(row.tween.target, progress);
-                if (row.ends <= next + 1e-8) {
+                if (completed) {
                     OpeningClockRuntime.running.delete(row);
                     row.tween.next();
                 }
@@ -165,10 +177,10 @@ export class Tween {
         return this;
     }
 
-    /** 登记数值渐变及进度回调，轨迹和显示规则由生产代码定义。 */
-    public to(seconds: number, values: Record<string, number>, options?: Pick<ClockStep, "onUpdate">): this {
-        if (Object.values(values).some(value => typeof value !== "number")) {
-            throw new Error("出场专项只模拟数值渐变，不能模拟坐标或渲染");
+    /** 登记数值或位置渐变及进度回调，轨迹由生产代码定义。 */
+    public to(seconds: number, values: Record<string, number | BaseVec3>, options?: Pick<ClockStep, "onUpdate">): this {
+        if (Object.values(values).some(value => typeof value !== "number" && !(value instanceof BaseVec3))) {
+            throw new Error("战斗专项只模拟数值和三维坐标渐变");
         }
         this.steps.push({ duration: seconds, values, onUpdate: options?.onUpdate });
         return this;

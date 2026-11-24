@@ -22,6 +22,7 @@ import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
 import { HeroRosterEvent } from "../utils/HeroRosterEvent";
 import { HeroRosterModel } from "../HeroRosterModel";
 import { HeroRosterUtils } from "../utils/HeroRosterUtils";
+import { FormationView } from "./FormationView";
 import { HeroIconCellView } from "./HeroIconCellView";
 import { HeroInfoView } from "./HeroInfoView";
 import type { HeroCellModel } from "./HeroListPresentation";
@@ -89,7 +90,7 @@ export class HeroListView extends BaseView {
         this.roster = roster;
     }
 
-    /** 打开列表时绑定筛选与选中事件，并恢复原看板和对白。 */
+    /** 打开时绑定当前列表节点的筛选与选中事件，并恢复看板和对白。 */
     public onOpen(): void {
         if (!this.closed) {
             this.refresh();
@@ -97,12 +98,14 @@ export class HeroListView extends BaseView {
         }
         this.validateBindings();
         this.closed = false;
-        const list = this.heroScroll!.list;
-        list.node.on(SuperContent.RENDER_ITEM, this.onRender, this);
-        list.node.on(SuperContent.SELECT_ITEM, this.onSelect, this);
+        const listNode = this.heroScroll!.list.node;
+        listNode.on(SuperContent.RENDER_ITEM, this.onRender, this);
+        listNode.on(SuperContent.SELECT_ITEM, this.onSelect, this);
         this.ownListener(() => {
-            list.node.off(SuperContent.RENDER_ITEM, this.onRender, this);
-            list.node.off(SuperContent.SELECT_ITEM, this.onSelect, this);
+            if (listNode.isValid) {
+                listNode.off(SuperContent.RENDER_ITEM, this.onRender, this);
+                listNode.off(SuperContent.SELECT_ITEM, this.onSelect, this);
+            }
         });
         EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.refresh);
         this.bindButtons();
@@ -147,7 +150,7 @@ export class HeroListView extends BaseView {
         }
     }
 
-    /** 读取旧提示表首条对白。当前只有一条配置，保持原文和高亮颜色。 */
+    /** 显示旧提示表首条对白，沿用原文、高亮和本次打开期的按钮监听。 */
     private showDialogue(): void {
         const body = this.dialogueText;
         const bubble = body?.node.parent;
@@ -168,8 +171,13 @@ export class HeroListView extends BaseView {
         body.string = ItemDetailUtils.richText(content);
         label.string = action;
         const onClick = () => UIManager.instance.toast(tip.atom === "act_daily_gift" ? "每日礼包暂未开放" : "该入口暂未开放");
-        button.node.on(Button.EventType.CLICK, onClick);
-        this.ownListener(() => button.node.off(Button.EventType.CLICK, onClick));
+        const node = button.node;
+        node.on(Button.EventType.CLICK, onClick);
+        this.ownListener(() => {
+            if (node.isValid) {
+                node.off(Button.EventType.CLICK, onClick);
+            }
+        });
     }
 
     /** 直接查询当前模板显示并将筛选结果交给列表，不创建模板索引或计算格子坐标。 */
@@ -248,18 +256,27 @@ export class HeroListView extends BaseView {
         this.heroScroll!.toStart();
     }
 
-    /** 每次打开登记业务按钮，关闭由BaseView统一解除，不改变固定几何。 */
+    /** 登记本次打开的业务按钮，出阵窗随英雄列表离开而关闭。 */
     private bindButtons(): void {
         const bind = (button: Button | null, action: () => void) => {
             if (!button) {
                 return;
             }
-            button.node.on(Button.EventType.CLICK, action);
-            this.ownListener(() => button.node.off(Button.EventType.CLICK, action));
+            const node = button.node;
+            node.on(Button.EventType.CLICK, action);
+            this.ownListener(() => {
+                if (node.isValid) {
+                    node.off(Button.EventType.CLICK, action);
+                }
+            });
         };
         bind(this.lineupButton, () => {
-            void UIManager.instance.openById("remake-formation", { complete: () => {} })
-                .catch(error => UIManager.instance.toast(ErrorUtils.messageOf(error)));
+            void UIManager.instance.openChild(this, FormationView, { complete: () => {} })
+                .catch(error => {
+                    if (!this.closed && !UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
+                        UIManager.instance.toast(ErrorUtils.messageOf(error));
+                    }
+                });
         });
         bind(this.btnHero, () => UIManager.instance.toast("英雄数据随登录和重连自动同步，请等待连接恢复"));
         this.elemButtons.forEach((button, index) => bind(button, () => this.pickElem(index)));

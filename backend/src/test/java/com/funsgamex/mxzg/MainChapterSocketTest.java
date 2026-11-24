@@ -1,12 +1,16 @@
 /**
- * 主线挑战、结算、独立通关奖励和英雄早期成长的真实 WebSocket 回归，核对提交事件和重新鉴权。
+ * 主线、独立通关奖励和 VIP 契约的真实 WebSocket 回归，核对提交事件和重新鉴权。
  * 使用独立H2和随机端口，验证真实发放、状态更新与回执重放。
  */
 package com.funsgamex.mxzg;
 import com.funsgamex.mxzg.auth.*;
+import com.funsgamex.mxzg.hero.HeroGrowthRules;
 import com.funsgamex.mxzg.network.GameProtocolCodec;
 import com.funsgamex.mxzg.network.AssetSyncService;
+import com.funsgamex.mxzg.reward.RewardGrantService;
 import com.funsgamex.mxzg.role.RoleRepository;
+import com.funsgamex.mxzg.role.RoleRules;
+import com.funsgamex.mxzg.time.GameClock;
 import java.nio.ByteBuffer;
 import java.net.URI;
 import java.net.http.*;
@@ -41,6 +45,14 @@ class MainChapterSocketTest {
     @Autowired AssetSyncService sync;
     /** 测试夹具写入与回滚使用应用真实事务管理。 */
     @Autowired PlatformTransactionManager transactions;
+    /** 隔离角色的前置经验按真实升级门槛准备。 */
+    @Autowired RoleRules roleRules;
+    /** 按真实英雄养成上限准备可挑战的阵容。 */
+    @Autowired HeroGrowthRules growth;
+    /** 测试角色的两名奖励英雄经正常发奖事务入库。 */
+    @Autowired RewardGrantService grants;
+    /** 构造奖励事务时使用与游戏一致的时间。 */
+    @Autowired GameClock clock;
     private final class Peer implements WebSocket.Listener, AutoCloseable {
         final HttpClient client = HttpClient.newHttpClient();
         final BlockingQueue<JsonNode> messages = new LinkedBlockingQueue<>();
@@ -426,6 +438,262 @@ class MainChapterSocketTest {
             assertEquals(mixed.path("body").path("battleId"), mixed.path("body").path("state").path("pendingBattleId"));
             assertEquals(before.get("gold"), jdbc.queryForMap("SELECT * FROM game_role WHERE id=?", role).get("gold"));
         }
+    }
+
+    /** 一个隔离角色经真实协议推进主线、塔和竞技场，领取四项奖励并冷登录恢复。 */
+    @Test void advancesVipAfterRealMainTowerAndArenaSettlements() throws Exception {
+        String account = "contract_" + UUID.randomUUID().toString().substring(0, 12);
+        var player = login.login(account, "local-1");
+        String role = player.role().id();
+        String token = player.session().accessToken();
+        jdbc.update("UPDATE game_role SET role_level=16,goddess_vip=1 WHERE id=?", role);
+        String weak = UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10101001,1,1)", weak, role);
+        var team = new ArrayList<Map<String, Object>>();
+        int[] templates = {10104004, 10505005, 10204005, 10204004, 10405005};
+        int[] positions = {2, 3, 5, 6, 7};
+        for (int index = 0; index < templates.length; index++) {
+            String hero = UUID.randomUUID().toString();
+            jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,?,?,?)",
+                hero, role, templates[index], 100, index == 1 || index == 4 ? 5 : 4);
+            team.add(Map.of("position", positions[index], "heroId", hero));
+        }
+
+        Map<String, Object> losingCommand;
+        JsonNode losingReceipt;
+        try (var peer = new Peer()) {
+            assertTrue(peer.authenticate(token).path("ok").asBoolean());
+            long version = jdbc.queryForObject("SELECT lineup_version FROM game_role WHERE id=?", Long.class, role);
+            var weakTeam = Map.of("requestId", UUID.randomUUID().toString(), "expectedVersion", version,
+                "formationId", 1, "slots", List.of(Map.of("position", 2, "heroId", weak)));
+            var saved = success(peer, "formation.save", weakTeam);
+            var list = success(peer, "arena.state", Map.of());
+            assertEquals(3, list.path("opponents").size());
+            losingCommand = Map.of("requestId", UUID.randomUUID().toString(),
+                "opponentId", list.path("opponents").get(0).path("id").asInt());
+            losingReceipt = success(peer, "arena.challenge", losingCommand);
+            assertFalse(losingReceipt.path("record").path("won").asBoolean());
+            assertEquals(1, losingReceipt.path("state").path("settledChallenges").asInt());
+            assertEquals(0, losingReceipt.path("state").path("robotWins").asInt());
+            assertTrue(peer.events.stream().anyMatch(event -> vipProgress(event.path("body"), 100700) == 1));
+            write("vip-arena-loss", losingReceiptFrame(peer, losingCommand, losingReceipt));
+
+            success(peer, "formation.save", Map.of("requestId", UUID.randomUUID().toString(),
+                "expectedVersion", saved.path("version").asLong(), "formationId", 1, "slots", team));
+            for (int mission = 1; mission <= 10; mission++) {
+                advanceChapter(peer, mission);
+            }
+        }
+
+        try (var peer = new Peer()) {
+            assertTrue(peer.authenticate(token).path("ok").asBoolean());
+            for (int mission = 11; mission <= 20; mission++) {
+                advanceChapter(peer, mission);
+            }
+            var state = success(peer, "tower.state", Map.of());
+            assertEquals(0, state.path("highestCleared").asInt());
+            assertEquals(10, state.path("floors").size());
+            long towerVersion = state.path("formationVersion").asLong();
+            var independent = new ArrayList<>(team);
+            Collections.swap(independent, 0, 1);
+            independent.set(0, Map.of("position", 2, "heroId", team.get(1).get("heroId")));
+            independent.set(1, Map.of("position", 3, "heroId", team.get(0).get("heroId")));
+            var towerTeam = success(peer, "tower.formation.save",
+                Map.of("expectedVersion", towerVersion, "formationId", 1, "slots", independent));
+            assertEquals(team.get(1).get("heroId"), towerTeam.path("slots").get(0).path("heroId").asString());
+        }
+
+        try (var peer = new Peer()) {
+            assertTrue(peer.authenticate(token).path("ok").asBoolean());
+            int energy = success(peer, "tower.state", Map.of()).path("energy").asInt();
+            for (int floor = 1; floor <= 10; floor++) {
+                var command = Map.of("requestId", UUID.randomUUID().toString(), "floor", floor);
+                var response = peer.request("tower.challenge", command);
+                assertTrue(response.path("ok").asBoolean(), response.toString());
+                var result = response.path("body");
+                assertTrue(result.path("won").asBoolean(), "第 " + floor + " 层须真实获胜");
+                assertEquals(floor, result.path("state").path("highestCleared").asInt());
+                assertEquals(energy, result.path("state").path("energy").asInt());
+                assertEquals("tower:" + floor, result.path("replay").path("scenario").asString());
+                assertFalse(result.path("actual").path("items").isEmpty());
+                write("vip-tower-" + floor, response);
+                if (floor == 10) {
+                    assertTrue(peer.events.stream().anyMatch(event -> vipProgress(event.path("body"), 100800) == 10));
+                    assertEquals(result, success(peer, "tower.challenge", command));
+                }
+            }
+            var sweep = success(peer, "tower.sweep",
+                Map.of("requestId", UUID.randomUUID().toString(), "floor", 10, "maxDiamonds", 0));
+            assertEquals("SWEEP", sweep.path("action").asString());
+            assertFalse(sweep.has("replay"));
+            var milestone = success(peer, "tower.milestone.claim",
+                Map.of("requestId", UUID.randomUUID().toString(), "milestoneId", 1));
+            assertTrue(milestone.path("state").path("milestone").path("claimed").asBoolean());
+            assertEquals(2, milestone.path("actual").path("items").size());
+        }
+
+        String finalClaim = UUID.randomUUID().toString();
+        long beforeClaim;
+        try (var peer = new Peer()) {
+            var accepted = peer.authenticate(token);
+            assertTrue(accepted.path("ok").asBoolean());
+            assertEquals(20, vipProgress(accepted.path("body").path("initial"), 100500));
+            assertTrue(vipProgress(accepted.path("body").path("initial"), 100600) >= 15);
+            assertEquals(10, vipProgress(accepted.path("body").path("initial"), 100800));
+            assertEquals(losingReceipt, success(peer, "arena.challenge", losingCommand));
+            var report = success(peer, "arena.replay",
+                Map.of("battleId", losingReceipt.path("record").path("battleId").asString()));
+            assertEquals(losingReceipt.path("replay"), report);
+            for (int participation = 2; participation <= 3; participation++) {
+                var list = success(peer, "arena.refresh", Map.of());
+                var response = peer.request("arena.challenge", Map.of("requestId", UUID.randomUUID().toString(),
+                    "opponentId", list.path("opponents").get(0).path("id").asInt()));
+                assertTrue(response.path("ok").asBoolean(), response.toString());
+                var result = response.path("body");
+                assertTrue(result.path("record").path("won").asBoolean());
+                assertEquals(participation, result.path("state").path("settledChallenges").asInt());
+                assertEquals(participation - 1, result.path("state").path("robotWins").asInt());
+                write("vip-arena-win-" + participation, response);
+            }
+            assertTrue(peer.events.stream().anyMatch(event -> vipProgress(event.path("body"), 100700) == 3));
+            beforeClaim = roles.findById(role).orElseThrow().diamonds();
+            for (int task : List.of(100500, 100600, 100700, 100800)) {
+                var body = Map.of("taskId", task, "requestId", task == 100800 ? finalClaim : UUID.randomUUID().toString());
+                var paid = success(peer, "vip.claim", body);
+                var item = paid.path("notice").path("items").get(0);
+                assertEquals(900002, item.path("itemId").asInt());
+                assertEquals(30, item.path("credited").asInt());
+            }
+            assertEquals(beforeClaim + 120, roles.findById(role).orElseThrow().diamonds());
+            assertTrue(peer.events.stream().anyMatch(event -> event.path("body").path("vip").path("level").asInt() == 2));
+        }
+
+        try (var peer = new Peer()) {
+            var restored = success(peer, "session.login", Map.of("account", account, "serverId", "local-1",
+                "clientInstanceId", UUID.randomUUID().toString()));
+            peer.connectionId = restored.path("connectionId").asString();
+            var snapshot = restored.path("initial");
+            assertEquals(role, snapshot.path("role").path("id").asString());
+            assertEquals(2, snapshot.path("vip").path("level").asInt());
+            assertEquals(beforeClaim + 120, snapshot.path("role").path("diamonds").asLong());
+            assertEquals(10, success(peer, "tower.state", Map.of()).path("highestCleared").asInt());
+            assertEquals(3, success(peer, "arena.state", Map.of()).path("settledChallenges").asInt());
+            success(peer, "vip.claim", Map.of("taskId", 100800, "requestId", finalClaim));
+            assertEquals(beforeClaim + 120, roles.findById(role).orElseThrow().diamonds());
+        }
+    }
+
+    /** 用同一角色实际结算第 70 关并升到 25 级，完成副本和召唤后领取整档奖励。 */
+    @Test void advancesVipAfterMainSeventyDailyDungeonAndFiveStarGrants() throws Exception {
+        String account = "contract_three_" + UUID.randomUUID().toString().substring(0, 10);
+        var player = login.login(account, "local-1");
+        String role = player.role().id();
+        jdbc.update("UPDATE game_role SET role_level=24,role_experience=?,goddess_vip=2 WHERE id=?",
+            roleRules.threshold(24) - 1, role);
+        jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared) VALUES (?,69)", role);
+        jdbc.update("INSERT INTO game_main_chapter_idle(role_id,started_at) VALUES (?,?)", role, clock.epochSeconds());
+        String leader = UUID.randomUUID().toString();
+        int star = MainChapterProgressionPreview.lateChapterLeaderStar(550);
+        int level = growth.limit(200, 6, star);
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,10105011,?,?,6)",
+            leader, role, level, star);
+        var team = MainChapterProgressionPreview.prepareLateChapterLineup(jdbc, role, leader, 200, star, level).stream()
+            .map(slot -> Map.of("position", slot.position(), "heroId", slot.heroId())).toList();
+        var command = Map.of("taskId", 101200, "requestId", UUID.randomUUID().toString());
+        long expectedBalance;
+        JsonNode finalReceipt;
+        try (var peer = new Peer()) {
+            var auth = peer.authenticate(player.session().accessToken());
+            assertTrue(auth.path("ok").asBoolean(), auth.toString());
+            var initial = auth.path("body").path("initial");
+            assertEquals(69, vipProgress(initial, 100900));
+            assertEquals(24, vipProgress(initial, 101000));
+            assertEquals(0, vipProgress(initial, 101100));
+            assertEquals(0, vipProgress(initial, 101200));
+
+            long version = jdbc.queryForObject("SELECT lineup_version FROM game_role WHERE id=?", Long.class, role);
+            success(peer, "formation.save", Map.of("requestId", UUID.randomUUID().toString(),
+                "expectedVersion", version, "formationId", 1, "slots", team));
+            advanceChapter(peer, 70);
+            assertTrue(peer.events.stream().anyMatch(event -> vipProgress(event.path("body"), 100900) == 70
+                && vipProgress(event.path("body"), 101000) == 25));
+
+            var dungeon = Map.of("requestId", UUID.randomUUID().toString(), "stageId", 1,
+                "sweep", false, "maxDiamonds", 0);
+            var result = success(peer, "dungeon.gold.challenge", dungeon);
+            assertTrue(result.path("won").asBoolean());
+            assertTrue(peer.events.stream().anyMatch(event -> vipProgress(event.path("body"), 101100) == 1));
+            assertEquals(result, success(peer, "dungeon.gold.challenge", dungeon));
+
+            new TransactionTemplate(transactions).executeWithoutResult(status -> {
+                var actual = grants.grant(role, List.of(new RewardGrantService.Reward(10205020, 2)),
+                    new RewardGrantService.Context(clock.epochSeconds(), 0), ThreadLocalRandom.current());
+                assertEquals(2, actual.heroes().size());
+            });
+            var draw = success(peer, "hero.summon", Map.of("requestId", UUID.randomUUID().toString(),
+                "pool", "ADVANCED", "count", 1, "maxDiamonds", 0));
+            assertEquals(5, draw.path("actual").path("heroes").get(0).path("star").asInt());
+            assertTrue(peer.events.stream().anyMatch(event -> vipProgress(event.path("body"), 101200) == 3));
+            assertTrue(peer.events.stream().noneMatch(event -> vipProgress(event.path("body"), 101100) > 1));
+
+            expectedBalance = roles.findById(role).orElseThrow().diamonds() + 120;
+            for (int taskId : List.of(100900, 101000, 101100)) {
+                var reward = success(peer, "vip.claim", Map.of("taskId", taskId, "requestId", UUID.randomUUID().toString()));
+                assertVipThreeTaskReward(reward);
+            }
+            finalReceipt = success(peer, "vip.claim", command);
+            assertVipThreeTaskReward(finalReceipt);
+            assertTrue(peer.events.stream().anyMatch(event -> event.path("body").path("vip").path("level").asInt() == 3));
+            assertEquals(expectedBalance, roles.findById(role).orElseThrow().diamonds());
+        }
+
+        try (var peer = new Peer()) {
+            var restored = success(peer, "session.login", Map.of("account", account, "serverId", "local-1",
+                "clientInstanceId", UUID.randomUUID().toString()));
+            peer.connectionId = restored.path("connectionId").asString();
+            var snapshot = restored.path("initial");
+            assertEquals(role, snapshot.path("role").path("id").asString());
+            assertEquals(3, snapshot.path("vip").path("level").asInt());
+            assertEquals(expectedBalance, snapshot.path("role").path("diamonds").asLong());
+            assertEquals(finalReceipt, success(peer, "vip.claim", command));
+            assertEquals(expectedBalance, roles.findById(role).orElseThrow().diamonds());
+        }
+    }
+
+    /** VIP2 档单项发奖的通用反馈匹配真实到账的 30 钻。 */
+    private static void assertVipThreeTaskReward(JsonNode receipt) {
+        var item = receipt.path("notice").path("items").get(0);
+        assertEquals(900002, item.path("itemId").asInt());
+        assertEquals(30, item.path("credited").asInt());
+    }
+
+    /** 成功返回请求体并保留失败信封作为断言信息。 */
+    private JsonNode success(Peer peer, String name, Map<String, ?> body) throws Exception {
+        var response = peer.request(name, body);
+        assertTrue(response.path("ok").asBoolean(), response.toString());
+        return response.path("body");
+    }
+
+    /** 从提交快照按任务编号读取权威进度。 */
+    private int vipProgress(JsonNode snapshot, int id) {
+        return snapshot.path("vip").path("tasks").valueStream()
+            .filter(task -> task.path("id").asInt() == id).findFirst()
+            .map(task -> task.path("progress").asInt(-1)).orElse(-1);
+    }
+
+    /** 用同一真实挑战、结算通道推进下一关。 */
+    private void advanceChapter(Peer peer, int mission) throws Exception {
+        var battle = success(peer, "chapter.challenge", Map.of("requestId", UUID.randomUUID().toString()));
+        var claim = success(peer, "chapter.claim", Map.of("battleId", battle.path("battleId").asString()));
+        assertEquals(mission, claim.path("state").path("maxCleared").asInt());
+    }
+
+    /** 原失败回执重发得到相同结算，保存该二进制信封供客户端复验。 */
+    private JsonNode losingReceiptFrame(Peer peer, Map<String, Object> command, JsonNode original) throws Exception {
+        var response = peer.request("arena.challenge", command);
+        assertTrue(response.path("ok").asBoolean(), response.toString());
+        assertEquals(original, response.path("body"));
+        return response;
     }
 
     /** 从回执提取已完成关卡，仅供事件断言。 */

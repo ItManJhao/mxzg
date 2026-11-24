@@ -1,0 +1,2151 @@
+{
+  "scope": "日常副本全关卡共享动作，用旧及日服相同的 G_BATTLE_ACTIONS。",
+  "sourceActions": [
+    1010100,
+    1073101,
+    1075101,
+    1083101,
+    3010100,
+    3073101,
+    4053101,
+    4060100,
+    4061101,
+    4063101,
+    5050100,
+    5063101
+  ],
+  "assetsTotal": 193,
+  "absentAudio": [
+    "skill-102050073"
+  ],
+  "sources": [
+    {
+      "name": "skill-101050071",
+      "originalPvr": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-101050071.pvr.ccz",
+      "originalPlist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-101050071.plist",
+      "frames": 26,
+      "pvr": {
+        "bytes": 596461,
+        "sha256": "38714fe2865b7bbb7f168a2a00f46467c8cfbf702f82a8e86fbfb14ed44da3c6"
+      },
+      "plist": {
+        "bytes": 13662,
+        "sha256": "c8fb294b1dd339b025c502bbaddb79cfde354abe727b94787f5ef7f2e7ef8f27"
+      }
+    },
+    {
+      "name": "skill-101050083",
+      "originalPvr": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-101050083.pvr.ccz",
+      "originalPlist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-101050083.plist",
+      "frames": 11,
+      "pvr": {
+        "bytes": 157347,
+        "sha256": "7cdfaee9d3635dbaf24c00082f3c3e7f70871d8dde92da49618ba34a649fba16"
+      },
+      "plist": {
+        "bytes": 6246,
+        "sha256": "1b56d19f7f0e47fabf4bf4eb3f6486bbbd2e05e083856b967b3ed40b4d74cd30"
+      }
+    },
+    {
+      "name": "skill-103050073",
+      "originalPvr": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103050073.pvr.ccz",
+      "originalPlist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103050073.plist",
+      "frames": 17,
+      "pvr": {
+        "bytes": 259860,
+        "sha256": "22f9fb0991ac887d7d19b3e778baf66b56fc987a5f37b6f0da6c69a69ed24231"
+      },
+      "plist": {
+        "bytes": 9193,
+        "sha256": "cb4c5909840dd157188e9c6144391fd82814b2050353f6eb73891dfbaf020a88"
+      }
+    },
+    {
+      "name": "skill-104050053",
+      "originalPvr": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-104050053.pvr.ccz",
+      "originalPlist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-104050053.plist",
+      "frames": 10,
+      "pvr": {
+        "bytes": 216166,
+        "sha256": "d7545dd55025c8c227dc9fbbe47b0d51048876724f76258624eaa426d9912166"
+      },
+      "plist": {
+        "bytes": 5737,
+        "sha256": "6a78541e3ca8ccf4b75701c2dc7d525bcf92118f885916bbbf69b55d1446dd28"
+      }
+    },
+    {
+      "name": "skill-104050060",
+      "originalPvr": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-104050060.pvr.ccz",
+      "originalPlist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-104050060.plist",
+      "frames": 14,
+      "pvr": {
+        "bytes": 135798,
+        "sha256": "cf639103f6f4764693b86767c67b1cdce0fc69a106678fa1bd1f1319e4fb1418"
+      },
+      "plist": {
+        "bytes": 7677,
+        "sha256": "fb563ceb9d16981f67a9830e4c58c6c27357695a48be6155ae88bc05da07cfff"
+      }
+    },
+    {
+      "name": "skill-104050061",
+      "originalPvr": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-104050061.pvr.ccz",
+      "originalPlist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-104050061.plist",
+      "frames": 18,
+      "pvr": {
+        "bytes": 799840,
+        "sha256": "e759781e7934b9ee1f431f3ff9f0cd9a055913885b735a499b809288f0e2b862"
+      },
+      "plist": {
+        "bytes": 9702,
+        "sha256": "ad97267b0ff7f487437172e624dbbd754aca074c1e23603ef54af9fe7b8a50cc"
+      }
+    },
+    {
+      "name": "skill-104050061-1",
+      "originalPvr": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-104050061-1.pvr.ccz",
+      "originalPlist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-104050061-1.plist",
+      "frames": 42,
+      "pvr": {
+        "bytes": 445511,
+        "sha256": "6e9a91624e065662d70901b2f50b79a005209a8a0cc2c1b94af54e70001e17fd"
+      },
+      "plist": {
+        "bytes": 21637,
+        "sha256": "abcc258b25ffaa89a5e2aaa2f0e8bf69d7921b7f7b35a53eae1ccc222631a068"
+      }
+    },
+    {
+      "name": "skill-104050063",
+      "originalPvr": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-104050063.pvr.ccz",
+      "originalPlist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-104050063.plist",
+      "frames": 11,
+      "pvr": {
+        "bytes": 211940,
+        "sha256": "b9243ed6ba9640a9cb930470a7dbba644af16fdff58b65046daa24bf3dfe5f77"
+      },
+      "plist": {
+        "bytes": 6238,
+        "sha256": "f2974a165101f7d1e79fc9dd224a86637a614d42bf71e871eb7abd1ea036a020"
+      }
+    },
+    {
+      "name": "skill-105050050",
+      "originalPvr": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-105050050.pvr.ccz",
+      "originalPlist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-105050050.plist",
+      "frames": 12,
+      "pvr": {
+        "bytes": 92035,
+        "sha256": "6ffb6bfe62d4a705dd2f7ba15a42dc29f1537bea583e4eb90b50a37cfc191068"
+      },
+      "plist": {
+        "bytes": 6670,
+        "sha256": "3c8e0b2f0e1894873781b5d6a9d420c736ee60bb6bc5f6df6bfb777342e4f29f"
+      }
+    },
+    {
+      "name": "skill-105050061",
+      "originalPvr": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-105050061.pvr.ccz",
+      "originalPlist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-105050061.plist",
+      "frames": 9,
+      "pvr": {
+        "bytes": 197646,
+        "sha256": "7d1b6d0af429954d42411d62711df699d55fd1019d38dfd83db5803665f3240e"
+      },
+      "plist": {
+        "bytes": 5256,
+        "sha256": "836edf350884dfadd332c3edc613b58b8d130c12181b285cb886d80b68606273"
+      }
+    },
+    {
+      "name": "skill-105050061-1",
+      "originalPvr": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-105050061-1.pvr.ccz",
+      "originalPlist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-105050061-1.plist",
+      "frames": 24,
+      "pvr": {
+        "bytes": 674020,
+        "sha256": "c152f240f3c2f375ab51f394c41d83e1f9c8ccf438c81a22c9de29bc9dd7327a"
+      },
+      "plist": {
+        "bytes": 12737,
+        "sha256": "4f8ec679ed36b3daf87fef80acf4b708f4f86b8c24c700570ca692f9a4f9a13e"
+      }
+    }
+  ],
+  "files": [
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_0.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "05a54bdc8cf6aec408a0e487bf3f6da264a4fcc4e9000678e900ded220cf0ab2",
+      "afterSha256": "4b41ea9210cb178eeb8d194109a925286838e6e9a857cdc1de6ff372f92f4b92",
+      "metaSha256Before": "e1c998e85126b8ae3f4ddb7d56f9e2205925e62d24e4e693d3edaebd219e01af",
+      "metaSha256After": "e1c998e85126b8ae3f4ddb7d56f9e2205925e62d24e4e693d3edaebd219e01af",
+      "imageUuid": "2d5cf1a7-ab8a-49c3-b2ea-ace74fd44d87"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_1.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "d7ade93ef48a1d6a9fc49812912fc81cfc589ddafb3321040ec84aa17057206b",
+      "afterSha256": "f202fe9a7ad75f6d992737705514d807bc91f6b1f2afe12a8c78184e2188a426",
+      "metaSha256Before": "66db6cf4cbf5ecfa264e9a9a0e6aea21ead9a34bcdd27bb6983f407965d4a4fb",
+      "metaSha256After": "66db6cf4cbf5ecfa264e9a9a0e6aea21ead9a34bcdd27bb6983f407965d4a4fb",
+      "imageUuid": "59127d04-309d-4cbe-90e6-036978833e33"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_10.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "13ee5b8da6951a527b59d850b62b4a8ddf4ffff9e16569c2427c16a08b1a757f",
+      "afterSha256": "4315c6f3fc1af2bc868e3c0b712f71ec30cbde0ddd14571e444afe17e7c1b865",
+      "metaSha256Before": "799bf392487d0226e445700bd24c67ce53dca00e451ed404083ae5829f1f13c8",
+      "metaSha256After": "799bf392487d0226e445700bd24c67ce53dca00e451ed404083ae5829f1f13c8",
+      "imageUuid": "2279df81-9662-47c6-a8de-f25f3bc29791"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_11.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "cddbe629a97cc1f475ee750669aabc4b139c99660f4bd5bf59e99bdc094e795e",
+      "afterSha256": "21d565081f12d5a31a506b74a93fc1ddab7a44d4007154841294501dd47ccc35",
+      "metaSha256Before": "0965b469ca1248f5a2a253d8c63985a4c02eafcb124da2349c5f6544b8e97a45",
+      "metaSha256After": "0965b469ca1248f5a2a253d8c63985a4c02eafcb124da2349c5f6544b8e97a45",
+      "imageUuid": "37fe00d9-f20c-4dba-b066-e3dcc2ca09a6"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_12.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "9bccb43728a7cb1492ba6cf2776b33b7ac4c16951c814d5ef5ae7cb8e391fbff",
+      "afterSha256": "190edc66aaed007dcf95e6670b5193c731b593ef33225ade71f2abcf6cfa93eb",
+      "metaSha256Before": "3baf5cdfb239e9a96dba2859dd55110307fcf82d8acfd98b0de8d6c97e597e8a",
+      "metaSha256After": "3baf5cdfb239e9a96dba2859dd55110307fcf82d8acfd98b0de8d6c97e597e8a",
+      "imageUuid": "531ca479-cef3-4a9d-919c-1da017fb6ba2"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_13.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "e999f5ae193331e7bf491ef431f99cde63e3995af38e04d9e6782f78fe00427a",
+      "afterSha256": "cf898574645755a43652b4d49b9628969704576e08550ef2d46264a04813f1bc",
+      "metaSha256Before": "941cc6894672a8d972f32cc52779181dc03a343a831b4118db50c01c971d8e89",
+      "metaSha256After": "941cc6894672a8d972f32cc52779181dc03a343a831b4118db50c01c971d8e89",
+      "imageUuid": "b53e7607-bce0-4b5e-a875-efb252edf35e"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_14.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "1555777a935376f50b49faa9d05e55b5902a0c8a0c50a39bc776c54cac1c5b17",
+      "afterSha256": "238f7c7ee194d42cb3ba90a88362685705b8d6176a43d9786dda1927d6ebd0a2",
+      "metaSha256Before": "25950ad49f5119964018d28ec52de3d668d50216032847dd6ccced43dbc2a68d",
+      "metaSha256After": "25950ad49f5119964018d28ec52de3d668d50216032847dd6ccced43dbc2a68d",
+      "imageUuid": "d13f03d8-3260-4b88-95ac-431013abc8ea"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_15.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "5bccb04f8ee92553ff63b4885ce4219b2ae16519f89abf7d733eb2625333baae",
+      "afterSha256": "f45a5f253181d80000735e8dbb1d257fe5038336cb52a02cdf34a9911d5e054d",
+      "metaSha256Before": "f491e8d4d0280f28318c1d9e03a5e4dff8808e30aa05e582b84e8bfae65d79e9",
+      "metaSha256After": "f491e8d4d0280f28318c1d9e03a5e4dff8808e30aa05e582b84e8bfae65d79e9",
+      "imageUuid": "22ff1c68-a431-440b-be39-92cc3e415200"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_16.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "8fb7480a25acff7c5f050899d18dcf44b56c3f976fd72df7f6d3a20b744e1172",
+      "afterSha256": "456c8447d6692a3faf5543de7d967c3d379a279550cdb5b4b9a98a16921b5027",
+      "metaSha256Before": "7fa3b4df51761f157639c85be4247d61583d7f50791bbbcf29a48991b41dec31",
+      "metaSha256After": "7fa3b4df51761f157639c85be4247d61583d7f50791bbbcf29a48991b41dec31",
+      "imageUuid": "b52893be-258d-4177-b0b3-bb449fb0e6e8"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_17.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "cdea6b7be294de7b6386bb87407be7f9945291fa8bce321f13f6eb715b29516c",
+      "afterSha256": "b435efb7dca3be1316ea56293a04c622a360aef27f86a1e78c05bdf7abcf80b6",
+      "metaSha256Before": "65ce5f69936179af7620a7280e3ab2208034f8525ec972f292dbdb3ab086557d",
+      "metaSha256After": "65ce5f69936179af7620a7280e3ab2208034f8525ec972f292dbdb3ab086557d",
+      "imageUuid": "cc119d86-501a-49db-b17e-a32b10b5b144"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_18.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "3eb65fcb2f8c3739e0d2ca5ff8a906c5e63fe9054d1e6c13de6f08288b977f7b",
+      "afterSha256": "78a08221b60b294bc97fab97a3b06878344e98994f70f5c5b428d06b783cc606",
+      "metaSha256Before": "ffd258c650a66dbd0da95627cc579e62840c00c54ca430426ccf05416beac86e",
+      "metaSha256After": "ffd258c650a66dbd0da95627cc579e62840c00c54ca430426ccf05416beac86e",
+      "imageUuid": "4afac786-ff75-4170-8ae9-1db5fdb1bcaa"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_19.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "d251a55502c16837bc9c9dfcb25cbe5c0d3eb8fd7361eff7218db322e94fa873",
+      "afterSha256": "b866ba7a69a8cb79a4632e41b5cc45d21dcb846bfd3ed207c24fc9e46c14cc37",
+      "metaSha256Before": "30a0827f321598c6439657867c12ccf7ada1e876e132fa97b02ea6f9d9d31694",
+      "metaSha256After": "30a0827f321598c6439657867c12ccf7ada1e876e132fa97b02ea6f9d9d31694",
+      "imageUuid": "a498a9c7-14dc-4f63-9da0-86bde0358c76"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_2.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "0ff8485243c6a9836c0ca1fd4728e0036867597dfa0ae9dcb35697754960f9d3",
+      "afterSha256": "dac115de6aa1f69c3900874ef4e944f08aaf412a7d5e84aa14494f6f2c330640",
+      "metaSha256Before": "04270c7607c101742b354753d24d805ed094fa128e109aa5e372a84322949a5f",
+      "metaSha256After": "04270c7607c101742b354753d24d805ed094fa128e109aa5e372a84322949a5f",
+      "imageUuid": "910b1562-39af-482c-8a4e-9093b6448ffb"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_20.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "3ec9aefa936819640aff380d0cbe12aaf3c5dc5890d0231d3e852aad3ed6d5e4",
+      "afterSha256": "a1eb8ae853356052e425fb9a2c189d77e20a39bf3dccbb56ad3905e862648399",
+      "metaSha256Before": "fce7d00b0b2f85af4bb8a9b5fc8ce5f028f89dd917be093dcca32a0b0685f5f7",
+      "metaSha256After": "fce7d00b0b2f85af4bb8a9b5fc8ce5f028f89dd917be093dcca32a0b0685f5f7",
+      "imageUuid": "be49a47b-fefd-4f32-97cc-85a39af88a6b"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_21.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "1fb0d2c538d13c99305c2b58036de08d7e9c4ba3365258f1e9301f4c0d7b9ac8",
+      "afterSha256": "e360bb3cb3480cb0869faa396570e83f5fa6d706874f3e75c5fb6f80a060d2fc",
+      "metaSha256Before": "4f0c5b92a7346aaab91e9c84d3ec9029e2c39dc657906407f1f5568396863fc3",
+      "metaSha256After": "4f0c5b92a7346aaab91e9c84d3ec9029e2c39dc657906407f1f5568396863fc3",
+      "imageUuid": "28937266-0448-46d8-8b3a-5cff18d01f49"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_22.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "078f8203fae8f9ef032cb6b0b49a28506d36a2713d97a35e75e42811bd1c1fc4",
+      "afterSha256": "1e7a10c6d73960608c66c2892f39305c91b9fa4e67a99b9e77f2c7c10d010262",
+      "metaSha256Before": "7ef21b0a92997b17638701b0d4c40b85e114a9fa9192bb74bd3fe82ff7da3d06",
+      "metaSha256After": "7ef21b0a92997b17638701b0d4c40b85e114a9fa9192bb74bd3fe82ff7da3d06",
+      "imageUuid": "e1d0718d-f953-4dbf-ad8b-762bdeb46690"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_23.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "6350df08377429a239c1b29e3bf7be4181d7a1b7f189e37069ff90680653e1c0",
+      "afterSha256": "e5faf23126074b8823e4d24888328882aef6c97ae767ab5cf51d38ef6a10b834",
+      "metaSha256Before": "17677be300618f5985b63b88be5b95d774e7854cf76c6ee3c6c33ccc4b1ae0b4",
+      "metaSha256After": "17677be300618f5985b63b88be5b95d774e7854cf76c6ee3c6c33ccc4b1ae0b4",
+      "imageUuid": "6d261650-0b97-4181-85f8-6b7373efd937"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_24.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "443a8ee3062059694e5a570df7a070f6566026dfcd535437f480a90e3d54da9d",
+      "afterSha256": "92cebc05b4afd222cefc5d951e03b4321e090ab49d9be6b4e660e04cc0cb501c",
+      "metaSha256Before": "c6579615ae87cdd49ee3653a06df37ae740a95f21149354f7ea7252d2b2caf18",
+      "metaSha256After": "c6579615ae87cdd49ee3653a06df37ae740a95f21149354f7ea7252d2b2caf18",
+      "imageUuid": "6652be02-ddc5-4715-aaee-4b078c8283ea"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_25.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "e6a2b126e8a0cdba5e6be8966d05297ce466faaeb717e7aa637b07d320238c43",
+      "afterSha256": "0f066fb294df1ba48d1f150a11c858929496085c21606078eff0eda94efd61e0",
+      "metaSha256Before": "745fb81571fba5c68e4977101ef8ebf24411ac5e6178fc7af2b7377f55275eab",
+      "metaSha256After": "745fb81571fba5c68e4977101ef8ebf24411ac5e6178fc7af2b7377f55275eab",
+      "imageUuid": "f4e0dd88-55c7-4039-b26e-448ab06ca91d"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_3.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "0dbd120831a2e7055640020b9b6a2936cef232c4185b6db91d5c8e0794dee1ea",
+      "afterSha256": "4a043f90d29bd81e962f8ee50ecc0acca42a2c2182ff7ed5c34c999f2966083e",
+      "metaSha256Before": "c8577a02604c811e2ae972a45053c18f7ac46ea694074d6832112c41656f7d38",
+      "metaSha256After": "c8577a02604c811e2ae972a45053c18f7ac46ea694074d6832112c41656f7d38",
+      "imageUuid": "696251c9-9ea9-401e-b376-4cd6995dbd99"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_4.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "cd6f5f3fee8cbddbf8bcc48982d358d61ada3f1f2ef8be90d7bb9bfb668aad5f",
+      "afterSha256": "7a03b6f1414fa938e2f4973da6253b0de138d4d5b10139032387b98d962b9da6",
+      "metaSha256Before": "7f1390345c27d1684132b477d10b82d9fce192069a48814d0e49965a9ef690c8",
+      "metaSha256After": "7f1390345c27d1684132b477d10b82d9fce192069a48814d0e49965a9ef690c8",
+      "imageUuid": "7fc764fc-f595-41ec-8c3a-5d36c36f1ebc"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_5.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "d086d4c72ec0552180556e2667a260a5f1a2e1abc4f0aeb226723fcd7018b12f",
+      "afterSha256": "12ecebd448c9d2e0f9232949d9c4e2377d38e3e033b143f58dd8f4402fecc0a5",
+      "metaSha256Before": "d24bba5b8bba9b28857197ad5633319c23bd15977de673418f1e07232540b3c2",
+      "metaSha256After": "d24bba5b8bba9b28857197ad5633319c23bd15977de673418f1e07232540b3c2",
+      "imageUuid": "f3f7db84-a1fc-4a86-85e1-1b40bacd8a21"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_6.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "be033c5bd30b8fe17486cff0105b9c10ed7fbedd08bbdc7a6d0250d7c08ad250",
+      "afterSha256": "26095e6a151ba28f8e58596a98ae44779bb4afff9b262d0f911e0e5acbadac32",
+      "metaSha256Before": "b8c08c6a0a5f216e27dc1717c14ff6bc38efc3884674480e63ea9a0a0bc288f5",
+      "metaSha256After": "b8c08c6a0a5f216e27dc1717c14ff6bc38efc3884674480e63ea9a0a0bc288f5",
+      "imageUuid": "77636b05-99ce-43fe-8234-119903c45c12"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_7.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "5143466185610365f39031f26f7bdb9a231b2a27190fb321b2670fcaf5eb934d",
+      "afterSha256": "df448b096daee0497a70b472bb66f1bc1ee8472da26d2ccb1194165a52c993f0",
+      "metaSha256Before": "170d41bc0ffed3b321c8ad57c42fc906877f1ce14e3e07957d7be3f614d7ff08",
+      "metaSha256After": "170d41bc0ffed3b321c8ad57c42fc906877f1ce14e3e07957d7be3f614d7ff08",
+      "imageUuid": "1e5d932e-2fc3-47be-ad0e-ae9c32a50598"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_8.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "bde8bed7eea5a5889177934cc49c841fa05ef902c63a48065dea8a68f9d5d43e",
+      "afterSha256": "3370e6d5892c7fc054497351ac6d5c88deb24386fade364304eb5c5d1c1d54fd",
+      "metaSha256Before": "a4a78195032fb924c4b19902cb93c0557fadb12e37b9533839836facdb93a366",
+      "metaSha256After": "a4a78195032fb924c4b19902cb93c0557fadb12e37b9533839836facdb93a366",
+      "imageUuid": "f1a9336e-0249-4413-9a0e-1b9c9850084d"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050071/skill-101050071_9.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "11b3e307956befd3b74b9fd26a366b24477fc9d4ddcd644cc4c2ecce654bb99e",
+      "afterSha256": "e887bcc2dccb9df6c9615e8ac855e5c0845924ee6e7fc1893e8af0e571314d46",
+      "metaSha256Before": "a4a5d4e9c73685ad0c813737236e1a78004555cc1d9a0f7c024b995c15228bd3",
+      "metaSha256After": "a4a5d4e9c73685ad0c813737236e1a78004555cc1d9a0f7c024b995c15228bd3",
+      "imageUuid": "0528e813-09b9-4d1c-ad9d-3dede5cb0b54"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050083/skill-101050083_0.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "5bab85c14ebb7335bdb5d3a55c7850a7956c6124313a18c0cb87802a8d425d62",
+      "afterSha256": "bc14e247648ab3a7e25725042811c334315a846e419cc6eebd87d3530d5dc3c3",
+      "metaSha256Before": "6a36c1b1e25419d7c07a30877258ee4a49a5c954f871e407a42a730f412cfa9f",
+      "metaSha256After": "6a36c1b1e25419d7c07a30877258ee4a49a5c954f871e407a42a730f412cfa9f",
+      "imageUuid": "829acd8d-d035-4d25-bad8-3b754c498aab"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050083/skill-101050083_1.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "387d68418e78eeae554be96f057a8cbcdcbd0d328f6609b80fdad7cd67dff6b8",
+      "afterSha256": "0f3550a0875b13b1d19bda437e9b3d106d0801e169f5c2e2b1358d8e9062ff7c",
+      "metaSha256Before": "aab483ae126dbca46fa9ec8d17733a73f37f35e308d27c67f8c4489791f8cf3b",
+      "metaSha256After": "aab483ae126dbca46fa9ec8d17733a73f37f35e308d27c67f8c4489791f8cf3b",
+      "imageUuid": "13a5bb19-7bdd-4748-b2a4-040f6ac4db09"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050083/skill-101050083_10.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "fc25c9cdcef0e09ad4dda75f676f1ff0f748c62fa3d8420b3c3f0e4c282119e1",
+      "afterSha256": "212c64f239fa3600a3fd61909816912220a369a54f92fda660cc906fc5f49f46",
+      "metaSha256Before": "2bf46a2f5b1e99134ccf1b6878e44eb319a36ce5b8e3ff913778b09a820eee67",
+      "metaSha256After": "2bf46a2f5b1e99134ccf1b6878e44eb319a36ce5b8e3ff913778b09a820eee67",
+      "imageUuid": "a537891c-ce54-477c-9b48-c33632174da3"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050083/skill-101050083_2.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "96667641c1bf957c0792a596017bb7d91c59c2dd6a9c58b7d29cd5ac5bf024a6",
+      "afterSha256": "890f3417b2b110a1147d8c913cc459ab0b478be208e7129a9aa028615b237091",
+      "metaSha256Before": "90f4d4dfa801f2c71b1d9fce4fa6c837890183d3803585ab041ffde5365347de",
+      "metaSha256After": "90f4d4dfa801f2c71b1d9fce4fa6c837890183d3803585ab041ffde5365347de",
+      "imageUuid": "2806ecbb-323d-4472-8125-d2358c437911"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050083/skill-101050083_3.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "bfd3a6ba1a6369571c814cc8c49becccf9b861b103b04986cba906a3a600bb91",
+      "afterSha256": "e4dbb03b4280bbdfe0ebc2329f5469c465986bd44fe9a62b231f4dcec7762045",
+      "metaSha256Before": "99ed9e12a0a07140cfac5edc4599f1c546454a17d44f44235cd606dc61d093fc",
+      "metaSha256After": "99ed9e12a0a07140cfac5edc4599f1c546454a17d44f44235cd606dc61d093fc",
+      "imageUuid": "2e6a58c6-d7a0-464f-b46b-639dd62bb1cf"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050083/skill-101050083_4.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "2e683dc73f45365f8956af50b8157e4dbe9229f22753fd18769e6db4807bb8b0",
+      "afterSha256": "dfd10385b739e7e7cb95f6abaf4be3c1a70f3280b2c17534d6bbfe1d4ab95cca",
+      "metaSha256Before": "fd41f72a9025a34a1231333b07ac1c97c980eabdcb74b6d734873c65f9119f45",
+      "metaSha256After": "fd41f72a9025a34a1231333b07ac1c97c980eabdcb74b6d734873c65f9119f45",
+      "imageUuid": "4019a798-3269-4ad3-b53a-0a9e1b947fe2"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050083/skill-101050083_5.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "fbd287a8820572e3f9dfa5ac94ded753f1d7da236e0b69c601191ae3d1f6236c",
+      "afterSha256": "4a921573edc63a442397e08a55ea6a3129682ba4ad9e9867957ecc185367864e",
+      "metaSha256Before": "d695e6c54c19ff11e5f7a345d272a960f7ee93dbb44f4d76b52f6a3a35f1d7d8",
+      "metaSha256After": "d695e6c54c19ff11e5f7a345d272a960f7ee93dbb44f4d76b52f6a3a35f1d7d8",
+      "imageUuid": "11cc53b9-c956-44e5-a6e9-6895ada9d6d2"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050083/skill-101050083_6.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "e1c76df379ee40d8f0a5e48991623364ae887ccf6a187cc7c568cc473cbde01c",
+      "afterSha256": "73c3ce04088ae546e462de5634816ba979669c9a7640016b0a1b5ccfb5747aed",
+      "metaSha256Before": "2a4f1c4b3c780f6d707e3a4c5ec4de39e496dd1e1985cfda2ce40ed309dca195",
+      "metaSha256After": "2a4f1c4b3c780f6d707e3a4c5ec4de39e496dd1e1985cfda2ce40ed309dca195",
+      "imageUuid": "7b1ce3a5-b8b6-47af-a7e5-f591beac27ff"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050083/skill-101050083_7.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "80e125fd93bb7f4c3f7fda45a7f2b010d71d50b12a03ff851338b035f3bf472d",
+      "afterSha256": "b22924282c0ecdbf845e84523b7da47cf787728a8912feb9bf58bcd37650952c",
+      "metaSha256Before": "f5bec8908eb5734cf6cf8858755e211cc64fc5f92480a46c6b525a6535b1c6fb",
+      "metaSha256After": "f5bec8908eb5734cf6cf8858755e211cc64fc5f92480a46c6b525a6535b1c6fb",
+      "imageUuid": "09a82958-cd43-415e-b1f9-d35d47f7879d"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050083/skill-101050083_8.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "074f1d4f65663e3fe0cbfbc9e912626fb63ee72acf0e867890a06f173b3f7325",
+      "afterSha256": "09225151ac2d8143700d5d1be35524581a7d0506acc795abc700b63f05ca5be6",
+      "metaSha256Before": "bc82e4c0109cf2358e68a8cd2fe7abddb7358bd107165758cbfba4ded8c40ef6",
+      "metaSha256After": "bc82e4c0109cf2358e68a8cd2fe7abddb7358bd107165758cbfba4ded8c40ef6",
+      "imageUuid": "cc28ef1c-dc9e-4509-9e52-9d60d221bd58"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-101050083/skill-101050083_9.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "2d775566b054cff68d5bdac3d16ec74898c5c402956e929f7c7f5dce4cf11888",
+      "afterSha256": "3a804b3b2db7a57b30fcf00286154fc2ff2f96371d39ae166ba70f5303d12a4c",
+      "metaSha256Before": "0a1b4a6908c4c4abd6bb586e5ad630af2e94246546b4804e870f49c9c7d6d899",
+      "metaSha256After": "0a1b4a6908c4c4abd6bb586e5ad630af2e94246546b4804e870f49c9c7d6d899",
+      "imageUuid": "325a0bba-afff-4793-99c6-54285f630281"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050073/skill-103050073_0.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "dc43b3a0563b569cedd5e5f9f20cdbb4b806de84c495525b4d8550f13f3f6104",
+      "afterSha256": "4c0d1da81e600eb8a1599e7a0bc2cfd14d8711584d8002d037f4045232d440f2",
+      "metaSha256Before": "dcb7295e5c91b909221e138c2c7beee30c8c7cfbb1bdc59fb1e90d0ddc09d246",
+      "metaSha256After": "dcb7295e5c91b909221e138c2c7beee30c8c7cfbb1bdc59fb1e90d0ddc09d246",
+      "imageUuid": "ea666301-2346-48a5-bdde-f19a78e54d4d"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050073/skill-103050073_1.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "a540bdb100cfa7191a52e2eae54c3fbfbaa1169501d1d5ded970100deea79516",
+      "afterSha256": "d26a40ea788353b5c69fb15e6473f0e08caa3e31bca81d27959f97356cd84265",
+      "metaSha256Before": "b5fd322378dc9ed8ec030b11fdcb3554891a6004806290acd05122e5a224352f",
+      "metaSha256After": "b5fd322378dc9ed8ec030b11fdcb3554891a6004806290acd05122e5a224352f",
+      "imageUuid": "1cd6401f-935c-4599-b413-7bad717c5e9c"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050073/skill-103050073_10.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "afd42971192ced39db8f6b8e4ac824f10eba505f350b1470d17f10a756508c52",
+      "afterSha256": "cf6ce659a8ad4200f058b4eda331db50f3cd46dd0354d7c243034c99a8f9e82f",
+      "metaSha256Before": "ff6edcd48f9b6e00c53cb73199b7546b4a6a28f57beebed50707afcd1a87f412",
+      "metaSha256After": "ff6edcd48f9b6e00c53cb73199b7546b4a6a28f57beebed50707afcd1a87f412",
+      "imageUuid": "7dba46e3-aabf-4961-9305-2622cce38889"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050073/skill-103050073_11.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "fe8da2a1c81b00c9a9e5c9ac32f92802f8362995477962dc0b03ae12a08cedbf",
+      "afterSha256": "eae1553c2e2e97f278e58d8687d5b575973e369272b3ea6797020c216868bc8d",
+      "metaSha256Before": "ea585a3d3375a47b15ceb7a04c8f953d863698b71b764c9a684ebf6e294f5ffd",
+      "metaSha256After": "ea585a3d3375a47b15ceb7a04c8f953d863698b71b764c9a684ebf6e294f5ffd",
+      "imageUuid": "7212976d-960c-4129-b743-0d4ff63e4ffc"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050073/skill-103050073_12.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "5fa19678f628105099a25d3b357f12c7a42de747fd5d692d9658c65280dec52d",
+      "afterSha256": "687569a243f5da16b2a676d439faf24b074d1d2257d13e3be37df669540dab01",
+      "metaSha256Before": "0c16d5f2942c4f9877fcdd8986626fcfc4809ec23d503f572855cd02818b87a9",
+      "metaSha256After": "0c16d5f2942c4f9877fcdd8986626fcfc4809ec23d503f572855cd02818b87a9",
+      "imageUuid": "8dc588d1-2877-4d43-9cc5-6bfcba531cd6"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050073/skill-103050073_13.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "ca9a1633d112abcca2d63595c3b66edbc8ecd38a25276b0953ce4802f5e946b8",
+      "afterSha256": "20282cd75e4649375b3ef9e074ccb8a1dd3a2692fc8aa176dca1f36b59d53710",
+      "metaSha256Before": "566b96e17d014dd29fff7dfaa321e691f439ed71820f8432b315e8bf85f27801",
+      "metaSha256After": "566b96e17d014dd29fff7dfaa321e691f439ed71820f8432b315e8bf85f27801",
+      "imageUuid": "1722e0f4-c816-4150-8ca3-ded0aa6e1e20"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050073/skill-103050073_14.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "299194117b55566bd810a21660ba93194fe5a85851949e8a00d08a96235d244d",
+      "afterSha256": "c3ba409025252d07eeecda30e9bf91619276d74644216b2a9c6599d680c7369f",
+      "metaSha256Before": "d2099c3c74653cb334941160668ee1b50a18deb8cbc6552df3dc02eadd42dd75",
+      "metaSha256After": "d2099c3c74653cb334941160668ee1b50a18deb8cbc6552df3dc02eadd42dd75",
+      "imageUuid": "2b91b84f-ce6e-4d20-a402-0907f5c021d2"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050073/skill-103050073_15.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "8691c6d250448f17d0dfb708b5c0d3df94db9a4931d2304c75a6a222bc24a9a0",
+      "afterSha256": "09cca8134e2d5339943f4248ad395b6f2088f7cf8158c84091b9ece407376eac",
+      "metaSha256Before": "7946cb42b65b7e14a157dae7519f3722ef18b87b6d30a8e5e05a64c53489bc93",
+      "metaSha256After": "7946cb42b65b7e14a157dae7519f3722ef18b87b6d30a8e5e05a64c53489bc93",
+      "imageUuid": "5487825e-eb95-4499-b08a-6a0049cdb15e"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050073/skill-103050073_16.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "ae4fbae0973368e835fdca9ada0bb8f0bc89f07b138e2efea657d2c0c36df723",
+      "afterSha256": "30bfb5f6b2125a9aa0554a59643284a82f93ebddb26df91eb028d8bccfcc28d4",
+      "metaSha256Before": "15125f7f4e37e51ae25f9fb813f9c2cd8d2016b88e7b6edb44effc0a117af18d",
+      "metaSha256After": "15125f7f4e37e51ae25f9fb813f9c2cd8d2016b88e7b6edb44effc0a117af18d",
+      "imageUuid": "77588952-8e2d-4a85-a36a-0d901079d947"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050073/skill-103050073_2.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "41e3dae1d947593ca8c84b6b927a544c18bf97bbe1b92c340cd1138920d95171",
+      "afterSha256": "4741a0385fad57c1167f1bfc59899911a9af5af6dc2101ae9593bea41be60e22",
+      "metaSha256Before": "c67bc7ffdc59fa6cb96bb51183d0ff60cfc936b773ee072bd86b2872020c3ed7",
+      "metaSha256After": "c67bc7ffdc59fa6cb96bb51183d0ff60cfc936b773ee072bd86b2872020c3ed7",
+      "imageUuid": "54888d6e-68e4-42cf-90d5-c95dd7ad0c96"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050073/skill-103050073_3.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "4db7c5310263d00188c57eec3432e985f99283ab9486c6d4f233632176fc823e",
+      "afterSha256": "0644147d9c663637fb3984ef55b73b82ecea02274371b24a3d58a25699ebf5cd",
+      "metaSha256Before": "99adc55aa9fbdc597129039d3390b344aa430ca8f92727993dc68ac2dfb479d9",
+      "metaSha256After": "99adc55aa9fbdc597129039d3390b344aa430ca8f92727993dc68ac2dfb479d9",
+      "imageUuid": "6d63abb4-1cd5-4c54-bf1d-06602f871f99"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050073/skill-103050073_4.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "9c5bfd73f4ddd16af9ee93748e7138f79ed1bc9ad86e8d319c77c6e5afcc86d0",
+      "afterSha256": "b8dd884a09c3eb88e9898f60d16552d17cd5c3973e828ec37618e3c3814469c5",
+      "metaSha256Before": "230f91e2c12f15b42a2e13037a9a7228e55ae3b518fd8d0bd1ad670289ec92e2",
+      "metaSha256After": "230f91e2c12f15b42a2e13037a9a7228e55ae3b518fd8d0bd1ad670289ec92e2",
+      "imageUuid": "a0c66ad5-1b3b-426d-8ec4-edbc5afb4f52"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050073/skill-103050073_5.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "3eb1146a5e1bf8d635bca0df3c522acfa2c2d9403373db3b2910d37f064cd7bd",
+      "afterSha256": "0489f4839fcf1f5276e13295907e5552ff9b30781514fcfb3d61fedae8dbd07d",
+      "metaSha256Before": "14cda994d7e6d3358b4586e1d7ac126fc8087da42d3aaa01e1ba8ff47b1f085a",
+      "metaSha256After": "14cda994d7e6d3358b4586e1d7ac126fc8087da42d3aaa01e1ba8ff47b1f085a",
+      "imageUuid": "1114fc38-f183-4f9e-9340-75bdb63092fb"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050073/skill-103050073_6.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "db24e06ec8040619ea992531f9ab1d7dd207fe61ac82dad653919353d861bac6",
+      "afterSha256": "9dc240aebe7fce7e8261589ab4542ea7b0ef502bb970bfa397bee8cde4333661",
+      "metaSha256Before": "cddea9d001ff0edc71496c106973a04a7596e8be11805d4b997f566fec1379e1",
+      "metaSha256After": "cddea9d001ff0edc71496c106973a04a7596e8be11805d4b997f566fec1379e1",
+      "imageUuid": "a21df76b-82ba-4064-9669-7864cd373375"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050073/skill-103050073_7.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "fb0d149087571e23639b45673ea13eed130e72d7cdab675121c192399f5d36d8",
+      "afterSha256": "d9b999fe80c0d56f2bf7b7fe7fb74d56c8352180c25cd5cc9cb1cb2f363f57a6",
+      "metaSha256Before": "bfadf3868c10c61c58c819f57b4aec3fa3c980771b7fd7d885f1d40d64bc27c7",
+      "metaSha256After": "bfadf3868c10c61c58c819f57b4aec3fa3c980771b7fd7d885f1d40d64bc27c7",
+      "imageUuid": "9bb7aba5-3d79-4d2e-8785-c77f28c1bd81"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050073/skill-103050073_8.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "d5bfb9cb75a9122fa60e38a40ee60f227f660e15db1cb7614d335fbe76450da0",
+      "afterSha256": "327bfe019bf2be66999f5389d5a801ebf927b16d01c8b0e704bf5bc467389745",
+      "metaSha256Before": "c12849a8032c4957ee6310ea61e56569f9f65bf5abacf6bf84c026b522593f03",
+      "metaSha256After": "c12849a8032c4957ee6310ea61e56569f9f65bf5abacf6bf84c026b522593f03",
+      "imageUuid": "be7d6cb6-4051-4b23-a388-456cc12fb3e3"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050073/skill-103050073_9.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "7855d2b5b4b0c663f93b83bcdedf689849a2795074c2ff46faeb97df7e3f26e4",
+      "afterSha256": "481ff75ad6e2cf5fcfcbe29c685f2df9f9e4867740362a3e79c5eb1ba67b0b22",
+      "metaSha256Before": "eefcfdbffeeabf1d2af379ed72ccc4b4e88db9f877e11e1ec9bedcd6c57b809f",
+      "metaSha256After": "eefcfdbffeeabf1d2af379ed72ccc4b4e88db9f877e11e1ec9bedcd6c57b809f",
+      "imageUuid": "164a3d53-92e8-4b8a-92d8-96af3eaadc1c"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050053/skill-104050053_0.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "71074be6feadd4aa8eb6e4e144b432d4842ddff3bdc40e79b95ebb1c06f459d2",
+      "afterSha256": "167538597b248a5875a59c85fc25b371b6ff64ccdfc217cee647dd6fd9ca0207",
+      "metaSha256Before": "934d51979b934f51b8fe423ec9108aede1a71be7058ae228c9c7ef6fac999c6d",
+      "metaSha256After": "934d51979b934f51b8fe423ec9108aede1a71be7058ae228c9c7ef6fac999c6d",
+      "imageUuid": "b2731884-bb02-4cd4-85df-a1c5589622a5"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050053/skill-104050053_1.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "304fd8142e29efa86d3a9b1493b1343c5d8c958e3335f4cb4ca66a4833da48a0",
+      "afterSha256": "c1a245b59816168c08517faa331e364e8331864a772a018ae0771cf694a15c83",
+      "metaSha256Before": "6f246577fa210adc9a67fc91722aa5ae0742d6a98f90e1750012d356e95057de",
+      "metaSha256After": "6f246577fa210adc9a67fc91722aa5ae0742d6a98f90e1750012d356e95057de",
+      "imageUuid": "02724b05-c253-4b05-9a2f-38ad783fc756"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050053/skill-104050053_2.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "e8a3d0818ccf18cadf095994c53a366f03c7862026ba68fa3b502d4e03bdf9ec",
+      "afterSha256": "c38f34ee36d9b2269c84bf7a1041e80defe894caacfadeb7ab9529eb3b585105",
+      "metaSha256Before": "e941d8dc215f757c5daebc0b6a497739a3687ffe0cf53b07a811d5cac01aae4b",
+      "metaSha256After": "e941d8dc215f757c5daebc0b6a497739a3687ffe0cf53b07a811d5cac01aae4b",
+      "imageUuid": "e88e0e01-6e71-4c3e-bfb3-fd0863c2c376"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050053/skill-104050053_3.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "1eb3a591faef6f0685b63a9a6465c660483b86d1e0a9876da68d18384a01a859",
+      "afterSha256": "dbf4453ad18406094ab4e55f96fc18716ec6f113e5c69ae61028c25f002d2405",
+      "metaSha256Before": "a6c0408b4df3b48876b59cc1d3095de45a9c3b45720b980b9d2a2925edbc07d8",
+      "metaSha256After": "a6c0408b4df3b48876b59cc1d3095de45a9c3b45720b980b9d2a2925edbc07d8",
+      "imageUuid": "e062d292-a98d-4fce-b322-7dd591d7c213"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050053/skill-104050053_4.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "6c7627df6f19e78df2425bc70658d204f287c0013509f936077a28ae2b01e665",
+      "afterSha256": "623600cb8c09a21ff8ca6d95cc545e54723fe2ec189667370f4a1c75664b2010",
+      "metaSha256Before": "cdb66e4047ba2b79f30e38d990a5653af3ef890174b9d9469a643b3c0e9da7fa",
+      "metaSha256After": "cdb66e4047ba2b79f30e38d990a5653af3ef890174b9d9469a643b3c0e9da7fa",
+      "imageUuid": "cacec8b1-3b1b-4f75-be80-48c6b888a1b4"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050053/skill-104050053_5.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "f65a13245ae815885814552c76862c692ef56cbf8ce536942e3e5e603c49f6f7",
+      "afterSha256": "144d5340778c9ea1279db08181b427dc36a82135b7d9a2a1ae24b36afa7dd3fa",
+      "metaSha256Before": "6c310a8f81055ec44c6ebfbf9b5658acfd9716205a028872c2840ddeb7be0eb3",
+      "metaSha256After": "6c310a8f81055ec44c6ebfbf9b5658acfd9716205a028872c2840ddeb7be0eb3",
+      "imageUuid": "3294da5e-c427-4e1b-900f-907cc0b4b4f1"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050053/skill-104050053_6.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "ba6897963e9b554d8a92dc72674e10ae0405f9c5c63c36e1b7cdc3fe4d20316b",
+      "afterSha256": "907a052dca26de0f3752ce586cb6db16a4efc73a84fe45e6404db23e16b0d340",
+      "metaSha256Before": "1e37389ed045870ea3aaaa46e7f4131c1d93ad769549c3aff2ddfefce695005c",
+      "metaSha256After": "1e37389ed045870ea3aaaa46e7f4131c1d93ad769549c3aff2ddfefce695005c",
+      "imageUuid": "91b9727e-f154-41c7-93f0-c63fdb2d6b27"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050053/skill-104050053_7.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "cbdd19cf3eff91b429df725aa0574f2704d14e95401d24c4b9a46cefd218fb00",
+      "afterSha256": "bd465b2049e84c086d2f4d80caa8e6dbe925208d99a3ee137cda9ba966e7ee85",
+      "metaSha256Before": "f37b562d24c0c1fd0fabd11226bb3dc6c1e755f82389cc829b2bd3a2fcb2f297",
+      "metaSha256After": "f37b562d24c0c1fd0fabd11226bb3dc6c1e755f82389cc829b2bd3a2fcb2f297",
+      "imageUuid": "e20953d8-475f-4939-ae93-b5cb541ec46a"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050053/skill-104050053_8.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "87500affc68406ddcea7bd677210dec9d5bce8e3b8f3ae51367360cc9e985895",
+      "afterSha256": "ad60a2ec68ff2c3ea3b430fac76eb63e4a8364ff7c08f16dd096972bb83422fb",
+      "metaSha256Before": "3c5ea5c02441376acbcb647fe6ebf87d7222b8d5a1be68f481e75ca082fbf855",
+      "metaSha256After": "3c5ea5c02441376acbcb647fe6ebf87d7222b8d5a1be68f481e75ca082fbf855",
+      "imageUuid": "c52c9e77-2d95-4a61-9ddd-2355af5ccdeb"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050053/skill-104050053_9.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "ddda078e007045cae4c380c9dd959dd3f86214d2cbae7158d6e418f6de3fbee1",
+      "afterSha256": "e7562347fa22333cee44f118e6dae1a5e7e26e88eef6043e721a90ec9c7baf7d",
+      "metaSha256Before": "5343801a33cc17edb0a9657716ed188ffd4e3cc7766a3acea4c96dcbb5be3f9b",
+      "metaSha256After": "5343801a33cc17edb0a9657716ed188ffd4e3cc7766a3acea4c96dcbb5be3f9b",
+      "imageUuid": "8fa2f8ac-260b-4cc2-a0c2-c4b4da10e3aa"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050060/skill-104050060_0.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "b3d0bc507fe5c38a951310153cf59c6916b4148b957ff4ea3184ee9eb6cdbba4",
+      "afterSha256": "51a37eca1497938177ac7e8734a3f0f516bf87b31be57cbc5505e357a0319f5c",
+      "metaSha256Before": "66d097cfabe5420cd7c1e701a3ac7350cf4279cd6f8922e32e652f5da7510dad",
+      "metaSha256After": "66d097cfabe5420cd7c1e701a3ac7350cf4279cd6f8922e32e652f5da7510dad",
+      "imageUuid": "085da367-993a-4042-a975-60f5e8d071ce"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050060/skill-104050060_1.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "ecbe3da655ca6e425ca9f0dfcc5dfd1065315800d7f89054b49d90aa22f0d9a1",
+      "afterSha256": "b6976666b8050fe4f9e4aadf0681d7d0851a6e67b2a72e08b9abfc629b602b38",
+      "metaSha256Before": "0a8d7456c4110d3a5a3efba2c63f438bddcbc6a8a9ee4b91f04c5d4ab7301e1b",
+      "metaSha256After": "0a8d7456c4110d3a5a3efba2c63f438bddcbc6a8a9ee4b91f04c5d4ab7301e1b",
+      "imageUuid": "4f4fe004-cf10-44c3-b456-8196bd578e07"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050060/skill-104050060_10.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "5e9d0b57276076d4e282c1ac3b9671a5abef5e057829b172169d4b5838a00866",
+      "afterSha256": "e56e57322b70e5862fd4004f9b6516ac78291a581fbfdd1fbc34da6c33e7c4a9",
+      "metaSha256Before": "e14ce57db4c4e16d43f51373a3bb553bf05f6381a0d57bf6ca0e7bdb821d4aa8",
+      "metaSha256After": "e14ce57db4c4e16d43f51373a3bb553bf05f6381a0d57bf6ca0e7bdb821d4aa8",
+      "imageUuid": "8d1fc316-2ab8-465b-a42f-9ede4bb5b42c"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050060/skill-104050060_11.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "0aac31d00dd96007ea768e82493ec9839fe056df4840ca9a537121dc70f4fd0c",
+      "afterSha256": "9b13695b512fab45ec39222c24389cb7766e98e5378cf1d44abd6ea490c7c71d",
+      "metaSha256Before": "18280eb7fb46e414f14cb05f7c1e503070efd5bde0464e5c9a4dc82c857bcd82",
+      "metaSha256After": "18280eb7fb46e414f14cb05f7c1e503070efd5bde0464e5c9a4dc82c857bcd82",
+      "imageUuid": "9acc7f05-e529-489b-9658-b030365c697c"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050060/skill-104050060_12.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "aefdffa188a9fb98d41ed7d8e6bc5d22b9babedfd2f6c134ee7646dcef877552",
+      "afterSha256": "6bbe8f3572ad51ccfd959c30125bc1b76910cb52fba2ef94323c83450eac8cdc",
+      "metaSha256Before": "bc0361a39710bb205aa96d47e27e5ad79fcf5e18b87f416e24d83276512e3c83",
+      "metaSha256After": "bc0361a39710bb205aa96d47e27e5ad79fcf5e18b87f416e24d83276512e3c83",
+      "imageUuid": "24ca6f3c-f64b-4db5-82d3-6ebd054f1ba7"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050060/skill-104050060_13.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "08a5e785a7fae008a40ee294f716feeb1465b425e482073f319fce04519f1075",
+      "afterSha256": "b242c07e8dec5bdd88b9f510c16eebe9dea074c6a3eb1a4b0609577923eccb71",
+      "metaSha256Before": "78e910523245a6b4e900df39c05bf1c98cf279a03f6be9465bcc9384a8c6a38e",
+      "metaSha256After": "78e910523245a6b4e900df39c05bf1c98cf279a03f6be9465bcc9384a8c6a38e",
+      "imageUuid": "5be863c9-0183-4ba7-a603-2a496b9987c6"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050060/skill-104050060_2.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "f784c94363a3b4eea67677a2cad2975c2e1521c163e8579c85702a75602d56ce",
+      "afterSha256": "be885963fe466613ac56b8fe3de14a480fface72362872fc9d312a5d8318a588",
+      "metaSha256Before": "6b305bf597559d9e6b7b314b3f81685c1e6e30a3a56bc0d1621cd95fc3d8a565",
+      "metaSha256After": "6b305bf597559d9e6b7b314b3f81685c1e6e30a3a56bc0d1621cd95fc3d8a565",
+      "imageUuid": "c86e62ac-7a9f-4084-8a4c-7b1027ebebde"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050060/skill-104050060_3.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "5e8d8201b22cf9e054e9275488ceb4b7726489990a0754bf03bcc412dea1ab29",
+      "afterSha256": "b2fc807f28c29d5c433cda8d9bb0f282919d470ed723d2b73be7af58f2da205a",
+      "metaSha256Before": "3b81dd5c14732b5a4882f961d13d5b467f2d08d60023074131b69a0f2f7e75cb",
+      "metaSha256After": "3b81dd5c14732b5a4882f961d13d5b467f2d08d60023074131b69a0f2f7e75cb",
+      "imageUuid": "32845cd4-bf08-4100-88ad-db04f1d88ffd"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050060/skill-104050060_4.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "83f26d7f5b47321ee07acb6424a8c8c525325ac2e98bceb8ad840b0380f23f60",
+      "afterSha256": "4c5796be16f8b3da8c3acddc1de2097ab2f4709112d66a70964f4cb0b8c0e2b6",
+      "metaSha256Before": "c83c065453d92fdbf18d841947072aa62b6af6d0d8ea0928a20b8ad6fd6ad2cc",
+      "metaSha256After": "c83c065453d92fdbf18d841947072aa62b6af6d0d8ea0928a20b8ad6fd6ad2cc",
+      "imageUuid": "34da1ae8-5bdc-4ee0-9836-c43dc6cd5553"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050060/skill-104050060_5.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "facdd0ca811612b5aeacc55a00f260d83ab69cea2dbd3cfb234080afefdeb0aa",
+      "afterSha256": "2a9c0adc6bb0fce78ea7223c1a3fbe22c8ee806d3d652664651e0ed6920d9b42",
+      "metaSha256Before": "51c2d313a9c9e9f1655a43fb453c6758649f3571ef5d0907a2edcaf036f3dd86",
+      "metaSha256After": "51c2d313a9c9e9f1655a43fb453c6758649f3571ef5d0907a2edcaf036f3dd86",
+      "imageUuid": "cf7e4ce8-e935-4ee3-95bc-a2b764168ef4"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050060/skill-104050060_6.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "1ba1f7cb0aa0c0ea1e72b8ffee2d53c8c236500ff133b8694b6612d43da924c7",
+      "afterSha256": "a58621eb530793add2f23574aa9c43c9011e19f65a845bea659940ee766039f6",
+      "metaSha256Before": "79f971347e9167112aa911f06b17bb233df22ae193268daee3a1d95439eb0987",
+      "metaSha256After": "79f971347e9167112aa911f06b17bb233df22ae193268daee3a1d95439eb0987",
+      "imageUuid": "9b1fe9a6-b72d-465b-a21f-c47b9331eed9"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050060/skill-104050060_7.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "dd249753fba09c24dbc7729d17f6ebdbf8352436b78725ea360eebdab24bfc8d",
+      "afterSha256": "3ffea0ec29593b3cc572c5a97335d1e0b686b8acc08346a0b3d7f98198834850",
+      "metaSha256Before": "c62cdc739949c2f8f39d3f7f117ad15b107dbfe2425fabf67ceddcdedac92b22",
+      "metaSha256After": "c62cdc739949c2f8f39d3f7f117ad15b107dbfe2425fabf67ceddcdedac92b22",
+      "imageUuid": "8b5de182-58ac-40b7-80a7-dbad514d0a6d"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050060/skill-104050060_8.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "3e3586b6dca98f7cd2ca524af2fe282ad6ccec2752035fc672df6cba1dd151f5",
+      "afterSha256": "bef18dc109a4fab548f3ad2708800db663dc96957ceed89ba6579cad0b4f7c0d",
+      "metaSha256Before": "81115aa3d9a1c367e6f171bdd8beb1d5beb3261a9355efec37f1abfc00d82bdd",
+      "metaSha256After": "81115aa3d9a1c367e6f171bdd8beb1d5beb3261a9355efec37f1abfc00d82bdd",
+      "imageUuid": "4b002d14-97eb-4cf9-b0e1-d99836d447dd"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050060/skill-104050060_9.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "d731e6c2282c527a4a5680ac5ec1cfa6b34f216f1ed469e2c49e33cc4112c385",
+      "afterSha256": "a5dcb4a7474c76f37bcc11dae0c73bda34a1d1d395be2c95ed71ece8e5fa1ca0",
+      "metaSha256Before": "023da37502133e5792ebb6732bdfb75d819510f3b70b0180ca228d56f00f17d7",
+      "metaSha256After": "023da37502133e5792ebb6732bdfb75d819510f3b70b0180ca228d56f00f17d7",
+      "imageUuid": "a85dfe01-89f8-4b80-b953-359a88d053db"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_0.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "019e9c5f4092a48c96db91076744a949db890a5ed1421626985f3d8bd8b41cdc",
+      "afterSha256": "227d3bad01ff8677c63cefd425abd9a5f2413bfdbcc9f123e586580bc50b341c",
+      "metaSha256Before": "6a7efe814d79afc5221c5f8c10b8c416848e320505579e7991beebe674fc1bac",
+      "metaSha256After": "6a7efe814d79afc5221c5f8c10b8c416848e320505579e7991beebe674fc1bac",
+      "imageUuid": "98e2a579-defa-4251-bfde-51d3bee4e7d8"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_1.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "b5045137dcc948cde88d9ce1f2fbe6d410874ed23c56728de07974a6ed0a7b9d",
+      "afterSha256": "bbec80739819f9d9cc51dd4409aea146da88b8ae7e78dc3381b80df86d48db63",
+      "metaSha256Before": "a6c69e8783efa910e5b34d547527bdc08ecc1ec6b834e018b27661f928da41eb",
+      "metaSha256After": "a6c69e8783efa910e5b34d547527bdc08ecc1ec6b834e018b27661f928da41eb",
+      "imageUuid": "f8ff79bf-d38f-4dbf-89a8-5bad9c30aeb7"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_10.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "1d72612ae49e4df447295c3a3b7c23662d2d32a11285e1ef192fc5cb056fe791",
+      "afterSha256": "5f59c4aa6eb1ddf1304b06a4dd07a4bc606d93d750cec5b116f167c50767c9c6",
+      "metaSha256Before": "42370a843c882be1d7c53629ff8eb74c8a2c3a17a3f8a8ef5b7b53b7afdee162",
+      "metaSha256After": "42370a843c882be1d7c53629ff8eb74c8a2c3a17a3f8a8ef5b7b53b7afdee162",
+      "imageUuid": "83416c9c-98d9-4a66-9c6f-996f1ba3c044"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_11.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "af9d64e43e55613241ce63e52d0fb17459b0ae6acf53392d53d9ae23f5d72427",
+      "afterSha256": "fcc8f4379104e1de9976a1778e0bedaffde54d21d13d13c174820fc79f0f727a",
+      "metaSha256Before": "523fe9e98fd275e04b9d2f1b5d32e259dd3e9b912dd57ade1def8f623d53ff01",
+      "metaSha256After": "523fe9e98fd275e04b9d2f1b5d32e259dd3e9b912dd57ade1def8f623d53ff01",
+      "imageUuid": "5ad35133-8391-4f5e-acfa-178bd7245edc"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_12.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "3bb3c89002918296de9b8d3611df8ffba35789488c338e2504a4ea4b241cfb77",
+      "afterSha256": "88571308d663899be5b8569bf9110f32470805f7baef54e87daeff9f4d16e787",
+      "metaSha256Before": "75c059e16ba2d5421c3185de757af61f1de687fb8f668aa7d75cda5629d1775b",
+      "metaSha256After": "75c059e16ba2d5421c3185de757af61f1de687fb8f668aa7d75cda5629d1775b",
+      "imageUuid": "417a21bb-3ef2-4005-980e-19703dd824a2"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_13.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "674f43a3dba12b37d47065005662a7b5c3a09985133e9bc7c1a2f6aeea602d45",
+      "afterSha256": "eb585b8a52f03271be91c0762f04cf241b81f2e633719916094785036ff7a41c",
+      "metaSha256Before": "2f02bf3831453e922491b3a41604fa71e8f99d2340e56f5485302801e4091f25",
+      "metaSha256After": "2f02bf3831453e922491b3a41604fa71e8f99d2340e56f5485302801e4091f25",
+      "imageUuid": "3d65c3c2-5e0d-4a60-94d4-cc588277913b"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_14.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "959c1d3a81545061015063541b3d679bd4ead5f0a5d0010078f91091c705e405",
+      "afterSha256": "fee52d9f9b739f930117febf47a6a1d6ac56cf2d8404df59f2deade716fe01bb",
+      "metaSha256Before": "09f4be896d69be6e009e4154c68dbd745a41b193b1785b1be78280ee0dfc607d",
+      "metaSha256After": "09f4be896d69be6e009e4154c68dbd745a41b193b1785b1be78280ee0dfc607d",
+      "imageUuid": "b02b0d2f-c30a-4485-bdbe-9fca7c9d607b"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_15.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "59bc5ba2419e11bab1e5dfb9b02a8142a2826a459ae9b2a92f68a38667c2e94f",
+      "afterSha256": "ac9f9295d960d869ec06b544f6fdaa6d44718e712a45a40a2812388c72bd58b2",
+      "metaSha256Before": "7c67ffd57ba131c12e0954cca9eeaf46d6442c500536d576c5825ee7cad4adae",
+      "metaSha256After": "7c67ffd57ba131c12e0954cca9eeaf46d6442c500536d576c5825ee7cad4adae",
+      "imageUuid": "9d35e747-1a2c-4e0a-98be-35a03e9e5828"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_16.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "3fcf1a780b9ca340031d043334cb32ee79b8a0725340521f08ccd67c47f20554",
+      "afterSha256": "04cc9794785c77721c8e83d6a038b8904643ca42fdf771c67456e3f1e2b7df1e",
+      "metaSha256Before": "2b074a149ee0115309a5d55374aee6c4c06e572dda2828d9c400ac1156ae7e82",
+      "metaSha256After": "2b074a149ee0115309a5d55374aee6c4c06e572dda2828d9c400ac1156ae7e82",
+      "imageUuid": "6a08b3b4-01ca-4185-b8b2-bab3bc318e09"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_17.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "5ae7612f83c2d9457007ca1d5456c9c4ed7e4eb4e013336623b8bfb212b54d5e",
+      "afterSha256": "794f5d714108af5a01f842b4c9b4cf741978a3eba02e74a258004bebfa8004c2",
+      "metaSha256Before": "5ed9311a37b39dd09786c87ed4d0c2ab90395aac766326635574bd4d4a4d69f7",
+      "metaSha256After": "5ed9311a37b39dd09786c87ed4d0c2ab90395aac766326635574bd4d4a4d69f7",
+      "imageUuid": "a6f3f0eb-36f3-4a77-9f6d-e368eec8c68e"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_2.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "3101682128eebdd5cf9e95009b50985bd3474816a59139dbfb2926b692cbf490",
+      "afterSha256": "691fc7d434d25904b74e26b2945bdc050ef880ef4951dcc93de222f997f80704",
+      "metaSha256Before": "706e39aa343126e6d2608e399babf287fb77d1277020f5c195d70fd747a0af2b",
+      "metaSha256After": "706e39aa343126e6d2608e399babf287fb77d1277020f5c195d70fd747a0af2b",
+      "imageUuid": "6e0605b5-9c59-470e-b358-98482b2e27aa"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_3.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "4abd3f1f43b560657d1e5fb2d8c23af104e7e26c9c58e07b1d19d80900f1e427",
+      "afterSha256": "42c2d9715f56ad7fee059fd98dc7e257aed67de0984b23a7b03c4d7000b0fe4b",
+      "metaSha256Before": "f5078cbed51a3c463a40f4f9729844c14dfadbb50e8af24b6f1ca04184cb347a",
+      "metaSha256After": "f5078cbed51a3c463a40f4f9729844c14dfadbb50e8af24b6f1ca04184cb347a",
+      "imageUuid": "05b1f81e-e3ce-4968-8633-3c1c46f3fde8"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_4.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "30e872105be0fc726f42760629f1492a00eea668e2176cafcdd9a34149e462e2",
+      "afterSha256": "78c5a87f5f99b65c192389a93162505996daf51db473411801bb123527e52c17",
+      "metaSha256Before": "060259d21b0e0011cebb61f3f028857dabd1829bc2210cb85770438ffbf0dcd6",
+      "metaSha256After": "060259d21b0e0011cebb61f3f028857dabd1829bc2210cb85770438ffbf0dcd6",
+      "imageUuid": "823b90ec-1445-483a-ad48-462bd29397bd"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_5.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "c4e2861c03895c9149edcc407115fd4f7ebbae812c0950a8aa3432fe1a41b5d7",
+      "afterSha256": "9bafd85bc6ee38f90a6c52db3f0831e33586aa9a27e39dc3ce7e7557bd0ba6d1",
+      "metaSha256Before": "b89e5da61a362acbe09fb4fed2a82ea6182242998bcc1d49c408a7de4fd2a8fa",
+      "metaSha256After": "b89e5da61a362acbe09fb4fed2a82ea6182242998bcc1d49c408a7de4fd2a8fa",
+      "imageUuid": "5a87bf88-a432-49a5-8a5a-70bb30b87754"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_6.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "155f74a13fe675bedd68c626e049672e2a921c06300c549e2006ac2a4641465c",
+      "afterSha256": "2a8fb1024b55309ec5b6657b7b4194a5a5e298bbb77092c761b767d07dea44e7",
+      "metaSha256Before": "c74e4c52498bf73694dc58660d435a034fba03102c46b0b0fcde79afc8a560dc",
+      "metaSha256After": "c74e4c52498bf73694dc58660d435a034fba03102c46b0b0fcde79afc8a560dc",
+      "imageUuid": "2c7854bb-9a94-4328-aed9-4d263a58fbff"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_7.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "666a6c6e4b0ad202c5b0a055f932957ef68b74ae2b9514b28c47a1b44273eccd",
+      "afterSha256": "08e824fca35e4b90d08ab19b29d354f664274b69a0b0ad6c2195f108c7697044",
+      "metaSha256Before": "421a077a0a1c94f8fe21b58c1f8fc3e9062d6ba7bc308683a5d916c148b02e58",
+      "metaSha256After": "421a077a0a1c94f8fe21b58c1f8fc3e9062d6ba7bc308683a5d916c148b02e58",
+      "imageUuid": "7cf4086e-6199-4149-8b83-d491ae10796b"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_8.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "59ffe4826b0ac43691ea3de1d07d950024f9417079bd0c3a76bcf350c3d071fc",
+      "afterSha256": "783b06ebe477c4de2ec82e14896164fe53ad03f5a31013c8cf1c3d4998f54d8b",
+      "metaSha256Before": "ae92c55486046e4748b888513ba24e026aa2ce26a24359b7e8574b5ba0298c65",
+      "metaSha256After": "ae92c55486046e4748b888513ba24e026aa2ce26a24359b7e8574b5ba0298c65",
+      "imageUuid": "7d6be60c-a9d7-4fda-b510-490023939e22"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061/skill-104050061_9.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "7fc3241c552a8be555b61fe3b33c5e15c241848d9ea8e4c3e8522e2be76c1f9d",
+      "afterSha256": "99e300518bb83c087a43f6d9c568b576fbb21c6e325fb6959d05cb0ab145d10b",
+      "metaSha256Before": "5d432d63c024bee69c8258c712f2811fcdaa6a0c109c76b554015b1f7038e256",
+      "metaSha256After": "5d432d63c024bee69c8258c712f2811fcdaa6a0c109c76b554015b1f7038e256",
+      "imageUuid": "75c21a0e-4c27-4f19-b937-84eb283bace5"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_0.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "28762dd9da8560a47f120690c0f1c38c68ad44496b17dcb01cde304ed1b7ddd8",
+      "afterSha256": "5187755e56ac60ac51db2d86828ab91b166051fd7b8a87b44e7b47993afd0c01",
+      "metaSha256Before": "2c7d4a7ea67be230d96e04c842c7751a9889d01b0e34ff98714f26bf82b7e4a7",
+      "metaSha256After": "2c7d4a7ea67be230d96e04c842c7751a9889d01b0e34ff98714f26bf82b7e4a7",
+      "imageUuid": "db884b9b-12bd-4fe7-8596-30ed463bebd4"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_1.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "61f7644771a030941a95d035a0b534b7b3a042b86587ed1bde3a7b01c4e43ad2",
+      "afterSha256": "db3dd186da27fb4cf7604da9e7a5d727602009f7e4c6f258c1b828a1b5928de1",
+      "metaSha256Before": "b5a02003e8be2c94275e41c660b0db3c5a168339a3b63281d263178fd6e3ab7c",
+      "metaSha256After": "b5a02003e8be2c94275e41c660b0db3c5a168339a3b63281d263178fd6e3ab7c",
+      "imageUuid": "9be76b39-93d3-4d61-9e81-aebf63c7c409"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_10.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "5051b9f4221127f8cc36cecd3eeeeeb29bdfdcb3a52efd981eec09b8b51e2f6a",
+      "afterSha256": "5928e043f0e039cccaf795a5b9a848fcf7ac77dba82732672ff551430d87b72f",
+      "metaSha256Before": "eac7a655ea0a9f22cd6cfc7491188067d01a3a47da5580d9a47439c3e467c730",
+      "metaSha256After": "eac7a655ea0a9f22cd6cfc7491188067d01a3a47da5580d9a47439c3e467c730",
+      "imageUuid": "f7698c53-11f7-495c-b1f8-c8895d45b81e"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_11.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "46347054fda76393cd66c4634dfbb3b586d4605cf42e5466abbd9c068a800a3a",
+      "afterSha256": "14caa9e588ba749d91af38b5dc27cf36ff4d6f4b7f89a85cd8a01f0436991d3a",
+      "metaSha256Before": "1336b7e9d57d4075a79025bc363704295e4ee7065b8d6aafacd8ce261a5300fd",
+      "metaSha256After": "1336b7e9d57d4075a79025bc363704295e4ee7065b8d6aafacd8ce261a5300fd",
+      "imageUuid": "645784f6-f7e3-42c5-aa3f-14bc0addc990"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_12.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "1f6e1e55709e813ca8a73055426b462ce27e7d8dddc88dfa39b0727879ff65f1",
+      "afterSha256": "ccbfb6801dcaba8534e649dd1e79b1da34cc4e08f16b59218b3d7a11f4e7c521",
+      "metaSha256Before": "d1537f8ae09434fcf8fcfebec9ddef5aa553ceea2444e36d692632a1b1cbd4f2",
+      "metaSha256After": "d1537f8ae09434fcf8fcfebec9ddef5aa553ceea2444e36d692632a1b1cbd4f2",
+      "imageUuid": "96ced75e-fc00-441e-aa47-596ef0012d45"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_13.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "02a20e78e42b0623b621c84fe2ac26a79d129a35c7a4eb45c0bebb4217a6c0c8",
+      "afterSha256": "3280677ce5ecbfa9be88ad6c5e2f9260e4d140333bec13762d4be1171b66ea34",
+      "metaSha256Before": "9488b0a07f1efa50e8938cb7b4978444dc9260567d26f9ca94ed01341aa4e579",
+      "metaSha256After": "9488b0a07f1efa50e8938cb7b4978444dc9260567d26f9ca94ed01341aa4e579",
+      "imageUuid": "596be55d-6f64-4e41-a66b-e96cc47e3eff"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_14.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "d86c02c80028df0b8dad5775395c7b2c11b545f3f30c98a39119d2bffdae1e5e",
+      "afterSha256": "7320dc0789278502456357c34e847aa010c5009061e1b73adac9ce0d0d88dc18",
+      "metaSha256Before": "618dcfd458a308bf032099e7f9db5c13331f0315bf935a5ee3285b61ba82fb6a",
+      "metaSha256After": "618dcfd458a308bf032099e7f9db5c13331f0315bf935a5ee3285b61ba82fb6a",
+      "imageUuid": "56378fad-228a-4ece-aad4-d4724922f55c"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_15.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "6f2efd1214d3defd3790b1231f21882b443d177a145af3f238ead8f6dc7e57a0",
+      "afterSha256": "8e21129c81464be8d92cb55e32a1759e3aaf095912e9f995045cad60bda59b51",
+      "metaSha256Before": "53155992bdae21ccdd37620ceadae92cc1ade8be667e855dd093a799fcdac8cf",
+      "metaSha256After": "53155992bdae21ccdd37620ceadae92cc1ade8be667e855dd093a799fcdac8cf",
+      "imageUuid": "8c90a848-f33b-492e-952c-3eabf9428830"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_16.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "aa6e36456348406cc25f929eea08a60b5e2998fd5182df67cf8dfb088f38669b",
+      "afterSha256": "feeb5fa0fc38bb91a122e45f6f9fab7d1a480d994e335d959b0ace1911bead5e",
+      "metaSha256Before": "3ce03e6267c01f9eefbfe8a44bff391f4c4f9c9953ee8290127fe4e752c187bd",
+      "metaSha256After": "3ce03e6267c01f9eefbfe8a44bff391f4c4f9c9953ee8290127fe4e752c187bd",
+      "imageUuid": "7a3e0b59-4b3a-4b41-a878-cca37554d114"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_17.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "7dcdd81987555422286fa2d8c29dc83bc657d5c0ef4ab7b7ca51a3f3d438657b",
+      "afterSha256": "51e9bc7a5460dbfb46e615236348a9fbbdfa9c6db6b217220d2eefb2a55f4ae6",
+      "metaSha256Before": "84f8ecdf50e32c10937e7747ea57a05308b636fa62389b2cfc1dbc8c116515f2",
+      "metaSha256After": "84f8ecdf50e32c10937e7747ea57a05308b636fa62389b2cfc1dbc8c116515f2",
+      "imageUuid": "c2f76106-d3e1-4fed-b2e0-c4be6b601197"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_18.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "11f56369c73b4d15a493dea29ebf1d3cdc86d457cb13623cab4cc6bc9ac0e439",
+      "afterSha256": "76f66d0cfa0379587b3b2b8dc832bc57fcc25925685ddaad2ea696354fa87e3f",
+      "metaSha256Before": "c46a22142ffdf72195e02707f1f8bb026ac1703bb57ed5f25f7058e9f73a1c5c",
+      "metaSha256After": "c46a22142ffdf72195e02707f1f8bb026ac1703bb57ed5f25f7058e9f73a1c5c",
+      "imageUuid": "441f8b9e-ad7f-4082-b01e-e93480df22e4"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_19.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "10b7830e8c9505ec70d5c1fe2d6040618628553984d3d25056fd6f72b48e1f30",
+      "afterSha256": "e0014f4c28fb6a49c2db2d3ca01d6ecfdbbdf392a7945437743774b2db22244b",
+      "metaSha256Before": "0dfac7faede0aa9291dab8d80eb64fce49500739eccdd34226725520bd0d490d",
+      "metaSha256After": "0dfac7faede0aa9291dab8d80eb64fce49500739eccdd34226725520bd0d490d",
+      "imageUuid": "8154c993-46f3-4097-b84b-bdb9fa082f31"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_2.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "9b809aaf43cec0d53ea96f69f608d3eb604f4e9a77bc01f0d490038bcf0380dc",
+      "afterSha256": "805a82c18ec9b550201ea2a47bd127aafd63be7bbc7dd1977fd505cb4a3b21a0",
+      "metaSha256Before": "50882800c5bb50f4e8b0d4bc43ffe51fc48f8b2d446df5dd4d43ea82fbdd48f2",
+      "metaSha256After": "50882800c5bb50f4e8b0d4bc43ffe51fc48f8b2d446df5dd4d43ea82fbdd48f2",
+      "imageUuid": "07bf6fd4-79e9-4c14-98d9-5577a1dfbcba"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_20.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "f737a0b23e8cbafff1483887b546bfd569d574ca0131cc951fb0c7a1d6ff22e7",
+      "afterSha256": "72a1b982a73036e77b8b4e431c096addd6b28871c8deb2fdb299c01ac7b8d993",
+      "metaSha256Before": "7fe98b29446166396a61ba08c7053e00fc84e4f502a5aee3b413a9f3b032dfad",
+      "metaSha256After": "7fe98b29446166396a61ba08c7053e00fc84e4f502a5aee3b413a9f3b032dfad",
+      "imageUuid": "21b1a832-d7f0-49a9-9bd7-f53473240087"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_21.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "3ae4b0392b5f6a8d6b801c52440d282818c68a8a7853be8917b027f5624dc56f",
+      "afterSha256": "08a47af39a4882c74b68c18827155de2b0b6cdebc76923f34619a243b581128c",
+      "metaSha256Before": "d2ec214767a4b63b23869330f0649db397a10fdff2a92956c8b43eda5552b46b",
+      "metaSha256After": "d2ec214767a4b63b23869330f0649db397a10fdff2a92956c8b43eda5552b46b",
+      "imageUuid": "ee54ed9c-d3d1-479a-b5d6-0964ae0b7053"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_22.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "ca1b383270e51729442f38b4ca8cdfad9ed69a68be29848fc43f00f80d86e998",
+      "afterSha256": "9cc65b59c50e78cff599850bd118b2b9edd675c6fe4129635d29dd3ac08dd93d",
+      "metaSha256Before": "2db4c9cf032128f9c57641ffbb38248e3c22ecfdc497c55f93140acaf920c4ba",
+      "metaSha256After": "2db4c9cf032128f9c57641ffbb38248e3c22ecfdc497c55f93140acaf920c4ba",
+      "imageUuid": "91b64054-ba87-42ec-acc5-42e56d2d1618"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_24.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "f505fa5c0fbcd3310efd45345d3dcb514c807da3679706a4a1d99c8a1a57759d",
+      "afterSha256": "f6960c181eca542a32948d612dd597a60c695b43453d769095cd286f57b87d63",
+      "metaSha256Before": "ca752f8428749f8a0b1bcfcd8bc86ffa9a887b0b8fb8efb7413febb944e886b8",
+      "metaSha256After": "ca752f8428749f8a0b1bcfcd8bc86ffa9a887b0b8fb8efb7413febb944e886b8",
+      "imageUuid": "e556d5da-7323-4214-8015-7b835e600bc5"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_25.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "c39ec547b5ab5b96f64265e38661a79f87d6831527ad6332829dc9b3926c87a3",
+      "afterSha256": "13338ccab91950802ff79f4b5dd165d8f3585febbdd89476511a9c5f94098ced",
+      "metaSha256Before": "5a63433570186431f099b3c47a6fd80f055be992a89c79dac67a5264da21517b",
+      "metaSha256After": "5a63433570186431f099b3c47a6fd80f055be992a89c79dac67a5264da21517b",
+      "imageUuid": "4c7fe083-3d9b-4ab0-8433-6c53b9ec84a2"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_26.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "51616965b5bdf5b3570f0b3a093e3758196d08fe0c2f8920af441384df87fb54",
+      "afterSha256": "02b9ac206e554e9133316e53af3ab51304e0390bc65a93688b17762171bf0d9a",
+      "metaSha256Before": "942c8c4861a87dc81744d4a673a32191885316042e64f0d07c4d6a66d3a2532b",
+      "metaSha256After": "942c8c4861a87dc81744d4a673a32191885316042e64f0d07c4d6a66d3a2532b",
+      "imageUuid": "e5c52e6b-b766-49b9-abd9-07f5eec7fe0b"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_27.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "757195ea07418a005ad7c64a3b264e19a4579bc2cba622325f8fd9b75260f7cb",
+      "afterSha256": "2aad2c87029d2f10ae9390e6f0cd23dfc1b7024cba94802050824d9edfa8b1df",
+      "metaSha256Before": "7138d9f2542eb3c6cd797f9fef267ee6af84eb98a6bb2c38e2e290c98bc54401",
+      "metaSha256After": "7138d9f2542eb3c6cd797f9fef267ee6af84eb98a6bb2c38e2e290c98bc54401",
+      "imageUuid": "41781249-c5fc-4faa-bd11-3e891e1b843a"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_28.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "c81b9fdf001a3fcca9ec3a5f0ccc880e99916942cb545b63878c80992abeedce",
+      "afterSha256": "a45b75f98caec78c956916ca8416efe1793676df5bcd1aa48b3a2cac3c8033f5",
+      "metaSha256Before": "e3564face75a88c0ceb7e830cee04951099316a544cacfe45800d66a3810e90f",
+      "metaSha256After": "e3564face75a88c0ceb7e830cee04951099316a544cacfe45800d66a3810e90f",
+      "imageUuid": "c1805c89-6713-43a1-b4c5-1956cf25a872"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_29.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "8c71f302533713ad3e52fd7b5bb7d121cefc7da847db1b701494b1036361eeca",
+      "afterSha256": "b27cf54d8d3df626f57ac3e04e9168daf7e1e4dfed4f41b249bea41cca171dc4",
+      "metaSha256Before": "31179fc4861eb0ce25a9a0be8832de273ba3db0a70e5c14f19d2f79b3366d89f",
+      "metaSha256After": "31179fc4861eb0ce25a9a0be8832de273ba3db0a70e5c14f19d2f79b3366d89f",
+      "imageUuid": "46021556-0ad8-4695-a874-579413bc2688"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_3.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "90e742bc5096cc0413d7745253b7b3b9f286c29181c51e1ebaa0c76ed3c0eb7f",
+      "afterSha256": "17ad654636e79a6bbfb70b7bf898604c0865dc5c8e6cbd1a2707dd4bafebbad2",
+      "metaSha256Before": "43636fe61c1ab0c1547e299675c9bb01ac7a47120b906ec1c3a2b833d3899692",
+      "metaSha256After": "43636fe61c1ab0c1547e299675c9bb01ac7a47120b906ec1c3a2b833d3899692",
+      "imageUuid": "2646b3fe-9818-4394-a9a3-9807fd811700"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_30.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "489195c918fa356777c2936ecdcbabff2c98f2edb48a8efc1b5ede4aa2c630b7",
+      "afterSha256": "9dfafe54c4af5e6dd2e339fc20a6507f9c1f827f45b40b7aeee7ff67cc9e87b6",
+      "metaSha256Before": "0b60dc57b8397e611586039a1ec4603b66180e3a59238f2eb9e5e839917bf027",
+      "metaSha256After": "0b60dc57b8397e611586039a1ec4603b66180e3a59238f2eb9e5e839917bf027",
+      "imageUuid": "21b1b228-b456-4655-ba59-e04a7c127adc"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_31.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "0ba44f650ea3134b363dab7313c4afd828bfcd041abca3e03e46b4635ede745e",
+      "afterSha256": "be368265510ff4a7530be6d701db86fb04b57bedeb8204ac644870854a04ea7f",
+      "metaSha256Before": "dc24251052a269d06b39fe8b75df68f28f7be50c82c4d79c093e8718352f35eb",
+      "metaSha256After": "dc24251052a269d06b39fe8b75df68f28f7be50c82c4d79c093e8718352f35eb",
+      "imageUuid": "fffda46c-e2bd-4433-81d7-8bb38015568a"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_32.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "70e61c2ad8e4108100c9890af00d276682ff4dff1c5fcc21953022c84733299b",
+      "afterSha256": "bd942901315d2465d7968732d379873fafce6668ea96c661af424b448d1a6737",
+      "metaSha256Before": "aa6bf344f019c3bd6e5d04509ee06a2a7e6fa1f7148072b75de86e101971cf76",
+      "metaSha256After": "aa6bf344f019c3bd6e5d04509ee06a2a7e6fa1f7148072b75de86e101971cf76",
+      "imageUuid": "f0f4ffca-d317-4d9e-bbb7-37e9b9659f21"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_33.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "e28612b323164cd645be305016274f8ab2449f5a40c251a25882826bf4476517",
+      "afterSha256": "77d2d97fa726173a72fd7309ed676ad4421a46cc8c4f49246651710910af419b",
+      "metaSha256Before": "08194bc04dd554149fffffef21797443406316ee458b37c2e01db2ea3afe2b35",
+      "metaSha256After": "08194bc04dd554149fffffef21797443406316ee458b37c2e01db2ea3afe2b35",
+      "imageUuid": "5c858c0a-e28a-4324-9f49-91ebe78dd3d4"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_34.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "64f1b4fdc655e5431aea8299d4fcccd33df0536a9abbbb8629d2f12396a714a9",
+      "afterSha256": "e12ac804a068cadf94ec65f5092d2893f1beb3b4a929ada01baf9c7d991de28d",
+      "metaSha256Before": "270a869e550f521063db76229f9abe28c2294b0ec5276f44bc723dc2c325f525",
+      "metaSha256After": "270a869e550f521063db76229f9abe28c2294b0ec5276f44bc723dc2c325f525",
+      "imageUuid": "f0ff83d2-ca33-429d-ae95-c7fd38dcddbc"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_35.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "d09855d11ae71badd305ea875ff3f121949f8985d25398fdec4a1d2fbd0ce75c",
+      "afterSha256": "be42bb0f46a357f6ff30880a230b677c60bc1d4abaa4f5fbe05f22a96152bb0b",
+      "metaSha256Before": "f9b692b14755db3cb6088e0b822a33314e24eb576a405c6fd9969ade42843707",
+      "metaSha256After": "f9b692b14755db3cb6088e0b822a33314e24eb576a405c6fd9969ade42843707",
+      "imageUuid": "f9efc4fd-7137-4532-a3f6-d46f0f5759bf"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_36.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "2332c17099c2f105decc74d58fefbef92ad321c77460acbad346c8a37c6911e5",
+      "afterSha256": "443b07b0d4bf7e439f5a4c9c9db21c476e305f362d9ff94137a1276d87366642",
+      "metaSha256Before": "b3f81c37ab47b0d1eae6e0e5c95cd46a0a683b6539dedd2bf0bf69845c5083db",
+      "metaSha256After": "b3f81c37ab47b0d1eae6e0e5c95cd46a0a683b6539dedd2bf0bf69845c5083db",
+      "imageUuid": "73b747e7-6351-4766-8fb0-26e0270d5d5e"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_37.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "18a0e489e5a9729326e5fcf8eb2202cb57b5d2e4777a976b28db006ed1c3f19a",
+      "afterSha256": "f49670bc6b8ecc5fcf49f61087c5334989b86588ed5bf55b748a5ed6af1b5fc0",
+      "metaSha256Before": "3cce2328ff90321cf0869b619bbcb9cbdc0bada83816e159e478ebd1956210f6",
+      "metaSha256After": "3cce2328ff90321cf0869b619bbcb9cbdc0bada83816e159e478ebd1956210f6",
+      "imageUuid": "dbcd0b23-36b0-4a49-bea1-cd4d6b33150c"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_38.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "032c1ec401e20b23a8ccb4ed1c17c0bf010b8b888a813cebc898403bcb5e73c1",
+      "afterSha256": "e99f8f03783fe7b0c7fd16edf9b8862c53d7af78ec60d5bc0100df78fe669b68",
+      "metaSha256Before": "01d0e0d7e2fe488d5754c6eb39128ab60feed2c51a24b0e90d1534a9bfc4918b",
+      "metaSha256After": "01d0e0d7e2fe488d5754c6eb39128ab60feed2c51a24b0e90d1534a9bfc4918b",
+      "imageUuid": "2bd188a6-8691-423e-8024-86fddcefc0a6"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_39.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "664408da7447a9be7e942f525d2ae76314f4a4f58ea44fc649c8f40b8246f256",
+      "afterSha256": "1e8ad5d08cb22d8001ada2dc1b6478cafe53011b74689bdd756e16e62efef286",
+      "metaSha256Before": "4320d86a689bad924ce5ad8fe45a127800447f426a5bd8296a0ab782aca0cdc5",
+      "metaSha256After": "4320d86a689bad924ce5ad8fe45a127800447f426a5bd8296a0ab782aca0cdc5",
+      "imageUuid": "3eaeb34d-7ecf-40c8-ad65-5ab221c9d461"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_4.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "7688ccc49912bf2e01445f84eed98764725811c8de8c10330a111aa2a9559acf",
+      "afterSha256": "18814a3f03b1f09fe135e9b1afb7a10680448cc13493b7788c4aaad499bd01ae",
+      "metaSha256Before": "a3dcc518d40aa3bc1e621b7d1b0119f7d78ae8549df5926c614682be8167f3dd",
+      "metaSha256After": "a3dcc518d40aa3bc1e621b7d1b0119f7d78ae8549df5926c614682be8167f3dd",
+      "imageUuid": "5b8037ea-58c0-4c15-b40c-8b121ad85f32"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_40.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "8a68decfbf616ba8c42da8cbd448827df8c7bb058e65a5a1d7faf99fba295ee1",
+      "afterSha256": "b046c7548bbd770e5cc8bdd42175fc49fd12505ccef1b9464267551b69c9a9b8",
+      "metaSha256Before": "531cf5ee0f562bc7ee46e5eed9dd6428fe2baaa144d71662b55718a889cda8c4",
+      "metaSha256After": "531cf5ee0f562bc7ee46e5eed9dd6428fe2baaa144d71662b55718a889cda8c4",
+      "imageUuid": "25df894c-c93b-43a9-8804-36eea101ad0d"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_41.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "d2320d0c7489ed378a78eea7e99eb9230c9d6fe62ecf7604c8951a357c0ac69f",
+      "afterSha256": "e10fac04d40d5000016d14a9826e7854209b91c4dda8301b3d4bbbcae6344e8a",
+      "metaSha256Before": "27c72ce392fb796823a82af9f11b7df74e4a15c486ecc89fe4056c53c2059300",
+      "metaSha256After": "27c72ce392fb796823a82af9f11b7df74e4a15c486ecc89fe4056c53c2059300",
+      "imageUuid": "e90a1be1-3e65-48b6-9d1b-711a695cd1a6"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_5.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "560d051e18c661aedee5a8c05ee9497f1b1748c048a576070b450e72837e7a9d",
+      "afterSha256": "d3480e06b96975319538678c0975383d282f728bc5cdb16d7053c6dfd029e64d",
+      "metaSha256Before": "95b24b3437f8c1d8a6a040ebdb0fc5a5d5321689119c82396298ebb867d182e3",
+      "metaSha256After": "95b24b3437f8c1d8a6a040ebdb0fc5a5d5321689119c82396298ebb867d182e3",
+      "imageUuid": "2ddde032-2a37-4547-b6d3-baf74f5e585c"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_6.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "c845e08ddd3c27e8240f16ff2c46dcf1352f888d9d6faf35509fab50f787c9b1",
+      "afterSha256": "00261527b0a2837ab9427fee8294292dee4e92f115a23eb51e19013a57553277",
+      "metaSha256Before": "3a7806b38dd80f5cf6b64a35a19e9fb52ae4a15efa78cba271c165e83316a585",
+      "metaSha256After": "3a7806b38dd80f5cf6b64a35a19e9fb52ae4a15efa78cba271c165e83316a585",
+      "imageUuid": "c28a5311-9a50-433f-a914-18491fbcd5a7"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_7.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "2d9cb129847edf5e8300a26eae7145c729849081eb9ad0884184e7a40462872b",
+      "afterSha256": "ae3349cfaa56d886cee81f1a2a2a75f627d486d2b008eb88693a0cfb04a69937",
+      "metaSha256Before": "79d76115e503968f4aa013855b7683ff85a6d81a63dfe56f99315dcbd4736401",
+      "metaSha256After": "79d76115e503968f4aa013855b7683ff85a6d81a63dfe56f99315dcbd4736401",
+      "imageUuid": "7d6928f0-e1ed-4ac6-a0c6-7db74cb7bb28"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_8.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "fb51c2394eef37e6b6507ca3325fcd6f657adc590593cd247feb10dfefc529a4",
+      "afterSha256": "2820edf23a99097df31a7d4ffe1c1c6a9fbffa8314b53b35129bb090eb0c7d69",
+      "metaSha256Before": "04f6c08576438bc7468550a8226e46e8d68685df4f722412b0bea86b13cae093",
+      "metaSha256After": "04f6c08576438bc7468550a8226e46e8d68685df4f722412b0bea86b13cae093",
+      "imageUuid": "16557266-3c70-445a-8d89-d3b169f52c59"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050061-1/skill-104050061-1_9.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "23a146a1f34d99eb842ddb28147d20b0017603656ecce625d81a8c31a9c32bb5",
+      "afterSha256": "0e21816f6e3ef0f6e73d2ce784a08c7e67c49fe918f8212e1948807170d48446",
+      "metaSha256Before": "c02c07109aa4d7b7c7bcbe3887a468a2b15b1dcf1663429441e251618b2051ec",
+      "metaSha256After": "c02c07109aa4d7b7c7bcbe3887a468a2b15b1dcf1663429441e251618b2051ec",
+      "imageUuid": "b78ab062-fa1f-4928-bb9a-99312f3eb7ba"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050063/skill-104050063_0.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "11dd7fd3da71ffe648728278214081b113277969fe04e5dd5675351c8d031f38",
+      "afterSha256": "92a3b2c2afdf7727ce03b17d3413ca3ff2c926c1cbd395e8bce09302a2b8b9a6",
+      "metaSha256Before": "3b90a07f706a7dbffdffe15e192f1a27dabb3ce53bad69156c0dfa81f3e75de3",
+      "metaSha256After": "3b90a07f706a7dbffdffe15e192f1a27dabb3ce53bad69156c0dfa81f3e75de3",
+      "imageUuid": "237221d4-82be-4a42-b132-dc88ce491b66"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050063/skill-104050063_1.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "3816d57862c06e060d52b8d0375d52b6b39014b110bc0cf69f2dc2acfe2cc52e",
+      "afterSha256": "d36eb7c9d5b8abd7045266f2c908405ed2a0fce5570ef864823a3aeb6df7d4f2",
+      "metaSha256Before": "6b2e1fe48e7553c17bd6a1a59198d0d78a647fb010664faa71f840e01e0c6883",
+      "metaSha256After": "6b2e1fe48e7553c17bd6a1a59198d0d78a647fb010664faa71f840e01e0c6883",
+      "imageUuid": "85a29f81-7b0f-4615-bedb-a43750bec6b3"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050063/skill-104050063_10.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "80098dba1aac55f26571bb945df777b3359a7d94a07cad9336a0ba67980da9eb",
+      "afterSha256": "108989217ff0acc0bf28ff5079e86f32ad35c1f94459dc72946326a3560a8e65",
+      "metaSha256Before": "a421191e12cf551957d3eedc4fca123230d21b3a60112810fb4a40feefa69432",
+      "metaSha256After": "a421191e12cf551957d3eedc4fca123230d21b3a60112810fb4a40feefa69432",
+      "imageUuid": "8855a917-2f27-4211-ac74-e80c06b9b18f"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050063/skill-104050063_2.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "53abf864879a20be45dad7b9567a0bd4791482e80273834f1f69eb7190a255e2",
+      "afterSha256": "505b8f6546c6c1261885f19d3b2858c330c898554d6246b927860bcc28f7f8fd",
+      "metaSha256Before": "d82e2831cc8fb4221a2450febf315ced2b3e6d4b02a9010c467ee08a61f47e29",
+      "metaSha256After": "d82e2831cc8fb4221a2450febf315ced2b3e6d4b02a9010c467ee08a61f47e29",
+      "imageUuid": "0e258dc6-f90b-4660-82a1-821633a17c7c"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050063/skill-104050063_3.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "b500fa4ddf94d4f9ffa7f3c034221ee30a901f69f1932351fe42e1d97601ca43",
+      "afterSha256": "f492275332a08dd3dc533d2c247c7c1178745e58aa58b4e7ad421a24e0e087ba",
+      "metaSha256Before": "558499f173d2b8624b9c9f759b9449e81e6bd4d1338cedacd3546d49b689d648",
+      "metaSha256After": "558499f173d2b8624b9c9f759b9449e81e6bd4d1338cedacd3546d49b689d648",
+      "imageUuid": "9c2a47c1-7c27-40e8-92c1-aa19c1cbd37b"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050063/skill-104050063_4.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "7ec97eb1519fd8396371fb57a01092c2bb57383e309eb733c39d9a282dea5d22",
+      "afterSha256": "bde07a8681b809f4f7887a368f8ab595f7d72f860b427885bf12e8f26158ac78",
+      "metaSha256Before": "1c39bdf624e30c9e4a22845b5787cef4c1e3f5d2d8d9c18b611eed43067c4d02",
+      "metaSha256After": "1c39bdf624e30c9e4a22845b5787cef4c1e3f5d2d8d9c18b611eed43067c4d02",
+      "imageUuid": "6b8846fc-62fa-46f0-8c1e-0b2bd519943e"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050063/skill-104050063_5.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "91fc643ed82ff38925373ae23124ce3cad43835b85c0310a936ddda6e6ff1c35",
+      "afterSha256": "c44499d66cf743840b3b0e993b0ac88ebe6ca63c259bf66657102f3b9f56dc69",
+      "metaSha256Before": "270d7dfb5a1be760e4cdd226fe2e444f9de72ce1bd93b264ff453aa48e3b2b8d",
+      "metaSha256After": "270d7dfb5a1be760e4cdd226fe2e444f9de72ce1bd93b264ff453aa48e3b2b8d",
+      "imageUuid": "e197c651-3b54-4486-85ed-ed289b00bd08"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050063/skill-104050063_6.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "851b96f31c9cb41070d80bedc12f6326c2693ceb266a97dcd5c3342d6ef9307e",
+      "afterSha256": "e0b0189b0026a25e6b91556260121b891872c881b3caf215cfedd3c6ec788a63",
+      "metaSha256Before": "b8edf0b95af59d3faa3fcbb91d7d05dc416362a094f4b4b007a710af08530826",
+      "metaSha256After": "b8edf0b95af59d3faa3fcbb91d7d05dc416362a094f4b4b007a710af08530826",
+      "imageUuid": "3e409698-6fd1-4280-9e6f-2baa6572e207"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050063/skill-104050063_7.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "e16539532e0432da8430ec1c357b2fc091dc69765c4b981f37e116728c2a976a",
+      "afterSha256": "5e737c59b8a62410033953ac2254ec73ada02a314797aa6a467a1a8055ade0b1",
+      "metaSha256Before": "2fd5627c36a4d631e44a99456220b2468bd10c4a787c74257020049a8204cb4c",
+      "metaSha256After": "2fd5627c36a4d631e44a99456220b2468bd10c4a787c74257020049a8204cb4c",
+      "imageUuid": "dc4d99c2-1c44-432c-a5c5-f2fbbedc4fa2"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050063/skill-104050063_8.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "a705555aec4a1ab07314c07c1833a9211de91c7dd156c0b5e8311670c565a799",
+      "afterSha256": "328413edc0d85a6eb1167124cf5739a5e7deac73950ec9cd2efce90b5c48d050",
+      "metaSha256Before": "1f7324a6b44fb323ba26ca6104aca5967dc109fbed02a4796acc8b5ce79ebec2",
+      "metaSha256After": "1f7324a6b44fb323ba26ca6104aca5967dc109fbed02a4796acc8b5ce79ebec2",
+      "imageUuid": "bf069456-800c-424e-b79f-26692678d31f"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-104050063/skill-104050063_9.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "755b0510fd23a2d9b04fdd9b59bb52d20184c160a3dc2651ca06422146f801cf",
+      "afterSha256": "222b00429bc00fd3b2341be88c32d6f8b5dc66333d7356e7676b91ec267987d7",
+      "metaSha256Before": "8f9858c253fef6c5a8dd0904a28b2936d6a506b340c273cefdea0841d88c4737",
+      "metaSha256After": "8f9858c253fef6c5a8dd0904a28b2936d6a506b340c273cefdea0841d88c4737",
+      "imageUuid": "ffda2d00-ef1f-42ff-9073-f639f6bc1ac3"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050050/skill-105050050_0.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "5d4cdb1c6aed53da48a9fd6bdcd9161f9b6c491dccda7e04d6f5d2114a7ea2a5",
+      "afterSha256": "2f87184ebe328b2e6d9cf1bb317e8dd64420a4732442a168507b56d7872a1ab5",
+      "metaSha256Before": "38c12f77a85d601286974e76ac7b06c9b8d297bf1238f9417ced836b2e5c6389",
+      "metaSha256After": "38c12f77a85d601286974e76ac7b06c9b8d297bf1238f9417ced836b2e5c6389",
+      "imageUuid": "45690986-c575-4847-9d66-2271f0c8c242"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050050/skill-105050050_1.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "5d4cdb1c6aed53da48a9fd6bdcd9161f9b6c491dccda7e04d6f5d2114a7ea2a5",
+      "afterSha256": "2f87184ebe328b2e6d9cf1bb317e8dd64420a4732442a168507b56d7872a1ab5",
+      "metaSha256Before": "3211ee5a09961b71e17efd9e26f4f6a4c1a3dd4cdb87c018f3ee7ef41adce56e",
+      "metaSha256After": "3211ee5a09961b71e17efd9e26f4f6a4c1a3dd4cdb87c018f3ee7ef41adce56e",
+      "imageUuid": "58731d8d-df25-41ee-8c49-325dcaba4fe1"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050050/skill-105050050_10.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "1754d2fd25ef22450a66779f4040cfc7df83edc9cdc357ca2910d5c786b5d558",
+      "afterSha256": "65dd1ff7922e9770b7647777d7b69a6d99f5fcd8dab76540b933cbbc4a1b419d",
+      "metaSha256Before": "bd2de197b95b9a27664e3c977534cb7975a92ab7ef7ed3ecc9d4b8d50fa85c35",
+      "metaSha256After": "bd2de197b95b9a27664e3c977534cb7975a92ab7ef7ed3ecc9d4b8d50fa85c35",
+      "imageUuid": "60f80bcd-06f5-4ba9-80bb-ddbb04235051"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050050/skill-105050050_11.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "1754d2fd25ef22450a66779f4040cfc7df83edc9cdc357ca2910d5c786b5d558",
+      "afterSha256": "65dd1ff7922e9770b7647777d7b69a6d99f5fcd8dab76540b933cbbc4a1b419d",
+      "metaSha256Before": "e1566c05852be4268cc6ea6ce09aef4fefe4f819f25bdbd417ee91a301844bbe",
+      "metaSha256After": "e1566c05852be4268cc6ea6ce09aef4fefe4f819f25bdbd417ee91a301844bbe",
+      "imageUuid": "9c98a2c9-5801-4357-8f2c-e26354c4e564"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050050/skill-105050050_2.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "fcb9ab895c67bc165e00c095ce12955d53d463fc043cd86c1d841210a7abf771",
+      "afterSha256": "19ceddcc0feb6d4094289a0524a2523a9764f89deb52aea12e941e7e2a846d0b",
+      "metaSha256Before": "eb73a1eb2d237636d858c5b850fc3c89d3e59dd753803ae318357e92f36840c8",
+      "metaSha256After": "eb73a1eb2d237636d858c5b850fc3c89d3e59dd753803ae318357e92f36840c8",
+      "imageUuid": "5773ca53-5de8-4b29-adad-f4dfed4c4c71"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050050/skill-105050050_3.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "f35f8522164319d1faa14096829f111b77158ecfae8c4ba25de5730733cac7f4",
+      "afterSha256": "3f314e650817641132f8738ee1bf01c4fc0e81b52ca96cdcd50150e28c37adb3",
+      "metaSha256Before": "cedd17d984bfa4a4ec69ca6a8778d8e96b92b72dbc2f16b7b1a5c17a8cf3c213",
+      "metaSha256After": "cedd17d984bfa4a4ec69ca6a8778d8e96b92b72dbc2f16b7b1a5c17a8cf3c213",
+      "imageUuid": "f125c853-f317-46e9-8018-56e4a8df1d6d"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050050/skill-105050050_4.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "5be6305792e091d54ea5b0e8a8137ea57abaf18ae49255b63364672484c3430a",
+      "afterSha256": "d645a5b81a1182b211559c5177a5a92631a084d9d2b0401afbc948119a40ff30",
+      "metaSha256Before": "d682b229434bbb9bbadf35be826b081ef72b66207595ba4878b4afdb9e05b725",
+      "metaSha256After": "d682b229434bbb9bbadf35be826b081ef72b66207595ba4878b4afdb9e05b725",
+      "imageUuid": "18d54e6d-3aa0-4b48-a3be-dcb871240633"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050050/skill-105050050_5.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "d321572644b08e0575d99f1f40401dd7fe29daf09c6c41e116e4d4e4f98bf8cb",
+      "afterSha256": "4ee685808565ae376e08e12badbb1b430dbb01fbf4ed6d00a54d3f85deb2b0f2",
+      "metaSha256Before": "60bf5c590ecbff3d330951237638ce8ba516e03f9d923c763e746b198aa61e43",
+      "metaSha256After": "60bf5c590ecbff3d330951237638ce8ba516e03f9d923c763e746b198aa61e43",
+      "imageUuid": "73802a95-de32-476d-8e89-884c4852e43f"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050050/skill-105050050_6.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "30632a9e3b87ad8ddace8081d5a108918215432fe61b9ffb8e7950b7bcd0fea7",
+      "afterSha256": "0286bb3471b8c13e67e4a10530c704f273a6cfedb62066206108df76da4fd0b4",
+      "metaSha256Before": "f7d57c4142e0a4e8bf309128918039e75c64c6f0e20729b6736507427762a45b",
+      "metaSha256After": "f7d57c4142e0a4e8bf309128918039e75c64c6f0e20729b6736507427762a45b",
+      "imageUuid": "3f7c6fe1-8b59-4df1-9cd6-1159b17e9f0c"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050050/skill-105050050_7.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "7945218e8204fd517067ddb0176ce353e4288cf3e6ecc9f3b8131593bc7374f1",
+      "afterSha256": "e95a508e9a8e76bb48fd06f613895c924da72298ac478900fe6f0bfb215e9a93",
+      "metaSha256Before": "404d40b917241db5b0a22ac138cd3e7b270ba4f306addac210492b3c8ffe8180",
+      "metaSha256After": "404d40b917241db5b0a22ac138cd3e7b270ba4f306addac210492b3c8ffe8180",
+      "imageUuid": "7e3b3e42-8c24-4264-bfd4-d3b45060a7dc"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050050/skill-105050050_8.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "129ed352e3214872026ab0c0db07183a99553782e651f116b29fe01bf12e670a",
+      "afterSha256": "2f96b17d3e115788cb9a66e18e85469f84a626758e8e99adb7b30f0172e7becb",
+      "metaSha256Before": "5208fb9d6c38bd3f74e12e3609dc1a7e03bd6b45dda272dce86632a9107313fe",
+      "metaSha256After": "5208fb9d6c38bd3f74e12e3609dc1a7e03bd6b45dda272dce86632a9107313fe",
+      "imageUuid": "a509f2f1-d1bd-4651-aaf2-ba83fddf5ff7"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050050/skill-105050050_9.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "79d100f8fc6fe1867d73a48374f2a8d9c9a9f2702e53fc08793fbe9c3e4b3af2",
+      "afterSha256": "0d2a9c43bc98d9f269a939ba2d8f0ee97f258c622fcd34c2171f4c09800ec276",
+      "metaSha256Before": "d79954a373266b6dd5ebe09cea77109de56a6ab3a1b0a6a2aed422be67e515e1",
+      "metaSha256After": "d79954a373266b6dd5ebe09cea77109de56a6ab3a1b0a6a2aed422be67e515e1",
+      "imageUuid": "9a61ac06-cc0c-47ca-84cf-f9c9ad2376b7"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061/skill-105050061_0.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "8fa3033660e8dd97118f513c969d6bcb83e8cfdd6f9451a32f41edd492c7fc4c",
+      "afterSha256": "b16df541267f20e362b2332fb4f46ddbaafaf92ead16dd56e55167899902af15",
+      "metaSha256Before": "3d9038e175f0447e5abcdaadda96b84f8011365f5af81ec7b2ca59f1c8d0d044",
+      "metaSha256After": "3d9038e175f0447e5abcdaadda96b84f8011365f5af81ec7b2ca59f1c8d0d044",
+      "imageUuid": "7770c2c1-a042-486c-91be-9a421494e315"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061/skill-105050061_1.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "44825e150defef04745dd190930bd673fef0dece0c99404041ae2c8437277ffb",
+      "afterSha256": "15bfe95330d31efd2d8f46831f9ed8c1b7a9d113549511570c4fe623dc8c79d2",
+      "metaSha256Before": "f37f99bdf2e143659a456a16477d737535a6cfaf9fe34931d5762a3f802684dd",
+      "metaSha256After": "f37f99bdf2e143659a456a16477d737535a6cfaf9fe34931d5762a3f802684dd",
+      "imageUuid": "b0e216ae-a758-458a-9af3-ac61e2adae6c"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061/skill-105050061_2.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "7aa3a383cddf6239f9ea60fc488d00f80993a0017d4a3979e60c11fff58ebae6",
+      "afterSha256": "881302ce0d0d3247163788306c1c46bf919ea8ed8660c7fec8ae7c3a29fd55c2",
+      "metaSha256Before": "0a86584732bc8a0cb95b492a075a3db6760ead4d481798f3b6831f1ad988871a",
+      "metaSha256After": "0a86584732bc8a0cb95b492a075a3db6760ead4d481798f3b6831f1ad988871a",
+      "imageUuid": "b95dc0c6-1011-4742-8674-4cb3859781f2"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061/skill-105050061_3.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "e48148d8b33bad4d843c04bc7b403a51406e595a66e82925e2618c320b52ee49",
+      "afterSha256": "ffc7feba9745458946ef06c90e2ae7db86f54a7f36ad00a8272198d4150ac312",
+      "metaSha256Before": "e177c4d09ab317568fc47e6ae6603959af549953c7551930a0725409d70622a7",
+      "metaSha256After": "e177c4d09ab317568fc47e6ae6603959af549953c7551930a0725409d70622a7",
+      "imageUuid": "89b29057-ceb7-4e5c-bb76-f3f41900612b"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061/skill-105050061_4.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "bab024474deae2a8d8de816b1177de6e8f9c0b0d56bcde6c11b76834becf3dea",
+      "afterSha256": "942d3714783316993001f33c3abadbf7bb3b82d7f09d08bf071c031dd3a6a089",
+      "metaSha256Before": "5abbd9e8e41c25a6ac35be72beb1653d6cc0db6193ccff68e4196d87ec166115",
+      "metaSha256After": "5abbd9e8e41c25a6ac35be72beb1653d6cc0db6193ccff68e4196d87ec166115",
+      "imageUuid": "cf312316-ee00-47c0-816d-b5328d0b7d89"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061/skill-105050061_5.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "7f99dd54814f857805d52d9e7843840b2abd3f9404305ee453870f60ade79e0a",
+      "afterSha256": "da16a74091d7094320aac649bbb30b8be0374864cbb16dd947aeaf10abe61b70",
+      "metaSha256Before": "2f0d324f6267fa4d6bedb02212384b966f50d222cbf1c1930e34d72624473d3f",
+      "metaSha256After": "2f0d324f6267fa4d6bedb02212384b966f50d222cbf1c1930e34d72624473d3f",
+      "imageUuid": "aaca7b6c-bcd7-4f35-b575-deab317fd049"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061/skill-105050061_6.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "01d80f55daf19b6f660f031ed9667c2db7dd7d0f15c1e7c3f3372fd6e5701604",
+      "afterSha256": "836dc34ba8150b3caa4669305648614e7d859ec6a3e4c5fbb2bc4ae401f681c7",
+      "metaSha256Before": "98816fe0c11fef47b3f84a636d9ef0bf758b8b44503f5af7b53ac990e1b8ffd5",
+      "metaSha256After": "98816fe0c11fef47b3f84a636d9ef0bf758b8b44503f5af7b53ac990e1b8ffd5",
+      "imageUuid": "107734b8-b20e-469c-b35c-f3c60b085ccd"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061/skill-105050061_7.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "5b269aae40266dc19728b9a8bd8f3d9d632d74716018491779b7babb99ae9b7e",
+      "afterSha256": "75540a01dcfc3d461c8fd1a43eee6694a222032ac220d087c1f58ddacad93c9a",
+      "metaSha256Before": "885fc40bf2587d18e82f7912764368c4cb9dd3e351c1f306844c3b4a5b5dd1e1",
+      "metaSha256After": "885fc40bf2587d18e82f7912764368c4cb9dd3e351c1f306844c3b4a5b5dd1e1",
+      "imageUuid": "6bf757c3-72df-47c1-a8ba-8eb413ad6b20"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061/skill-105050061_8.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "92a38c3ce359d8265c2148ca9ce89050fdf610335cd4c068c40731a59dcfe925",
+      "afterSha256": "d82659bda71a107d82441ff37b1dda086238509e6bde1e5e7ace8e73ea9da32e",
+      "metaSha256Before": "e863c8e0fd6c1f2fedb134f3491f2cb4680d9a40c052de70e566bbaf8a4886c8",
+      "metaSha256After": "e863c8e0fd6c1f2fedb134f3491f2cb4680d9a40c052de70e566bbaf8a4886c8",
+      "imageUuid": "57333946-ab9e-4869-9429-0c18fdd365fb"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_0.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "3234e1d2c0b5f3602c1534fe65e7217a7733a9138a06544ef76119d7ac66166e",
+      "afterSha256": "bdb796cf1990b23ca61b5eed99baa5793c9708e2fa603d5625408a9ce542ec70",
+      "metaSha256Before": "d24764f500fa46534298d6daeb4e54da39d28b920e6a5779973269dfd5aaa770",
+      "metaSha256After": "d24764f500fa46534298d6daeb4e54da39d28b920e6a5779973269dfd5aaa770",
+      "imageUuid": "ed634177-1833-44de-b16b-1f4b6e8b940c"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_1.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "cc1af7cdb4c1c01719c1d63935446a125f8adb131aeecba81209a5461a9d9162",
+      "afterSha256": "51b5136c69f8b0b3febcb45ff7cad7ee266619fc0335213a2ce2f048a72c0222",
+      "metaSha256Before": "1fda6ec3cd7acbe8e4f83503a19fde6676625ccb74c467cd2fab2d671e1d2cd1",
+      "metaSha256After": "1fda6ec3cd7acbe8e4f83503a19fde6676625ccb74c467cd2fab2d671e1d2cd1",
+      "imageUuid": "21bd41e1-1207-42cb-b252-d24786a82a40"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_10.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "e64a88b165322db030375432f1ec0b58e6335fd5443321dd4466c35a03039181",
+      "afterSha256": "31c93d7e91dfccbc6ba44a12c73317da39aaead6b5c3815c9e766c45959f868a",
+      "metaSha256Before": "b35e270717c870c1e15ba0c09c479a963d2ed4a1ebffcd1464eb73e398b137bc",
+      "metaSha256After": "b35e270717c870c1e15ba0c09c479a963d2ed4a1ebffcd1464eb73e398b137bc",
+      "imageUuid": "66972d4b-5aa1-4248-a287-f9ae990a8140"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_11.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "183f8b8a9dff1dc728c05d9881d006a6b22b962f776fdb41d63773e5ca7bbde9",
+      "afterSha256": "439238fb73e2e8ca75ebc4a05ee79d383f4f0ec3454dad4e9968d6296c542fbf",
+      "metaSha256Before": "abce360c654867236926a67cdd826a6ec886451c647e5b2ef3cd5050b6090300",
+      "metaSha256After": "abce360c654867236926a67cdd826a6ec886451c647e5b2ef3cd5050b6090300",
+      "imageUuid": "795f2d6d-6468-4141-8852-f8566aba1b17"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_12.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "992aaaf3d9487f123a9b1172558b9e80817b450da325b419ab533d625ee6c8b7",
+      "afterSha256": "2047f671e148b888aca241c13e3e4158bba5a753fb28c5c2c0be7e70e7db6607",
+      "metaSha256Before": "5697eefdfa998f87cf81b06507d00211d62e5e780ec4b13d9196772bca386dda",
+      "metaSha256After": "5697eefdfa998f87cf81b06507d00211d62e5e780ec4b13d9196772bca386dda",
+      "imageUuid": "9ff33192-54b4-426c-b0d8-b3c3567d5bb1"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_13.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "b643571d99f54cdaf91cbf8280c504b48924a67a17c631c44db3d813c0466c24",
+      "afterSha256": "426194c0fc5e504fa9e5ed3527e0484d2ad582d215809f1f5b1cbd0f9d2f47f2",
+      "metaSha256Before": "72b8e29ae7ada45dc8c692f2ce4ffa11d1b579cc2dcedba5250bc52e9ef6bcc3",
+      "metaSha256After": "72b8e29ae7ada45dc8c692f2ce4ffa11d1b579cc2dcedba5250bc52e9ef6bcc3",
+      "imageUuid": "406a8b67-c79c-4e54-9fc0-32577ea1f6e6"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_14.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "98999fc70fee97afc1d82f991f27cc07843bd39057bc21d01d24be02ff70b793",
+      "afterSha256": "ec87c3631348d7f25f1e94bf28b9752978310e066fb1f1c58ea8d560290da5cb",
+      "metaSha256Before": "8cc0a0f7528f4e4f205e23f4d23a8b69e3e2024930ae6c0e5dbdc9d9a24148a3",
+      "metaSha256After": "8cc0a0f7528f4e4f205e23f4d23a8b69e3e2024930ae6c0e5dbdc9d9a24148a3",
+      "imageUuid": "310a4b12-5e12-4dd6-82a0-dd4cccae00ca"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_15.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "c72f42eaa7f388c45f1f1c98b650ecc87f80d3c06b647e0deeaa4ff561bec0d5",
+      "afterSha256": "71db6c7ce9c254bea9edf544e4023f8ff2287352986a855a2c84edf706c0d3a8",
+      "metaSha256Before": "bc30b28a8aa68411ff8ff282e1038de7562794769ed41c506edb4939f2ea0314",
+      "metaSha256After": "bc30b28a8aa68411ff8ff282e1038de7562794769ed41c506edb4939f2ea0314",
+      "imageUuid": "9378a0b2-f46c-40c3-9f92-901864ad7e7c"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_16.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "82c0c17e344b25e0829bdbda44e18f223f134f035adc466cda1ee6a3d1efaf54",
+      "afterSha256": "27ad0fe4bfb5c68bd30fb98eac5b377c6e5afe19e2189ba0e45084c5b4914b35",
+      "metaSha256Before": "78c90f1268cc62b8e9a42b45c9d323786054643f18e34651f9317c3952181e14",
+      "metaSha256After": "78c90f1268cc62b8e9a42b45c9d323786054643f18e34651f9317c3952181e14",
+      "imageUuid": "c88c1bea-aea2-42d3-872e-e088cda6e333"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_17.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "be2af6dd6f83465bb1d54a71f82439617bb1a95aca4d11581f544178ccb9cf89",
+      "afterSha256": "1b1d8487090fdff3944ad2e7e8a02cb62e0d33894244300b436dd3fc46d32b33",
+      "metaSha256Before": "9b3658f8372eb84b9453655e5d39fd14e6143b2bbda9031347e97ad456b27bf1",
+      "metaSha256After": "9b3658f8372eb84b9453655e5d39fd14e6143b2bbda9031347e97ad456b27bf1",
+      "imageUuid": "d79193b9-b29c-48e7-b23e-c2cfd544d195"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_18.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "9e8eb2f48469654638ace739743848329595c7cab059fe49070930c4c481d1f8",
+      "afterSha256": "0f1b35089aed75a4c641c91958aacf2cf79b7245fe16f8d1c377071a3c34df50",
+      "metaSha256Before": "7776e609805fd0ed95d178c49c53cca5e1c13ba302bfca2a80667957d9eea058",
+      "metaSha256After": "7776e609805fd0ed95d178c49c53cca5e1c13ba302bfca2a80667957d9eea058",
+      "imageUuid": "0ec64ef7-f775-4805-ae6c-35dc3a40462f"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_19.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "bf66f8e820f0c138042b51904cb567670e44468420009ffe08f3d2dcad20341b",
+      "afterSha256": "cc76c5d1a8cd945dcc76dd250259ee304bc4a95b853fffea94f21f1d1ad54cdb",
+      "metaSha256Before": "f16c5499119125d3a7a8d74ae3c8f70d76363dbf3e295404d1249d276637d346",
+      "metaSha256After": "f16c5499119125d3a7a8d74ae3c8f70d76363dbf3e295404d1249d276637d346",
+      "imageUuid": "d32d3025-e5ec-4762-ade4-126a647cb004"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_2.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "f4052d5b6f3a1c9aa38284c318c1ed4e1bdeaef2cb0bf0a2cb4d39aaf7783884",
+      "afterSha256": "c9679836ad8e13c1decb9edd8cd6ee68ce16a0c9ab0c471059d050a9b5461a2f",
+      "metaSha256Before": "51b7949756ad32a6432c89f422475f3785745b1d2b5fd9c93411acd520a51982",
+      "metaSha256After": "51b7949756ad32a6432c89f422475f3785745b1d2b5fd9c93411acd520a51982",
+      "imageUuid": "f299e43a-1d82-49fb-9131-d6810a993f00"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_20.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "5c28ccb0dbe30c50daca1e4ca290fd385daa8494380390076a3936d78638a542",
+      "afterSha256": "8e66003a94bc3465a1d8849ff1f664b17beb1d66ef227dc30219ffec55c27e2e",
+      "metaSha256Before": "34b6411eebffebe08129399e4e4cf0552a4d366f470e678002014fd72d7aa9de",
+      "metaSha256After": "34b6411eebffebe08129399e4e4cf0552a4d366f470e678002014fd72d7aa9de",
+      "imageUuid": "048721d6-475d-4234-88a6-44c9dd614c6b"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_21.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "c1195e1c1121a22d944681ac14104da7f5a7644e36cb3670263354d45bc12a9a",
+      "afterSha256": "0830594acc722125f28c2e0cd15eeef2e7acbc45fdb298e4154579c018a9764c",
+      "metaSha256Before": "ec2bf8196a1fe9334443db7e95ff3179afb03e44c171ac2c2581e3484c8072b4",
+      "metaSha256After": "ec2bf8196a1fe9334443db7e95ff3179afb03e44c171ac2c2581e3484c8072b4",
+      "imageUuid": "8504e967-f07c-4b7d-86c5-74ec0c2288d9"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_22.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "21c731c5049698e7ff93c04d6e43ac4ed19a0db4113dd409b3ac1f79683d0928",
+      "afterSha256": "d05cd7cbedb6d8f45c945763c54e82a4a1d1a104b0d3a0872c4c76ad3e6c7121",
+      "metaSha256Before": "bcf262cab1085ecc61240e8fca178fbea06dfb183e63a422549ea0ef2ea0e657",
+      "metaSha256After": "bcf262cab1085ecc61240e8fca178fbea06dfb183e63a422549ea0ef2ea0e657",
+      "imageUuid": "7eeae385-eec7-45a6-9ef8-08a0bd5b0b94"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_23.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "1ea61ecc82a16785a097b4196a32a0e84f1a0fc628fc6b80f7dc99ad4daef263",
+      "afterSha256": "dc445535b5b4e8e5ddcb69ba4782bdd95d9ed5c329f300f4ab9bed49828c04e2",
+      "metaSha256Before": "a888a29b38fc0cbbdb040a475624f0cbbea78db1ece5fa3b685f08cb2f437c1c",
+      "metaSha256After": "a888a29b38fc0cbbdb040a475624f0cbbea78db1ece5fa3b685f08cb2f437c1c",
+      "imageUuid": "de0e8761-6436-42a3-8273-2c53d00e4c5a"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_3.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "5a9d384c5d7a44f59278178a09bc7a1dff2a92b6c3dc67fa1c25ae7710ff3697",
+      "afterSha256": "d700f60284b28c3e86c5e2397eab376b8431994e88644955e9395cfbe2812cf4",
+      "metaSha256Before": "a09aa58ae7083c7650495adbb9a4471d3fb5dc063b58f5b2afaf886add32bc10",
+      "metaSha256After": "a09aa58ae7083c7650495adbb9a4471d3fb5dc063b58f5b2afaf886add32bc10",
+      "imageUuid": "c0da249c-aba7-4db9-9296-d5d03f0a695b"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_4.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "79621d167730b2595ad9304fe15f690fba29aa0d36adb158c5270206615d9f20",
+      "afterSha256": "f3a4695726b0521184c7997fbbf0ad4f445f9716e6c56a792a6d59546522955e",
+      "metaSha256Before": "802071f61224ca84228193dc9a8310ae0afbb1a1c9ce94a2c840e64759ea2bfe",
+      "metaSha256After": "802071f61224ca84228193dc9a8310ae0afbb1a1c9ce94a2c840e64759ea2bfe",
+      "imageUuid": "3b58c99c-11a5-459f-804d-ba05610f0fa2"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_5.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "53698f7f1639ae5d89a0ef99ed726124d40f434e2aa9b9e333a3c1b58d9df866",
+      "afterSha256": "36b923172b05fbc3de19b4f70cdcd042fe94869db1bd7bc7dbd85632c9f0d87c",
+      "metaSha256Before": "c8b85f3618c1c1999b1816a0b56af97b17537a44289d53ddb76dc5e97eb7aedf",
+      "metaSha256After": "c8b85f3618c1c1999b1816a0b56af97b17537a44289d53ddb76dc5e97eb7aedf",
+      "imageUuid": "dcc58f29-5957-4027-9670-88af962185cb"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_6.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "35e5f4ed40696e9d70ff6197796525a1f134673ed61dd6077a1278eae7c39b28",
+      "afterSha256": "4b717633d66d231869aff1553d4570ade464e918a2279574774811c75912f4c1",
+      "metaSha256Before": "7644725481c887e486867feaa5db3361731120d150e4b7c01a6bf363b3655c87",
+      "metaSha256After": "7644725481c887e486867feaa5db3361731120d150e4b7c01a6bf363b3655c87",
+      "imageUuid": "1d58c2bb-a94f-472b-9d4d-d7e8eb2365f6"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_7.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "e1060c2e62478debaeb11262a31ff777f8f1ca9b4e865d8142d3a803881fa4f4",
+      "afterSha256": "a2bfe6114bc31f8d6cc74897d70f23e6d34363e69dc840f34da8c2c0841fd97d",
+      "metaSha256Before": "aa19d48c8482eb60112d8a0d5e6cc0c97896fda2cd68aa3d31a2b2b071c11e06",
+      "metaSha256After": "aa19d48c8482eb60112d8a0d5e6cc0c97896fda2cd68aa3d31a2b2b071c11e06",
+      "imageUuid": "591a6372-f4e0-4cda-935a-c0c69fff1e56"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_8.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "a5df0c8eddbe4dd967602e5a89e95cb0acc3a683b89e60c64d883299dc5be38a",
+      "afterSha256": "63075f9f532e4fb6cacb7abd3f830f2f37b84bf0a77454e2885b7c0923fcef18",
+      "metaSha256Before": "f7c6d7781cd15bb68e7db7c6e6cfcea8bb87912cc3f07c8355a8004fb528b94c",
+      "metaSha256After": "f7c6d7781cd15bb68e7db7c6e6cfcea8bb87912cc3f07c8355a8004fb528b94c",
+      "imageUuid": "3cdd01ca-a173-42ab-8650-75a21d275e0d"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-105050061-1/skill-105050061-1_9.png",
+      "afterPixelsMatchSource": true,
+      "beforePixelsMatchSource": false,
+      "beforeSha256": "5de33cba4bebefa7f85f081b865af09b43d63766ad553609437b49b07c408b74",
+      "afterSha256": "1b80d547bd3695109deaa2acafab747f22d0e77eaf474010b0f13941e9ea5dc2",
+      "metaSha256Before": "2afc5fc986a248a64dc4bc70336ac04b00e9fba3d533471787a888d0c352ee41",
+      "metaSha256After": "2afc5fc986a248a64dc4bc70336ac04b00e9fba3d533471787a888d0c352ee41",
+      "imageUuid": "d56ad7f8-fca7-4ac5-884f-86f5a5b4a7e3"
+    }
+  ],
+  "audio": [
+    {
+      "name": "skill-101050111",
+      "local": "client/assets/bundles/resources/audio/skill-101050111.mp3",
+      "sha256": "c36a6af09fdecad460f4c664e2437da6e60bf9f4222ec9ac0a01fe65e04863fb"
+    },
+    {
+      "name": "skill-101050083",
+      "local": "client/assets/bundles/resources/audio/skill-101050083.mp3",
+      "sha256": "0dc657b252ad0d5380a36781c65a985a5a4a5e0592ddb100c45eb08fbb75656e"
+    },
+    {
+      "name": "skill-101030030",
+      "local": "client/assets/bundles/resources/audio/skill-101030030.mp3",
+      "sha256": "9a37c652a7a3abcbee91c174288d9067049a239efd83877fbf1b93ec8152f3ae"
+    },
+    {
+      "name": "skill-104050053",
+      "local": "client/assets/bundles/resources/audio/skill-104050053.mp3",
+      "sha256": "c14fa8da834d77ff25ea7a3b3294b6ad08975ac94b03b449aff12c16292bbda4"
+    },
+    {
+      "name": "skill-103050073",
+      "local": "client/assets/bundles/resources/audio/skill-103050073.mp3",
+      "sha256": "416c42936f8c92e4148d88bc30c62308a3aa55060411220b4a3c54d5ef55acd7"
+    },
+    {
+      "name": "skill-104050060",
+      "local": "client/assets/bundles/resources/audio/skill-104050060.mp3",
+      "sha256": "f1b1eeadce13411af7daf4397388a63c260d4e17305397726886e65a68462576"
+    },
+    {
+      "name": "skill-104050063",
+      "local": "client/assets/bundles/resources/audio/skill-104050063.mp3",
+      "sha256": "d00457b3c4943513de757a4dbb337f5f3420f6c395e455fc153a48b66e5cbda0"
+    },
+    {
+      "name": "skill-105050050",
+      "local": "client/assets/bundles/resources/audio/skill-105050050.mp3",
+      "sha256": "c841b5ba55ffcdb81a18a920b205cd4f683b20e25083c4b462c41fd5cc0c1e54"
+    }
+  ]
+}

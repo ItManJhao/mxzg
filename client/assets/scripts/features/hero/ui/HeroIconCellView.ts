@@ -5,7 +5,7 @@
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import { _decorator, Button, Component, Label, Node, Sprite } from "cc";
 import { ResManager } from "../../../framework/assets/ResManager";
-import { RedDotManager } from "../../../framework/ui/RedDotManager";
+import { RedDotBinding } from "../../../framework/ui/RedDotBinding";
 import { HERO_FACE_FALLBACK, HeroCellModel } from "./HeroListPresentation";
 
 const { ccclass, property } = _decorator;
@@ -40,14 +40,14 @@ export class HeroIconCellView extends Component {
     @property(Node)
     battle: Node | null = null;
 
-    /** 名册格实装的可选红点挂点，其他英雄格可省略。 */
+    /** 名册和创造法阵的可选红点锚点，保留预制体位置和尺寸。 */
     @property(Node)
-    reminderDot: Node | null = null;
+    reminderAnchor: Node | null = null;
 
     /** 当前格绑定的英雄红点路径，未授权显示时为 null。 */
     private redDotPath: string | null = null;
-    /** 可见格监听的解除函数，关闭和复用时清理。 */
-    private unwatchRedDot: (() => void) | null = null;
+    /** 格子的公共红点首次需要时创建，复用时只切换显示来源。 */
+    private reminder: RedDotBinding | null = null;
 
     /** 图片绘制代次，复用和销毁时递增，拒绝旧图片覆盖当前格子。 */
     private revision = 0;
@@ -82,48 +82,36 @@ export class HeroIconCellView extends Component {
         if (this.lock) this.lock.active = !empty && cell.locked;
         if (this.battle) this.battle.active = !empty && cell.deployed && cell.kind === "owned";
         this.button!.interactable = !empty;
-        if (redDotPath !== this.redDotPath) {
-            this.clearRedDotBinding();
-            this.redDotPath = redDotPath;
-        }
+        this.redDotPath = redDotPath;
         if (this.enabled && this.node.activeInHierarchy) {
-            this.bindRedDot();
+            this.refreshReminder();
         }
     }
 
-    /** 回收格先接收数据再激活，激活时补上其当前行的监听。 */
+    /** 回收格先接收数据再激活，激活时刷新当前行的提醒。 */
     public onEnable(): void {
-        this.bindRedDot();
+        this.refreshReminder();
     }
 
-    /** 格子离开视口或所属页面关闭时，立即解绑。 */
+    /** 格子离开视口或所属页面关闭时，隐藏红点并解除原条目订阅。 */
     public onDisable(): void {
-        this.clearRedDotBinding();
+        this.reminder?.bindPath(null);
     }
 
-    /** 只为当前有效的红点挂点订阅一次，读到即时汇总后再更新。 */
-    private bindRedDot(): void {
-        const dot = this.reminderDot;
-        if (!dot || this.unwatchRedDot) {
-            return;
-        }
-        if (this.redDotPath === null) {
-            dot.active = false;
-            return;
-        }
-        this.unwatchRedDot = RedDotManager.instance.watch(this.redDotPath, visible => {
-            if (dot.isValid) {
-                dot.active = visible;
-            }
-        });
+    /** 名册格订阅当前英雄的即时汇总；配方格可按列表传入的就绪状态直接展示。 */
+    protected refreshReminder(): void {
+        this.setReminder(this.redDotPath);
     }
 
-    /** 隐藏上一行红点并解除其订阅，可重复清理。 */
-    private clearRedDotBinding(): void {
-        this.unwatchRedDot?.();
-        this.unwatchRedDot = null;
-        if (this.reminderDot?.isValid) {
-            this.reminderDot.active = false;
+    /** 使用英雄路径订阅汇总，或按配方是否就绪直接显示同一实例。 */
+    protected setReminder(source: string | boolean | null): void {
+        if (source && !this.reminder && this.reminderAnchor?.isValid) {
+            this.reminder = RedDotBinding.atAnchor(this.reminderAnchor);
+        }
+        if (typeof source === "boolean") {
+            this.reminder?.setVisible(source);
+        } else {
+            this.reminder?.bindPath(source);
         }
     }
 
@@ -170,7 +158,7 @@ export class HeroIconCellView extends Component {
     /** 销毁时废弃在途图片并释放红点监听。 */
     onDestroy(): void {
         this.revision++;
-        this.clearRedDotBinding();
+        this.reminder?.dispose();
     }
 
     private paintLevel(level: number | null): void {

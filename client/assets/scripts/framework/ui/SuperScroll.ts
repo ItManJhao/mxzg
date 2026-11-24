@@ -93,6 +93,11 @@ export class SuperScroll extends ScrollView {
         this.restorePosition(Vec2.ZERO);
     }
 
+    /** 跳到当前数据中的指定条目，首尾超出视口中心时停在列表边缘。 */
+    public centerItem(index: number): void {
+        this.restorePosition(this.list.centeredOffset(index));
+    }
+
     /** 数据或几何完整重排前保存位置并停止惯性，普通滚动换绑不经过这里。 */
     private beforeLayout = (): void => {
         this.saved = this.readPosition();

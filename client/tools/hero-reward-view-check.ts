@@ -7,6 +7,7 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { AudioClip, AudioSource, Button, Label, Node, Sprite, SpriteFrame, UIOpacity, UITransform } from "cc";
 import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
+import { GameLog } from "../assets/scripts/core/GameLog";
 import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 import { ResManager } from "../assets/scripts/framework/assets/ResManager";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
@@ -149,7 +150,7 @@ function checkFrozenSkill(): void {
     }
 }
 
-/** 执行三种星级及静态来源技能说明，检查演出/同参重入/关闭的真实页面逻辑。 */
+/** 检查不同星级的演出、重入、子节点先销毁和迟到资源清理。 */
 async function checkLifecycle(): Promise<void> {
     const original = { frame: ResManager.getSpriteFrame, resources: ResourceAssetsUtils.forNode,
         spine: BattleSpineService.instance.mountBattleSpine, named: BattleSpineService.instance.mountNamedSpine,
@@ -234,6 +235,31 @@ async function checkLifecycle(): Promise<void> {
                 page.root.destroy();
             }
         }
+        const interrupted = fixture();
+        interrupted.view.runBind();
+        interrupted.view.runOpen(args);
+        await interrupted.view.whenReady();
+        // 模拟部分子节点先销毁，其余监听仍需要由页面清理。
+        for (const button of [interrupted.view.confirm!, interrupted.view.skillButtons[0]]) {
+            button.node.destroy();
+            Object.assign(button, { node: null });
+        }
+        const survivingButton = interrupted.view.skillButtons[1].node;
+        const off = survivingButton.off.bind(survivingButton);
+        let survivingUnbind = 0;
+        survivingButton.off = (...args: Parameters<Node["off"]>) => {
+            if (args[0] === Button.EventType.CLICK) {
+                survivingUnbind++;
+            }
+            off(...args);
+        };
+        const cleanupErrors = GameLog.shared.recent().filter(entry => entry.message.includes("HeroRewardView 清理失败")).length;
+        interrupted.view.runDispose();
+        assert.equal(GameLog.shared.recent().filter(entry => entry.message.includes("HeroRewardView 清理失败")).length,
+            cleanupErrors, "确认和技能节点已销毁时，清理路径不能抛错");
+        assert.equal(survivingUnbind, 1, "关闭后存活的按钮只解绑一次");
+        interrupted.root.destroy();
+
         const late = fixture();
         let release!: () => void;
         gate = new Promise<void>(resolve => { release = resolve; });

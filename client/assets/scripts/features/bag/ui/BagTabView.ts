@@ -21,9 +21,9 @@ export class BagTabView extends Component {
     @property(Button)
     button: Button | null = null;
 
-    /** 碎片分类的可合成提醒，其他分类保留初始隐藏。 */
+    /** 碎片分类绑定公共红点的位置，其他分类只保留空挂点。 */
     @property(Node)
-    redDot: Node | null = null;
+    pieceDotAnchor: Node | null = null;
 
     /** 父页面传入的分类切换回调，setTab 时替换，不发请求。 */
     private onClick: (() => void) | null = null;
@@ -43,13 +43,6 @@ export class BagTabView extends Component {
         this.onClick = handler;
         this.ensureClick();
         this.setSelected(on);
-    }
-
-    /** 根据背包页面传入的状态显示分类红点。 */
-    public setRedDot(visible: boolean): void {
-        if (this.redDot) {
-            this.redDot.active = visible;
-        }
     }
 
     /** 同步切换预制体绑定的图片，不在点击页签时发起图片加载。 */

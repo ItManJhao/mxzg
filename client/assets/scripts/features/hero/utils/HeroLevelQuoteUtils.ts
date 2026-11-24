@@ -6,9 +6,9 @@ import { ConfigUnavailable, GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import type { OwnedHero } from "../data/HeroSnapshotUtils";
 
-/** 按钮和消耗栏使用同一报价。pending 表示本次请求在途。 */
+/** 按钮和消耗栏使用同一份普通升级报价。 */
 export interface HeroLevelQuote {
-    readonly status: "ready" | "pending" | "max" | "unavailable";
+    readonly status: "ready" | "max" | "unavailable";
     readonly levelLimit: number | null;
     readonly gold: number;
     readonly heroExp: number;
@@ -22,7 +22,7 @@ export interface HeroLevelQuote {
 
 /** 强化进阶的展示条件；ready 表示等级与星级达标，是否足额由余额标记独立描述。 */
 export interface HeroStageQuote {
-    readonly status: "ready" | "pending" | "locked" | "max" | "unavailable";
+    readonly status: "ready" | "locked" | "max" | "unavailable";
     readonly stage: number | null;
     readonly nextStage: number | null;
     readonly requiredLevel: number | null;

@@ -18,7 +18,13 @@ class LoginFixture extends BaseView {}
 class HomeFixture extends BaseView {}
 class FailedFixture extends BaseView {}
 class SlowFixture extends BaseView {}
-class ThrowingFixture extends BaseView {}
+class ThrowingFixture extends BaseView {
+  /** 模拟主城开始异步加载后，绑定同步刷新时抛错。 */
+  onOpen(): void { this.beginOpen(); }
+
+  /** 模拟旧主城在关闭时拒绝尚未交给调用方的就绪等待。 */
+  onClose(): void { this.failOpen(new Error("页面已关")); }
+}
 class ResidentFixture extends BaseView {}
 class FeatureFixture extends BaseView {}
 class AlternateFeatureFixture extends BaseView {}
@@ -85,9 +91,90 @@ async function checkIdentityCleanup(): Promise<void> {
   root.destroy();
 }
 
+/** 取消等待时无须业务发出就绪事件。旧页关闭钩子异常也不能带走新页面。 */
+async function checkPageCleanup(): Promise<void> {
+  const ui = new UIManager();
+  const root = new Node("CleanupCanvas");
+  const nav = new RemakeNavigation(ui, root);
+  const notices: string[] = [];
+  let opened!: () => void;
+  const started = new Promise<void>(resolve => { opened = resolve; });
+  let closed = 0;
+  let disposed = 0;
+  class ReadyPage extends BaseView {}
+  class WaitingPage extends BaseView {
+    /** 模拟长时间未就绪的界面，其关闭和释放必须独立于加载结束。 */
+    onOpen(): void { this.beginOpen(); opened(); }
+
+    /** 记录页面是否先退出显示期。 */
+    onClose(): void { closed++; }
+
+    /** 记录本次实例是否随取消释放。 */
+    dispose(): void { disposed++; }
+  }
+  class FailingPage extends BaseView {
+    /** 模拟业务关闭钩子在回收节点时抛错。 */
+    onClose(): void { throw new Error("fixture cleanup failed"); }
+
+    /** 记录异常发生后业务实例是否仍完成释放。 */
+    dispose(): void { disposed++; }
+  }
+  const unregister = [ReadyPage, WaitingPage, FailingPage].map(ctor => UIRegistry.registerView(ctor, {
+    id: ctor.name, prefab: "test", layer: UILayer.Page, cache: ctor === FailingPage, allowMultiple: false,
+    load: async () => Object.assign(new Prefab(), {
+      _instantiate: () => {
+        const node = new Node(ctor.name);
+        node.addComponent(ctor);
+        return node;
+      },
+    }),
+  }));
+  ui.install(nav, { showToast: notice => { notices.push(notice); } });
+  let deadline: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const initial = await ui.open(ReadyPage);
+    const opening = ui.open(WaitingPage);
+    const cancelled = assert.rejects(opening, UIManager.isOpenCancelled);
+    const timeout = new Promise<never>((_resolve, reject) => {
+      deadline = setTimeout(() => reject(new Error("未就绪的页面没有取消")), 1000);
+    });
+    await Promise.race([started, timeout]);
+    ui.keepOnly(ReadyPage.name);
+    await Promise.race([cancelled, timeout]);
+    clearTimeout(deadline);
+    assert.equal(closed, 1);
+    assert.equal(disposed, 1);
+    assert(initial.node.isValid);
+    assert.equal(nav.current, ReadyPage.name);
+
+    const failing = await ui.open(FailingPage);
+    const next = await ui.open(ReadyPage);
+    assert.equal(nav.current, ReadyPage.name);
+    assert(next.node.isValid);
+    assert.equal(failing.node.isValid, false);
+    assert.equal(ui.snapshot().cached, 0, "关闭失败的实例不能再次使用");
+    assert.equal(disposed, 2);
+    assert.deepEqual(notices, [], "关页异常和正常取消均不报页面打开失败");
+
+    const external = new Node("ExternalDestroy");
+    const externalView = external.addComponent(FailingPage);
+    externalView.runOpen();
+    // 测试引擎替身不调用组件销毁钩子，在这里模拟 Creator 的生命周期入口。
+    assert.doesNotThrow(() => externalView.onDestroy(), "异常不会逃出引擎的销毁回调");
+    assert.equal(disposed, 3);
+    external.destroy();
+  } finally {
+    clearTimeout(deadline);
+    nav.dispose();
+    for (const stop of unregister) stop();
+    root.destroy();
+  }
+}
+
 /** 沿真实页面管理入口验证同步切换、缓存复用、取消和身份清理，不等待动画或连接服务器。 */
 async function main() {
   await checkIdentityCleanup();
+  await checkPageCleanup();
   const ui = new UIManager();
   const parent = new Node("Canvas");
   const nav = new RemakeNavigation(ui, parent);
@@ -164,12 +251,21 @@ async function main() {
   ui.keepOnly("test-remake-home");
   finish(new Prefab());
   await assert.rejects(pending, UIManager.isOpenCancelled);
-  assert.equal(counters.get("test-remake-slow")!.closed, 1, "cancelled controller unsubscribes");
-  assert.equal(hosts.get("test-remake-slow")!.isValid, false);
+  assert.equal(counters.get("test-remake-slow")!.created, 0, "取消后迟到的预制体不能创建页面");
+  assert.equal(hosts.has("test-remake-slow"), false);
   assert.equal(nav.current, "test-remake-home");
 
   const broken = register(ThrowingFixture, "test-remake-throwing", undefined, true);
-  await assert.rejects(ui.open(ThrowingFixture), /Controller initialization failed/);
+  const unexpectedRejections: unknown[] = [];
+  const recordRejection = (error: unknown) => { unexpectedRejections.push(error); };
+  process.on("unhandledRejection", recordRejection);
+  try {
+    await assert.rejects(ui.open(ThrowingFixture), /Controller initialization failed/);
+    await new Promise<void>(resolve => setImmediate(resolve));
+    assert.deepEqual(unexpectedRejections, [], "开页原错交由调用方，关页不再产生额外的未处理拒绝");
+  } finally {
+    process.off("unhandledRejection", recordRejection);
+  }
   assert.equal(broken.closed, 1, "a show failure cleans up partially initialized controllers");
   assert.equal(hosts.get("test-remake-throwing")!.isValid, false);
 
@@ -242,12 +338,12 @@ async function main() {
   const cancelledFeature = ui.open(FeatureFixture);
   ui.keepOnly("test-remake-home"); finishFeature(new Prefab());
   await assert.rejects(cancelledFeature, UIManager.isOpenCancelled);
-  assert.equal(featureNav.current, "test-remake-home"); assert.equal(slowFeature.closed, 1);
+  assert.equal(featureNav.current, "test-remake-home"); assert.equal(slowFeature.created, 0);
   register(FeatureFixture, "test-remake-feature");
   await ui.open(FeatureFixture); featureNav.dispose();
   assert.equal(parent.children.length, 0, "application disposal removes feature and root hosts");
 
-  // 独立导航验证闲置时长和数量上限，不等待真实两分钟。
+  // 用维护入口的时间参数验证关闭实例的十分钟闲置期和六页容量。
   const cacheUi = new UIManager();
   const cacheRoot = new Node("CacheRoot");
   const cacheNav = new RemakeNavigation(cacheUi, cacheRoot, {
@@ -268,7 +364,10 @@ async function main() {
   });
   await cacheUi.open(CacheRootView);
   const instances: BaseView[] = [];
-  for (let i = 0; i < 3; i++) {
+  assert.equal(UIManager.maxCachedPages, 6);
+  assert.equal(UIManager.cacheIdleMs, 600_000);
+  const beforeFirstClose = GameLog.monoNow();
+  for (let i = 0; i <= UIManager.maxCachedPages; i++) {
     class CachedView extends BaseView {}
     UIRegistry.registerView(CachedView, { id: "cache-" + i, prefab: "test", layer: UILayer.Page,
       cache: true, allowMultiple: false,
@@ -288,8 +387,9 @@ async function main() {
   }
   assert.equal(cacheUi.snapshot().cached, UIManager.maxCachedPages, "闲置页面不超过数量上限");
   assert(!instances[0].node.isValid, "超过上限先淘汰最早关闭的页面");
-  assert(instances[1].node.isValid && instances[2].node.isValid);
-  assert.equal(cacheUi.collectCached(GameLog.monoNow() + UIManager.cacheIdleMs), 2);
+  assert(instances.slice(1).every(instance => instance.node.isValid), "后关闭的六个页面仍可重用");
+  assert.equal(cacheUi.collectCached(beforeFirstClose + UIManager.cacheIdleMs - 1), 0);
+  assert.equal(cacheUi.collectCached(GameLog.monoNow() + UIManager.cacheIdleMs), UIManager.maxCachedPages);
   assert.equal(cacheUi.snapshot().cached, 0);
   for (const instance of instances) assert(!instance.node.isValid, "过期界面节点被销毁");
   cacheNav.dispose();
@@ -347,8 +447,8 @@ async function main() {
     assert.deepEqual(summonPages, ["first-summon"], "召唤法阵复用主城功能页导航");
     assert.equal(UIRegistry.viewSpecOf(FirstSummonView)?.layer, UILayer.Page);
     assert.equal(HomeFeatureNavigation.tabForPage("first-summon"), "summon");
-    assert.deepEqual(HomeFeatureNavigation.tabs, ["hero", "bag", "battle", "dungeon"],
-      "召唤走主城地图入口，底栏保留已开放的英雄、背包、战斗和副本入口");
+    assert.deepEqual(HomeFeatureNavigation.tabs, ["hero", "bag", "battle", "dungeon", "clan", "fetter"],
+      "召唤走主城地图入口，VIP 与已开放的其他功能使用底栏入口");
     map.close();
     mapActions.openFeature("main_summon");
     assert.deepEqual(summonPages, ["first-summon"], "主城关闭后，旧点击不再打开页面");

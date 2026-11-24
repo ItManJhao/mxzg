@@ -2543,13 +2543,13 @@
     "__prefab": {
       "__id__": 103
     },
-    "_reminderDot": {
+    "_reminderAnchor": {
       "__id__": 105
     }
   },
   {
     "__type__": "cc.Node",
-    "_active": false,
+    "_active": true,
     "_layer": 33554432,
     "_parent": {
       "__id__": 1
@@ -2569,7 +2569,7 @@
     },
     "_objFlags": 0,
     "_children": [],
-    "_name": "DailyDungeonReminder",
+    "_name": "DailyDungeonReminderAnchor",
     "_mobility": 0,
     "_lscale": {
       "__type__": "cc.Vec3",
@@ -2580,9 +2580,6 @@
     "_components": [
       {
         "__id__": 107
-      },
-      {
-        "__id__": 109
       }
     ],
     "_prefab": {
@@ -2637,50 +2634,5 @@
   {
     "__type__": "cc.CompPrefabInfo",
     "fileId": "63929f48-9e48-4b7f-a43f-e2b038d4eed1"
-  },
-  {
-    "__type__": "cc.Sprite",
-    "_name": "",
-    "_objFlags": 0,
-    "__editorExtras__": {},
-    "node": {
-      "__id__": 105
-    },
-    "_enabled": true,
-    "__prefab": {
-      "__id__": 110
-    },
-    "_customMaterial": null,
-    "_srcBlendFactor": 2,
-    "_dstBlendFactor": 4,
-    "_color": {
-      "__type__": "cc.Color",
-      "r": 255,
-      "g": 255,
-      "b": 255,
-      "a": 255
-    },
-    "_spriteFrame": {
-      "__uuid__": "e44d6939-5da6-4585-9fdc-7d2f474b5554@f9941",
-      "__expectedType__": "cc.SpriteFrame"
-    },
-    "_type": 0,
-    "_fillType": 0,
-    "_sizeMode": 0,
-    "_fillCenter": {
-      "__type__": "cc.Vec2",
-      "x": 0,
-      "y": 0
-    },
-    "_fillStart": 0,
-    "_fillRange": 0,
-    "_isTrimmedMode": false,
-    "_useGrayscale": false,
-    "_atlas": null,
-    "_id": ""
-  },
-  {
-    "__type__": "cc.CompPrefabInfo",
-    "fileId": "adb1b794-1cac-4c99-9422-5bd22990e718"
   }
 ]

@@ -61,7 +61,7 @@ export class RoleRenameView extends BaseView<RoleRenameArgs> {
     /** 仅在当前窗口提交后阻止重复确认，回包或关闭时清理。 */
     private submitting = false;
 
-    /** 初始化费用和输入，绑定本次窗口的操作、库存更新及回包。 */
+    /** 初始化费用和输入，绑定本次窗口的操作节点、库存更新及回包。 */
     public onOpen(args?: RoleRenameArgs): void {
         if (!args?.model.snapshot.role || !this.panel || !this.input || !this.costIcon
             || !this.costLabel || !this.confirmButton || !this.closeButton) {
@@ -72,8 +72,12 @@ export class RoleRenameView extends BaseView<RoleRenameArgs> {
         confirm.on(Button.EventType.CLICK, this.submit, this);
         close.on(Button.EventType.CLICK, this.close, this);
         this.ownListener(() => {
-            confirm.off(Button.EventType.CLICK, this.submit, this);
-            close.off(Button.EventType.CLICK, this.close, this);
+            if (confirm.isValid) {
+                confirm.off(Button.EventType.CLICK, this.submit, this);
+            }
+            if (close.isValid) {
+                close.off(Button.EventType.CLICK, this.close, this);
+            }
         });
         const events = EventDispatcher.instance;
         this.ownListener(events.on(BagEvent.BagUpdate, this, this.renderCost));

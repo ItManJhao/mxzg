@@ -3,6 +3,9 @@
  * 依据旧 BattleReportBaseLayer、BattleData 和 battletype；不读取账号、不授予 VIP 权限或结算奖励。
  */
 export class BattleInfoUtils {
+    /** 旧 BattleController 在每次普攻或技能完成后留出的战斗时钟秒数。 */
+    public static readonly attackIntervalSeconds = 0.5;
+
     /** 纯展示规则不允许实例化。 */
     private constructor() {}
 

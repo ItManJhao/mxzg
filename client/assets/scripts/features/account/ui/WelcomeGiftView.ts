@@ -60,7 +60,7 @@ export class WelcomeGiftView extends BaseView<WelcomeGiftArgs> {
         });
     }
 
-    /** 填充只读奖励列表，领取成功后按权威快照关闭窗口。 */
+    /** 填充奖励列表，绑定本次窗口的列表和按钮节点，领取成功后关闭。 */
     public onOpen(args?: WelcomeGiftArgs): void {
         const { panel, rewards, claimButton } = this;
         if (!args || !panel || !rewards || !claimButton) {
@@ -70,11 +70,17 @@ export class WelcomeGiftView extends BaseView<WelcomeGiftArgs> {
             return;
         }
         const list = rewards.list;
-        list.node.on(SuperContent.RENDER_ITEM, this.renderReward, this);
-        claimButton.node.on(Button.EventType.CLICK, this.claim, this);
+        const listNode = list.node;
+        const claimNode = claimButton.node;
+        listNode.on(SuperContent.RENDER_ITEM, this.renderReward, this);
+        claimNode.on(Button.EventType.CLICK, this.claim, this);
         this.ownListener(() => {
-            list.node.off(SuperContent.RENDER_ITEM, this.renderReward, this);
-            claimButton.node.off(Button.EventType.CLICK, this.claim, this);
+            if (listNode.isValid) {
+                listNode.off(SuperContent.RENDER_ITEM, this.renderReward, this);
+            }
+            if (claimNode.isValid) {
+                claimNode.off(Button.EventType.CLICK, this.claim, this);
+            }
         });
         this.ownListener(EventDispatcher.instance.on(WelcomeGiftFinished, this, () => {
             claimButton.interactable = true;

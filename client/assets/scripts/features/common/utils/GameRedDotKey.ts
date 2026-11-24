@@ -6,6 +6,8 @@ export class GameRedDotKey {
     public static readonly HERO = "hero";
     /** 英雄详情分支，按英雄实例和槽位显示。 */
     public static readonly HERO_DETAIL = "heroDetail";
+    /** 宝石和神装仅汇总到各自详情页签，独立于名册提示。 */
+    public static readonly HERO_GROWTH = "heroGrowth";
     /** 背包底栏入口。 */
     public static readonly BAG = "bag";
     /** 碎片分类及其可合成格子。 */
@@ -28,8 +30,26 @@ export class GameRedDotKey {
     public static readonly SUMMON_POINTS = "city.summon.points";
     /** 日常副本底栏入口。 */
     public static readonly DUNGEON = "dungeon";
-    /** 日常副本大厅的金币副本。 */
-    public static readonly GOLD_DUNGEON = "dungeon.gold";
+    /** 日常副本大厅汇总所有已接通的副本类型。 */
+    public static readonly DAILY_DUNGEON = "dungeon.daily";
+    /** 金币副本仍有可用的免费挑战或扫荡。 */
+    public static readonly GOLD_DUNGEON = "dungeon.daily.gold";
+    /** 经验副本仍有可用的免费挑战或扫荡。 */
+    public static readonly EXPERIENCE_DUNGEON = "dungeon.daily.experience";
+    /** 英雄副本仍有可用的免费挑战或扫荡。 */
+    public static readonly HERO_DUNGEON = "dungeon.daily.hero";
+    /** 羁绊副本仍有可用的免费挑战或扫荡。 */
+    public static readonly FETTER_DUNGEON = "dungeon.daily.fetter";
+    /** 精灵副本仍有可用的免费挑战或扫荡。 */
+    public static readonly SPIRIT_DUNGEON = "dungeon.daily.spirit";
+    /** 公会底栏入口，汇总当前角色可处理的公会提醒。 */
+    public static readonly GUILD = "guild";
+    /** 会长有尚未处理的入会申请。 */
+    public static readonly GUILD_APPLICATIONS = "guild.applications";
+    /** VIP 底栏入口，汇总本档任务提醒。 */
+    public static readonly VIP = "vip";
+    /** 当前档位至少一项任务已达且未领。 */
+    public static readonly VIP_TASKS = "vip.tasks";
 
     /** 键表通过静态字段读取。 */
     private constructor() {}
@@ -39,9 +59,26 @@ export class GameRedDotKey {
         return `${GameRedDotKey.heroDetail(heroId)}.upgrade`;
     }
 
+    /** 返回升星页签、名册格和底栏共用的升星红点来源。 */
+    public static heroStar(heroId: string): string {
+        return `${GameRedDotKey.heroDetail(heroId)}.star`;
+    }
+
     /** 返回指定英雄装备分支，或 1 至 4 号普通槽位的红点。 */
     public static heroEquipment(heroId: string, slot?: number): string {
         const parent = `${GameRedDotKey.heroDetail(heroId)}.equipment`;
+        return slot === undefined ? parent : `${parent}.${slot}`;
+    }
+
+    /** 返回宝石页签或指定宝石槽位的红点路径。 */
+    public static heroJewel(heroId: string, slot?: number): string {
+        const parent = `${GameRedDotKey.HERO_GROWTH}.${GameRedDotKey.heroKey(heroId)}.jewel`;
+        return slot === undefined ? parent : `${parent}.${slot}`;
+    }
+
+    /** 返回神装页签或指定神装槽位的红点路径。 */
+    public static heroGodEquipment(heroId: string, slot?: number): string {
+        const parent = `${GameRedDotKey.HERO_GROWTH}.${GameRedDotKey.heroKey(heroId)}.godEquipment`;
         return slot === undefined ? parent : `${parent}.${slot}`;
     }
 
@@ -52,6 +89,11 @@ export class GameRedDotKey {
 
     /** 返回当前英雄的详情汇总路径，转义实例 ID 中的字面点。 */
     public static heroDetail(heroId: string): string {
-        return `${GameRedDotKey.HERO_DETAIL}.${encodeURIComponent(heroId).replace(/\./g, "%2E")}`;
+        return `${GameRedDotKey.HERO_DETAIL}.${GameRedDotKey.heroKey(heroId)}`;
+    }
+
+    /** 实例 ID 中的字面点不参与红点路径分层。 */
+    private static heroKey(heroId: string): string {
+        return encodeURIComponent(heroId).replace(/\./g, "%2E");
     }
 }

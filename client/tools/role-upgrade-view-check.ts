@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 import { AudioClip, AudioSource, Label, Mask, Node, Prefab, RichText, Sprite, SpriteFrame, UITransform } from "cc";
 import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
+import { GameLog } from "../assets/scripts/core/GameLog";
 import { GConfig } from "../assets/scripts/config/GConfig";
 import type { RoleUpgradeFeatureRow } from "../assets/scripts/config/GConfig";
 import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
@@ -350,15 +351,16 @@ async function checkResourcesAndTeardown(): Promise<void> {
             await destroying.view.whenReady();
             if (brokenAudio) {
                 destroying.view.rewardAudio!.stop = () => { throw new Error("音源销毁夹具"); };
-                assert.throws(() => destroying.view.onDestroy(), /音源销毁夹具/);
             } else {
                 destroying.view.featureIcon!.isValid = false;
                 destroying.view.rewardAudio!.isValid = false;
-                destroying.view.onDestroy();
             }
+            assert.doesNotThrow(() => destroying.view.onDestroy());
             await Promise.resolve();
             destroying.view.onDestroy();
             assert.equal(notified, 1);
+            assert.equal(GameLog.shared.recent().filter(line => line.tag === "BaseView" && line.level === "error"
+                && line.message.includes("音源销毁夹具")).length, brokenAudio ? 1 : 0);
             if (brokenAudio) {
                 assert.equal(destroying.view.rewardAudio!.clip, null);
                 assert.equal(destroying.view.featureIcon!.spriteFrame, null);

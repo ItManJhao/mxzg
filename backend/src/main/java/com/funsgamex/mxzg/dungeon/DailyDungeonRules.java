@@ -1,10 +1,15 @@
-/** 金币副本首关的配置读取与纯奖励运算，只使用原策划表的服务端投影。 */
+/**
+ * 加载各类日常副本对应的旧配置，供副本服务读取关卡、当日次数、报价和神职奖励。
+ * 配置在应用启动时校验并冻结，可以由所有角色共用。
+ */
 package com.funsgamex.mxzg.dungeon;
 
 import com.funsgamex.mxzg.hero.HeroBattleChapterScenario.ConfiguredEnemy;
 import com.funsgamex.mxzg.reward.RewardGrantService.Reward;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.random.RandomGenerator;
@@ -15,115 +20,119 @@ import tools.jackson.databind.ObjectMapper;
 public class DailyDungeonRules {
     /** 旧神职收益的每万分标准，抽样范围为 1 至 10000。 */
     private static final int BASIS = 10_000;
-    /** 进程内只读的首关规则；源表有新副本时仍只加载明确接入的首关。 */
-    private final Config config;
-    /** 开战时冻结的敌方原关卡名字，来自已有简体语言表。 */
-    private final String opponentName;
+    /** 各已接入副本的规则集，键为稳定的副本类型。 */
+    private final Map<DailyDungeonType, Rules> byType;
 
     /** 旧神职特权的最小等级、奖励比例和命中概率，比例及概率均为万分比。 */
     private record ClergyBonus(int level, int points, int chance) {}
 
-    /** 原规则导出字段；免费上限、各 VIP 上限及每次报价独立保存。 */
-    private record Config(int stageId, int titleLanguageId, int minimumLevel, long requiredPower, int freeLimit,
-                          Map<Integer, Integer> vipLimits, Map<Integer, Long> costs, List<Reward> rewardPreview,
-                          List<ClergyBonus> clergy, List<ConfiguredEnemy> enemies) {}
+    /** 原规则导出字段；类型级参数和各关每次基本奖励独立保存。 */
+    private record Config(int freeLimit, Map<Integer, Integer> vipLimits, Map<Integer, Long> costs,
+                          List<ClergyBonus> clergy, List<StageRow> stages) {}
+
+    /** 由旧配置转换的只读规则，关卡按开放顺序排列，配置从 1 开始连续编号。 */
+    record Rules(int freeLimit, Map<Integer, Integer> vipLimits, Map<Integer, Long> costs,
+                 List<ClergyBonus> clergy, List<Stage> stages) {
+        /** 冻结所有类型级配置及其关卡目录，开放后才能被服务读取。 */
+        Rules {
+            vipLimits = Map.copyOf(vipLimits);
+            costs = Map.copyOf(costs);
+            clergy = List.copyOf(clergy);
+            stages = List.copyOf(stages);
+        }
+
+        /** 当前女神 VIP 可用的总胜场上限，包含免费次数。 */
+        int totalLimit(int vipLevel) {
+            Integer limit = vipLimits.get(vipLevel);
+            if (limit == null) {
+                throw new IllegalStateException("日常副本缺少女神 VIP 次数配置：" + vipLevel);
+            }
+            return limit;
+        }
+
+        /** 按下一个计数位置读取原钻石报价，达到总上限时没有新报价。 */
+        long nextCost(int wins, int limit) {
+            if (wins >= limit) {
+                return 0;
+            }
+            Long cost = costs.get(wins + 1);
+            if (cost == null || cost < 0) {
+                throw new IllegalStateException("日常副本缺少扣费配置：" + (wins + 1));
+            }
+            return cost;
+        }
+
+        /** 逐项沿用本类型的神职概率及旧 float 舍入，按实际关卡基础奖励计算加成。 */
+        List<Reward> rewards(Stage stage, int clergyLevel, RandomGenerator random) {
+            var result = new ArrayList<>(stage.rewardPreview());
+            for (var bonus : clergy) {
+                if (clergyLevel >= bonus.level() && random.nextInt(1, BASIS + 1) <= bonus.chance()) {
+                    float factor = (float) bonus.points() / BASIS;
+                    for (var reward : stage.rewardPreview()) {
+                        result.add(new Reward(reward.itemId(), (long) Math.ceil(reward.quantity() * factor)));
+                    }
+                }
+            }
+            return List.copyOf(result);
+        }
+    }
+
+    /** 单关策划原字段，ribbon 为原标题图序号。 */
+    private record StageRow(int stageId, int titleLanguageId, int minimumLevel, long requiredPower, int ribbon,
+                            List<Reward> rewardPreview, List<ConfiguredEnemy> enemies) {}
+
+    /** 领域服务读取的已验证关卡，战报名在启动时从已有简体语言表解析。 */
+    public record Stage(int id, int titleLanguageId, int minimumLevel, long requiredPower, int ribbon,
+                        List<Reward> rewardPreview, List<ConfiguredEnemy> enemies, String opponentName) {
+        /** 冻结可供不同角色共用的关卡奖励与原守军。 */
+        public Stage {
+            rewardPreview = List.copyOf(rewardPreview);
+            enemies = List.copyOf(enemies);
+        }
+    }
 
     /** 读入配置并冻结，使配置缺口在服务启动时明确失败。 */
     public DailyDungeonRules(ObjectMapper mapper) {
+        var loaded = new EnumMap<DailyDungeonType, Rules>(DailyDungeonType.class);
+        for (var type : DailyDungeonType.values()) {
+            loaded.put(type, readRules(mapper, type));
+        }
+        this.byType = Map.copyOf(loaded);
+    }
+
+    /** 获取本次操作所属类型的规则，同类关卡共享次数、报价和神职。 */
+    Rules get(DailyDungeonType type) {
+        return byType.get(type);
+    }
+
+    /** 从原策划投影读取单类副本，并验证关卡编号、守军和展示用语言。 */
+    private static Rules readRules(ObjectMapper mapper, DailyDungeonType type) {
         Config raw;
-        try (var input = getClass().getResourceAsStream("/gameplay/daily-gold-rules.json")) {
+        try (var input = DailyDungeonRules.class.getResourceAsStream("/gameplay/daily-" + type.key() + "-rules.json")) {
             if (input == null) {
-                throw new IllegalStateException("缺少金币副本首关配置");
+                throw new IllegalStateException("缺少日常副本配置：" + type.key());
             }
             raw = mapper.readValue(input, Config.class);
         } catch (IOException failure) {
-            throw new IllegalStateException("金币副本首关配置无法读取", failure);
+            throw new IllegalStateException("日常副本配置无法读取：" + type.key(), failure);
         }
-        if (raw.stageId() != 1 || raw.titleLanguageId() <= 0 || raw.minimumLevel() <= 0 || raw.requiredPower() < 0
-                || raw.freeLimit() <= 0 || !raw.vipLimits().containsKey(0) || raw.rewardPreview().isEmpty()
-                || raw.enemies().isEmpty() || raw.clergy().stream().anyMatch(bonus -> bonus.level() <= 0
+        if (raw.freeLimit() <= 0 || !raw.vipLimits().containsKey(0) || raw.stages().isEmpty()
+                || raw.clergy().stream().anyMatch(bonus -> bonus.level() <= 0
                     || bonus.points() <= 0 || bonus.chance() < 0 || bonus.chance() > BASIS)) {
-            throw new IllegalStateException("金币副本首关配置无效");
+            throw new IllegalStateException("日常副本类型配置无效：" + type.key());
         }
-        this.config = new Config(raw.stageId(), raw.titleLanguageId(), raw.minimumLevel(), raw.requiredPower(),
-                raw.freeLimit(), Map.copyOf(raw.vipLimits()), Map.copyOf(raw.costs()), List.copyOf(raw.rewardPreview()),
-                List.copyOf(raw.clergy()), List.copyOf(raw.enemies()));
-        this.opponentName = readOpponentName(mapper, raw.titleLanguageId());
-    }
-
-    /** 返回当前唯一开放的金币副本关卡。 */
-    public int stageId() {
-        return config.stageId();
-    }
-
-    /** 返回首关的真实原名语言键。 */
-    public int titleLanguageId() {
-        return config.titleLanguageId();
-    }
-
-    /** 返回与原关卡标题一致的战报守方名称。 */
-    public String opponentName() {
-        return opponentName;
-    }
-
-    /** 包含日常副本入口和当前关卡两层角色等级条件。 */
-    public boolean unlocked(int level) {
-        return level >= config.minimumLevel();
-    }
-
-    /** 旧服务端严格要求历史最高主阵容战力高于此门槛。 */
-    public long requiredPower() {
-        return config.requiredPower();
-    }
-
-    /** 所有角色相同的免费次数，只计已获胜或成功扫荡。 */
-    public int freeLimit() {
-        return config.freeLimit();
-    }
-
-    /** 当前女神 VIP 可用的总胜场上限，包含免费次数。 */
-    public int totalLimit(int vipLevel) {
-        Integer limit = config.vipLimits().get(vipLevel);
-        if (limit == null) {
-            throw new IllegalStateException("金币副本缺少女神 VIP 次数配置：" + vipLevel);
-        }
-        return limit;
-    }
-
-    /** 按下一个计数位置读取原钻石报价，达到总上限时没有新报价。 */
-    public long nextCost(int wins, int limit) {
-        if (wins >= limit) {
-            return 0;
-        }
-        Long cost = config.costs().get(wins + 1);
-        if (cost == null || cost < 0) {
-            throw new IllegalStateException("金币副本缺少扣费配置：" + (wins + 1));
-        }
-        return cost;
-    }
-
-    /** 原表的基础奖励预览，神职加成只在获胜时实际计算。 */
-    public List<Reward> rewardPreview() {
-        return config.rewardPreview();
-    }
-
-    /** 返回冻结的原守军行，不随机替换英雄或略去技能。 */
-    public List<ConfiguredEnemy> enemies() {
-        return config.enemies();
-    }
-
-    /** 逐项按旧神职规则抽样，使用旧 float 乘法和向上取整，通用发奖再合并同 ID。 */
-    public List<Reward> rewards(int clergyLevel, RandomGenerator random) {
-        var result = new ArrayList<>(rewardPreview());
-        for (var bonus : config.clergy()) {
-            if (clergyLevel >= bonus.level() && random.nextInt(1, BASIS + 1) <= bonus.chance()) {
-                float factor = (float) bonus.points() / BASIS;
-                for (var reward : rewardPreview()) {
-                    result.add(new Reward(reward.itemId(), (long) Math.ceil(reward.quantity() * factor)));
-                }
+        var opened = new ArrayList<Stage>();
+        for (var row : raw.stages()) {
+            if (row.stageId() != opened.size() + 1 || row.titleLanguageId() <= 0 || row.minimumLevel() <= 0
+                    || row.requiredPower() < 0 || row.ribbon() <= 0 || row.rewardPreview().isEmpty()
+                    || row.enemies().size() != 6 || new HashSet<>(row.enemies().stream()
+                        .map(ConfiguredEnemy::position).toList()).size() != row.enemies().size()) {
+                throw new IllegalStateException("日常副本关卡配置无效：" + type.scenario(row.stageId()));
             }
+            opened.add(new Stage(row.stageId(), row.titleLanguageId(), row.minimumLevel(), row.requiredPower(),
+                    row.ribbon(), row.rewardPreview(), row.enemies(), readOpponentName(mapper, row.titleLanguageId())));
         }
-        return List.copyOf(result);
+        return new Rules(raw.freeLimit(), raw.vipLimits(), raw.costs(), raw.clergy(), opened);
     }
 
     /** 从与客户端共用的语言表按键查找战报名，缺配置时启动失败。 */
@@ -137,8 +146,8 @@ public class DailyDungeonRules {
                 }
             }
         } catch (IOException failure) {
-            throw new IllegalStateException("金币副本语言表无法读取", failure);
+            throw new IllegalStateException("日常副本语言表无法读取", failure);
         }
-        throw new IllegalStateException("金币副本首关缺少语言配置：" + id);
+        throw new IllegalStateException("日常副本关卡缺少语言配置：" + id);
     }
 }

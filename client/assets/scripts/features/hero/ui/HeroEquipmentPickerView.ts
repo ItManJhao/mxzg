@@ -50,7 +50,7 @@ export class HeroEquipmentPickerView extends BaseView<PickerArgs> {
     /** 没有可选库存时显示的说明。 */
     @property(Label) emptyLabel: Label | null = null;
 
-    /** 监听本窗列表、统一库存和装备命令，关闭后由 BaseView 释放。 */
+    /** 监听列表和资产更新；关窗按原节点解绑，子节点销毁后仍关闭资产监听。 */
     public onOpen(args: PickerArgs): void {
         if (!args?.heroId || !slotNames[args.slot - 1] || !this.panel || !this.titleLabel
             || !this.closeButton || !this.list || !this.equippedRow || !this.emptyLabel) {
@@ -58,13 +58,14 @@ export class HeroEquipmentPickerView extends BaseView<PickerArgs> {
         }
         this.titleLabel.string = slotNames[args.slot - 1];
         const list = this.list.list.node;
+        const close = this.closeButton.node;
         const remove = this.equippedRow.getChildByName("ActionButton");
         if (!remove?.getComponent(Button)) {
             throw new Error("装备选择窗缺少已穿装备操作");
         }
         list.on(SuperContent.RENDER_ITEM, this.onRender, this);
         list.on(SuperContent.SELECT_ITEM, this.onSelect, this);
-        this.closeButton.node.on(Button.EventType.CLICK, this.close, this);
+        close.on(Button.EventType.CLICK, this.close, this);
         remove.on(Button.EventType.CLICK, this.unequip, this);
         this.ownListener(() => {
             if (list.isValid) {
@@ -74,7 +75,9 @@ export class HeroEquipmentPickerView extends BaseView<PickerArgs> {
             if (remove.isValid) {
                 remove.off(Button.EventType.CLICK, this.unequip, this);
             }
-            this.closeButton?.node.off(Button.EventType.CLICK, this.close, this);
+            if (close.isValid) {
+                close.off(Button.EventType.CLICK, this.close, this);
+            }
             EventDispatcher.instance.offTarget(this);
         });
         this.ownListener(ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitPanel()));

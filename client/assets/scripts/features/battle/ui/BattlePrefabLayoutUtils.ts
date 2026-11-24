@@ -53,7 +53,7 @@ export class BattlePrefabLayoutUtils {
         return "LayerVfx/VfxScreen";
     }
 
-    /** 八个站位均有独立头顶挂点，后排也能显示Buff。 */
+    /** 八个站位均有独立的原头顶挂点。 */
     public static battleHeadPath(side: BattleSlotSide, index: number): string | null {
         if (!BattlePrefabLayoutUtils.slotIndex(index, 7)) {
             return null;
@@ -74,13 +74,13 @@ export class BattlePrefabLayoutUtils {
         return head + "/LevelLabel";
     }
 
-    /** 根据阵营与站位返回状态图标行路径，站位无效返回null。 */
+    /** 状态图标跟随独立血条绘制，站位无效返回 null。 */
     public static battleBuffRowPath(side: BattleSlotSide, index: number): string | null {
-        const head = BattlePrefabLayoutUtils.battleHeadPath(side, index);
-        if (!head) {
+        const hp = BattlePrefabLayoutUtils.battleHpPath(side, index);
+        if (!hp) {
             return null;
         }
-        return head + "/BuffRow";
+        return hp + "/BuffRow";
     }
 
     /** 返回合法状态图标的节点路径，英雄站位或图标索引越界时返回null。 */

@@ -34,7 +34,8 @@ interface DungeonRewardPreview {
 /** 当前主城提供的角色快照和已接通玩法入口。 */
 export interface DungeonHallArgs {
     readonly account: AccountModel;
-    readonly openGoldDungeon: () => void;
+    /** 日常副本入口打开共用关卡页，默认展示金币。 */
+    readonly openDailyDungeon: () => void;
 }
 
 const { ccclass, property } = _decorator;
@@ -82,7 +83,7 @@ export class DungeonHallView extends BaseView<DungeonHallArgs> {
         this.render(model.snapshot);
     }
 
-    /** 投影入口、等级与奖励预览，只有已开放的日常副本卡订阅金币关资格。 */
+    /** 投影入口、等级与奖励预览，日常副本卡汇总各类型资格红点。 */
     private render(state: AccountState): void {
         const level = state.role?.level ?? 0;
         if (!level || level === this.shownLevel) {
@@ -110,7 +111,7 @@ export class DungeonHallView extends BaseView<DungeonHallArgs> {
                 title: gate.name,
                 description: config.requireConfig(GConfig.Language, entry.description).value ?? "",
                 lockText: open ? "" : lockTemplate.replace("%s", String(gate.level)),
-                reminderPath: open && entry.gate === "main_mission" ? GameRedDotKey.GOLD_DUNGEON : undefined,
+                reminderPath: open && entry.gate === "main_mission" ? GameRedDotKey.DAILY_DUNGEON : undefined,
                 rewards,
             };
         });
@@ -124,10 +125,10 @@ export class DungeonHallView extends BaseView<DungeonHallArgs> {
         node.getComponent(DungeonHallCardView)!.render(card, (id, quantity) => this.openReward(id, quantity));
     }
 
-    /** 日常副本打开已接通的金币首关，其他卡片提示当前实现状态。 */
+    /** 日常副本打开共用关卡页，其他卡片提示当前实现状态。 */
     private selectCard(card: DungeonHallCard, index: number): void {
         if (index === 0) {
-            this.args?.openGoldDungeon();
+            this.args?.openDailyDungeon();
             return;
         }
         UIManager.instance.toast(`${card.title}玩法尚未接入`);

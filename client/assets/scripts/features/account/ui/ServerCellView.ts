@@ -61,9 +61,12 @@ export class ServerCellView extends Component {
         };
         this.node.on(Button.EventType.CLICK, this.tap);
     }
-    /** 销毁格子时解除本实例的按钮监听。 */
+    /** 清空本格点击回调，格子节点仍存在时解除监听。 */
     onDestroy(): void {
-        if (this.tap) this.node.off(Button.EventType.CLICK, this.tap);
+        const node = this.node;
+        if (this.tap && node?.isValid) {
+            node.off(Button.EventType.CLICK, this.tap);
+        }
         this.tap = null;
     }
 }

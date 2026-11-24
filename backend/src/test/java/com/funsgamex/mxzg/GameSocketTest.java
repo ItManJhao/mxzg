@@ -2,6 +2,7 @@
 package com.funsgamex.mxzg;
 
 import com.funsgamex.mxzg.auth.*;
+import com.funsgamex.mxzg.dungeon.DailyDungeonType;
 import com.funsgamex.mxzg.network.GameProtocolCodec;
 import com.funsgamex.mxzg.protocol.GameProtocol;
 import java.nio.ByteBuffer;
@@ -122,6 +123,21 @@ class GameSocketTest {
             JsonNode response = request("session.authenticate", Map.of("accessToken", token, "clientInstanceId", UUID.randomUUID().toString()));
             if (response.path("ok").asBoolean()) connectionId = response.path("body").path("connectionId").asString();
             return response;
+        }
+
+        /** 在当前连接上等一次指定的提交通知，容许它先于或晚于操作回包。 */
+        JsonNode event(String name) throws InterruptedException {
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (System.nanoTime() < deadline) {
+                var event = events.poll();
+                if (event == null) {
+                    event = messages.poll(Math.max(1, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
+                }
+                if (event != null && event.path("name").asString().equals(name)) {
+                    return event;
+                }
+            }
+            throw new AssertionError("没有收到 " + name);
         }
 
         /** 释放测试 socket 与 HTTP 线程，不在测试间残留连接。 */
@@ -881,17 +897,87 @@ class GameSocketTest {
 
     /** 真实 TypeScript 连接覆盖金币副本战斗、清扫、资产快照和同请求重登恢复。 */
     @Test void dailyDungeonChallengeAndSweepRoundTrip() throws Exception {
-        String account = "gold_dungeon_" + UUID.randomUUID().toString().substring(0, 8);
-        var player = login.login(account, "local-1");
-        String roleId = player.role().id();
-        String heroId = UUID.randomUUID().toString();
-        jdbc.update("UPDATE game_role SET role_level=?,diamonds=?,goddess_vip=? WHERE id=?", 15, 1_000, 2, roleId);
-        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,?,?,?,?)",
-                heroId, roleId, 10104004, 100, 4, 0);
-        long version = jdbc.queryForObject("SELECT lineup_version FROM game_role WHERE id=?", Long.class, roleId);
+        runDailyDungeonRoundTrip(DailyDungeonType.GOLD, false);
+    }
+
+    /** 金币前三关共享当天免费和付费次数，每关保存原战报及到账。 */
+    @Test void goldDungeonStageProgressRoundTrip() throws Exception {
+        runDailyDungeonRoundTrip(DailyDungeonType.GOLD, true);
+    }
+
+    /** 真实客户端通过经验副本的挑战、扫荡、重登，并核对金币次数互不影响。 */
+    @Test void experienceDungeonRoundTrip() throws Exception {
+        runDailyDungeonRoundTrip(DailyDungeonType.EXPERIENCE, false);
+    }
+
+    /** 核对英雄、羁绊和精灵三组正式协议、首通回执以及实际到账。 */
+    @Test
+    void additionalDailyDungeonRoutesSettleRealRewards() throws Exception {
+        var player = player();
+        String role = player.role().id();
+        String hero = UUID.randomUUID().toString();
+        jdbc.update("UPDATE game_role SET role_level=60 WHERE id=?", role);
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10104004,100,4)", hero, role);
+        long version = jdbc.queryForObject("SELECT lineup_version FROM game_role WHERE id=?", Long.class, role);
         formations.save("Bearer " + player.session().accessToken(),
                 new com.funsgamex.mxzg.lineup.MainFormationCommandService.Save(UUID.randomUUID().toString(), version, 1,
-                        List.of(new com.funsgamex.mxzg.lineup.Lineup.Slot(2, heroId))));
+                        List.of(new com.funsgamex.mxzg.lineup.Lineup.Slot(2, hero))));
+        try (var peer = new Peer()) {
+            assertTrue(peer.authenticate(player.session().accessToken()).path("ok").asBoolean());
+            for (var type : List.of(DailyDungeonType.HERO, DailyDungeonType.FETTER, DailyDungeonType.SPIRIT)) {
+                String prefix = "dungeon." + type.key();
+                var list = peer.request(prefix + ".list", Map.of());
+                assertTrue(list.path("ok").asBoolean());
+                assertEquals(9, list.path("body").path("stages").size());
+                assertEquals(0, list.path("body").path("wins").asInt());
+                var command = Map.of("requestId", UUID.randomUUID().toString(), "stageId", 1,
+                        "sweep", false, "maxDiamonds", 0);
+                var result = peer.request(prefix + ".challenge", command);
+                assertTrue(result.path("ok").asBoolean(), () -> "副本拒绝 " + type.key() + " " + result.path("error"));
+                var receipt = result.path("body");
+                assertTrue(receipt.path("won").asBoolean());
+                assertEquals(type.scenario(1), receipt.path("replay").path("scenario").asString());
+                assertEquals(1, receipt.path("state").path("wins").asInt());
+                assertEquals(receipt, peer.request(prefix + ".challenge", command).path("body"));
+            }
+        }
+        var quantities = new HashMap<Integer, Long>();
+        for (var item : inventory.list(role)) {
+            quantities.merge(item.itemId(), item.quantity(), Long::sum);
+        }
+        assertEquals(10L, quantities.get(20003000));
+        assertEquals(2L, quantities.get(20004000));
+        assertEquals(4L, quantities.get(901501));
+        assertEquals(60L, quantities.get(901401));
+    }
+
+    /** 为真实客户端准备独立角色、足够余额和合法阵容，多关流程使用原 VIP8 四次上限。 */
+    private void runDailyDungeonRoundTrip(DailyDungeonType type, boolean multiStage) throws Exception {
+        boolean experience = type == DailyDungeonType.EXPERIENCE;
+        String account = (experience ? "experience_dungeon_" : multiStage ? "gold_dungeon_progress_" : "gold_dungeon_")
+                + UUID.randomUUID().toString().substring(0, 8);
+        var player = login.login(account, "local-1");
+        String roleId = player.role().id();
+        jdbc.update("UPDATE game_role SET role_level=?,diamonds=?,goddess_vip=? WHERE id=?",
+                experience ? 17 : 15, 1_000, multiStage ? 8 : 2, roleId);
+        record Member(int templateId, int star, int position) {}
+        var members = multiStage || experience
+                ? List.of(new Member(10104004, 4, 2), new Member(10505005, 5, 3),
+                        new Member(10204005, 4, 5), new Member(10204004, 4, 6), new Member(10405005, 5, 7))
+                : List.of(new Member(10104004, 4, 2));
+        var lineup = new ArrayList<com.funsgamex.mxzg.lineup.Lineup.Slot>();
+        for (var member : members) {
+            String heroId = UUID.randomUUID().toString();
+            jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,?,?,?,?)",
+                    heroId, roleId, member.templateId(), 100, member.star(), 0);
+            lineup.add(new com.funsgamex.mxzg.lineup.Lineup.Slot(member.position(), heroId));
+        }
+        long version = jdbc.queryForObject("SELECT lineup_version FROM game_role WHERE id=?", Long.class, roleId);
+        formations.save("Bearer " + player.session().accessToken(),
+                new com.funsgamex.mxzg.lineup.MainFormationCommandService.Save(UUID.randomUUID().toString(), version, 1, lineup));
+        if (multiStage) {
+            jdbc.update("UPDATE game_role SET max_main_power=52501 WHERE id=? AND max_main_power < 52501", roleId);
+        }
 
         var script = java.nio.file.Path.of("..", "client", "tools", "run-game-socket-live.cjs").toAbsolutePath().normalize();
         var process = new ProcessBuilder("node", script.toString(), Integer.toString(port), RUN_ID, account)
@@ -900,7 +986,9 @@ class GameSocketTest {
             assertTrue(process.waitFor(40, TimeUnit.SECONDS), "副本联调进程超时");
             String output = new String(process.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
             assertEquals(0, process.exitValue(), output);
-            assertTrue(output.contains("PASS real TS gold dungeon"), output);
+            var result = experience ? "PASS real TS experience dungeon"
+                    : multiStage ? "PASS real TS gold dungeon progression" : "PASS real TS gold dungeon →";
+            assertTrue(output.contains(result), output);
         } finally {
             if (process.isAlive()) {
                 process.destroyForcibly();
@@ -927,6 +1015,112 @@ class GameSocketTest {
         assertThrows(IllegalArgumentException.class,()->GameProtocolCodec.decode(new byte[GameProtocolCodec.FRAME_LIMIT+1]));
         assertThrows(IllegalArgumentException.class,()->GameProtocolCodec.encode(Map.of("version",1,"kind","request","name","session.login","body",Map.of("account","x".repeat(GameProtocolCodec.FRAME_LIMIT+1),"serverId","local-1","clientInstanceId","frame-limit-test"))));
     }
+    /** 两个真实连接覆盖公会徽章、申请者头像、同请求重试、审批、资料推送和冷重登。 */
+    @Test
+    void guildMembershipSynchronizesAndRestores() throws Exception {
+        var founder = player();
+        var candidate = player();
+        var candidateId = candidate.role().id();
+        String guildName = "远征" + UUID.randomUUID().toString().substring(0, 7);
+        int badgeId = 12;
+        jdbc.update("UPDATE game_role SET role_level=18,diamonds=100 WHERE id=?", founder.role().id());
+        jdbc.update("UPDATE game_role SET role_level=18 WHERE id=?", candidateId);
+        try (var leader = new Peer(); var member = new Peer()) {
+            leader.authenticate(founder.session().accessToken());
+            var guest = member.authenticate(candidate.session().accessToken()).path("body").path("initial");
+            assertEquals("", guest.path("role").path("guildName").asString());
+
+            var create = Map.of("name", guildName, "requestId", UUID.randomUUID().toString(),
+                "action", "CREATE", "badgeId", badgeId);
+            var created = leader.request("guild.change", create);
+            assertTrue(created.path("ok").asBoolean(), created::toString);
+            var guildId = created.path("body").path("guild").path("id").asString();
+            assertFalse(guildId.isBlank());
+            assertEquals(badgeId, created.path("body").path("guild").path("badgeId").asInt());
+            assertEquals(0, leader.event("state.changed").path("body").path("role").path("diamonds").asLong());
+            assertTrue(leader.request("guild.change", create).path("ok").asBoolean());
+
+            var matching = member.request("guild.list", Map.of("query", guildName, "page", 1));
+            var listedGuild = matching.path("body").path("guilds").get(0);
+            assertEquals(guildId, listedGuild.path("id").asString());
+            assertEquals(badgeId, listedGuild.path("badgeId").asInt());
+            var application = member.request("guild.change",
+                Map.of("requestId", UUID.randomUUID().toString(), "action", "APPLY", "guildId", guildId));
+            assertTrue(application.path("ok").asBoolean(), application::toString);
+            leader.event("guild.updated");
+            var pending = leader.request("guild.list", Map.of());
+            var applicant = pending.path("body").path("applications").get(0);
+            var profile = guest.path("role").path("basics");
+            assertEquals(candidateId, applicant.path("id").asString());
+            assertTrue(applicant.has("headId"));
+            assertTrue(applicant.has("borderId"));
+            assertEquals(profile.path("headId"), applicant.path("headId"));
+            assertEquals(profile.path("borderId"), applicant.path("borderId"));
+
+            var decision = leader.request("guild.change",
+                Map.of("requestId", UUID.randomUUID().toString(), "action", "APPROVE", "applicantId", candidateId));
+            assertTrue(decision.path("ok").asBoolean(), decision::toString);
+            assertEquals(2, decision.path("body").path("members").size());
+            var approved = decision.path("body").path("members").valueStream()
+                .filter(person -> candidateId.equals(person.path("id").asString())).findFirst().orElseThrow();
+            assertEquals(applicant.path("headId"), approved.path("headId"));
+            assertEquals(applicant.path("borderId"), approved.path("borderId"));
+            assertEquals(guildName, member.event("state.changed").path("body").path("role").path("guildName").asString());
+        }
+        try (var restored = new Peer()) {
+            var initial = restored.authenticate(candidate.session().accessToken()).path("body").path("initial");
+            assertEquals(guildName, initial.path("role").path("guildName").asString());
+            var restoredGuild = restored.request("guild.list", Map.of()).path("body");
+            assertEquals(2, restoredGuild.path("members").size());
+            assertEquals(badgeId, restoredGuild.path("guild").path("badgeId").asInt());
+            var left = restored.request("guild.change", Map.of("requestId", UUID.randomUUID().toString(), "action", "LEAVE"));
+            assertTrue(left.path("ok").asBoolean(), left::toString);
+            assertTrue(left.path("body").path("rejoinAtSeconds").asLong() > 0);
+            assertEquals("", restored.event("state.changed").path("body").path("role").path("guildName").asString());
+        }
+    }
+
+    /** 契约资格、首次领取、同请求去重以及断开后通过统一快照恢复，均走真实 WebSocket。 */
+    @Test
+    void vipClaimSynchronizesAndRestores() throws Exception {
+        var account = player();
+        var roleId = account.role().id();
+        String token = account.session().accessToken();
+        var valid = Map.of("requestId", UUID.randomUUID().toString(), "taskId", 100200);
+        try (var peer = new Peer()) {
+            var initial = peer.authenticate(token).path("body").path("initial");
+            assertEquals(0, initial.path("vip").path("level").asInt(-1));
+            assertEquals(4, initial.path("vip").path("tasks").size());
+            assertEquals("VIP_TASK_NOT_REACHED", peer.request("vip.claim", valid).path("error").path("code").asString());
+            jdbc.update("UPDATE game_role SET role_level=5 WHERE id=?", roleId);
+
+            var response = peer.request("vip.claim", valid);
+            assertTrue(response.path("ok").asBoolean(), response::toString);
+            var receipt = response.path("body");
+            assertEquals(roleId, receipt.path("roleId").asString());
+            assertEquals(100200, receipt.path("taskId").asInt());
+            var stateFrame = peer.event("state.changed");
+            var notice = peer.event("reward.granted").path("body");
+            assertEquals(notice, receipt.path("notice"));
+            assertEquals(20, notice.path("items").get(0).path("credited").asLong());
+            var snapshot = stateFrame.path("body");
+            assertEquals(receipt.path("assetRevision"), snapshot.path("revision"));
+            assertEquals(initial.path("role").path("diamonds").asLong() + 20, snapshot.path("role").path("diamonds").asLong());
+            assertTrue(snapshot.path("vip").path("tasks").valueStream().anyMatch(task ->
+                    task.path("id").asInt() == 100200 && task.path("claimed").asBoolean()));
+            assertEquals(receipt, peer.request("vip.claim", valid).path("body"));
+            java.nio.file.Files.write(java.nio.file.Path.of("target", "vip-claim-wire.pb"), GameProtocolCodec.encode(response));
+            java.nio.file.Files.write(java.nio.file.Path.of("target", "vip-state-wire.pb"), GameProtocolCodec.encode(stateFrame));
+        }
+        try (var restored = new Peer()) {
+            var snapshot = restored.authenticate(token).path("body").path("initial");
+            assertTrue(snapshot.path("vip").path("tasks").valueStream().anyMatch(task ->
+                    task.path("id").asInt() == 100200 && task.path("claimed").asBoolean()));
+            assertEquals("VIP_TASK_CLAIMED", restored.request("vip.claim", Map.of(
+                    "requestId", UUID.randomUUID().toString(), "taskId", 100200)).path("error").path("code").asString());
+        }
+    }
+
     /** 关闭 GM 时所有开发操作均由服务端拒绝，普通心跳仍可用。 */
     @Test void gmDisabledIsEnforced() throws Exception {
         var player = player();

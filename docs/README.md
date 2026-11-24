@@ -1,6 +1,6 @@
 # 文档索引
 
-更新于 2026-11-23。第一次接手先看 [开发交接](handoff.md) 和 [仓库约定](../AGENTS.md)。
+更新于 2026-11-24。第一次接手先看 [开发交接](handoff.md) 和 [仓库约定](../AGENTS.md)。
 
 | 想了解什么 | 去哪里查 |
 |---|---|
@@ -20,6 +20,9 @@
 | 界面、弹窗与列表 | [Prefab 与弹窗](prefab-layout.md)、[虚拟列表](super-scroll-authoring.md) |
 | 主线和战斗 | [里程碑](main-chapter-milestone.md)、[战斗布局](battle-prefab-layout.md)、[统计](battle-statistics.md)、[待复验问题](battle-known-issues.md) |
 | 挂机与奖励 | [领取事务](main-chapter-idle-settlement.md)、[收益规则](idle-reward-rules.md)、[活动控制](idle-activity-maintenance.md)、[通用奖励与确认](reward-feedback.md) |
+| 公会 | [创建、申请、审批和退出](guild-membership.md) |
+| 副本大厅与竞技场 | [五类日常副本](network-contract.md#日常副本)、[幻境之塔](network-contract.md#幻境之塔)、[新手竞技场](network-contract.md#新手竞技场) |
+| VIP 等级与领奖 | [契约任务、累计条件与回包](network-contract.md#vip-契约任务) |
 | 配置、资源和构建 | [配置生成](config-pipeline.md)、[加载与缓存](staged-resource-loading.md)、[自动图集](bag-auto-atlas.md) |
 | 本机运行、GM和技能台 | [本机启停与独立验证](local-remake-workflow.md)、[GM维护](gm-development.md) |
 

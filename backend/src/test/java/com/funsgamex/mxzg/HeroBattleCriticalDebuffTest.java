@@ -14,6 +14,7 @@ import com.funsgamex.mxzg.hero.HeroSkillPanelRules;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -143,7 +144,7 @@ class HeroBattleCriticalDebuffTest {
         assertEquals(0.5D, criticalRate(engine, 13));
     }
 
-    /** 未知属性、概率、后续、条件值及越界数仍使整技能预检失败，不因通用分支默认接受。 */
+    /** 配置化概率保留万分比，非法值、未核对复制分支与真实子动作仍做完整预检。 */
     @Test
     void unsupportedConditionalAttributeAndPresentationRemainRejected() throws Exception {
         var row = mutableBuff(1051301);
@@ -152,8 +153,14 @@ class HeroBattleCriticalDebuffTest {
             assertThrows(IllegalArgumentException.class, () -> rules.damageSkillArts(active(1)));
         }
         row.put("value", "207|-1250|0|0");
-        row.put("attach_percent", 9999);
+        row.put("attach_percent", 10001);
         assertThrows(IllegalArgumentException.class, () -> rules.damageSkillArts(active(1)));
+        row.put("attach_percent", 9999);
+        assertEquals(0.9999D, rules.directAttributeChance(1051301));
+        assertDoesNotThrow(() -> rules.damageSkillArts(active(1)));
+        row.put("copy_target", 1);
+        assertThrows(IllegalArgumentException.class, () -> rules.damageSkillArts(active(1)));
+        row.put("copy_target", 0);
         row.put("attach_percent", 10000);
         row.put("art_list", "[1051101]");
         assertThrows(IllegalArgumentException.class, () -> rules.damageSkillArts(active(1)));
@@ -164,6 +171,31 @@ class HeroBattleCriticalDebuffTest {
         presentation.put("attach_percent", 10000);
         presentation.put("art_list", "[1051101]");
         assertThrows(IllegalArgumentException.class, () -> rules.damageSkillArts(active(1)));
+    }
+
+    /** 幻境原守军保留负暴击、负攻防、虚弱以及数值为零的固定状态，一次性护甲与条件虚弱分开。 */
+    @Test
+    void readsIndependentFixedProbabilitiesAndInheritedStatusEffect() {
+        var attributes = Map.of(
+            2211501, List.of(207, -1000, 2, 3000),
+            3201301, List.of(230, 2000, 2, 5000),
+            4071401, List.of(202, -3000, 2, 7000),
+            4101301, List.of(201, -2000, 2, 6000),
+            1151301, List.of(222, 0, 1, 10000));
+        attributes.forEach((id, row) -> {
+            assertTrue(rules.battleDirectAttribute(id));
+            assertEquals(new HeroSkillPanelRules.ControlAttributeDefinition(id, row.get(0), row.get(1), row.get(2)),
+                rules.controlAttribute(id));
+            assertEquals(row.get(3) / 10000D, rules.directAttributeChance(id));
+        });
+        assertTrue(rules.battleStatusCondition(4091201));
+        assertEquals(Set.of(1204), rules.statusConditionValues(4091201));
+        assertTrue(rules.immediateArts(4091201).getFirst().targets().selectors().isEmpty());
+        assertEquals(List.of(4091301), rules.immediateArts(4091201).getFirst().buffs());
+        assertEquals(new HeroSkillPanelRules.ControlAttributeDefinition(4091301, 230, 1500, 0),
+            rules.onceDamageAttribute(4091301));
+        assertEquals(new HeroSkillPanelRules.ControlAttributeDefinition(4091401, 202, -3000, 0),
+            rules.onceDamageAttribute(4091401));
     }
 
     /** 由原技能行解析等级元数据，不用手工技能表代替真实动作列表。 */

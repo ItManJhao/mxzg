@@ -1,10 +1,11 @@
 /**
  * 长连接鉴权接管与恢复快照：同一角色锁内读取钱包、库存实例、冒险点、主线已领及普通召唤冷却。
- * 登录首包和提交后state.changed共用本入口；冒险点真正缺行才按旧规则懒建，不生成酒馆任务。
+ * 登录首包和提交后 state.changed 共用本入口，公会身份与 VIP 任务在同一角色锁内读取。
  */
 package com.funsgamex.mxzg.network;
 
 import com.funsgamex.mxzg.auth.SessionService;
+import com.funsgamex.mxzg.guild.GuildService;
 import com.funsgamex.mxzg.hero.*;
 import com.funsgamex.mxzg.inventory.InventoryService;
 import com.funsgamex.mxzg.inventory.TimedInventoryService;
@@ -12,6 +13,7 @@ import com.funsgamex.mxzg.role.*;
 import com.funsgamex.mxzg.spirit.SpiritInventoryService;
 import com.funsgamex.mxzg.tavern.TavernPointService;
 import com.funsgamex.mxzg.time.GameClock;
+import com.funsgamex.mxzg.vip.VipService;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.*;
@@ -26,7 +28,7 @@ public class SessionSnapshotService {
                            com.funsgamex.mxzg.campaign.MainChapterIdleService.State mainChapterIdle,
                            SpiritInventoryService.State spiritInventory, TavernPointService.State tavernPoints,
                            HeroSummonService.State heroSummon, HeroGodEquipmentService.State godEquipment,
-                           HeroArtifactService.State artifacts) {}
+                           HeroArtifactService.State artifacts, VipService.State vip) {}
     /** 持久会话鉴权，在角色锁内再次确认凭证。 */
     private final SessionService sessions;
     /** 唯一钱包与版本读取入口，同时提供角色行锁。 */
@@ -71,6 +73,10 @@ public class SessionSnapshotService {
     private final GameClock clock;
     /** 快照装配时将实际到期的佩戴框恢复为默认框。 */
     private final RoleProfileService roleProfiles;
+    /** 恢复当前角色的正式公会身份，查询与成员写入共用持久数据。 */
+    private final GuildService guilds;
+    /** 当前 VIP 档位、真实任务进度及领取记录的唯一读取入口。 */
+    private final VipService vip;
 
     /** 注入各领域持久数据入口和游戏时钟，在统一读取事务内聚合状态。 */
     public SessionSnapshotService(SessionService sessions, RoleRepository roles, InventoryService inventory,
@@ -80,7 +86,7 @@ public class SessionSnapshotService {
             com.funsgamex.mxzg.campaign.MainChapterIdleService idle, SpiritInventoryService spirits,
             TavernPointService tavernPoints, com.funsgamex.mxzg.campaign.MainChapterRules chapterRules,
             HeroSummonService heroSummons, HeroGodEquipmentService godEquipment, HeroArtifactService artifacts, GameClock clock,
-            RoleProfileService roleProfiles) {
+            RoleProfileService roleProfiles, GuildService guilds, VipService vip) {
         this.idle = idle;
         this.chapters = chapters;
         this.sessions = sessions;
@@ -98,6 +104,8 @@ public class SessionSnapshotService {
         this.artifacts = artifacts;
         this.clock = clock;
         this.roleProfiles = roleProfiles;
+        this.guilds = guilds;
+        this.vip = vip;
     }
 
     /** 锁内再次校验，撤销同角色其他令牌；并发接管中已失效的令牌不能复活。 */
@@ -109,7 +117,7 @@ public class SessionSnapshotService {
         return role;
     }
 
-    /** 同一角色锁内组装资产与玩法状态；期限库存和挂机共享一次游戏时间，坏状态整包拒绝。 */
+    /** 同一角色锁内组装资产、公会身份和 VIP 任务等玩法状态。期限库存和挂机共享一次游戏时间。 */
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRES_NEW)
     public Snapshot snapshot(String token) {
         String role = sessions.requireRole(token);
@@ -128,8 +136,9 @@ public class SessionSnapshotService {
                 chapter.challengeLimit(), chapter.firstRewardProgress());
         var idleState = idle.snapshot(role, chapter.maxCleared(), now);
         idleState = idle.withLineup(role, idleState, formation);
-        return new Snapshot(roles.findById(role).orElseThrow(), heroes.list(role), inventory.list(role),
+        var profile = roles.findById(role).orElseThrow().withGuildName(guilds.nameForRole(role));
+        return new Snapshot(profile, heroes.list(role), inventory.list(role),
                 roles.revision(role), timedState, capacity.current(role), formation, chapter, idleState, spiritState,
-                pointState, heroSummons.current(role), godEquipment.state(role), artifacts.state(role));
+                pointState, heroSummons.current(role), godEquipment.state(role), artifacts.state(role), vip.current(role));
     }
 }

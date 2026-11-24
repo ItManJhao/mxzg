@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
-import { Node, Label, Button, Sprite } from "cc";
+import { Node, Label, Button, Prefab, Sprite, UITransform } from "cc";
 import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 import { MainChapterMilestoneCard } from "../assets/scripts/features/battle/ui/MainChapterMilestoneCard";
 import { MainChapterModel } from "../assets/scripts/features/battle/MainChapterModel";
@@ -16,6 +16,7 @@ import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { RedDotManager } from "../assets/scripts/framework/ui/RedDotManager";
 import { ResManager } from "../assets/scripts/framework/assets/ResManager";
+import { PrefabLoader } from "../assets/scripts/framework/assets/PrefabLoader";
 import { GameLog } from "../assets/scripts/core/GameLog";
 
 /** 读取正式静态绑定，避免只测工具临时拼接节点而遗漏实际Prefab。 */
@@ -23,12 +24,18 @@ function staticBindings(): void {
     const objects = JSON.parse(readFileSync("client/assets/bundles/module/battle/prefabs/MainChapterView.prefab", "utf8"));
     const component = objects.find((row: any) => row.rewardIcon && row.rewardName && row.claimLabel && row.heroHost);
     assert(component, "常显原目标卡必须存在于正式MainChapterView Prefab");
-    for (const field of ["rewardIcon", "rewardName", "progressLabel", "claimButton", "claimLabel", "claimDot", "heroHost", "progressFill"]) {
+    for (const field of ["rewardIcon", "rewardName", "progressLabel", "claimButton", "claimLabel", "claimDotAnchor", "heroHost", "progressFill"]) {
         assert(objects[component[field].__id__], "目标卡缺少静态引用：" + field);
     }
-    const dot = objects[component.claimDot.__id__];
-    assert.equal(dot._active, false);
-    assert.equal(dot._parent.__id__, objects[component.claimButton.__id__].node.__id__);
+    const anchor = objects[component.claimDotAnchor.__id__];
+    assert.equal(anchor._active, true);
+    assert.equal(anchor._parent.__id__, objects[component.claimButton.__id__].node.__id__);
+    assert.equal(anchor._lpos.x, 82);
+    assert.equal(anchor._lpos.y, 21);
+    const transforms = anchor._components.map((ref: any) => objects[ref.__id__]);
+    assert.deepEqual(transforms.map((row: any) => row.__type__), ["cc.UITransform"]);
+    assert.equal(transforms[0]._contentSize.width, 23);
+    assert.equal(transforms[0]._contentSize.height, 23);
     const main = objects.find((row: any) => row.challengeButton && row.idleClaimButton);
     assert.equal(objects[main.milestoneCard.__id__], component);
     const frame = objects.find((row: any) => row.__type__ === "cc.Node" && row._name === "MilestoneOriginalFrame");
@@ -58,7 +65,9 @@ function card(): MainChapterMilestoneCard {
     value.progressLabel = new Node("ProgressLabel").addComponent(Label);
     value.claimButton = new Node("ClaimButton").addComponent(Button);
     value.claimLabel = new Node("ClaimLabel").addComponent(Label);
-    value.claimDot = new Node("ClaimDot"); value.claimDot.parent = value.claimButton.node;
+    value.claimDotAnchor = new Node("ClaimDotAnchor");
+    value.claimDotAnchor.parent = value.claimButton.node;
+    value.claimDotAnchor.addComponent(UITransform).setContentSize(23, 23);
     const progress = new Node("Progress"); progress.parent = root;
     value.progressFill = new Node("Fill").addComponent(Sprite); value.progressFill.node.parent = progress;
     return value;
@@ -78,6 +87,13 @@ async function main(): Promise<void> {
     const originalPaint = ResManager.setSprite;
     const originalToast = UIManager.instance.toast;
     const originalClaim = MainChapterController.instance.claimMilestone;
+    const originalLoad = PrefabLoader.loadPrefab;
+    const prefab = Object.assign(new Prefab(), { _instantiate: () => {
+        const node = new Node("RedDot");
+        node.addComponent(UITransform).setContentSize(28, 28);
+        return node;
+    } });
+    PrefabLoader.loadPrefab = async () => prefab;
     (BattleSpineService.instance as any).mountBattleSpine = (parent: Node, stem: string, _failure: unknown, options: { scale: number }) => {
         const actor = { node: new Node("OriginalHero"), stem, scale: options.scale, gestures: [] as string[],
             gesture(name: string) { this.gestures.push(name); return true; } };
@@ -92,7 +108,7 @@ async function main(): Promise<void> {
     try {
         state(14);
         (value as any).onEnable();
-        assert.equal(value.claimDot!.active, false);
+        assert.equal(value.claimDotAnchor!.getChildByName("RedDot"), null);
         assert.equal(EventDispatcher.instance.listenerCount(MainChapterController.Updated), before + 1);
         assert.equal(actors.length, 1);
         assert.equal(actors[0].stem, "10105007");
@@ -107,7 +123,10 @@ async function main(): Promise<void> {
         assert.equal(entries, 0);
         assert(tips[0].includes("1关"));
         state(15);
-        assert.equal(value.claimDot!.active, true);
+        await new Promise<void>(resolve => setImmediate(resolve));
+        const dot = value.claimDotAnchor!.getChildByName("RedDot");
+        assert.equal(dot?.active, true);
+        assert.equal(dot?.getComponent(UITransform)?.width, 23);
         assert.equal(RedDotManager.instance.isVisible(GameRedDotKey.BATTLE), true);
         assert.equal(actors.length, 1, "同目标快照不重复创建模型");
         assert.equal(value.rewardIcon!.node.active, false);
@@ -123,7 +142,7 @@ async function main(): Promise<void> {
         assert.equal(entries, 1);
         assert.equal(value.claimLabel!.string, "确认中");
         state(15, [100]);
-        assert.equal(value.claimDot!.active, false);
+        assert.equal(dot?.active, false);
         assert.equal(RedDotManager.instance.isVisible(GameRedDotKey.BATTLE), false);
         finish(); await click;
         assert.equal(actors[0].node.isValid, false, "切到物品目标须释放旧英雄节点");
@@ -132,6 +151,7 @@ async function main(): Promise<void> {
         assert.equal(value.rewardIcon!.node.active, true);
         assert.equal(value.heroHost!.active, false);
         (value as any).onDisable();
+        assert.equal(value.claimDotAnchor!.getChildByName("RedDot"), null);
         assert.equal(EventDispatcher.instance.listenerCount(MainChapterController.Updated), before);
         const previous = value.rewardName!.string;
         state(20, [100]);
@@ -164,8 +184,14 @@ async function main(): Promise<void> {
 
         state(140, [100, 150, 200, 300, 400, 500]);
         assert.equal(value.completed, true);
-        assert.equal(value.claimDot!.active, false);
+        assert(!value.claimDotAnchor!.getChildByName("RedDot")?.active);
         (value as any).onDisable();
+        value.claimDotAnchor = null;
+        (value as any).onEnable();
+        state(15);
+        assert.equal(value.claimLabel!.string, "领取奖励", "缺少红点时仍展示可领取状态");
+        (value.claimButton as unknown as { node: Node | null }).node = null;
+        assert.doesNotThrow(() => (value as any).onDisable());
         assert.equal(EventDispatcher.instance.listenerCount(MainChapterController.Updated), before);
         console.log("PASS milestone card: original frame/model, 15/50/80 rewards, next target and lifecycle");
     } finally {
@@ -175,6 +201,7 @@ async function main(): Promise<void> {
         ResManager.setSprite = originalPaint;
         UIManager.instance.toast = originalToast;
         MainChapterController.instance.claimMilestone = originalClaim;
+        PrefabLoader.loadPrefab = originalLoad;
         model.reset();
         RedDotManager.instance.reset();
     }

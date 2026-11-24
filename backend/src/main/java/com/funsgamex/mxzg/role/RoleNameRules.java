@@ -17,7 +17,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 @Component
-class RoleNameRules {
+public class RoleNameRules {
     /** 保留旧名字允许的字符范围，拒绝单行输入框无法正常显示的控制字符。 */
     private static final Pattern NAME_PATTERN = Pattern.compile("[\\p{Graph}\\p{Space}\\p{Blank}\\w\\u0020-\\uFE4F]+");
     /** 旧服系统展示符号，避免昵称冒用游戏内标签。 */
@@ -53,30 +53,40 @@ class RoleNameRules {
 
     /** 去除首尾空白及换行并校验合法性，通过后返回实际保存的名字。 */
     Optional<String> validate(String input) {
+        return validate(input, maxLength);
+    }
+
+    /** 依调用模块的策划上限校验同一套可见字符、显示长度和敏感词。 */
+    public Optional<String> validate(String input, int limit) {
         if (input == null) {
             return Optional.empty();
         }
         String nickname = input.trim().replace("\r", "").replace("\n", "");
-        if (nickname.isBlank() || nickname.length() > maxLength || !NAME_PATTERN.matcher(nickname).matches()) {
+        if (nickname.isBlank() || nickname.length() > limit || !NAME_PATTERN.matcher(nickname).matches()) {
             return Optional.empty();
         }
         int length = 0;
         for (int index = 0; index < nickname.length(); index++) {
             char letter = nickname.charAt(index);
             length += letter <= 0xff ? 1 : 2;
-            if (length > maxLength || Character.isISOControl(letter) || RESERVED_SYMBOLS.indexOf(letter) >= 0) {
+            if (length > limit || Character.isISOControl(letter) || RESERVED_SYMBOLS.indexOf(letter) >= 0) {
                 return Optional.empty();
             }
         }
-        String lowered = nickname.toLowerCase(Locale.ROOT);
+        return containsBlocked(nickname) ? Optional.empty() : Optional.of(nickname);
+    }
+
+    /** 按统一服务端屏蔽词校验文本，供公会公告等已限定长度的输入复用。 */
+    public boolean containsBlocked(String text) {
+        String lowered = text.toLowerCase(Locale.ROOT);
         for (int start = 0; start < lowered.length(); start++) {
             for (int end = start + 1; end <= lowered.length(); end++) {
                 if (blocked.contains(lowered.substring(start, end))) {
-                    return Optional.empty();
+                    return true;
                 }
             }
         }
-        return Optional.of(nickname);
+        return false;
     }
 
     /** 各抽一个原表片段拼接为候选，确认可用的昵称仍由提交事务认领。 */

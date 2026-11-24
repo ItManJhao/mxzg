@@ -46,6 +46,8 @@ export class GameSocketClient {
   onState: ((frame: GameFrame) => void) | null = null;
   /** 当前连接的通用奖励事件，只交应用核对归属及安排展示，不替代状态快照。 */
   onReward: ((frame: GameFrame) => void) | null = null;
+  /** 当前已认证连接收到公会变更后刷新公会窗口，公会名仍由角色快照提交。 */
+  onGuildUpdated: ((frame: GameFrame) => void) | null = null;
   /** 当前连接最近的完整帧，供本次登录交付，不另建资产 Model。 */
   latestState: GameFrame | null = null;
   onDisconnected: ((message: string) => void) | null = null;
@@ -274,7 +276,7 @@ export class GameSocketClient {
     }
   }
 
-  /** 只接纳本连接上的会话、资产和奖励通知。顶号消息在连接已识别时即可生效。 */
+  /** 只接纳本连接上的会话、资产、奖励与公会通知。顶号消息在连接已识别时即可生效。 */
   private onServerEvent(frame: GameFrame): void {
     if (!this.connectionId) {
       throw new SocketFailure("INVALID_MESSAGE");
@@ -292,6 +294,14 @@ export class GameSocketClient {
     switch (frame.name) {
       case Protocol.STATE_CHANGED:
         this.onStateChanged(frame);
+        return;
+      case Protocol.GUILD_UPDATED:
+        if (frame.id !== undefined || frame.ok !== undefined || frame.error !== undefined) {
+          throw new SocketFailure("INVALID_MESSAGE");
+        }
+        if (this.traceReceived(frame)) {
+          this.onGuildUpdated?.(frame);
+        }
         return;
       case Protocol.REWARD_GRANTED: {
         const notice = GameProtocolCodecUtils.validateRewardNotice(frame.body);
@@ -393,7 +403,7 @@ export class GameSocketClient {
     }
   }
 
-  /** 将业务拒绝映射为飘字文案，保留 GM 参数、资格、消耗和连接故障的原因。 */
+  /** 将资格、消耗、请求和连接等业务拒绝映射为飘字文案。 */
   private static failureMessage(code: string): string {
     switch (code) {
       case "UNAUTHENTICATED": return "登录已失效，请重新登录";
@@ -515,7 +525,31 @@ export class GameSocketClient {
       case "MARKET_REFRESH_LIMIT": return "今日付费刷新次数已用完";
       case "MARKET_INSUFFICIENT": return "购买或刷新所需的货币不足";
       case "INVALID_MARKET_REQUEST": return "市场操作参数无效，请重新选择";
+      case "GUILD_LOCKED": return "角色达到18级后开放公会";
+      case "GUILD_INSUFFICIENT": return "创建公会所需的钻石不足";
+      case "GUILD_RECHARGE_REQUIRED": return "尚未达到创建公会的累计充值条件";
+      case "GUILD_NAME_INVALID": return "公会名称不符合要求";
+      case "GUILD_DESCRIPTION_INVALID": return "公会公告不符合要求";
+      case "GUILD_NAME_TAKEN": return "公会名称已被使用";
+      case "GUILD_NOT_FOUND": return "该公会已不存在";
+      case "GUILD_ALREADY_MEMBER": return "你已加入公会";
+      case "GUILD_NOT_MEMBER": return "你尚未加入公会";
+      case "GUILD_FULL": return "公会人数已满";
+      case "GUILD_COOLDOWN": return "退出公会后需等待两小时才能申请";
+      case "GUILD_FORBIDDEN": return "你没有此公会操作权限";
+      case "GUILD_LEADER_CANNOT_LEAVE": return "会长不能在仍有其他成员时退出公会";
+      case "GUILD_APPLICATION_MISSING": return "该入会申请已处理或失效";
+      case "GUILD_REQUEST_CONFLICT": return "操作已发生变化，请刷新公会状态";
+      case "GUILD_REQUEST_INVALID": return "公会操作参数无效";
+      case "VIP_REQUEST_INVALID": return "VIP 任务参数无效";
+      case "VIP_REQUEST_CONFLICT": return "VIP 任务操作已变化，请重新选择";
+      case "VIP_TASK_TIER": return "当前档位无法领取该任务";
+      case "VIP_TASK_UNAVAILABLE": return "该任务相关玩法尚未开放";
+      case "VIP_TASK_NOT_REACHED": return "任务进度尚未达成";
+      case "VIP_TASK_CLAIMED": return "该任务奖励已领取";
       case "DUNGEON_LEVEL": return "角色等级未达到副本开启条件";
+      case "DUNGEON_STAGE": return "该副本关卡尚未开放";
+      case "DUNGEON_PREVIOUS_STAGE": return "请先通关当前副本的上一关";
       case "DUNGEON_POWER": return "历史主线阵容最高战力未达到副本要求";
       case "DUNGEON_COUNT": return "今日副本次数已用完";
       case "DUNGEON_SWEEP_LOCKED": return "首次挑战胜利后可清扫";
@@ -525,6 +559,30 @@ export class GameSocketClient {
       case "DUNGEON_BATTLE_UNAVAILABLE": return "当前阵容的技能尚不能用于此副本，请检查上阵英雄";
       case "DUNGEON_REQUEST_INVALID": return "副本操作参数无效，请重新选择";
       case "DUNGEON_REQUEST_CONFLICT": return "副本操作与原请求不一致，请重新确认";
+      case "TOWER_LEVEL": return "角色达到16级后开放幻境之塔";
+      case "TOWER_FLOOR": return "请挑战当前未通关楼层";
+      case "TOWER_ENERGY": return "幻境之塔精力不足";
+      case "TOWER_FORMATION_EMPTY": return "请先保存幻境之塔阵容";
+      case "TOWER_FORMATION_CHANGED": return "阵容已变化，请重新打开出阵";
+      case "TOWER_FORMATION_INVALID": return "幻境阵容不可用，请重新选将";
+      case "TOWER_BATTLE_UNAVAILABLE": return "当前阵容无法进行幻境战斗";
+      case "TOWER_SWEEP_FLOOR": return "只能扫荡已通关的最高楼层";
+      case "TOWER_SWEEP_LIMIT": return "今日幻境扫荡次数已用完";
+      case "TOWER_COST_CHANGED": return "扫荡费用已变化，请重新确认";
+      case "TOWER_DIAMONDS": return "扫荡所需钻石不足";
+      case "TOWER_MILESTONE_LOCKED": return "通关对应楼层后可领取";
+      case "TOWER_MILESTONE_CLAIMED": return "该楼层奖励已领取";
+      case "TOWER_REQUEST_INVALID": return "幻境操作参数无效，请重新选择";
+      case "TOWER_REQUEST_CONFLICT": return "幻境操作与原请求不一致，请重新确认";
+      case "ARENA_LEVEL": return "角色达到8级后开放竞技场";
+      case "ARENA_OPPONENT": return "对手已变化，请重新选择";
+      case "ARENA_TICKETS": return "免费次数已用完，竞技场门票不足";
+      case "ARENA_DIAMONDS": return "购买竞技场门票所需的钻石不足";
+      case "ARENA_BATTLE_UNAVAILABLE": return "请保存可出战的主线阵容后再挑战";
+      case "ARENA_REPORT": return "该竞技场战报不可用";
+      case "ARENA_NEWCOMER_COMPLETE": return "新手竞技场已完成，真人匹配暂未开放";
+      case "ARENA_REQUEST_INVALID": return "竞技场操作参数无效，请重新选择";
+      case "ARENA_REQUEST_CONFLICT": return "竞技场操作与原请求不一致，请重新确认";
       case "IDEMPOTENCY_CONFLICT": return "操作与原请求不一致，请重新确认";
       case "UNKNOWN_MESSAGE": return "服务端不支持此协议，请更新并重启后端";
       default: return "请求未完成（" + code + "），请稍后重试";

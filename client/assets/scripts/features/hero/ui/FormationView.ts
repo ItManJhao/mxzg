@@ -1,6 +1,6 @@
 /**
- * 主线阵容页面：编辑英雄与站位草稿，展示队伍加成，并持有阵型及元素子窗。
- * 子窗确认只更新草稿，点击出阵才交由 FormationController 保存。
+ * 共用出阵页面。主线和幻境之塔编辑各自的阵容；阵型和元素子窗只修改本页草稿。
+ * 保存后由所属业务控制器确认结果，主线继续等待统一角色快照。
  */
 import { _decorator, Button, EventTouch, Label, Node, UITransform, Vec3, view as ccView } from "cc";
 import { GameLog } from "../../../core/GameLog";
@@ -22,9 +22,12 @@ import { FormationSaveModel } from "../FormationSaveModel";
 import { HeroRosterModel } from "../HeroRosterModel";
 import { FormationEvent } from "../utils/FormationEvent";
 import { HeroRosterEvent } from "../utils/HeroRosterEvent";
+import { HeroRosterUtils } from "../utils/HeroRosterUtils";
 import { HeroCatalog } from "../utils/HeroCatalog";
 import { FormationElementUtils, type FormationElementPreview } from "../utils/FormationElementUtils";
-import type { FormationState } from "../data/FormationData";
+import { FormationMatrixUtils, type FormationMatrixEntry } from "../utils/FormationMatrixUtils";
+import type { FormationSaveRequest, FormationState } from "../data/FormationData";
+import type { MainFormation } from "../data/HeroSnapshotUtils";
 
 const { ccclass, property } = _decorator;
 
@@ -49,6 +52,15 @@ export interface FormationRequest {
     complete(confirmed: boolean): void;
     /** 主线出战确认保存成功后关闭；普通布阵仍留在页面。 */
     closeAfterSave?: boolean;
+    /** 其他玩法的显示标题，主线沿用预制体标题。 */
+    title?: string;
+    /** 其他玩法提供自己的已确认阵容和保存入口，主线使用原统一快照。 */
+    formation?: {
+        /** 返回当前玩法已同步的阵容和可用格位。 */
+        read(): MainFormation | null;
+        /** 将独立草稿交给所属玩法，收到确认后给出结果。 */
+        save(draft: Omit<FormationSaveRequest, "requestId">, done: (success: boolean) => void): void;
+    };
 }
 
 @UIRegistry.view({
@@ -108,6 +120,8 @@ export class FormationView extends BaseView<FormationRequest> {
     private closed = true;
     /** 当前页面草稿，绝不回写权威Model。 */
     private state: FormationState = { heroes: [], lineup: { version: 0, slots: [] }, busy: true, message: "等待阵容同步…" };
+    /** 本次开窗读取的阵型说明，用当前草稿阵型查找各格的加成。 */
+    private matrices: readonly FormationMatrixEntry[] = [];
     /** 当前草稿派生的说明和总加成，关闭或未取得配置时清空。 */
     private elementPreview: FormationElementPreview | null = null;
     /** 当前父页持有的元素子窗，关闭后清空，复用本实例刷新草稿。 */
@@ -121,7 +135,7 @@ export class FormationView extends BaseView<FormationRequest> {
     /** 本页已点击出战，当前草稿在保存期间保持不变，等待服务器阵容确认。 */
     private submittedForBattle = false;
 
-    /** 校验布局、出阵和加成展示的静态绑定，随后从统一快照建立草稿。 */
+    /** 校验静态绑定，读取阵型说明，从快照建立草稿。 */
     public onOpen(args?: FormationRequest): void {
         this.args = args;
         this.done = false;
@@ -143,16 +157,26 @@ export class FormationView extends BaseView<FormationRequest> {
         const cell = (this.heroScroll!.list.cellPrefab!.data as Node).getComponent(HeroIconCellView);
         if (!cell) throw new Error("FormationHeroCellView.prefab 缺少HeroIconCellView");
         cell.validateBindings();
+        this.matrices = FormationMatrixUtils.list();
         this.fit();
         ccView.on("canvas-resize", this.fit, this);
         this.bindControls();
-        const list = this.heroScroll!.list;
-        list.node.on(SuperContent.SELECT_ITEM, this.onSelect, this);
-        this.ownListener(() => list.node.off(SuperContent.SELECT_ITEM, this.onSelect, this));
+        const listNode = this.heroScroll!.list.node;
+        listNode.on(SuperContent.SELECT_ITEM, this.onSelect, this);
+        this.ownListener(() => {
+            if (listNode.isValid) {
+                listNode.off(SuperContent.SELECT_ITEM, this.onSelect, this);
+            }
+        });
         EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.onAssetsChanged);
-        EventDispatcher.instance.on(FormationEvent.SaveChanged, this, this.onSaveChanged);
+        if (args?.title) {
+            this.titleLabel!.string = args.title;
+        }
         this.reload();
-        this.onSaveChanged();
+        if (!args?.formation) {
+            EventDispatcher.instance.on(FormationEvent.SaveChanged, this, this.onSaveChanged);
+            this.onSaveChanged();
+        }
     }
 
     /** 只适配根窗口，列表尺寸归静态布局；共享遮罩由UIManager提供。 */
@@ -171,11 +195,16 @@ export class FormationView extends BaseView<FormationRequest> {
         this.saves = saves;
     }
 
-    /** 绑定出阵、阵型、元素抑制及站位输入，关页时由本页统一解除监听。 */
+    /** 绑定出阵、阵型、元素抑制及站位输入，关页时仅从有效的原节点解绑。 */
     private bindControls(): void {
         const bind = (button: Button, run: () => void) => {
-            button.node.on(Button.EventType.CLICK, run);
-            this.ownListener(() => button.node.off(Button.EventType.CLICK, run));
+            const node = button.node;
+            node.on(Button.EventType.CLICK, run);
+            this.ownListener(() => {
+                if (node.isValid) {
+                    node.off(Button.EventType.CLICK, run);
+                }
+            });
         };
         bind(this.closeButton!, () => this.complete(false));
         bind(this.confirmButton!, () => this.saveDraft());
@@ -205,12 +234,12 @@ export class FormationView extends BaseView<FormationRequest> {
     /** 同版本名册变化保留草稿；权威阵容换版时取消旧选择窗，再按现有保存状态决定是否重载。 */
     private onAssetsChanged(): void {
         if (this.closed) return;
-        const current = this.roster.snapshot.mainFormation;
+        const current = this.currentFormation();
         const draftReplaced = !current || current.version !== this.state.lineup.version;
         if (draftReplaced) {
             UIManager.instance.closeChildren(this);
         }
-        if (this.saves.snapshot.busy) {
+        if (this.args?.formation ? this.state.busy && !!current : this.saves.snapshot.busy) {
             return;
         }
         if (draftReplaced || this.state.busy) {
@@ -261,12 +290,31 @@ export class FormationView extends BaseView<FormationRequest> {
             return;
         }
         UIManager.instance.closeChildren(this);
+        const draft = {
+            expectedVersion: this.state.lineup.version,
+            formationId: this.state.formationId!,
+            slots: this.state.lineup.slots.map(slot => ({ ...slot })),
+        };
+        const formation = this.args?.formation;
+        if (formation) {
+            this.state = { ...this.state, busy: true, message: "正在保存阵容…" };
+            this.paint();
+            formation.save(draft, saved => {
+                if (!this.closed) {
+                    if (saved) {
+                        this.complete(true);
+                    } else {
+                        this.reload();
+                    }
+                }
+            });
+            return;
+        }
         this.submittedForBattle = !!this.args?.closeAfterSave;
-        void this.module.save({ expectedVersion: this.state.lineup.version,
-            formationId: this.state.formationId!, slots: this.state.lineup.slots.map(slot => ({ ...slot })) });
+        void this.module.save(draft);
     }
 
-    /** 重绘草稿站位、阵型及元素加成，等待服务器时禁用编辑。 */
+    /** 重绘草稿站位、当前阵型格位加成及同元素加成，等待服务器时禁用编辑。 */
     public render(state: FormationState): void {
         this.cancelSlotGesture();
         this.state = state;
@@ -286,7 +334,10 @@ export class FormationView extends BaseView<FormationRequest> {
         const selected = this.elementButtons[this.elem].node;
         this.filterMark!.setPosition(selected.position.x, selected.position.y, 0);
         this.elementButtons.forEach(button => { button.interactable = !state.busy; });
-        const heroes = state.heroes.filter(hero => !this.elem || HeroCatalog.find(hero.templateId)?.elem === this.elem);
+        // 排序使用已保存的主线阵容，编辑草稿时仅更新格子的出阵标记。
+        const heroes = state.heroes
+            .filter(hero => !this.elem || HeroCatalog.find(hero.templateId)?.elem === this.elem)
+            .sort(HeroRosterUtils.compareOwned);
         this.heroScroll!.list.setData(heroes, (node, hero) => {
             const face = HeroCatalog.find(hero.templateId);
             const cell = node.getComponent(HeroIconCellView)!;
@@ -297,12 +348,15 @@ export class FormationView extends BaseView<FormationRequest> {
             });
             cell.button!.interactable = editable;
         });
+        const matrix = this.matrices.find(entry => entry.id === formationId);
         this.slots.forEach(slot => {
             const heroId = state.lineup.slots.find(row => row.position === slot.position)?.heroId;
             const hero = state.heroes.find(row => row.id === heroId);
             const face = hero ? HeroCatalog.find(hero.templateId) : null;
+            const bonus = slot.position === ASSISTANCE_POSITION ? null
+                : matrix?.slots[slot.position - 1]?.bonus ?? "";
             slot.show(state.openPositions?.includes(slot.position) === true, !editable,
-                hero ? face?.name || String(hero.templateId) : null, face?.icon || null);
+                face?.icon ?? null, bonus);
         });
     }
 
@@ -319,11 +373,12 @@ export class FormationView extends BaseView<FormationRequest> {
         this.args?.complete(confirmed);
     }
 
-    /** 释放视口监听、拖动预览和本页的元素派生数据，模块继续接收保存回执。 */
+    /** 释放视口监听、拖动预览和本页的加成展示数据，模块继续接收保存回执。 */
     public onClose(): void {
         ccView.off("canvas-resize", this.fit, this);
         this.closed = true;
         this.cancelSlotGesture();
+        this.matrices = [];
         this.elementPreview = null;
         this.elementDialog = null;
         this.lastElementIssue = "";
@@ -336,7 +391,8 @@ export class FormationView extends BaseView<FormationRequest> {
     }
     /** 仅从唯一快照复制草稿；未同步允许位置时不开放编辑。 */
     private reload(message = "点击英雄上阵或撤下，拖动阵位中的英雄换位"): void {
-        const snapshot = this.roster.snapshot, current = snapshot.mainFormation;
+        const snapshot = this.roster.snapshot;
+        const current = this.currentFormation();
         const option = current?.options?.find(row => row.formationId === current.formationId);
         if (!current || !option) {
             this.state = {...this.state, busy: true, message: "阵型配置尚未同步，请等待连接恢复"};
@@ -348,6 +404,11 @@ export class FormationView extends BaseView<FormationRequest> {
             };
         }
         this.paint();
+    }
+
+    /** 从本页所属玩法读取权威阵容；塔尚未同步时保持空状态。 */
+    private currentFormation(): MainFormation | null | undefined {
+        return this.args?.formation ? this.args.formation.read() : this.roster.snapshot.mainFormation;
     }
 
     /** 仅在当前页打开且服务器阵容已就绪时编辑草稿。 */
@@ -598,7 +659,7 @@ export class FormationView extends BaseView<FormationRequest> {
     /** 核对当前快照的版本和可选阵型，按开放格序位迁移草稿；助战只在双方开放时保留。 */
     private applyFormation(formationId: number): void {
         const currentPositions = this.state.openPositions;
-        const current = this.roster.snapshot.mainFormation;
+        const current = this.currentFormation();
         if (!this.editable() || !currentPositions || formationId === this.state.formationId
                 || current?.version !== this.state.lineup.version || !current.unlockedIds.includes(formationId)) {
             return;

@@ -7,6 +7,8 @@ import { UIManager } from "../../framework/ui/UIManager";
 import { GameLog } from "../../core/GameLog";
 import { CityNavigationUtils } from "../../config/CityNavigationUtils";
 import { EntryGateUtils } from "../../config/EntryGateUtils";
+import { GameConfig } from "../../config/GameConfig";
+import { GConfig } from "../../config/GConfig";
 import type { AccountModel } from "../../features/account/AccountModel";
 
 /** 导航需要的页面操作；不包含资源获取或业务协议。 */
@@ -35,8 +37,8 @@ interface FeatureHost {
     notice(text: string): void;
 }
 
-/** 功能页占用主城的内容区域；召唤与市场仍点亮主城导航。 */
-type FeatureTab = "hero" | "bag" | "battle" | "summon" | "market" | "dungeon";
+/** 功能页占用主城的内容区域；地图进入的玩法仍点亮主城导航。 */
+type FeatureTab = "hero" | "bag" | "battle" | "summon" | "market" | "dungeon" | "clan" | "fetter" | "arena" | "tower";
 
 /** 主城点击目标、页面和内容区域对应关系。 */
 const routes: Readonly<Record<string, { page: string; title: string; tab: FeatureTab }>> = {
@@ -48,7 +50,11 @@ const routes: Readonly<Record<string, { page: string; title: string; tab: Featur
     main_hero_make: {page: "hero-creation", title: "创造法阵", tab: "summon"},
     main_shop: {page: "market", title: "市场", tab: "market"},
     dungeon: {page: "dungeon-hall", title: "副本大厅", tab: "dungeon"},
-    "gold-dungeon": {page: "gold-dungeon", title: "金币副本", tab: "dungeon"},
+    "gold-dungeon": {page: "gold-dungeon", title: "日常副本", tab: "dungeon"},
+    arena: {page: "arena", title: "竞技场", tab: "arena"},
+    tower: {page: "tower", title: "幻境之塔", tab: "tower"},
+    clan: {page: "guild", title: "公会", tab: "clan"},
+    fetter: {page: "vip", title: "VIP", tab: "fetter"},
 };
 
 /** 管理最新功能打开意图，加载失败时保留已显示的主城或功能页。 */
@@ -56,7 +62,7 @@ export class HomeFeatureNavigation {
     /** 从已登记的页面导出底栏开放状态；英雄详情与英雄列表只点亮同一个页签。 */
     public static readonly tabs = Object.freeze(
         Array.from(new Set(Object.values(routes).map(route => route.tab)))
-            .filter(tab => tab !== "summon" && tab !== "market"),
+            .filter(tab => tab !== "summon" && tab !== "market" && tab !== "arena" && tab !== "tower"),
     );
 
     /** 同次打开仍在等待350毫秒后才提示；缓存瞬开不把资源复用误报成重新准备。 */
@@ -81,10 +87,19 @@ export class HomeFeatureNavigation {
         return Object.values(routes).find(route => route.page === page)?.tab ?? null;
     }
 
-    /** 处理已实现入口并返回true；仅有效打开持续等待才提示，未知入口返回false交原调用方说明未开放。 */
+    /** 转交已接通的功能入口和页内跳转，日常副本跳转按玩法自身门槛检查。 */
     open(id: string): boolean {
         if (id === "mainline") {
             id = "battle";
+        }
+        if (id === "main_fetter") {
+            id = "fetter";
+        }
+        if (id === "main_pvp") {
+            id = "arena";
+        }
+        if (id === "main_fantasy_tower") {
+            id = "tower";
         }
         const route = Object.prototype.hasOwnProperty.call(routes, id) ? routes[id] : undefined;
         if (id !== "city" && !route) {
@@ -93,7 +108,10 @@ export class HomeFeatureNavigation {
         if (this.disposed || !this.host.authorized()) {
             return true;
         }
-        if (route?.tab === "dungeon" && !this.canOpenDungeon()) {
+        if ((id === "dungeon" || id === "clan") && !this.canOpenGatedTab(id)) {
+            return true;
+        }
+        if ((id === "gold-dungeon" || id === "arena" || id === "tower") && !this.canOpenPlay(id)) {
             return true;
         }
         if (!route) {
@@ -119,8 +137,16 @@ export class HomeFeatureNavigation {
             }
         }, HomeFeatureNavigation.loadingNoticeDelayMs);
         this.ui.keepOnly(page);
-        const args = id === "dungeon" ? { account: this.host.account, openGoldDungeon: () => this.open("gold-dungeon") }
-            : id === "gold-dungeon" ? { backToHall: () => this.open("dungeon") } : undefined;
+        let args: unknown;
+        if (id === "dungeon") {
+            args = { account: this.host.account, openDailyDungeon: () => this.open("gold-dungeon") };
+        } else if (id === "gold-dungeon") {
+            args = { account: this.host.account, backToHall: () => this.open("dungeon") };
+        } else if (id === "clan") {
+            args = { account: this.host.account };
+        } else if (id === "fetter") {
+            args = { openFeature: (featureId: string) => this.open(featureId) };
+        }
         void this.ui.openById(page, args).then(() => {
             this.clearLoadingNotice(epoch);
             if (this.accepts(epoch)) {
@@ -145,16 +171,33 @@ export class HomeFeatureNavigation {
         return true;
     }
 
-    /** 按当前角色资料和旧副本大厅门槛放行，锁定时显示实际等级。 */
-    private canOpenDungeon(): boolean {
-        const gate = CityNavigationUtils.bottomGate("dungeon");
+    /** VIP 任务、地图和副本卡片使用对应玩法的旧版开关，达标后才打开玩法页。 */
+    private canOpenPlay(id: "gold-dungeon" | "arena" | "tower"): boolean {
+        const entry = CityNavigationUtils.findNavEntry(id === "gold-dungeon" ? "daily" : id);
         const role = this.host.account?.snapshot.role;
-        if (!gate || !role) {
-            this.host.notice("副本大厅条件尚未同步");
+        const gate = entry?.gateId && GameConfig.instance.getConfig(GConfig.OpenCondition, entry.gateId);
+        if (!role || !gate) {
+            this.host.notice(routes[id].title + "条件尚未同步");
             return false;
         }
         if (!EntryGateUtils.isEntryOpen(gate, role.level, 0)) {
-            this.host.notice(`角色达到 ${gate.level} 级开启副本大厅`);
+            this.host.notice(`角色达到 ${gate.level} 级开启${routes[id].title}`);
+            return false;
+        }
+        return true;
+    }
+
+    /** 副本和公会共用底栏的实际等级门槛。 */
+    private canOpenGatedTab(tab: "dungeon" | "clan"): boolean {
+        const gate = CityNavigationUtils.bottomGate(tab);
+        const role = this.host.account?.snapshot.role;
+        const title = routes[tab].title;
+        if (!gate || !role) {
+            this.host.notice(title + "条件尚未同步");
+            return false;
+        }
+        if (!EntryGateUtils.isEntryOpen(gate, role.level, 0)) {
+            this.host.notice(`角色达到 ${gate.level} 级开启${title}`);
             return false;
         }
         return true;

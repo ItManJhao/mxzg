@@ -3,7 +3,7 @@ import { _decorator, Button, Label, Node, Sprite, UITransform } from "cc";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { ResManager } from "../../../framework/assets/ResManager";
 import { BaseView } from "../../../framework/ui/BaseView";
-import { RedDotManager } from "../../../framework/ui/RedDotManager";
+import { RedDotBinding } from "../../../framework/ui/RedDotBinding";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
@@ -56,8 +56,8 @@ export class FirstSummonView extends BaseView<void> {
     @property(Label) advancedFreeLabel: Label | null = null;
     /** 右上方显示积分使用比例。 */
     @property(Sprite) pointsFill: Sprite | null = null;
-    /** 积分满足领取条件时的提醒。 */
-    @property(Node) pointsReady: Node | null = null;
+    /** 积分兑换提醒的可选定位节点，保留原尺寸与偏移。 */
+    @property(Node) pointsDotAnchor: Node | null = null;
     /** 查看积分条件及领取。 */
     @property(Button) pointsButton: Button | null = null;
     /** 查看真实召唤概率。 */
@@ -113,11 +113,9 @@ export class FirstSummonView extends BaseView<void> {
         this.ownListener(EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.render));
         this.ownListener(EventDispatcher.instance.on(HeroRosterEvent.SummonProgress, this, this.render));
         this.ownListener(EventDispatcher.instance.on(BagEvent.BagUpdate, this, this.render));
-        const pointsReady = this.pointsReady;
-        if (pointsReady) {
-            this.ownListener(RedDotManager.instance.watch(GameRedDotKey.SUMMON_POINTS, visible => {
-                pointsReady.active = visible;
-            }));
+        if (this.pointsDotAnchor) {
+            const binding = RedDotBinding.atAnchor(this.pointsDotAnchor, GameRedDotKey.SUMMON_POINTS);
+            this.ownListener(() => binding.dispose());
         }
         this.ownListener(EventDispatcher.instance.on("summon.repeat", this, selection => {
             if (this.isSummonShown) {

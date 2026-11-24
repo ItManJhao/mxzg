@@ -7,7 +7,7 @@ import { GameConfig } from "../../../config/GameConfig";
 import { ErrorUtils } from "../../../core/ErrorUtils";
 import { GameLog } from "../../../core/GameLog";
 import { BaseView } from "../../../framework/ui/BaseView";
-import { RedDotManager } from "../../../framework/ui/RedDotManager";
+import { RedDotBinding } from "../../../framework/ui/RedDotBinding";
 import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
 import { CityMapQuery, CityMapService } from "./CityMapService";
 import { CityEffectHandle, CityEffectPlayUtils } from "./CityEffectPlayUtils";
@@ -101,8 +101,8 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
     private started = false;
     /** 建筑按钮已开始绑定时为true，同一实例后续刷新不重复登记点击。 */
     private clicksBound = false;
-    /** 本次打开是否已订阅主城的法阵红点，关闭后复位。 */
-    private watchingBuildingRedDots = false;
+    /** 当前主城显示期的法阵红点绑定，刷新建筑锁态时同步更新。 */
+    private readonly buildingRedDots: RedDotBinding[] = [];
     /** 关闭或释放后为true，重复清理直接返回，动态显示由各自资源作用域结束迟到交付。 */
     private cleaned = false;
     /** 返回主城地图根节点，由RemakeHomeView统一持有其显示和生命周期。 */
@@ -120,7 +120,7 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
             this.args = args;
         }
         if (this.started) {
-            this.watchBuildingRedDots();
+            this.bindBuildingRedDots();
             this.refreshLocks();
             return;
         }
@@ -152,31 +152,32 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
             spot.sprite.grayscale = locked;
             spot.sprite.color = locked ? LOCKED_COLOR : OPEN_COLOR;
         });
-        this.paintBuildingRedDot("main_summon", RedDotManager.instance.isVisible(GameRedDotKey.SUMMON));
-        this.paintBuildingRedDot("main_hero_make", RedDotManager.instance.isVisible(GameRedDotKey.HERO_CREATION));
+        this.buildingRedDots.forEach(binding => binding.refresh());
     }
 
-    /** 监听两个法阵的汇总红点，随当前地图的使用周期释放。 */
-    private watchBuildingRedDots(): void {
-        if (this.watchingBuildingRedDots) {
+    /** 按场景挂点绑定法阵提醒，建筑开放且树节点点亮时显示。 */
+    private bindBuildingRedDots(): void {
+        if (this.buildingRedDots.length > 0) {
             return;
         }
-        this.watchingBuildingRedDots = true;
-        this.ownListener(() => { this.watchingBuildingRedDots = false; });
-        this.ownListener(RedDotManager.instance.watch(GameRedDotKey.SUMMON,
-            visible => this.paintBuildingRedDot("main_summon", visible)));
-        this.ownListener(RedDotManager.instance.watch(GameRedDotKey.HERO_CREATION,
-            visible => this.paintBuildingRedDot("main_hero_make", visible)));
-    }
-
-    /** 已开放的法阵可显示其预制体红点，随原建筑一起移动。 */
-    private paintBuildingRedDot(atom: string, visible: boolean): void {
-        const dot = this.views.get("spot-" + atom)?.getChildByName("RedDot");
-        const query = this.args?.query;
-        if (dot && query) {
-            const locked = CityMapLayoutUtils.cityAtomLocked(atom, query.level(), query.openDay(), query.db());
-            dot.active = visible && !locked;
+        const entries = [
+            ["main_summon", GameRedDotKey.SUMMON],
+            ["main_hero_make", GameRedDotKey.HERO_CREATION],
+        ] as const;
+        for (const [atom, path] of entries) {
+            const anchor = this.views.get("spot-" + atom)?.getChildByName("RedDotAnchor");
+            if (anchor) {
+                const binding = RedDotBinding.atAnchor(anchor, path, () => {
+                    const query = this.args?.query;
+                    return !!query && !CityMapLayoutUtils.cityAtomLocked(atom, query.level(), query.openDay(), query.db());
+                });
+                this.buildingRedDots.push(binding);
+            }
         }
+        this.ownListener(() => {
+            this.buildingRedDots.forEach(binding => binding.dispose());
+            this.buildingRedDots.length = 0;
+        });
     }
 
     /** 同步读取三张已安装主城表并完成入口和特效装配；缺配置直接使开页等待失败，不补加载或退回空表。 */
@@ -197,7 +198,7 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
             if (this.spotViews.size < 1 || !this.views.has("spot-main_summon")) {
                 throw new Error("CityHub 没有建筑按钮");
             }
-            this.watchBuildingRedDots();
+            this.bindBuildingRedDots();
             this.fxHandle = CityEffectPlayUtils.startCityEffects(this.views, this.layout.effects, (node, parent, x, y) => this.placeBottomLeft(node, parent, x, y));
             this.bindMainline();
             this.bindDrag();

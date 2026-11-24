@@ -28,6 +28,7 @@ import { BagItemView } from "./BagItemView";
 import { BagTabView } from "./BagTabView";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { RedDotManager } from "../../../framework/ui/RedDotManager";
+import { RedDotBinding } from "../../../framework/ui/RedDotBinding";
 import { BagInfoView } from "./BagInfoView";
 import { SpiritInfoView } from "./SpiritInfoView";
 import { EquipmentInfoView } from "./EquipmentInfoView";
@@ -98,8 +99,10 @@ export class BagView extends BaseView<BagOpenArgs> {
     private nextExpiry = Infinity;
     /** 本页创建的分类组件，刷新时同步选中态，随页面节点销毁。 */
     private tabs: BagTabView[] = [];
-    /** 碎片页签生成后保留引用，缓存重开时随当前角色红点刷新。 */
-    private pieceTab: BagTabView | null = null;
+    /** 碎片页签的可选定位节点，缓存重开时重新绑定红点。 */
+    private pieceDotAnchor: Node | null = null;
+    /** 当前显示期的碎片页签红点，关闭后释放并清空。 */
+    private pieceDotBinding: RedDotBinding | null = null;
     /** 是否已创建页签，避免重复实例化。 */
     private tabsBuilt = false;
     /** 是否已执行首次打开；后续 onOpen 只刷新已有内容。 */
@@ -137,13 +140,11 @@ export class BagView extends BaseView<BagOpenArgs> {
         this.args = args;
         EventDispatcher.instance.on(BagEvent.BagUpdate, this, this.refreshFromModel);
         EventDispatcher.instance.on(BagEvent.BagSyncStateChanged, this, this.onSyncStateChanged);
-        this.ownListener(RedDotManager.instance.watch(GameRedDotKey.BAG_PIECES, visible => {
-            this.pieceTab?.setRedDot(visible);
-        }));
         this.bindClose();
         this.bindList();
         this.tab = args?.tab || "item";
         if (this.opened) {
+            this.bindPieceDot();
             this.refreshGrid();
             return;
         }
@@ -238,14 +239,17 @@ export class BagView extends BaseView<BagOpenArgs> {
         component.validateBindings();
     }
 
-    /** 登记一次关闭按钮回调，交给 BaseView 统一释放。 */
+    /** 登记一次关闭按钮回调；子节点先销毁时仍重置绑定状态。 */
     private bindClose(): void {
         if (!this.btnClose || this.closeBound) return;
         this.closeBound = true;
         const close = () => this.close();
-        this.btnClose.node.on(Button.EventType.CLICK, close);
+        const node = this.btnClose.node;
+        node.on(Button.EventType.CLICK, close);
         this.ownListener(() => {
-            this.btnClose?.node.off(Button.EventType.CLICK, close);
+            if (node.isValid) {
+                node.off(Button.EventType.CLICK, close);
+            }
             this.closeBound = false;
         });
     }
@@ -292,7 +296,7 @@ export class BagView extends BaseView<BagOpenArgs> {
                 ? GameConfig.instance.getConfig(GConfig.Language, 5788)?.value || "欢迎光临～" : "背包为空";
     }
 
-    /** 根据分类生成页签，碎片页签读取已同步红点，点击只切换展示。 */
+    /** 根据分类生成页签，碎片页签接入公共红点，点击只切换展示。 */
     private buildTabs(): void {
         if (this.tabsBuilt || !this.tabContent || !this.tabPrefab) return;
         this.tabsBuilt = true;
@@ -313,10 +317,22 @@ export class BagView extends BaseView<BagOpenArgs> {
                 this.refreshGrid();
             });
             if (spec.id === "shard") {
-                this.pieceTab = tab;
-                tab.setRedDot(RedDotManager.instance.isVisible(GameRedDotKey.BAG_PIECES));
+                this.pieceDotAnchor = tab.pieceDotAnchor;
+                this.bindPieceDot();
             }
             this.tabs.push(tab);
+        }
+    }
+
+    /** 把碎片汇总红点绑定到当前显示期，关页时销毁并退订。 */
+    private bindPieceDot(): void {
+        if (this.pieceDotAnchor && !this.pieceDotBinding) {
+            const binding = RedDotBinding.atAnchor(this.pieceDotAnchor, GameRedDotKey.BAG_PIECES);
+            this.pieceDotBinding = binding;
+            this.ownListener(() => {
+                binding.dispose();
+                this.pieceDotBinding = null;
+            });
         }
     }
 

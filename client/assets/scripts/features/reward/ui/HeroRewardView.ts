@@ -105,7 +105,7 @@ export class HeroRewardView extends BaseView<HeroRewardArgs> {
     /** 本次参数关闭回调，取走后单次通知，异常不重复推进。 */
     private closedCallback: (() => void) | undefined;
 
-    /** 校验完整静态绑定，按钮和适配沿BaseView生命周期统一清理。 */
+    /** 校验静态绑定并监听确认、技能与适配，销毁时从仍有效的原节点解绑。 */
     public onBind(): void {
         if (!this.panel || !this.highStar || !this.heroHost || this.auraHosts.length !== 2
             || !this.introduction || !this.heroEffect || !this.heroLight || !this.heroName || !this.heroDescription || !this.element
@@ -114,12 +114,22 @@ export class HeroRewardView extends BaseView<HeroRewardArgs> {
             || !this.titleEffect || !this.confetti || !this.rewardAudio) {
             throw new Error("英雄获得窗口静态绑定缺失");
         }
-        this.confirm.node.on(Button.EventType.CLICK, this.close, this);
-        this.ownListener(() => this.confirm?.node.off(Button.EventType.CLICK, this.close, this));
+        const confirmNode = this.confirm.node;
+        confirmNode.on(Button.EventType.CLICK, this.close, this);
+        this.ownListener(() => {
+            if (confirmNode.isValid) {
+                confirmNode.off(Button.EventType.CLICK, this.close, this);
+            }
+        });
         this.skillButtons.forEach((button, slot) => {
             const show = () => this.showSkill(slot);
-            button.node.on(Button.EventType.CLICK, show);
-            this.ownListener(() => button.node.off(Button.EventType.CLICK, show));
+            const node = button.node;
+            node.on(Button.EventType.CLICK, show);
+            this.ownListener(() => {
+                if (node.isValid) {
+                    node.off(Button.EventType.CLICK, show);
+                }
+            });
         });
         this.ownListener(ViewportLayoutUtils.bindVisibleRefresh(this.node,
             () => ViewportLayoutUtils.fitVisibleRoot(this.node)));

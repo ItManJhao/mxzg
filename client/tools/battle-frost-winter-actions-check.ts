@@ -48,10 +48,12 @@ function empty(): void {
         { file: '["skill-102040050"]' },
         { sound: '["god01"]' },
         { shake: 1 },
-        { dimly: 1 },
+        { dimly: 2 },
     ]) {
         assert.throws(() => BattleAttackUtils.plan({ ...source, ...changes }), /空动作包含尚未恢复/);
     }
+    assert.deepEqual(BattleAttackUtils.plan({ ...source, dimly: 1 }), plan,
+        "公共暗屏在空动作开始前发出，不改变空段自身的骨骼或特效");
     const inherited = { ...source };
     delete inherited.shake;
     delete inherited.dimly;

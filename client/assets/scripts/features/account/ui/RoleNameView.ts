@@ -63,7 +63,7 @@ export class RoleNameView extends BaseView<RoleNameArgs> {
         });
     }
 
-    /** 校验静态绑定，登记窗口打开期间的按钮、快照与协议反馈。 */
+    /** 校验静态绑定，登记本次打开的按钮节点、快照与协议反馈。 */
     public onOpen(args?: RoleNameArgs): void {
         const { panel, nameInput, randomButton, confirmButton } = this;
         if (!args || !panel || !nameInput || !randomButton || !confirmButton) {
@@ -72,11 +72,17 @@ export class RoleNameView extends BaseView<RoleNameArgs> {
         if (args.model.snapshot.role?.firstNamed !== false) {
             return;
         }
-        randomButton.node.on(Button.EventType.CLICK, this.randomize, this);
-        confirmButton.node.on(Button.EventType.CLICK, this.confirm, this);
+        const randomNode = randomButton.node;
+        const confirmNode = confirmButton.node;
+        randomNode.on(Button.EventType.CLICK, this.randomize, this);
+        confirmNode.on(Button.EventType.CLICK, this.confirm, this);
         this.ownListener(() => {
-            randomButton.node.off(Button.EventType.CLICK, this.randomize, this);
-            confirmButton.node.off(Button.EventType.CLICK, this.confirm, this);
+            if (randomNode.isValid) {
+                randomNode.off(Button.EventType.CLICK, this.randomize, this);
+            }
+            if (confirmNode.isValid) {
+                confirmNode.off(Button.EventType.CLICK, this.confirm, this);
+            }
         });
         const events = EventDispatcher.instance;
         this.ownListener(events.on(RoleNameEvent.Suggested, this, this.showSuggestion));

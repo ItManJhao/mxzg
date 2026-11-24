@@ -26,6 +26,15 @@ interface OpenPage {
     host: Node;
     view: BaseView<unknown>;
 }
+/** 主页面打开意图，切页可取消资源或页面就绪的等待。 */
+interface PageIntent {
+    /** 导航按页面 ID 保留当前目标。 */
+    readonly id: string;
+    /** 页面资源或就绪等待期间收到取消时拒绝。 */
+    readonly cancelled: Promise<never>;
+    /** 取消等待，打开入口随后释放本次实例。 */
+    readonly cancel: () => void;
+}
 /** 一个真实弹窗实例；准备中的窗口也参与模态归属，不以页面id覆盖另一份实例。 */
 interface ResidentPage extends OpenPage {
     /** 本次打开的注册配置，包含当前实例的模态和关闭模式。 */
@@ -86,7 +95,7 @@ export class UIManager {
         return {
             pages: Array.from(this.pages.values()).reduce((sum, group) => sum + group.length, 0),
             residents: this.residents.size, cached: this.cached.size, prepared: this.prepared.size,
-            opening: this.opening.size, pendingResident: this.pendingResident.size, intents: this.tokens.size,
+            opening: this.opening.size, pendingResident: this.pendingResident.size, intents: this.pageIntents.size,
             modalNodes: this.modalLayer.snapshot().nodes, modalActive: this.modalLayer.snapshot().active
         };
     }
@@ -112,10 +121,10 @@ export class UIManager {
     private cached = new Map<string, OpenPage & {
         closedAt: number;
     }>();
-    /** 闲置页面最多保留两份；只限制界面实例，不淘汰预加载资源。 */
-    public static readonly maxCachedPages = 2;
-    /** 页面关闭后最多保留120秒，重新打开后不受闲置清理影响。 */
-    public static readonly cacheIdleMs = 120000;
+    /** 最多保留六个已关闭的缓存页，超量时从最早关闭的页面开始淘汰。 */
+    public static readonly maxCachedPages = 6;
+    /** 页面从关闭起闲置十分钟后到期，单位为毫秒；重新打开后停止闲置计时。 */
+    public static readonly cacheIdleMs = 600_000;
     /** 只在存在闲置页面时等待最近到期时间；清空、取完和卸载时取消。 */
     private cacheTimer: ReturnType<typeof setTimeout> | null = null;
     /** 已完成打开的弹窗按实际宿主保存；同一页面可以有多份实例。 */
@@ -133,8 +142,8 @@ export class UIManager {
     /** 节点层级活跃事件合并至帧末执行，避免在引擎遍历激活树时重排兄弟节点。 */
     private modalRefreshPending = false;
     private opening = new Map<string, Promise<BaseView<unknown>>>();
-    private tokens = new Map<number, string>();
-    private nextToken = 1;
+    /** 未进页面栈的打开意图，主页面切换和应用卸载会撤销。 */
+    private readonly pageIntents = new Set<PageIntent>();
     install(nav: PageNav, host: UIManagerHost): void {
         this.nav = nav;
         this.host = host;
@@ -184,6 +193,9 @@ export class UIManager {
                 }
                 existing.view.runOpen(args);
                 await existing.view.whenReady();
+                if (!existing.view.node?.isValid || this.top(spec.id) !== existing || this.nav?.current !== spec.id) {
+                    throw new OpenCancelled();
+                }
                 this.noteOpened(existing.view, spec, started);
                 return existing.view as BaseView<T>;
             }
@@ -352,16 +364,25 @@ export class UIManager {
      * 背包还在加载时玩家去了别的页，这次打开就不能再压栈。
      */
     keepOnly(id: string): void {
-        for (const [token, page] of this.tokens) {
-            if (page !== id) {
-                this.tokens.delete(token);
+        for (const intent of this.pageIntents) {
+            if (intent.id !== id) {
+                this.cancelPageOpening(intent);
             }
         }
     }
 
-    /** 丢掉所有还没进栈的打开。 */
+    /** 撤销所有还未进栈的打开，包括已挂载但仍在等待就绪的页面。 */
     invalidatePending(): void {
-        this.tokens.clear();
+        for (const intent of this.pageIntents) {
+            this.cancelPageOpening(intent);
+        }
+    }
+
+    /** 立即撤销旧等待，同 ID 可以开始新的打开。 */
+    private cancelPageOpening(intent: PageIntent): void {
+        this.pageIntents.delete(intent);
+        this.opening.delete(intent.id);
+        intent.cancel();
     }
 
     /** 销毁所有已关闭的缓存页；不关闭正在显示或正在打开的页面，也不清空共享预制体池。 */
@@ -370,7 +391,7 @@ export class UIManager {
         this.cached.clear();
         this.cancelCacheTimer();
         for (const page of pages) {
-            this.disposeCachedPage(page);
+            this.releasePage(page);
         }
     }
 
@@ -388,18 +409,22 @@ export class UIManager {
         return existed;
     }
 
-    /** 缓存实例退出时保证销毁节点；节点作用域随销毁释放，其他页面的共享资源不受影响。 */
-    private disposeCachedPage(page: OpenPage): void {
+    /** 释放业务视图。清理异常记录其来源，后续宿主销毁或导航仍可完成。 */
+    private releaseView(id: string, view: BaseView<unknown>): void {
         try {
-            page.view.runDispose();
+            view.runDispose();
         }
         catch (error) {
-            GameLog.shared.classified("FRAMEWORK", "error", "UIManager", "缓存页面清理失败 " + page.id + " " + ErrorUtils.messageOf(error));
+            GameLog.shared.classified("FRAMEWORK", "error", "UIManager",
+                "页面清理失败 " + id + " " + (error instanceof Error ? error.stack || error.message : String(error)));
         }
-        finally {
-            if (page.host.isValid) {
-                page.host.destroy();
-            }
+    }
+
+    /** 业务释放后由同一个管理器销毁宿主和其持有的资源。 */
+    private releasePage(page: OpenPage): void {
+        this.releaseView(page.id, page.view);
+        if (page.host.isValid) {
+            page.host.destroy();
         }
     }
 
@@ -411,7 +436,7 @@ export class UIManager {
                 continue;
             }
             this.cached.delete(id);
-            this.disposeCachedPage(page);
+            this.releasePage(page);
             removed++;
         }
         this.scheduleCacheCollection();
@@ -440,26 +465,7 @@ export class UIManager {
         }, delay);
     }
 
-    /**
-     * 页面栈要销毁宿主之前问一下。cache 的页面先摘下来，不销毁。
-     * 节点已经没了就不能缓存。
-     */
-    retainOnClose(node: Node): boolean {
-        for (const list of this.pages.values()) {
-            for (let i = 0; i < list.length; i++) {
-                const page = list[i];
-                if (page.host !== node) {
-                    continue;
-                }
-                const ctor = UIRegistry.viewCtorById(page.id);
-                const spec = ctor ? UIRegistry.viewSpecOf(ctor) : null;
-                return !!(spec && spec.cache && node.isValid);
-            }
-        }
-        return false;
-    }
-
-    /** RemakeNavigation关闭Page时调用；缓存页仅关闭展示和监听，其他页面继续解绑与释放。 */
+    /** 导航关闭页面时保留可重用实例。关闭钩子抛错时释放旧页并继续切换。 */
     noteClosed(id: string): void {
         const list = this.pages.get(id);
         if (!list || list.length === 0) {
@@ -472,7 +478,14 @@ export class UIManager {
         if (list.length === 0) {
             this.pages.delete(id);
         }
-        page.view.runClose();
+        try {
+            page.view.runClose();
+        } catch (error) {
+            GameLog.shared.classified("FRAMEWORK", "error", "UIManager",
+                "页面关闭失败 " + id + " " + (error instanceof Error ? error.stack || error.message : String(error)));
+            this.releasePage(page);
+            return;
+        }
         const ctor = UIRegistry.viewCtorById(id);
         const spec = ctor ? UIRegistry.viewSpecOf(ctor) : null;
         if (spec && spec.cache && page.host.isValid && page.view.node && page.view.node.isValid) {
@@ -480,15 +493,14 @@ export class UIManager {
             page.host.removeFromParent();
             const previous = this.cached.get(id);
             if (previous && previous !== page) {
-                this.disposeCachedPage(previous);
+                this.releasePage(previous);
             }
             this.cached.delete(id);
             this.cached.set(id, { ...page, closedAt: GameLog.monoNow() });
             this.collectCached();
             return;
         }
-        page.view.runUnbind();
-        page.view.runDispose();
+        this.releasePage(page);
     }
 
     /** 将页面ID、View类或实例解析到已注册ID；未注册对象返回null，不创建页面。 */
@@ -778,8 +790,8 @@ export class UIManager {
         return [...Array.from(this.residents.values()), ...Array.from(this.pendingResident.values())];
     }
 
-    /** 先移除归属并停用节点，再统一释放本实例；重复取消不会清理新窗口。 */
-    private disposeResident(page: ResidentPage): void {
+    /** 释放弹窗和模态归属。宿主由引擎销毁时，先清理视图，宿主交给当前销毁流程。 */
+    private disposeResident(page: ResidentPage, hostDestroying = false): void {
         if (page.cancelled) {
             return;
         }
@@ -803,27 +815,21 @@ export class UIManager {
             page.host.off(Node.EventType.ACTIVE_IN_HIERARCHY_CHANGED, page.onActiveChanged);
             page.onActiveChanged = null;
         }
-        if (page.host.isValid) {
+        if (!hostDestroying && page.host.isValid) {
             page.host.active = false;
         }
         this.refreshModal();
-        try {
-            page.view.runDispose();
-        }
-        catch (error) {
-            GameLog.shared.classified("FRAMEWORK", "error", "UIManager", "弹窗清理失败 " + page.id + " " + ErrorUtils.messageOf(error));
-        }
-        finally {
-            if (page.host.isValid) {
-                page.host.destroy();
-            }
+        if (hostDestroying) {
+            this.releaseView(page.id, page.view);
+        } else {
+            this.releasePage(page);
         }
     }
 
     /** 处理宿主直接销毁，立即取消等待并恢复下层模态。 */
     private onResidentDestroyed(page: ResidentPage): void {
         page.onDestroyed = null;
-        this.disposeResident(page);
+        this.disposeResident(page, true);
     }
 
     /** 打开或重开时提升到同宿主本层顶部，高层窗口保持在上。 */
@@ -921,31 +927,36 @@ export class UIManager {
         return page;
     }
 
-    private issue(id: string): number {
-        const token = this.nextToken;
-        this.nextToken += 1;
-        this.tokens.set(token, id);
-        return token;
+    /** 登记独立的打开意图，允许切页取消在途等待。 */
+    private issuePageIntent(id: string): PageIntent {
+        let cancel!: () => void;
+        const cancelled = new Promise<never>((_resolve, reject) => {
+            cancel = () => reject(new OpenCancelled());
+        });
+        const intent = { id, cancel, cancelled };
+        this.pageIntents.add(intent);
+        return intent;
     }
 
-    /** 打开新的常驻界面或弹窗；准备期间保持令牌有效，失败或取消时撤销实例与在途登记。 */
+    /** 下载完成后重新检查导航意图。等待就绪时取消也会释放已经挂载的页面。 */
     private async openNew(ctor: ViewClass<unknown>, spec: ViewSpec, args: unknown): Promise<BaseView<unknown>> {
         const started = GameLog.monoNow();
         const shell = new Node("LiveShell");
         const origin = this.nav ? this.nav.current : null;
-        const token = this.issue(spec.id);
+        const intent = this.issuePageIntent(spec.id);
         let view: BaseView<unknown> | null = null;
         try {
-            view = await this.mount(shell, ctor, spec, args, () => this.ensureCurrent(token, spec.id, origin));
+            const validate = () => this.ensureCurrent(intent, origin);
+            const prefab = await Promise.race([this.loadViewPrefab(spec, validate), intent.cancelled]);
+            validate();
+            view = this.mount(shell, ctor, spec, args, prefab);
+            await Promise.race([view.whenReady(), intent.cancelled]);
+            validate();
+            this.stage(spec, shell, view, intent);
             this.noteOpened(view, spec, started);
-            this.ensureCurrent(token, spec.id, origin);
-            if (!shell.isValid || !view.node || !view.node.isValid) {
-                throw new Error("页面已关");
-            }
-            this.stage(spec, shell, view, token);
         }
         catch (err) {
-            throw this.abandon(spec, shell, view, token, err);
+            throw this.abandon(spec, shell, view, intent, err);
         }
         this.notify(spec.id);
         return view;
@@ -954,59 +965,50 @@ export class UIManager {
     /** 复用已关闭页面；取消或失败时销毁实例，禁止把部分打开的页面重新缓存。 */
     private async reopen(page: OpenPage, spec: ViewSpec, args: unknown): Promise<BaseView<unknown>> {
         const origin = this.nav ? this.nav.current : null;
-        const token = this.issue(spec.id);
+        const intent = this.issuePageIntent(spec.id);
         const started = GameLog.monoNow();
         try {
             if (spec.prepare) {
-                await spec.prepare();
+                await Promise.race([spec.prepare(), intent.cancelled]);
             }
-            this.ensureCurrent(token, spec.id, origin);
-            page.host.active = true;
-            page.view.runOpen(args);
-            await page.view.whenReady();
-            this.noteOpened(page.view, spec, started);
-            this.ensureCurrent(token, spec.id, origin);
-            if (!page.host.isValid || !page.view.node || !page.view.node.isValid) {
-                throw new Error("页面已关");
-            }
-            this.stage(spec, page.host, page.view, token);
-        }
-        catch (err) {
-            const cancelled = UIManager.isOpenCancelled(err) || !this.tokens.has(token);
-            this.tokens.delete(token);
-            this.armed.delete(spec.id);
-            this.prepared.delete(spec.id);
-            this.disposeCachedPage(page);
-            if (!cancelled) {
-                this.reportOpenFailed(spec.id, err);
-            }
-            if (cancelled && !UIManager.isOpenCancelled(err)) {
-                GameLog.shared.classified("FRAMEWORK", "info", "UI", "打开已取消 " + spec.id + " " + ErrorUtils.messageOf(err));
+            this.ensureCurrent(intent, origin);
+            if (!page.host.isValid || !page.view.node?.isValid) {
                 throw new OpenCancelled();
             }
-            throw err instanceof Error ? err : new Error(ErrorUtils.messageOf(err));
+            page.host.active = true;
+            page.view.runOpen(args);
+            await Promise.race([page.view.whenReady(), intent.cancelled]);
+            this.ensureCurrent(intent, origin);
+            this.stage(spec, page.host, page.view, intent);
+            this.noteOpened(page.view, spec, started);
+        }
+        catch (err) {
+            throw this.abandon(spec, page.host, page.view, intent, err);
         }
         this.notify(spec.id);
         return page.view;
     }
 
     /** 意图还在，而且玩家没有切到别的页。 */
-    private ensureCurrent(token: number, id: string, origin: string | null): void {
-        if (!this.tokens.has(token)) {
+    private ensureCurrent(intent: PageIntent, origin: string | null): void {
+        if (!this.pageIntents.has(intent)) {
             throw new OpenCancelled();
         }
         if (!this.nav) {
             throw new Error("UIManager 还没接上页面栈");
         }
-        if (this.nav.current !== origin && this.nav.current !== id) {
+        if (this.nav.current !== origin && this.nav.current !== intent.id) {
             throw new OpenCancelled();
         }
     }
 
     /** 装好了才登记进栈。只清掉这一次的意图，别的打开还留着。 */
-    private stage(spec: ViewSpec, shell: Node, view: BaseView<unknown>, token: number): void {
+    private stage(spec: ViewSpec, shell: Node, view: BaseView<unknown>, intent: PageIntent): void {
         if (!this.nav) {
             throw new Error("UIManager 还没接上页面栈");
+        }
+        if (!shell.isValid || !view.node?.isValid) {
+            throw new OpenCancelled();
         }
         this.prepared.set(spec.id, { id: spec.id, host: shell, view });
         this.armed.add(spec.id);
@@ -1016,7 +1018,7 @@ export class UIManager {
         if (!this.top(spec.id)) {
             throw new Error("页面没有挂上 " + spec.id);
         }
-        this.tokens.delete(token);
+        this.pageIntents.delete(intent);
     }
 
     /** 已经在栈上才刷新底栏。 */
@@ -1027,19 +1029,16 @@ export class UIManager {
     }
 
     /** 终止尚未完成的打开，关闭View并销毁外壳；主动取消不作为加载失败重复报告。 */
-    private abandon(spec: ViewSpec, shell: Node, view: BaseView<unknown> | null, token: number, err: unknown): Error {
-        const cancelled = UIManager.isOpenCancelled(err) || !this.tokens.has(token);
-        this.tokens.delete(token);
-        this.armed.delete(spec.id);
-        this.prepared.delete(spec.id);
-        if (view) {
-            view.runClose();
-            if (!spec.cache) {
-                view.runUnbind();
-                view.runDispose();
-            }
+    private abandon(spec: ViewSpec, shell: Node, view: BaseView<unknown> | null, intent: PageIntent, err: unknown): Error {
+        const pending = this.pageIntents.delete(intent);
+        const cancelled = UIManager.isOpenCancelled(err) || !pending;
+        if (this.prepared.get(spec.id)?.host === shell) {
+            this.armed.delete(spec.id);
+            this.prepared.delete(spec.id);
         }
-        if (shell.isValid) {
+        if (view) {
+            this.releasePage({ id: spec.id, host: shell, view });
+        } else if (shell.isValid) {
             shell.destroy();
         }
         if (!cancelled) {
@@ -1069,9 +1068,8 @@ export class UIManager {
         }
     }
 
-    /** 挂载前由页面宿主持有预制体；配置前置条件由@UIRegistry.view声明，异步准备、显示和实例缓存期间均保护依赖。 */
-    private async mount(shell: Node, ctor: ViewClass<unknown>, spec: ViewSpec, args: unknown, validate: () => void): Promise<BaseView<unknown>> {
-        const prefab = await this.loadViewPrefab(spec, validate);
+    /** 为宿主保留预制依赖并同步绑定视图，调用方持有实例后再等待异步就绪。 */
+    private mount(shell: Node, ctor: ViewClass<unknown>, spec: ViewSpec, args: unknown, prefab: Prefab): BaseView<unknown> {
         if (!shell.isValid) {
             throw new Error("页面已关");
         }
@@ -1089,10 +1087,9 @@ export class UIManager {
                 found.attachBinding(spec.createBinding(found));
             }
             found.runOpen(args);
-            await found.whenReady();
         }
         catch (error) {
-            found.runDispose();
+            this.releaseView(spec.id, found);
             throw error;
         }
         return found;

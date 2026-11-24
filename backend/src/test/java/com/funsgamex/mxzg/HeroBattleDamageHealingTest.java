@@ -1,8 +1,9 @@
-/** 使用真实技能验证蒂芬妮与森镜之灵的伤害转治疗、各自的先决条件与战报。 */
+/** 使用真实技能验证伤害换治疗、伤害换盾，以及各自的先决条件与战报。 */
 package com.funsgamex.mxzg;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.DoublePredicate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -88,6 +89,44 @@ class HeroBattleDamageHealingTest {
         assertEquals(0, blocked.ordinaryResults().getLast().damage());
         assertEquals(10000, blocked.state(4).hp());
         assertEquals(unblocked.recoveries(), blocked.recoveries());
+    }
+
+    /** 黑暗兵器以本次累计的计算伤害为三名低血队友护盾，最后一次闪避时旧盾值为零。 */
+    @ParameterizedTest
+    @CsvSource({"true", "false"})
+    void shieldsLowestHealthAlliesFromAccumulatedDamage(boolean lastHit) {
+        var mapper = new ObjectMapper();
+        var rules = new HeroSkillPanelRules(mapper);
+        var elements = new HeroBattleElementRules(mapper);
+        var skill = rules.battleSchedule(List.of(
+                new HeroEvolutionRules.Skill(105050111, 1), new HeroEvolutionRules.Skill(105050110, 0)));
+        var engine = new HeroBattleHealingExecutor(rules, List.of(
+                new State(new Actor(1, skill), 1, 2, 9000, 10000, 1000, 0, 0, 0),
+                new State(new Actor(2, List.of()), 1, 3, 4000, 10000, 1000, 0, 0, 0),
+                new State(new Actor(3, List.of()), 1, 5, 600, 1000, 1000, 0, 0, 0),
+                new State(new Actor(4, List.of()), 1, 6, 1000, 10000, 1000, 0, 0, 0),
+                new State(new Actor(5, List.of()), 2, 2, 10000, 10000, 1000, 0, 0, 0),
+                new State(new Actor(6, List.of()), 2, 3, 10000, 10000, 1000, 0, 0, 0)));
+        for (int id = 1; id <= 6; id++) {
+            engine.bindCombatData(id, 10505011, Map.of(220, 1000L, 150, 500L));
+        }
+        var rolls = new AtomicInteger();
+        engine.beginRound(1, List.of(1, 2, 3, 4, 5, 6), elements, chance -> false);
+        engine.act(1, 5, 100, elements, chance -> switch (rolls.getAndIncrement()) {
+            case 0 -> true;
+            case 3 -> lastHit;
+            default -> false;
+        });
+        assertEquals(2, engine.ordinaryResults().size());
+        long value = lastHit ? engine.damages().stream().mapToLong(HeroBattleHealingExecutor.Damage::incoming)
+                .sum() / 2 : 0;
+        assertEquals(!lastHit, engine.ordinaryResults().getLast().missed());
+        for (int id : List.of(2, 3, 4)) {
+            var shield = engine.buffs(id).getFirst();
+            assertEquals(5111301, shield.spec().id());
+            assertEquals(value, shield.value());
+        }
+        assertTrue(engine.buffs(1).isEmpty());
     }
 
     /** 森镜三级必须实际命中带旧中毒状态的目标，并取本次伤害的一半向自己治疗。 */

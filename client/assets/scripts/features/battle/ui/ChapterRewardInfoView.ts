@@ -49,7 +49,7 @@ export class ChapterRewardInfoView extends BaseView {
     /** 关闭后拒绝迟到详情操作。 */
     private released = false;
 
-    /** 登记本页交互并读取已安装配置，投影完成后显示主体；失败交UIManager处理。 */
+    /** 登记本页按钮、列表和适配监听；配置投影完成后显示主体，失败交UIManager处理。 */
     public onOpen(): void {
         if (!this.panel || !this.closeButton || !this.firstTab || !this.idleTab || !this.stages) {
             throw new Error("产物说明页面绑定缺失");
@@ -60,8 +60,13 @@ export class ChapterRewardInfoView extends BaseView {
         this.normalTabs = [this.firstTab.node.getComponent(Sprite)!.spriteFrame, this.idleTab.node.getComponent(Sprite)!.spriteFrame];
         for (const [button, action] of [[this.closeButton, () => this.close()],
             [this.firstTab, () => this.select(false)], [this.idleTab, () => this.select(true)]] as const) {
-            button.node.on(Button.EventType.CLICK, action);
-            this.ownListener(() => button.node.off(Button.EventType.CLICK, action));
+            const node = button.node;
+            node.on(Button.EventType.CLICK, action);
+            this.ownListener(() => {
+                if (node.isValid) {
+                    node.off(Button.EventType.CLICK, action);
+                }
+            });
         }
         const content = this.stages.list.node;
         content.on(SuperContent.RENDER_ITEM, this.onRender, this);
@@ -72,7 +77,7 @@ export class ChapterRewardInfoView extends BaseView {
                 content.off(ChapterRewardInfoCell.ITEM_SELECTED, this.showItem, this);
             }
         });
-        ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport());
+        this.ownListener(ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport()));
         try {
             this.readConfig();
             this.panel.active = true;
@@ -112,7 +117,7 @@ export class ChapterRewardInfoView extends BaseView {
         cell.bind(row.stage, this.idle ? row.idleItems : row.firstItems);
     }
 
-    /** 打开只读物品详情，隐藏获取跳转，数量明确为产物说明而非库存。 */
+    /** 将只读物品详情作为本页子窗打开，父页关闭时可取消在途加载。 */
     private showItem(id: number): void {
         if (this.released) {
             return;
@@ -121,11 +126,8 @@ export class ChapterRewardInfoView extends BaseView {
             source: "description",
             face: { ...BagItemCatalog.face(id, 0), typeLine: "产物说明（只读）" },
         };
-        void UIManager.instance.open(BagInfoView, args).then(info => {
-            if (!this.released) {
-                info.runOpen(args);
-            }
-        }).catch(() => { /* 加载失败或取消由 UIManager 统一处理。 */ });
+        void UIManager.instance.openChild(this, BagInfoView, args)
+            .catch(() => { /* 加载失败或取消由 UIManager 统一处理。 */ });
     }
 
     /** 主体按旧尺寸等比适配；列表自行处理视口变化，遮罩尺寸和空白关闭统一归ModalLayer。 */
@@ -139,11 +141,11 @@ export class ChapterRewardInfoView extends BaseView {
         this.panel.setPosition(-280 * scale, -350 * scale, 0);
     }
 
-    /** 释放本页引用并取消迟到更新；关闭说明不改动挂机时钟和资产。 */
+    /** 释放配置投影，同时关闭或取消本页所有只读详情。 */
     public onClose(): void {
         this.released = true;
         this.rows = [];
-        UIManager.instance.closeById(UIRegistry.viewSpecOf(BagInfoView)!.id);
+        UIManager.instance.closeChildren(this);
         this.finishOpen();
     }
 }

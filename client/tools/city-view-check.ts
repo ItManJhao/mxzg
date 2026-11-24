@@ -1,7 +1,7 @@
 /**
  * 主城入口回归。使用引擎替身核对预制体绑定、红点状态和开关生命周期。
  */
-import { Node } from "cc";
+import { Node, Prefab, UITransform } from "cc";
 import { readFileSync } from "fs";
 
 import { join } from "path";
@@ -11,6 +11,7 @@ import { CityChromeView } from "../assets/scripts/features/city/ui/CityChromeVie
 import { CityHubView } from "../assets/scripts/features/city/ui/CityHubView";
 import { GameRedDotKey } from "../assets/scripts/features/common/utils/GameRedDotKey";
 import { RedDotManager } from "../assets/scripts/framework/ui/RedDotManager";
+import { PrefabLoader } from "../assets/scripts/framework/assets/PrefabLoader";
 import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 
 import { TAB_SELECTED_SCALE, CityTabUtils } from "../assets/scripts/features/city/utils/CityTabUtils";
@@ -53,6 +54,10 @@ interface PrefabObj {
   _spriteFrame?: { __uuid__?: string };
   _children?: { __id__?: number }[];
   _components?: { __id__?: number }[];
+  _lpos?: { x: number; y: number; z: number };
+  _contentSize?: { width: number; height: number };
+  _anchorPoint?: { x: number; y: number };
+  data?: { __id__?: number };
   node?: { __id__?: number };
 }
 
@@ -85,14 +90,16 @@ function parentName(data: PrefabObj[], ref: { __id__?: number } | null | undefin
   return parent && parent._name ? parent._name : "";
 }
 
-/** 检查红点为对应按钮的隐藏子节点，并使用原红点 SpriteFrame。 */
-function checkRedDotNode(data: PrefabObj[], target: PrefabObj): void {
+/** 检查红点挂点保留法阵旧尺寸和偏移，公共预制体提供图案。 */
+function checkRedDotAnchor(data: PrefabObj[], target: PrefabObj, x: number): void {
   const children = target._children || [];
-  const dots = children.map(ref => nodeAt(data, ref)).filter(node => node._name === "RedDot");
-  assert(dots.length === 1 && dots[0]._active === false, `${target._name} 恰有一个默认隐藏的红点`);
-  const sprite = dots[0]._components?.map(ref => data[ref.__id__!]).find(comp => comp.__type__ === "cc.Sprite");
-  const source = metaUuid("client/assets/bundles/module/common/ui/other_spr-reddot-1.png.meta");
-  assert(sprite?._spriteFrame?.__uuid__ === `${source}@f9941`, `${target._name} 使用原红点资源`);
+  const anchors = children.map(ref => nodeAt(data, ref)).filter(node => node._name === "RedDotAnchor");
+  assert(anchors.length === 1 && anchors[0]._active === true, `${target._name} 恰有一个红点定位节点`);
+  const anchor = anchors[0];
+  assert(anchor._lpos?.x === x && anchor._lpos?.y === 33, `${target._name} 保留原红点位置`);
+  const transforms = anchor._components?.map(ref => data[ref.__id__!]) ?? [];
+  assert(transforms.length === 1 && transforms[0].__type__ === "cc.UITransform", `${target._name} 使用公共红点`);
+  assert(transforms[0]._contentSize?.width === 28 && transforms[0]._contentSize?.height === 28, `${target._name} 保留原红点尺寸`);
 }
 
 function checkFramework(): void {
@@ -193,8 +200,10 @@ function checkHubPrefab(): void {
   for (let i = 0; i < need.length; i++) assert(maps.indexOf(need[i]) >= 0, "map node bound " + need[i]);
   const spots = (comp.spots || []).map((ref) => nodeName(data, ref));
   assert(spots.indexOf("spot-main_summon") >= 0, "summon building is bound");
-  const summon = (comp.spots || []).find(ref => nodeName(data, ref) === "spot-main_summon");
-  checkRedDotNode(data, nodeAt(data, summon));
+  for (const [entrance, x] of [["spot-main_summon", 55], ["spot-main_hero_make", 70]] as const) {
+    const button = (comp.spots || []).find(ref => nodeName(data, ref) === entrance);
+    checkRedDotAnchor(data, nodeAt(data, button), x);
+  }
   assert(spots.indexOf("spot-main_smith_shop") >= 0, "smith building is bound");
   for (const ref of comp.spots || []) {
     assert(parentName(data, ref) === "BuildingEntries", "building is rendered in the entrance layer: " + nodeName(data, ref));
@@ -221,6 +230,7 @@ function checkEntryLayout(): void {
   }
 }
 
+/** 检查导航保留各按钮的引用，红点样式统一由公共预制体提供。 */
 function checkChromePrefab(): void {
   const uuid = metaUuid("client/assets/scripts/features/city/ui/CityChromeView.ts.meta");
   const data = loadPrefab("client/assets/bundles/module/home/prefabs/CityChromeView.prefab");
@@ -251,10 +261,11 @@ function checkChromePrefab(): void {
   one("bottomBg", "Bg");
   one("tabCity", "TabCity");
   one("tabFetter", "TabFetter");
-  for (const key of ["tabCity", "tabHero", "tabBag", "tabBattle", "tabDungeon"]) {
+  for (const key of ["tabCity", "tabHero", "tabBag", "tabBattle", "tabDungeon", "tabClan", "tabFetter"]) {
     const ref = comp[key];
-    assert(ref && !Array.isArray(ref), `${key} 绑定红点入口`);
-    checkRedDotNode(data, nodeAt(data, ref as { __id__?: number }));
+    assert(ref && !Array.isArray(ref), `${key} 绑定底栏入口`);
+    const tab = nodeAt(data, ref as { __id__?: number });
+    assert(!tab._children?.some(child => nodeName(data, child) === "RedDot"), `${key} 使用公共红点`);
   }
   one("btnMail", "BtnMail");
   const activity = comp.activityButtons;
@@ -265,6 +276,20 @@ function checkChromePrefab(): void {
   const shell = "c4e8aHSe2NOkI8Vai2cC0fj";
   const text = read("client/assets/bundles/module/home/prefabs/CityChromeView.prefab");
   assert(text.split(shell).length === 2, "CityChromeShell class id stays once");
+}
+
+/** 公共模板保留旧底栏红点的位置、尺寸、锚点和原贴图。 */
+function checkSharedRedDotPrefab(): void {
+    const data = loadPrefab("client/assets/bundles/module/common/prefabs/RedDot.prefab");
+    const root = nodeAt(data, component(data, "cc.Prefab").data);
+    assert(root._name === "RedDot" && root._active === false, "公共红点默认隐藏");
+    const position = root._lpos;
+    assert(position?.x === 28 && position.y === 28 && position.z === 0, "公共红点保留导航按钮内原相对坐标");
+    const transform = component(data, "cc.UITransform");
+    assert(transform._contentSize?.width === 28 && transform._contentSize.height === 28, "公共红点保留原尺寸");
+    assert(transform._anchorPoint?.x === 0.5 && transform._anchorPoint.y === 0.5, "公共红点保留居中锚点");
+    const source = metaUuid("client/assets/bundles/module/common/ui/other_spr-reddot-1.png.meta");
+    assert(component(data, "cc.Sprite")._spriteFrame?.__uuid__ === `${source}@f9941`, "公共红点使用原贴图");
 }
 
 /** 导航立即切换页面，底栏仍只保留最后一个选中按钮。 */
@@ -280,25 +305,40 @@ function checkWideTabSize(): void {
   assert(CityTabUtils.cityTabLayout(960, 6, false).x > CityTabUtils.cityTabLayout(640, 6, false).x, "宽屏按钮间距仍展开");
 }
 
-/** 用真实顶底栏和地图订阅验证汇总、锁态切换、关闭解绑和复开同步。 */
-function checkRedDotLifecycle(): void {
+/** 用真实顶底栏与地图绑定验证锁态、聚合以及两个法阵挂点独立显示。 */
+async function checkRedDotLifecycle(): Promise<void> {
   const root = new Node("CityChromeFixture");
   const chrome = root.addComponent(CityChromeView);
   const city = new Node("TabCity");
   const dungeon = new Node("TabDungeon");
-  const cityDot = new Node("RedDot");
-  const dungeonDot = new Node("RedDot");
+  const clan = new Node("TabClan");
+  city.parent = root;
+  dungeon.parent = root;
+  clan.parent = root;
   const dungeonLock = new Node("Lock");
-  cityDot.parent = city;
-  dungeonDot.parent = dungeon;
   dungeonLock.parent = dungeon;
-  Object.assign(chrome, { started: true, tabs: { city, dungeon } });
+  const prefab = Object.assign(new Prefab(), { _instantiate: () => {
+    const node = new Node("RedDot");
+    node.addComponent(UITransform).setContentSize(28, 28);
+    return node;
+  } });
+  const loadPrefab = PrefabLoader.loadPrefab;
+  PrefabLoader.loadPrefab = async () => prefab;
+  Object.assign(chrome, { started: true, tabs: { city, dungeon, clan } });
 
   const hub = new Node("CityHubFixture").addComponent(CityHubView);
   const summon = new Node("spot-main_summon");
-  const summonDot = new Node("RedDot");
-  summonDot.parent = summon;
-  Object.assign(hub, { started: true, views: new Map([[summon.name, summon]]) });
+  const summonAnchor = new Node("RedDotAnchor");
+  summonAnchor.parent = summon;
+  summonAnchor.addComponent(UITransform).setContentSize(28, 28);
+  const creation = new Node("spot-main_hero_make");
+  const creationAnchor = new Node("RedDotAnchor");
+  creationAnchor.parent = creation;
+  creationAnchor.addComponent(UITransform).setContentSize(28, 28);
+  Object.assign(hub, {
+    started: true,
+    views: new Map([[summon.name, summon], [creation.name, creation]]),
+  });
   let open = false;
   hub.runOpen({
     onAtom: () => {},
@@ -309,27 +349,60 @@ function checkRedDotLifecycle(): void {
   try {
     chrome.runOpen();
     dots.set(GameRedDotKey.SUMMON + ".test", true);
-    assert(cityDot.active && !summonDot.active, "主城汇总亮起，锁定中的法阵挂点保持隐藏");
+    await new Promise<void>(resolve => setImmediate(resolve));
+    assert(city.getChildByName("RedDot")?.active && !summonAnchor.getChildByName("RedDot"), "主城汇总亮起，锁定中的法阵不挂红点");
     open = true;
     hub.refreshLocks();
-    assert(summonDot.active, "已亮条件在入口开放后立即显示");
+    await new Promise<void>(resolve => setImmediate(resolve));
+    assert(summonAnchor.getChildByName("RedDot")?.active, "已亮条件在入口开放后显示");
+    dots.set(GameRedDotKey.HERO_CREATION, true);
+    dots.set(GameRedDotKey.SUMMON + ".test", false);
+    await new Promise<void>(resolve => setImmediate(resolve));
+    assert(creationAnchor.getChildByName("RedDot")?.active && summonAnchor.getChildByName("RedDot")?.active === false,
+      "两个法阵分别使用各自的条件，不共用显示状态");
 
     dots.set(GameRedDotKey.DUNGEON + ".test", true);
-    assert(!dungeonDot.active, "锁标遮断聚合红点");
+    assert(!dungeon.getChildByName("RedDot"), "锁定时不挂载红点");
     chrome.setTabs([{ id: "dungeon", text: "副本", state: "open" }]);
-    assert(dungeonDot.active && !dungeonLock.active, "入口开放后复用当前聚合值");
+    await new Promise<void>(resolve => setImmediate(resolve));
+    assert(dungeon.getChildByName("RedDot")?.active && !dungeonLock.active, "入口开放后复用当前聚合值");
+
+    dots.set(GameRedDotKey.GUILD_APPLICATIONS, true);
+    await new Promise<void>(resolve => setImmediate(resolve));
+    assert(clan.getChildByName("RedDot")?.active, "公会底栏汇总审批分支");
+    dots.set(GameRedDotKey.GUILD_APPLICATIONS, false);
+    assert(clan.getChildByName("RedDot")?.active === false, "审批分支熄灭后隐藏公会底栏红点");
 
     chrome.runClose();
     hub.runClose();
     dots.reset();
-    assert(cityDot.active && summonDot.active, "关闭后已退订，不再刷旧视图");
+    assert(!city.getChildByName("RedDot") && !creationAnchor.getChildByName("RedDot"), "关闭时释放底栏与法阵红点");
     chrome.runOpen();
-    assert(!cityDot.active && !dungeonDot.active, "复开立即读取当前状态");
+    await new Promise<void>(resolve => setImmediate(resolve));
+    assert(!city.getChildByName("RedDot") && !dungeon.getChildByName("RedDot"), "复开立即读取当前状态");
   } finally {
     chrome.runDispose();
     hub.runDispose();
     dots.reset();
+    PrefabLoader.loadPrefab = loadPrefab;
   }
 }
 
-checkFramework(); checkHubPrefab(); checkEntryLayout(); checkChromePrefab(); checkSources(); checkTabSelection(); checkWideTabSize(); checkRedDotLifecycle(); console.log("city-view passed: bindings, entrance layering, red dot lifecycle, framework isolation and tab layout");
+/** 先检查预制绑定与样式，再运行动态红点生命周期检查。 */
+async function main(): Promise<void> {
+    checkFramework();
+    checkHubPrefab();
+    checkEntryLayout();
+    checkChromePrefab();
+    checkSharedRedDotPrefab();
+    checkSources();
+    checkTabSelection();
+    checkWideTabSize();
+    await checkRedDotLifecycle();
+    console.log("city-view passed: bindings, entrance layering, red dot lifecycle, framework isolation and tab layout");
+}
+
+void main().catch(error => {
+    console.error(error);
+    process.exitCode = 1;
+});

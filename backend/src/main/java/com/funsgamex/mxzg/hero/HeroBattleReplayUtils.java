@@ -7,17 +7,23 @@ public final class HeroBattleReplayUtils {
     /** 工具类不保存跨场状态。 */
     private HeroBattleReplayUtils() {}
 
-    /** 按伤害/治疗原顺序重放完整名册生命，拒绝少帧、乱序、未知单位及提前结束；审计场景保持独立来源。 */
+    /** 按原顺序核对阵容生命和胜负；竞技场沿用独立回合上限。 */
     public static void validate(HeroBattleChapterScenario.Result report) {
-        boolean dailyGold = "dungeon:gold:1".equals(report.scenario());
-        boolean indexed = indexedScenario(report.scenario()) || dailyGold;
+        boolean dailyDungeon = report.scenario().matches("dungeon:(gold|experience|hero|fetter|spirit):[1-9][0-9]{0,9}");
+        boolean tower = report.scenario().matches("tower:(?:[1-9]|10)");
+        boolean arena = report.scenario().matches("arena:(?:[1-9]|1[0-9]|2[0-4])");
+        boolean indexed = indexedScenario(report.scenario()) || dailyDungeon || tower || arena;
+        int maxRounds = arena ? HeroBattleRoundUtils.ARENA_MAX_ROUNDS : HeroBattleRoundUtils.MAX_ROUNDS;
         if ((!indexed && !Set.of("main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:duel", "audit:charm", "audit:charm-death", "audit:teams", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed", "audit:round-limit").contains(report.scenario()))
-            || report.rounds() < 1 || report.rounds() > HeroBattleRoundUtils.MAX_ROUNDS || report.frames().isEmpty()) {
+            || report.rounds() < 1 || report.rounds() > maxRounds || report.frames().isEmpty()) {
             throw new IllegalArgumentException("战斗回放场景或回合范围无效");
         }
         var units = HeroBattleChapterScenario.roster(report.initial());
-        if (dailyGold && units.stream().filter(unit -> unit.faction() == 2).count() != 6) {
-            throw new IllegalArgumentException("金币副本首关战报缺少原守军");
+        if (dailyDungeon || tower || arena) {
+            long defenders = units.stream().filter(unit -> unit.faction() == 2).count();
+            if (defenders != (arena ? 4 : 6)) {
+                throw new IllegalArgumentException("配置化战报缺少原守军");
+            }
         }
         if (!indexed && !Set.of("audit:charm", "audit:charm-death", "audit:teams", "audit:control-teams", "audit:frozen", "main:1:1:3").contains(report.scenario()) && units.size() != 2) {
             throw new IllegalArgumentException("该战斗来源未开放多单位");
@@ -127,7 +133,7 @@ public final class HeroBattleReplayUtils {
         }
         if (!turns.equals(report.turns()) || !hp.equals(report.finalHp()) || lastRound != report.rounds()
             || !all.equals(report.damages()) || !recoveries.equals(report.recoveries())
-            || HeroBattleChapterScenario.outcome(units, hp, lastRound) != report.outcome()
+            || HeroBattleChapterScenario.outcome(units, hp, lastRound, maxRounds) != report.outcome()
             || report.outcome() == HeroBattleRoundUtils.Outcome.ONGOING) {
             throw new IllegalArgumentException("战斗最终结果不一致");
         }

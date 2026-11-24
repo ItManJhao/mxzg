@@ -1,8 +1,10 @@
 /** 独立通关奖励专项，验证实际目录、服务端资格显示、按钮等待状态和预制体。 */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
+import { Button, Node } from "cc";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { MainChapterModel } from "../assets/scripts/features/battle/MainChapterModel";
+import { ChapterClearRewardCell } from "../assets/scripts/features/battle/ui/ChapterClearRewardCell";
 import { ChapterClearRewardUtils } from "../assets/scripts/features/battle/utils/ChapterClearRewardUtils";
 import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 
@@ -50,16 +52,38 @@ function verifyPrefabs(): void {
     assert(binding);
     const button = main[binding.clearRewardButton.__id__];
     assert.equal(main[button.node.__id__]._name, "ChapterClearRewardButton");
-    assert.equal(main[binding.clearRewardDot.__id__]._active, false);
+    const anchor = main[binding.clearRewardDotAnchor.__id__];
+    assert.equal(anchor._active, true);
+    assert.equal(anchor._parent.__id__, button.node.__id__);
+    assert.equal(anchor._lpos.x, 29);
+    assert.equal(anchor._lpos.y, 29);
+    const transforms = anchor._components.map((ref: any) => main[ref.__id__]);
+    assert.deepEqual(transforms.map((row: any) => row.__type__), ["cc.UITransform"]);
+    assert.equal(transforms[0]._contentSize.width, 23);
+    assert.equal(transforms[0]._contentSize.height, 23);
     const prefab = read("ChapterClearRewardView.prefab");
     const cell = read("ChapterClearRewardCell.prefab.meta");
     assert(prefab.some((row: any) => row.cellPrefab?.__uuid__ === cell.uuid && row.virtual === true));
 }
 
-/** 校验同源列表、按钮和实际预制体。 */
+/** 模拟引擎先清理按钮组件的节点，再停用奖励行，验证其余退订仍执行。 */
+function verifyDetachedButton(): void {
+    const cell = new Node("ChapterClearRewardRow").addComponent(ChapterClearRewardCell);
+    cell.action = new Node("ActionButton").addComponent(Button);
+    const content = new Node("RewardContent");
+    const state = cell as unknown as { content: Node | null; onDisable(): void };
+    state.content = content;
+    (cell.action as unknown as { node: Node | null }).node = null;
+
+    assert.doesNotThrow(() => state.onDisable());
+    assert.equal(state.content, null, "按钮节点已经释放时仍须解除内层列表监听");
+}
+
+/** 校验同源列表、按钮、停用顺序和实际预制体。 */
 async function main(): Promise<void> {
     await verifyList();
     verifyPrefabs();
+    verifyDetachedButton();
     console.log("通关奖励配置、服务端资格、按钮状态和Prefab检查通过");
 }
 

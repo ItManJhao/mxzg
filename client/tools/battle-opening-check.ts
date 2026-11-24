@@ -1,7 +1,7 @@
 /**
  * 正式战斗出场时序专项：直接执行BattleReplayPreview.open，控制真实资源入口和cc动画时钟。
- * 验证加载隐藏、真实开始骨骼70%接双边出场、出场60%时渐入、等待两路完成后显示HP/战报，以及各阶段关闭迟到隔离。
- * 同时执行真实持续控制与飘字回调，核材质、共享循环帧、多目标数字以及关页清理；不能替代Creator渲染验收。
+ * 验证开场能先播、双边资源就绪后在开始骨骼70%起出场、出场60%渐入，以及技能慢载和关闭清理。
+ * 同时执行真实技能、持续控制和飘字回调，核骨骼切换、材质、共享循环帧及关页清理；不能替代Creator渲染验收。
  */
 import { strict as assert } from "node:assert";
 import { BitmapFont, Button, director, Director, Label, Node, sp, Sprite, SpriteFrame, tween, UIOpacity, UITransform, Vec3 } from "cc";
@@ -18,13 +18,17 @@ import { BattleReplayPreview } from "../assets/scripts/features/battle/ui/Battle
 import { BattleSpineService } from "../assets/scripts/features/battle/ui/BattleSpineService";
 import { BattleAttackUtils } from "../assets/scripts/features/battle/utils/BattleAttackUtils";
 import { BattleInfoUtils } from "../assets/scripts/features/battle/utils/BattleInfoUtils";
-import { BattleReplayUtils } from "../assets/scripts/features/battle/utils/BattleReplayUtils";
+import { BattleReplayStep, BattleReplayUtils } from "../assets/scripts/features/battle/utils/BattleReplayUtils";
 
-/** 本专项只需控制资源完成，不保存另一份出场流程。 */
-function deferred(): { promise: Promise<void>; resolve(): void } {
+/** 用例决定某个资源到达或失败的时刻，开场和失败清理均由真实播放器执行。 */
+function deferred(): { promise: Promise<void>; resolve(): void; reject(error: Error): void } {
     let resolve!: () => void;
-    const promise = new Promise<void>(done => { resolve = done; });
-    return { promise, resolve };
+    let reject!: (error: Error) => void;
+    const promise = new Promise<void>((done, fail) => {
+        resolve = done;
+        reject = fail;
+    });
+    return { promise, resolve, reject };
 }
 
 /** 创建已知挂点及恒等坐标转换；位移保留Vec3复制与对象重载，不模拟真实排版或绘制。 */
@@ -58,8 +62,10 @@ const units = [
 class OpeningFixture {
     /** 正式用例保留双边四单位；挂机回归只用一个我方和一个敌方，不扩大协议名册范围。 */
     public readonly roster: typeof units;
-    /** 资源门闩只拦最后一张敌方出场帧，覆盖揭开战场前的异步空档。 */
+    /** 同时挂起最后一张敌方出场帧和首个骨骼，验证不阻塞其余资源发起加载。 */
     public readonly resource = deferred();
+    /** 测试慢速技能包时只拦指定资源，由用例调用 releaseResources 放行。 */
+    public delayedPath: string | null = null;
     /** 用例根节点，销毁它触发生产Preview自己的取消与清理。 */
     public readonly parent = node("OpeningTestRoot");
     /** 真实Preview挂载的战场节点，保存生产需要的静态挂点。 */
@@ -74,6 +80,8 @@ class OpeningFixture {
     public readonly loaded: string[] = [];
     /** 被生产挂入的模型节点，检查其真实可见性和透明度。 */
     public readonly models: Node[] = [];
+    /** 记录测试期间播放器主动切换的骨骼动作，不模拟骨骼自然完成。 */
+    public readonly actorActions: string[] = [];
     /** 记录ZDKS开始时钟，不伪造动画结束事件。 */
     public readonly zdksStarts: number[] = [];
     /** 记录真实Preview何时调用战报入口；不在此模拟战报逻辑。 */
@@ -98,7 +106,7 @@ class OpeningFixture {
         log: GameLog.shared.classified,
     };
 
-    /** 构造静态挂点并替换外部边界；可选择真实挂机的一对单位，出场与关闭逻辑仍用生产实现。 */
+    /** 构造静态挂点与外部资源门闩；可选择挂机一对单位或指定战报步骤。 */
     public constructor(blockResource = false, idleEncounter = false, selectedSteps: any[] = [], manualOpening = false) {
         this.roster = idleEncounter ? [units[0], units[2]] : units;
         this.blocked = blockResource;
@@ -108,12 +116,12 @@ class OpeningFixture {
         child("IdleLayout/Enemy1");
         for (const side of ["ally", "enemy"]) {
             for (let index = 0; index < 8; index++) {
-                const slot = child("LayerField/" + side + "/Slot" + index);
+                child("LayerField/" + side + "/Slot" + index);
                 const row = child("LayerHud/HpBars/" + side + index);
                 node("Label", row).addComponent(Label);
                 node("Fill", row).addComponent(Sprite);
                 node("ElementIcon", row).addComponent(Sprite);
-                const buffs = this.child(slot.getPathInHierarchy().split("OpeningBattlePage/")[1] + "/HeadAnchor/BuffRow");
+                const buffs = node("BuffRow", row);
                 for (let chip = 0; chip < 3; chip++) {
                     node("Buff_" + chip, buffs).addComponent(Sprite);
                 }
@@ -162,7 +170,7 @@ class OpeningFixture {
         ResourceAssetsUtils.forNode = () => ({
             loadPath: async (path: string, type: string) => {
                 this.loaded.push(path);
-                if (this.blocked && path === "battle/ui/battle-appear-right_14/spriteFrame") {
+                if ((this.blocked && path === "battle/ui/battle-appear-right_14/spriteFrame") || path === this.delayedPath) {
                     await this.resource.promise;
                 }
                 const asset = type === "BitmapFont" ? new BitmapFont() : new SpriteFrame();
@@ -175,8 +183,16 @@ class OpeningFixture {
             const skeleton = actorNode.addComponent(sp.Skeleton);
             (skeleton as any).customMaterial = { testOriginal: true };
             this.models.push(actorNode);
-            const actor = { node: actorNode, play: () => {}, gesture: () => true };
-            void Promise.resolve().then(options.onReady);
+            const actor = {
+                node: actorNode,
+                play: (clip: string) => this.actorActions.push(clip),
+                gesture: (clip: string) => {
+                    this.actorActions.push(clip);
+                    return true;
+                },
+            };
+            const ready = this.blocked && this.models.length === 1 ? this.resource.promise : Promise.resolve();
+            void ready.then(options.onReady);
             return actor as any;
         };
         BattleSpineService.instance.mountNamedSpine = (host, stem, _clip, options) => {
@@ -229,10 +245,21 @@ class OpeningFixture {
         return current;
     }
 
-    /** 放行唯一受控资源，重复调用无额外作用。 */
+    /** 一起放行受控出场帧和骨骼，重复调用无额外作用。 */
     public releaseResources(): void {
         this.blocked = false;
+        this.delayedPath = null;
         this.resource.resolve();
+    }
+
+    /** 资源分段回归使用真实技能调度器，记录进入战报的时刻，沿用本用例配置的服务端步骤。 */
+    public useReplayPlayer(): void {
+        const fixture = this;
+        const play = this.originals.play;
+        BattleReplayPlayer.prototype.play = function(bytes, focus) {
+            fixture.playbackStarts.push(OpeningClockRuntime.now);
+            return play.call(this, bytes, focus);
+        };
     }
 
     /** 调用真实正式/挂机入口，使用onCompleted隔离本专项不涉及的结算装配。 */
@@ -279,7 +306,7 @@ class OpeningFixture {
     }
 }
 
-/** 无调度延迟时第9完整帧对应.45秒，FX完整播完且渐入完成前均不放行HP/战报。 */
+/** 双边帧和模型尚未返回也应开始播 ZDKS；及时返回时继续沿原70%出场和60%渐入。 */
 async function checkOrdering(): Promise<void> {
     OpeningClockRuntime.reset();
     const fixture = new OpeningFixture(true);
@@ -292,8 +319,9 @@ async function checkOrdering(): Promise<void> {
             throw openError;
         }
         assert(fixture.loaded.includes("battle/ui/battle-appear-right_14/spriteFrame"), "必须阻断真实资源入口");
+        assert.equal(fixture.models.length, fixture.roster.length, "首个单位骨骼未完成时其余单位应已发起加载");
         fixture.assertHidden();
-        assert.equal(fixture.zdksStarts.length, 0, "全部出场资源就绪前不启动正式开场");
+        assert.deepEqual(fixture.zdksStarts, [0], "出场帧和首个模型慢载不能拖住 ZDKS 的首帧");
         fixture.releaseResources();
         await OpeningClockRuntime.flush();
         assert.deepEqual(fixture.zdksStarts, [0]);
@@ -347,6 +375,83 @@ async function checkOrdering(): Promise<void> {
         assert.equal(OpeningClockRuntime.pending(), 0);
     } finally {
         fixture.dispose();
+    }
+}
+
+/** ZDKS 整段播完时双方尚未加载好，应等待真实资源，再完整播放出场和渐入。 */
+async function checkLateActors(): Promise<void> {
+    OpeningClockRuntime.reset();
+    const fixture = new OpeningFixture(true);
+    let close: (() => void) | undefined;
+    const opening = fixture.open().then(result => { close = result; });
+    try {
+        await OpeningClockRuntime.advance(1.1);
+        assert.deepEqual(fixture.zdksStarts, [0]);
+        assert.equal(fixture.effects().length, 0);
+        fixture.assertHidden();
+        fixture.releaseResources();
+        await OpeningClockRuntime.advance(0);
+        assert.equal(fixture.effects().length, fixture.roster.length, "双方资源到齐后直接进入出场");
+        await OpeningClockRuntime.advance(1.451);
+        await opening;
+        assert.equal(fixture.playbackStarts.length, 1);
+    } finally {
+        close?.();
+        fixture.dispose();
+        OpeningClockRuntime.reset();
+    }
+}
+
+/** 延迟第二招的冰冻材质，验证整组在技能边界等待，以及加载失败和关场后迟到失败的处理。 */
+async function checkColdSkill(outcome: "ready" | "failed" | "closed"): Promise<void> {
+    OpeningClockRuntime.reset();
+    const sample = (kind: BattleReplayStep["kind"], configId: number) => ({
+        kind, configId, sourceId: 1, targetId: 3, round: 1,
+        hpByUnit: { 1: 10, 2: 10, 3: 7, 4: 10 },
+    });
+    const fixture = new OpeningFixture(false, false, [
+        sample("skill.begin", 1), sample("presentation", 5061201), sample("skill.end", 1),
+        sample("skill.begin", 2), sample("presentation", 4041101),
+        { ...sample("damage", 1011401), actualHpChange: -3, reportedHpChange: -3, dead: false },
+        { ...sample("buff.upsert", 2051301), buffInstanceId: "ice", expiresAtRound: 3 },
+        sample("skill.end", 2),
+    ]);
+    fixture.useReplayPlayer();
+    fixture.delayedPath = "effects/legacy-frozen";
+    let close: (() => void) | undefined;
+    const opening = fixture.open().then(result => { close = result; });
+    try {
+        await OpeningClockRuntime.advance(0.5);
+        assert.deepEqual(fixture.zdksStarts, [0]);
+        assert(!fixture.loaded.includes("effects/legacy-frozen"), "出场时第二招不应与第一招抢加载");
+        await OpeningClockRuntime.advance(5.5);
+        assert.equal(fixture.playbackStarts.length, 1, "第二招的冰冻不阻塞第一招");
+        assert(fixture.loaded.includes("effects/legacy-frozen"), "第二招已实际请求慢资源");
+        assert(fixture.actorActions.includes("attack3"), "第一招的原地施法已播放");
+        assert(!fixture.actorActions.includes("attack2") && !fixture.actorActions.includes("hit"),
+            "第二招的动作、伤害和冰冻必须在同一技能边界等待");
+        await opening;
+        if (outcome === "closed") {
+            close!();
+        }
+        if (outcome === "ready") {
+            fixture.releaseResources();
+        } else {
+            fixture.resource.reject(new Error("测试冰冻材质加载失败"));
+        }
+        await OpeningClockRuntime.advance(6);
+        assert.equal(fixture.actorActions.includes("attack2"), outcome === "ready");
+        assert.equal(fixture.actorActions.includes("hit"), outcome === "ready");
+        if (outcome === "failed") {
+            assert.equal(fixture.errors.length, 1);
+            assert.match(fixture.errors[0], /测试冰冻材质加载失败/);
+        } else {
+            assert.deepEqual(fixture.errors, []);
+        }
+    } finally {
+        close?.();
+        fixture.dispose();
+        OpeningClockRuntime.reset();
     }
 }
 
@@ -477,6 +582,10 @@ async function checkCancellation(): Promise<void> {
             director.emit(Director.EVENT_AFTER_UPDATE);
             assert.equal(fixture.zdksProgressReads, readsAfterClose, phase + "关闭后不得遗留开始骨骼进度监听");
             fixture.completeZdks?.();
+            if (phase === "resources") {
+                await OpeningClockRuntime.flush();
+                assert(result instanceof Error, "关闭时必须立即取消开场，不能等尚未到达的图片与模型");
+            }
             fixture.releaseResources();
             await OpeningClockRuntime.flush();
             await OpeningClockRuntime.advance(100);
@@ -530,7 +639,7 @@ async function checkIdleUnchanged(): Promise<void> {
     }
 }
 
-/** 直接调用真实状态显示：多实例共享循环、真实材质优先级、无图标实例和关页迟到均不另造实现。 */
+/** 直接调用真实状态显示，核对 HUD 跟随、实例循环、材质优先级和关场清理。 */
 async function checkControlLifecycle(): Promise<void> {
     OpeningClockRuntime.reset();
     const step = (configId: number, instance: string, kind = "buff.upsert"): any => ({
@@ -546,7 +655,8 @@ async function checkControlLifecycle(): Promise<void> {
         await opening;
         assert(fixture.presentation, "必须取得真实Preview显示能力，不能只核描述符");
         const slot = fixture.models[0].parent!;
-        const row = slot.getChildByPath("HeadAnchor/BuffRow")!;
+        const hpRow = fixture.child("LayerHud/HpBars/ally0");
+        const row = hpRow.getChildByName("BuffRow")!;
         const skeleton = fixture.models[0].getComponent(sp.Skeleton) as any;
         const original = skeleton.customMaterial;
         const { rows } = GameConfig.instance.getFileByPath("config/buff") as { rows: { idx: number; delay: number }[] };
@@ -576,6 +686,24 @@ async function checkControlLifecycle(): Promise<void> {
         }
         await apply(2141301, "sleep");
         assert.equal(row.active, true, "深睡沿原状态图标展示");
+        assert.equal(row.parent, hpRow, "状态图标随 HUD 血条绘制在所有模型上方");
+        assert.equal(slot.getChildByPath("HeadAnchor/BuffRow"), null);
+        const countLabel = row.getChildByPath("Buff_0/BuffLayerCount")!.getComponent(Label)!;
+        assert.equal(countLabel.string, "1", "状态行继续显示真实实例层数");
+        const slotTransform = slot.getComponent(UITransform)!;
+        slotTransform.convertToWorldSpaceAR = point => new Vec3(point.x + slot.position.x, point.y + slot.position.y, 0);
+        const originalPosition = slot.position.clone();
+        slot.setPosition(37, 58, 0);
+        director.emit(Director.EVENT_AFTER_UPDATE);
+        assert.equal(hpRow.position.x, 37, "近身移动时 HUD 及其 Buff 一起跟随站位");
+        assert.equal(hpRow.position.y, 178);
+        slot.setPosition(originalPosition);
+        director.emit(Director.EVENT_AFTER_UPDATE);
+        const snapshot = step(2141301, "sleep", "round.ready");
+        fixture.presentation!.restore({ ...snapshot, hpByUnit: { ...snapshot.hpByUnit, 1: 0 } });
+        assert.equal(hpRow.active, false, "单位死亡时连同 Buff 一起隐藏");
+        fixture.presentation!.restore(snapshot);
+        assert.equal(hpRow.active, true, "恢复可见单位时只展示仍在的状态实例");
         assert(!slot.children.some(value => /sleep|zzz/i.test(value.name)), "旧源没有深睡动作，不发明额外帧");
         await apply(2141301, "sleep", true);
         await apply(2051301, "frozen");
@@ -676,16 +804,116 @@ async function checkBattleNumbers(): Promise<void> {
     }
 }
 
-/** 使用真实配置完成出场、持续控制和飘字回归；不运行玩家服务或实际战斗。 */
+/** 执行两位守军的原地施法，确认零等待和定长等待的战报段都交由骨骼完成回待机。 */
+async function checkStationaryCast(): Promise<void> {
+    OpeningClockRuntime.reset();
+    const steps: BattleReplayStep[] = [5061201, 4041101].map(configId => ({
+        kind: "presentation", configId, sourceId: 1, targetId: 3, round: 1,
+        skillLevel: null, skillType: null, actualHpChange: null, reportedHpChange: null, dead: null,
+        buffInstanceId: null, expiresAtRound: null, buffValue: null, removalReason: null,
+        hpByUnit: { 1: 10, 2: 10, 3: 10, 4: 10 },
+    }));
+    const fixture = new OpeningFixture(false, false, steps);
+    let close: (() => void) | undefined;
+    try {
+        const opening = fixture.open().then(value => { close = value; });
+        await OpeningClockRuntime.advance(4);
+        await opening;
+        const actionsBeforeCast = fixture.actorActions.length;
+        for (const step of steps) {
+            const cast = fixture.presentation!.play(step);
+            await OpeningClockRuntime.advance(2);
+            await cast;
+        }
+        assert.deepEqual(fixture.actorActions.slice(actionsBeforeCast), ["attack3", "attack2"]);
+        assert.deepEqual(fixture.errors, []);
+    } finally {
+        close?.();
+        fixture.dispose();
+        OpeningClockRuntime.reset();
+    }
+}
+
+/** 复现旧标记早于投射到达、动作长于归位等待，以及切断战报的生命周期。 */
+async function checkActionTiming(): Promise<void> {
+    OpeningClockRuntime.reset();
+    const shot = { kind: "presentation", configId: 1050100, sourceId: 1, targetId: 3, round: 1 } as BattleReplayStep;
+    const hit = { ...shot, kind: "damage", configId: 1050200, reportedHpChange: -3,
+        activeSkillDamage: false, hpByUnit: { 1: 10, 2: 10, 3: 7, 4: 10 } } as BattleReplayStep;
+    const melee = { ...shot, configId: 1010100 };
+    const fixture = new OpeningFixture(false, false, [shot, hit, melee]);
+    const scale = BattleInfoUtils.defaultTimeScale();
+    let close: (() => void) | undefined;
+    try {
+        const opening = fixture.open().then(value => { close = value; });
+        await OpeningClockRuntime.advance(4);
+        await opening;
+        const present = fixture.presentation!;
+        const source = fixture.models[0].parent!;
+        fixture.models[2].parent!.setPosition(-150, 20, 0);
+        const floats = fixture.child("LayerFloat/FloatDamageRoot");
+        const numbers = () => floats.children.filter(child => child.name === "BattleHealthFloat");
+        present.prepareSkill!([shot, hit]);
+        const projectile = Promise.all([present.play(shot), present.play(hit)]);
+        await OpeningClockRuntime.advance(0.72 / scale);
+        assert.equal(numbers().length, 0, "过了旧 40 帧标记，投射未到不能提前扣血和弹伤害");
+        await OpeningClockRuntime.advance(0.12 / scale);
+        assert.deepEqual(fixture.errors, []);
+        assert.equal(numbers().length, 1, "投射到达后显示本次伤害");
+        await OpeningClockRuntime.advance(1);
+        await projectile;
+
+        const skeleton = fixture.models[0].getComponent(sp.Skeleton)!;
+        Object.assign(skeleton, { getCurrent: () => ({ animationStart: 0, animationEnd: 2.3 }) });
+        const origin = source.position.clone();
+        present.prepareSkill!([melee]);
+        const cast = present.play(melee);
+        await OpeningClockRuntime.advance(1.4 / scale);
+        assert.notEqual(source.position.x, origin.x, "配置等待结束后骨骼仍在动作，不能先归位");
+        await OpeningClockRuntime.advance(1.2 / scale);
+        await cast;
+        assert.deepEqual(source.position, origin, "骨骼动作结束后才完成归位");
+
+        let next = false;
+        const interval = present.play({ ...melee, kind: "skill.end" }).then(() => { next = true; });
+        await OpeningClockRuntime.advance(0.49 / scale);
+        assert.equal(next, false, "出手之间保留旧版半秒停顿");
+        await OpeningClockRuntime.advance(0.02 / scale);
+        await interval;
+
+        const nextHit = { ...hit };
+        present.prepareSkill!([shot, nextHit]);
+        const pending = Promise.all([present.play(shot), present.play(nextHit)]);
+        await OpeningClockRuntime.advance(0.72 / scale);
+        close!();
+        await OpeningClockRuntime.flush();
+        await pending;
+        assert.equal(OpeningClockRuntime.pending(), 0, "中途关闭应释放尚未到达的命中等待");
+        assert.equal(numbers().length, 0, "关场不补弹伤害");
+        assert.deepEqual(fixture.errors, []);
+    } finally {
+        close?.();
+        fixture.dispose();
+        OpeningClockRuntime.reset();
+    }
+}
+
+/** 使用真实配置完成出场、施法、持续控制和飘字回归；不运行玩家服务或实际战斗。 */
 async function main(): Promise<void> {
     await ConfigFixtureUtils.installReal();
     await checkOrdering();
+    await checkLateActors();
+    await checkColdSkill("ready");
+    await checkColdSkill("failed");
+    await checkColdSkill("closed");
     await checkActualSpineProgress();
     await checkDelayedFrames();
     await checkCancellation();
     await checkIdleUnchanged();
     await checkControlLifecycle();
     await checkBattleNumbers();
+    await checkStationaryCast();
+    await checkActionTiming();
     OpeningClockRuntime.reset();
     console.log("PASS 正式出场与控制；群攻双飘字独立落点、正确字库、轨迹渐隐、正常收尾与关闭清理");
 }

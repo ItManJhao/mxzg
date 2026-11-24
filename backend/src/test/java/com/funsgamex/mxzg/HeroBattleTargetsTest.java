@@ -103,4 +103,24 @@ class HeroBattleTargetsTest {
             source, living(), List.of(friend), true, noDraw));
     }
 
+    /** 亚瑟使用原21号按职业排序；同职业保持原次序，缺少首选时仍选存活敌人。 */
+    @Test void jobPriorityKeepsOrderAndFillsWithOtherJobs() {
+        var rules = new HeroSkillPanelRules(new ObjectMapper());
+        var arthur = rules.battleTargets(2091101);
+        assertEquals(List.of(3, 4, 21), arthur.selectors());
+        var mage = new Unit(3, 2, 5, 50, 100, 100, null, null, null, 2);
+        var firstWarrior = new Unit(4, 2, 3, 20, 100, 100, null, null, null, 1);
+        var lastWarrior = new Unit(5, 2, 1, 10, 100, 100, null, null, null, 1);
+        var priest = new Unit(6, 2, 4, 30, 100, 100, null, null, null, 3);
+        var formation = List.of(source, mage, firstWarrior, lastWarrior, priest);
+        assertEquals(List.of(firstWarrior), HeroBattleTargetUtils.select(arthur, source, formation, List.of(), false));
+        assertEquals(List.of(mage), HeroBattleTargetUtils.select(arthur, source, List.of(source, mage, priest),
+                List.of(), false));
+        var priorities = new Plan(1, List.of(3, 21), 4, List.of(3, 1));
+        assertEquals(List.of(priest, firstWarrior, lastWarrior, mage),
+                HeroBattleTargetUtils.select(priorities, source, formation, List.of(), false));
+        assertThrows(IllegalArgumentException.class, () -> HeroBattleTargetUtils.select(arthur, source, living(),
+                List.of(), false));
+    }
+
 }

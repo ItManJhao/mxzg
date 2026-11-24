@@ -16,12 +16,13 @@ import { MainChapterController } from "../../features/battle/MainChapterControll
 import { MainChapterModel } from "../../features/battle/MainChapterModel";
 import { MainChapterRedDotUtils } from "../../features/battle/utils/MainChapterRedDotUtils";
 import { GameRedDotKey } from "../../features/common/utils/GameRedDotKey";
-import { DailyDungeonController } from "../../features/dungeon/DailyDungeonController";
-import { DailyDungeonModel } from "../../features/dungeon/DailyDungeonModel";
+import { DAILY_DUNGEON_ENTRIES, DailyDungeonController } from "../../features/dungeon/DailyDungeonController";
+import { DAILY_DUNGEON_KINDS, DailyDungeonModel, type DailyDungeonKind } from "../../features/dungeon/DailyDungeonModel";
 import { FirstSummonData } from "../../features/hero/data/FirstSummonData";
 import { HeroRosterModel } from "../../features/hero/HeroRosterModel";
 import { HeroCreationUtils } from "../../features/hero/utils/HeroCreationUtils";
 import { HeroRedDotUtils } from "../../features/hero/utils/HeroRedDotUtils";
+import { VipModel } from "../../features/vip/VipModel";
 
 export class ApplicationRedDots {
     /** 主城就绪且配置可读取时才投影业务状态。 */
@@ -30,8 +31,8 @@ export class ApplicationRedDots {
     private clockTask: ReturnType<typeof setInterval> | null = null;
     /** 副本列表影响资格的等级、阵容版本及上阵战力，供合并同一状态的后台查询。 */
     private dungeonInputs = "";
-    /** 下一次允许尝试读取过期副本状态的服务器 Unix 秒，避免失败时逐秒发包。 */
-    private nextDungeonRefresh = 0;
+    /** 各副本下一次允许补读的服务器 Unix 秒，读取到有效状态后移除对应限制。 */
+    private readonly nextDungeonRefresh = new Map<DailyDungeonKind, number>();
     /** 主线进度监听在应用退出时解除。 */
     private readonly unbindChapter: () => void;
 
@@ -43,7 +44,7 @@ export class ApplicationRedDots {
         this.unbindChapter = EventDispatcher.instance.on(MainChapterController.Updated, this, this.refreshChapter);
     }
 
-    /** 配置包和主城均可用后读取当前快照，启动免费次数计时。 */
+    /** 配置包和主城均可用后读取当前快照，启动召唤计时和副本资格补查。 */
     public setReady(ready: boolean): void {
         if (ready === this.ready) {
             return;
@@ -52,7 +53,10 @@ export class ApplicationRedDots {
         if (ready) {
             this.refreshSnapshot();
             this.refreshChapter();
-            this.clockTask = setInterval(() => this.refreshTimed(), 1_000);
+            this.clockTask = setInterval(() => {
+                this.refreshSummon();
+                this.refreshDungeonIfNeeded();
+            }, 1_000);
         } else if (this.clockTask !== null) {
             clearInterval(this.clockTask);
             this.clockTask = null;
@@ -60,7 +64,7 @@ export class ApplicationRedDots {
     }
 
     /**
-     * 角色、库存和名册在同一批次提交后重算，首次等待配置包和主城就绪。
+     * 角色、库存、名册和契约任务提交后重算各功能和培养页签，首次等待配置包和主城就绪。
      * @param forceDungeon 同角色鉴权恢复后重新确认独立副本资格。
      */
     public refreshSnapshot(forceDungeon = false): void {
@@ -71,7 +75,7 @@ export class ApplicationRedDots {
         const manager = RedDotManager.instance;
         const roster = HeroRosterModel.instance.snapshot;
         const bag = BagModel.instance;
-        const hero = HeroRedDotUtils.project(roster, bag, role.gold);
+        const hero = HeroRedDotUtils.project(roster, bag, role);
         const creationGate = GameConfig.instance.getConfig(GConfig.OpenCondition, "main_hero_make");
         const creationReady = !!creationGate && EntryGateUtils.isEntryOpen(creationGate, role.level, 0)
             && bag.snapshot.synced && HeroCreationUtils.options(roster.heroes, id => bag.quantity(id)).some(option => option.ready);
@@ -86,17 +90,22 @@ export class ApplicationRedDots {
         }
         EventDispatcher.batchNotifications(() => {
             manager.replaceBranch(GameRedDotKey.HERO_DETAIL, hero.details);
+            manager.replaceBranch(GameRedDotKey.HERO_GROWTH, hero.growth);
             manager.set(GameRedDotKey.HERO, hero.lineupReady);
             manager.set(GameRedDotKey.HERO_CREATION, creationReady);
             manager.replaceBranch(GameRedDotKey.BAG_PIECES, pieces);
-            this.refreshTimed();
+            manager.set(GameRedDotKey.VIP_TASKS, VipModel.instance.state?.tasks.some(task =>
+                !task.claimed && task.progress !== undefined && task.progress >= task.target) ?? false);
+            this.refreshSummon();
         });
         const gate = CityNavigationUtils.bottomGate("dungeon");
-        const goldGate = GameConfig.instance.getConfig(GConfig.OpenCondition, "main_mission");
-        if (!gate || !goldGate || !EntryGateUtils.isEntryOpen(gate, role.level, 0)
-            || !EntryGateUtils.isEntryOpen(goldGate, role.level, 0)) {
+        const dailyGate = GameConfig.instance.getConfig(GConfig.OpenCondition, "main_mission");
+        if (!gate || !dailyGate || !EntryGateUtils.isEntryOpen(gate, role.level, 0)
+            || !EntryGateUtils.isEntryOpen(dailyGate, role.level, 0)) {
             this.dungeonInputs = "";
-            manager.set(GameRedDotKey.GOLD_DUNGEON, false);
+            for (const kind of DAILY_DUNGEON_KINDS) {
+                manager.set(DAILY_DUNGEON_ENTRIES[kind].reminder, false);
+            }
             return;
         }
         const deployed = new Set(roster.mainFormation?.slots.map(slot => slot.heroId));
@@ -104,14 +113,13 @@ export class ApplicationRedDots {
         const inputs = JSON.stringify([role.level, roster.mainFormation?.version, power]);
         if (forceDungeon || this.dungeonInputs !== inputs) {
             this.dungeonInputs = inputs;
-            this.refreshDungeon();
-        }
-    }
-
-    /** 在副本入口已开放时读取现有服务端列表，供首次、重连和跨日共用。 */
-    private refreshDungeon(): void {
-        if (this.ready && this.dungeonInputs) {
-            DailyDungeonController.instance.refreshReminder();
+            for (const kind of DAILY_DUNGEON_KINDS) {
+                if (this.dungeonAvailable(kind, role.level)) {
+                    DailyDungeonController.instance.refreshReminder(kind);
+                } else {
+                    manager.set(DAILY_DUNGEON_ENTRIES[kind].reminder, false);
+                }
+            }
         }
     }
 
@@ -119,7 +127,7 @@ export class ApplicationRedDots {
     public resetSession(): void {
         this.setReady(false);
         this.dungeonInputs = "";
-        this.nextDungeonRefresh = 0;
+        this.nextDungeonRefresh.clear();
         RedDotManager.instance.reset();
     }
 
@@ -136,8 +144,8 @@ export class ApplicationRedDots {
         }
     }
 
-    /** 用公共服务器时钟处理免费召唤和金币副本跨日，不改变任何库存或次数。 */
-    private refreshTimed(): void {
+    /** 免费召唤冷却读取公共服务器时钟，积分提醒读取已同步库存。 */
+    private refreshSummon(): void {
         const role = this.account.snapshot.role;
         if (!this.ready || !role || !GameConfig.instance.getPackageVersion()) {
             return;
@@ -154,12 +162,34 @@ export class ApplicationRedDots {
             [GameRedDotKey.SUMMON_POINTS]: summonOpen && bag.snapshot.synced && !!details?.pointsExchangeAvailable
                 && bag.quantity(FirstSummonData.POINT_ITEM_ID) >= (details.pointsCost ?? FirstSummonData.cost("POINTS", 1).item_num),
         });
+    }
+
+    /** 仅对已开放类型补读缺失或已跨日的资格，独立限频且不抢占在途读取。 */
+    private refreshDungeonIfNeeded(): void {
         const now = ServerClock.instance.nowSeconds();
-        const dungeon = DailyDungeonModel.instance.state;
-        if (now !== null && dungeon && now > dungeon.resetAtSeconds && now >= this.nextDungeonRefresh) {
-            manager.set(GameRedDotKey.GOLD_DUNGEON, false);
-            this.nextDungeonRefresh = now + 60;
-            this.refreshDungeon();
+        const role = this.account.snapshot.role;
+        if (!this.dungeonInputs || now === null || !role) {
+            return;
         }
+        for (const kind of DAILY_DUNGEON_KINDS) {
+            if (!this.dungeonAvailable(kind, role.level)) {
+                continue;
+            }
+            const dungeon = DailyDungeonModel.instance.stateFor(kind);
+            if (dungeon && now <= dungeon.resetAtSeconds) {
+                this.nextDungeonRefresh.delete(kind);
+                continue;
+            }
+            RedDotManager.instance.set(DAILY_DUNGEON_ENTRIES[kind].reminder, false);
+            if (now >= (this.nextDungeonRefresh.get(kind) ?? 0) && DailyDungeonController.instance.refreshReminder(kind, false)) {
+                this.nextDungeonRefresh.set(kind, now + 60);
+            }
+        }
+    }
+
+    /** 只查询当前角色已满足原等级门槛的副本类型。 */
+    private dungeonAvailable(kind: DailyDungeonKind, level: number): boolean {
+        const gate = GameConfig.instance.getConfig(GConfig.OpenCondition, DAILY_DUNGEON_ENTRIES[kind].gate);
+        return !!gate && EntryGateUtils.isEntryOpen(gate, level, 0);
     }
 }

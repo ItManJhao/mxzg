@@ -134,10 +134,12 @@ function quotesAndSubmits(fixture: Fixture): void {
 function updatesOnlyFromSnapshot(fixture: Fixture): void {
     fixture.controller.upgrade(HERO.id);
     fixture.controller.upgrade(HERO.id);
-    assert.equal(fixture.controller.describe(HERO.id).status, "pending");
+    assert.equal(fixture.controller.busy, true);
+    assert.equal(fixture.controller.describe(HERO.id).status, "ready");
+    assert.equal(fixture.controller.describe(HERO.id).heroExp, 105);
     assert.equal(fixture.sent.length, 1);
     fixture.reply(success(fixture.sent[0]));
-    assert.equal(fixture.controller.describe(HERO.id).status, "ready");
+    assert.equal(fixture.controller.busy, false);
     assert.deepEqual(fixture.completed, [{ heroId: HERO.id, fromLevel: 1, toLevel: 6 }]);
     assert.equal(fixture.roster.snapshot.heroes[0].level, 1);
     assert.equal(fixture.bag.quantity(900101), 500);
@@ -180,7 +182,9 @@ function stageUsesAuthoritativeSnapshot(fixture: Fixture): void {
     fixture.controller.advanceStage(HERO.id);
     fixture.controller.advanceStage(HERO.id);
     assert.equal(fixture.stageSent.length, 1);
-    assert.equal(fixture.controller.describeStage(HERO.id).status, "pending");
+    assert.equal(fixture.controller.busy, true);
+    assert.equal(fixture.controller.describeStage(HERO.id).status, "ready");
+    assert.equal(fixture.controller.describeStage(HERO.id).stone, 50);
     const { requestId } = fixture.stageSent[0];
     const receipt: HeroStageReceipt = {
         requestId, heroId: HERO.id, fromStage: 0, toStage: 1, roleId: ROLE.id,
@@ -190,6 +194,7 @@ function stageUsesAuthoritativeSnapshot(fixture: Fixture): void {
     const status = { requestId, found: true, receipt };
     assert.deepEqual(roundTrip("response", status, Protocol.HERO_STAGE_ADVANCE_STATUS).body, status);
     fixture.reply(roundTrip("response", receipt, Protocol.HERO_STAGE_ADVANCE));
+    assert.equal(fixture.controller.busy, false);
     assert.deepEqual(fixture.completed, [{ heroId: HERO.id, fromStage: 0, toStage: 1 }]);
     assert.equal(fixture.roster.snapshot.heroes[0].stage, 0);
     assert.equal(fixture.bag.quantity(900102), 50);

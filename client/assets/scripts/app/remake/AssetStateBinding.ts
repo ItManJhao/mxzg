@@ -14,7 +14,7 @@ import { BagItemDataUtils } from "../../features/bag/data/BagItemDataUtils";
 import { ProtocolStateUtils } from "../../platform/ProtocolStateUtils";
 import type { ProtocolName } from "../../platform/Protocol";
 import type { GameFrame } from "../../platform/GameProtocolCodecUtils";
-import {ProtocolRouter} from "../../platform/ProtocolRouter";
+import { ProtocolRouter, type ProtocolReceiver } from "../../platform/ProtocolRouter";
 import { EventDispatcher } from "../../framework/EventDispatcher";
 
 export class AssetStateBinding {
@@ -40,6 +40,7 @@ export class AssetStateBinding {
      * @param identityChanged 应用关闭旧角色页面；先关闭再重置，同角色恢复不调用。
      * @param chapter 唯一主线状态协议入口。
      * @param sessions 模块初始化时登记的操作生命周期；先撤销旧任务，再提交同一份新快照。
+     * @param extraReceivers 还需在同一批次读取统一快照的模块，由应用装配。
      */
     constructor(
         private readonly account: AccountModel,
@@ -51,13 +52,14 @@ export class AssetStateBinding {
         },
         private readonly chapter?: MainChapterController,
         private readonly sessions: readonly { resetSession(): void }[] = [],
+        private readonly extraReceivers: readonly ProtocolReceiver[] = [],
     ) {
         this.stop = account.subscribe(state => {
             if (!state.role) this.clear();
         });
     }
 
-    /** 包括冒险点在内完整校验后批量提交；重复及低版本不通知，同版本鉴权首包仍校准时间和可选扩展。 */
+    /** 批量交付通过校验的统一快照。重复及低版本不通知，同版本鉴权首包仍校准时间和可选扩展。 */
     apply(frame: GameFrame): boolean {
         const current = this.account.snapshot;
         if (!current.role || current.busy) return false;
@@ -87,6 +89,9 @@ export class AssetStateBinding {
             ProtocolRouter.instance.dispatch(this.bag, frame);
             if (this.heroes) ProtocolRouter.instance.dispatch(this.heroes, frame);
             if (this.chapter) ProtocolRouter.instance.dispatch(this.chapter, frame);
+            for (const receiver of this.extraReceivers) {
+                ProtocolRouter.instance.dispatch(receiver, frame);
+            }
             this.revision = revision;
         });
         return true;

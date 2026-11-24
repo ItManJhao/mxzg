@@ -17,6 +17,9 @@ import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
 import { UILayer } from "../assets/scripts/framework/ui/UILayer";
 import { CityChromeView } from "../assets/scripts/features/city/ui/CityChromeView";
+import { GameRedDotKey } from "../assets/scripts/features/common/utils/GameRedDotKey";
+import { PrefabLoader } from "../assets/scripts/framework/assets/PrefabLoader";
+import { RedDotManager } from "../assets/scripts/framework/ui/RedDotManager";
 import { SkillAuditView } from "../assets/scripts/features/battle/ui/SkillAuditView";
 import { SkillAuditUtils } from "../assets/scripts/features/battle/utils/SkillAuditUtils";
 import { ConfigUnavailable, GameConfig } from "../assets/scripts/config/GameConfig";
@@ -54,6 +57,7 @@ function fixture() {
   home.cityHost = new Node("CityMapHost"); home.chromeHost = new Node("CityChromeHost");
   const profileNode=new Node("RoleProfileView"),profile=profileNode.addComponent(RoleProfileView);
   profile.nickname=new Node("Name").addComponent(Label);profile.roleId=new Node("Id").addComponent(Label);profile.level=new Node("Level").addComponent(Label);
+  profile.guildLabel = new Node("GuildName").addComponent(Label);
   profile.closeButton=new Node("Close").addComponent(Button);profile.settingsButton=new Node("Settings").addComponent(Button);
   profile.portraitButton = new Node("PortraitButton").addComponent(Button);
   profile.renameButton = new Node("RenameButton").addComponent(Button);
@@ -185,7 +189,97 @@ async function checkCityConfigGate(): Promise<void> {
   node.destroy();
 }
 
-/** 先验证配置就绪门槛，再安装真实配置并检查主城子视图、资料与关闭生命周期。 */
+/** 通过真实底栏组件检查 VIP 红点的按需挂载、锁定优先与关闭清理。 */
+async function checkBottomRedDots(): Promise<void> {
+    const root = new Node("ChromeFixture");
+    const chrome = root.addComponent(CityChromeView);
+    const vip = new Node("TabFetter");
+    vip.parent = root;
+    const lock = new Node("Lock");
+    lock.parent = vip;
+    lock.active = true;
+    // 只替换无关的顶底栏节点绑定，红点订阅仍经真实打开流程建立。
+    Object.assign(chrome, {
+        bindAll: () => { Object.assign(chrome, { tabs: { fetter: vip } }); },
+    });
+    const prefab = Object.assign(new Prefab(), {
+        _instantiate: () => {
+            const dot = new Node("RedDot");
+            dot.setPosition(28, 28, 0);
+            dot.active = false;
+            return dot;
+        },
+    });
+    const loads: Array<{ resolve: (asset: Prefab) => void; reject: (error: Error) => void }> = [];
+    const loadPrefab = PrefabLoader.loadPrefab;
+    PrefabLoader.loadPrefab = path => {
+        assert.equal(path, "bundles/module/common/prefabs/RedDot");
+        return new Promise((resolve, reject) => { loads.push({ resolve, reject }); });
+    };
+    const manager = RedDotManager.instance;
+    const openTab = { id: "fetter", text: "", state: "open" } as const;
+    const lockedTab = { ...openTab, state: "locked" } as const;
+    try {
+        manager.set(GameRedDotKey.VIP_TASKS, true);
+        chrome.runOpen();
+        await chrome.whenReady();
+        assert.equal(loads.length, 0, "VIP 锁定期间不为亮起的条件加载预制体");
+
+        chrome.setTabs([openTab]);
+        chrome.setTabs([openTab]);
+        assert.equal(loads.length, 1, "同一个宿主重复刷新只发起一次加载");
+        chrome.setTabs([lockedTab]);
+        loads[0].resolve(prefab);
+        await new Promise<void>(resolve => setImmediate(resolve));
+        assert.equal(vip.getChildByName("RedDot"), null, "加载期间重新锁定则取消本次挂载");
+
+        chrome.setTabs([openTab]);
+        assert.equal(loads.length, 2, "解锁后可以重新请求公共预制体");
+        loads[1].resolve(prefab);
+        await new Promise<void>(resolve => setImmediate(resolve));
+        const dot = vip.getChildByName("RedDot");
+        assert(dot?.active, "VIP 开放后显示已有任务红点");
+        assert.equal(dot.position.x, 28);
+        assert.equal(dot.position.y, 28);
+        chrome.setTabs([lockedTab]);
+        assert.equal(dot.active, false, "切为锁定时立即隐藏已挂载红点");
+        chrome.setTabs([openTab]);
+        assert.equal(dot.active, true, "解除锁定时复用实例和当前聚合值");
+        manager.reset();
+        assert.equal(dot.active, false, "清空角色条件后隐藏红点");
+        manager.set(GameRedDotKey.VIP_TASKS, true);
+        assert.equal(vip.getChildByName("RedDot"), dot, "重新点亮时复用原实例");
+        assert.equal(dot.active, true);
+        assert.equal(loads.length, 2);
+
+        chrome.runClose();
+        assert.equal(vip.getChildByName("RedDot"), null, "关闭底栏释放红点实例");
+        manager.set(GameRedDotKey.VIP_TASKS, false);
+        manager.set(GameRedDotKey.VIP_TASKS, true);
+        assert.equal(loads.length, 2, "关闭的底栏不再响应红点树变化");
+
+        chrome.runOpen();
+        assert.equal(loads.length, 3, "重开底栏读取当前红点条件");
+        chrome.runClose();
+        chrome.runOpen();
+        assert.equal(loads.length, 4);
+        loads[2].resolve(prefab);
+        await new Promise<void>(resolve => setImmediate(resolve));
+        assert.equal(vip.getChildByName("RedDot"), null, "前一次打开的迟到资源不能挂到重新打开的底栏");
+
+        loads[3].reject(new Error("测试红点资源加载失败"));
+        await new Promise<void>(resolve => setImmediate(resolve));
+        await chrome.whenReady();
+        assert.equal(vip.getChildByName("RedDot"), null, "提示资源失败时仍可打开底栏");
+    } finally {
+        chrome.runDispose();
+        manager.set(GameRedDotKey.VIP_TASKS, false);
+        root.destroy();
+        PrefabLoader.loadPrefab = loadPrefab;
+    }
+}
+
+/** 检查主城、资料、登录窗口与真实静态绑定。 */
 async function main() {
   await checkCityConfigGate();
   await ConfigFixtureUtils.installReal();
@@ -237,8 +331,9 @@ async function main() {
   assert.equal(profile.nickname!.string,"玩家甲");
   const same=await ui.openById("role-profile",roleArgs);
   assert.equal(same,profile,"重复点击只保留一个资料窗口");
-  model.replace({busy:false,error:"",role:{id:"role-new",nickname:"玩家乙",level:9,gold:5,diamonds:8}});
+  model.replace({busy:false,error:"",role:{id:"role-new",nickname:"玩家乙",level:9,gold:5,diamonds:8,guildName:"星火公会"}});
   assert.equal(profile.nickname!.string,"玩家乙");
+  assert.equal(profile.guildLabel!.string,"星火公会");
   profile.settingsButton!.node.emit(Button.EventType.CLICK);
   await new Promise(resolve => setTimeout(resolve, 0));
   assert(ui.ownsChild(profile, settings) && settings.serverName!.string === roleArgs.serverName,
@@ -264,6 +359,20 @@ async function main() {
   slow.city.completeLoading();
   await Promise.resolve();
   assert.equal(slow.home.cityHost!.children.length, 0);
+
+  // 父节点直接销毁时，顶栏入口节点可能已被引擎销毁，主城仍必须清理两个子视图。
+  const detached = fixture();
+  detached.home.runOpen();
+  const detachedOpen = assert.rejects(detached.home.whenReady(), /页面已关/);
+  const avatar = detached.chrome.avatar!;
+  avatar.destroy();
+  avatar.off = () => {
+    throw new Error("已销毁的入口无法退订节点事件");
+  };
+  assert.doesNotThrow(() => detached.home.onDestroy());
+  await detachedOpen;
+  assert.equal(detached.city.disposedCount, 1);
+  assert.equal(detached.chrome.disposedCount, 1);
 
   // 引擎先销毁按钮组件时其 node 会被清空，资料页稍后释放也不应抛错。
   const teardown = fixture();
@@ -298,6 +407,7 @@ async function main() {
     assert(content._components.some((r:any)=>serverPrefab[r.__id__].cellPrefab));
   }
   const hud = JSON.parse(readFileSync("client/assets/bundles/module/home/prefabs/CityChromeView.prefab","utf8"));
+  await checkBottomRedDots();
   const top = hud.find((row:any)=>row._name==="TopBar");
   const order = top._children.map((ref:any)=>hud[ref.__id__]._name);
   assert(order.indexOf("ExperienceBg")>order.indexOf("Bg"),"经验条不能被背景盖住");

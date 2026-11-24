@@ -21,8 +21,8 @@ const prefabUsedAt = new Map<string, number>();
 const prefabInstances = new Map<Prefab, number>();
 /** 实例节点已持有的预制体集合，避免同一页面重复加引用；节点销毁后自动退出。 */
 const nodePrefabs = new WeakMap<Node, Set<Prefab>>();
-/** 无实例使用的加载器缓存初始保留120秒；LoadingPlan另有应用持有，不受此值影响。 */
-export const PREFAB_IDLE_MS = 120000;
+/** 无实例使用的预制体闲置十分钟后到期，单位为毫秒；LoadingPlan 预载资源由应用另行持有。 */
+export const PREFAB_IDLE_MS = 600_000;
 /** 每次维护最多保留16份无实例使用的预制体缓存，不限制活动实例或应用预加载资源。 */
 export const MAX_IDLE_PREFABS = 16;
 /** 只保存正在加载的Promise，成功后移入显式应用缓存。 */

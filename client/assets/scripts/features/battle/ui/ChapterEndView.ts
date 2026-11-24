@@ -54,6 +54,8 @@ export interface ChapterEndArgs {
     roleAppearance?: { headId: number; borderId: number } | null;
     /** 已结算或待恢复说明，不以客户端播放结果伪造奖励。 */
     notice?: string;
+    /** 专用玩法已结算，可展示败场奖励、积分及冻结战报统计。 */
+    settledBattle?: boolean;
     /** 已校验的里程碑下一目标；缺失明确显示未同步，不从本次奖励或当前关卡猜测。 */
     readonly nextTarget?: ChapterMilestoneHint;
     /** 结果窗口关闭后通知主线返回主页；不触发结算。 */
@@ -112,7 +114,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
     /** 本页经验动画已推进的0.1秒步数，关闭停止调度。 */
     private experienceTick = 0;
 
-    /** 绑定已校验目标、确认关闭并异步准备表现；空白关闭由ViewSpec共享模态转交，不请求结算。 */
+    /** 绑定已校验目标、关闭和适配监听，并异步准备结算表现；空白关闭走共享模态。 */
     public onOpen(args?: ChapterEndArgs): void {
         super.onOpen(args);
         if (!args || !this.panel || !this.victory || !this.defeatWing || !this.defeatTitle
@@ -135,13 +137,13 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
                 }
             });
         }
-        ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport());
+        this.ownListener(ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport()));
         this.victoryCountdown = !!args.persistentChapter && args.won && (args.rewards?.length || 0) > 0;
         this.victory.active = args.won;
         this.defeatWing.active = !args.won;
         this.defeatTitle.active = !args.won;
-        this.defeatContent.active = !args.won;
-        this.readonlyNotice.active = args.won;
+        this.defeatContent.active = !args.won && !args.settledBattle;
+        this.readonlyNotice.active = args.won || !!args.settledBattle;
         const notice = this.readonlyNotice.getComponent(Label) || this.readonlyNotice.getComponentInChildren(Label);
         if (notice && (args.persistentChapter || args.notice !== undefined)) {
             notice.string = args.notice || "战报已保存";
@@ -149,14 +151,18 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         this.paintNextTarget(args);
         this.showRewards(args);
         this.seconds = this.victoryCountdown ? 4 : 5;
-        this.closeHint.string = args.won && !this.victoryCountdown ? "点击空白处关闭" : this.seconds + " 秒后关闭";
+        this.closeHint.string = (args.won && !this.victoryCountdown) || args.settledBattle
+            ? "点击空白处关闭" : this.seconds + " 秒后关闭";
         if (args.presentationOnly) {
             this.closeHint.string = "失败样式验收 · 5 秒后关闭";
         }
         const close = () => this.close();
         const confirm = this.mainVictoryPanel?.active
             ? this.panel.getChildByPath("VictoryButtons/ConfirmButton")! : this.panel.getChildByName("ConfirmButton")!;
-        confirm.active = args.won && (args.persistentChapter === true || args.rewards !== undefined);
+        confirm.active = !!args.settledBattle || args.won && (args.persistentChapter === true || args.rewards !== undefined);
+        if (args.settledBattle) {
+            this.bindSettledReport(args);
+        }
         if (confirm.active) {
             const anchor = this.panel.getChildByName(this.mainVictoryPanel?.active ? "MainVictoryCloseHintAnchor" : "VictoryCloseHintAnchor")!;
             this.closeHint.node.setPosition(anchor.position);
@@ -174,6 +180,21 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         }).catch(error => {
             if (!this.released) {
                 this.failOpen(error instanceof Error ? error : new Error(String(error)));
+            }
+        });
+    }
+
+    /** 其他已结算玩法共享统计按钮，播放历史不改变原结果。 */
+    private bindSettledReport(args: ChapterEndArgs): void {
+        const button = this.panel!.getChildByName("SettledReportButton");
+        if (!button) {
+            throw new Error("战斗结算预制体缺少统计入口");
+        }
+        button.active = !!args.units?.length;
+        button.on(Button.EventType.CLICK, this.openStatistics, this);
+        this.ownListener(() => {
+            if (button.isValid) {
+                button.off(Button.EventType.CLICK, this.openStatistics, this);
             }
         });
     }
@@ -232,7 +253,10 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         if (this.released || !this.args?.units?.length) {
             return;
         }
-        void UIManager.instance.open(BattleDetailLayer, { units: this.args.units, won: this.args.won, names: this.args.names }).catch(() => {
+        const ui = UIManager.instance;
+        const result = { units: this.args.units, won: this.args.won, names: this.args.names };
+        const opening = this.args.settledBattle ? ui.openChild(this, BattleDetailLayer, result) : ui.open(BattleDetailLayer, result);
+        void opening.catch(() => {
             // UIManager已统一记录打开失败及玩家提示，不重复打印或伪装打开成功。
         });
     }
@@ -249,12 +273,12 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         this.panel.setPosition(-320 * this.panelScale, (this.mainVictoryPanel?.active ? -365 : -200) * this.panelScale, 0);
     }
 
-    /** 绘制主线或副本调用方确认的胜利回执，只读演示无需提供奖励。 */
+    /** 绘制调用方确认的奖励；竞技场等真实败场奖励由服务端明细提供。 */
     private showRewards(args: ChapterEndArgs): void {
         if (!this.rewardScroll) {
             return;
         }
-        const rewards = args.won ? (args.rewards || []).filter(row => row.quantity > 0) : [];
+        const rewards = args.won || args.settledBattle ? (args.rewards || []).filter(row => row.quantity > 0) : [];
         this.rewardScroll.node.active = rewards.length > 0;
         if (!rewards.length) {
             return;
@@ -346,7 +370,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
             this.mainAudio.clip = mainClip;
             AudioPreferences.playEffect(this.mainAudio);
         }
-        if (!args.won || this.victoryCountdown) {
+        if ((!args.won && !args.settledBattle) || this.victoryCountdown) {
             this.schedule(this.tickClose, 1);
         }
         GameLog.shared.classified("MODULE", "info", "ChapterEndView",
@@ -450,7 +474,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         this.closeHint!.string = (this.args?.presentationOnly ? "失败样式验收 · " : "") + this.seconds + " 秒后关闭";
     }
 
-    /** 关闭本页详情并清空目标、动画、音频与定时器；不影响其他来源接管的详情或独立战报统计。 */
+    /** 关闭本页详情并清空仍存活的目标内容、动画、音频与定时器，最后通知来源页。 */
     public onClose(): void {
         if (this.released) {
             return;
@@ -469,9 +493,10 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         if (this.confetti?.isValid) {
             this.confetti.spriteFrame = null;
         }
-        if (this.nextTarget?.isValid && this.nextTarget.node.isValid) {
-            this.nextTarget.string = "";
-            this.nextTarget.node.active = false;
+        const target = this.nextTarget;
+        if (target?.isValid && target.node?.isValid) {
+            target.string = "";
+            target.node.active = false;
         }
         this.frames = [];
         if (this.panel?.isValid) {

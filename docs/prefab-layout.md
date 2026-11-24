@@ -1,6 +1,11 @@
 # Prefab 编辑与审查
 
-更新于 2026-11-23。[准入清单](../tools/prefab-plan.json)记录参与检查的预制体，[结构与验收报告](prefab-review.json)记录当前资源指纹、组件绑定及已验画面范围。从仓库根目录运行 `node client/tools/check-project.mjs --suite prefab-review` 可复查结构。英雄详情 HeroInfoView 和主城 CityHubView 的资源均已变化，旧画面记录保存在 supersededEntries，当前指纹只通过结构检查。
+更新于 2026-11-24。[准入清单](../tools/prefab-plan.json)记录参与检查的预制体，[结构与验收报告](prefab-review.json)记录当前资源指纹、组件绑定及已验画面范围。从仓库根目录运行 `node client/tools/check-project.mjs --suite prefab-review` 可复查结构。英雄详情、主城、战场和出阵页的旧指纹签收均保存在[人工验收记录](../config/prefab-acceptance.json)的 `supersededEntries`。
+
+11 月 23 日的本机 Creator 预览覆盖了下面两处布局改动。预览日志没有记录所加载资源的 SHA256，当前文件指纹的视觉签收仍待补录。
+
+- **战场 BattlePage**。双方 16 个位置的 Buff 行已从模型头部移到对应血条节点。独立六人战报停帧时，六名己方英雄的状态图标都显示在模型层上方。本机记录为 `client/temp/project-checks/battle-timing-browser-rest.log` 和同目录的 `battle-timing-six-buffs.png`。
+- **出阵页 FormationView**。视口宽度由 580 调为 568，英雄列表由五列调为四列。预览覆盖首末行裁剪、星级、排序筛选、草稿切换与取消、空格属性加成。本机记录为 `client/temp/project-checks/formation-panel-browser.log`。[布阵维护](formation-ui-authoring.md)
 
 创造法阵的配方格复用英雄头像格的绘制，在 HeroCreationCellView 显示备料数量与颜色。修改格位间距时应保留该预制体根节点的 0.78 倍缩放，SuperContent 使用这个尺寸计算虚拟列表的格位。[法阵头像格](../client/assets/scripts/features/hero/ui/HeroCreationCellView.ts) · [列表维护](super-scroll-authoring.md)
 

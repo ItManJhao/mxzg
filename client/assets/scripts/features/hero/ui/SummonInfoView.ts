@@ -58,7 +58,7 @@ export class SummonInfoView extends BaseView<SummonInfoArgs> {
             .catch(() => { /* 开窗失败由 UIManager 统一报告。 */ });
     }
 
-    /** 注册滚动列表和页签，公示默认展示高级召唤。 */
+    /** 注册当前列表节点和页签，公示默认展示高级召唤。 */
     public onOpen(args?: SummonInfoArgs): void {
         if (!args || !this.panel || !this.closeButton || !this.titleLabel || !this.list
             || this.tabs.length !== 5 || this.tabHighlights.length !== 5 || this.tabLabels.length !== 5) {
@@ -67,7 +67,11 @@ export class SummonInfoView extends BaseView<SummonInfoArgs> {
         this.titleLabel.string = { rates: "召唤概率", lineups: "阵容推荐", prayer: "召唤祈愿" }[args.kind];
         const content = this.list.list.node;
         content.on(SuperContent.RENDER_ITEM, this.renderRow, this);
-        this.ownListener(() => content.off(SuperContent.RENDER_ITEM, this.renderRow, this));
+        this.ownListener(() => {
+            if (content.isValid) {
+                content.off(SuperContent.RENDER_ITEM, this.renderRow, this);
+            }
+        });
         this.listen(this.closeButton, () => this.close());
         this.tabs.forEach((button, index) => {
             button.node.active = args.kind === "rates";
@@ -131,10 +135,14 @@ export class SummonInfoView extends BaseView<SummonInfoArgs> {
         panel.node.setScale(scale, scale, 1);
     }
 
-    /** 登记短期按钮监听，关闭窗口时解除。 */
+    /** 登记本次按钮监听，关闭窗口时仅从仍有效的原节点解绑。 */
     private listen(button: Button, callback: () => void): void {
         const node = button.node;
         node.on(Button.EventType.CLICK, callback);
-        this.ownListener(() => node.off(Button.EventType.CLICK, callback));
+        this.ownListener(() => {
+            if (node.isValid) {
+                node.off(Button.EventType.CLICK, callback);
+            }
+        });
     }
 }

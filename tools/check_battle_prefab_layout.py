@@ -1,4 +1,4 @@
-"""检查战斗预制体的设计宽、九宫格资源边距及血条模式，防止导入时退回旧显示参数。"""
+"""检查战斗预制体的设计宽、九宫格资源边距及血条、Buff 挂点。"""
 import json
 import math
 from pathlib import Path
@@ -23,6 +23,43 @@ def validate_sliced_frame(frame, size, source=""):
         # 只允许尺寸完全一致，避免新布局放大/缩小时用零边距破坏应保护的边缘。
         assert (math.isclose(size["width"], frame["rawWidth"], abs_tol=1e-6)
                 and math.isclose(size["height"], frame["rawHeight"], abs_tol=1e-6)), (source, "零边距九宫格不得拉伸")
+
+
+def check_buff_hud(battle):
+    """核对双方八槽的状态图标随血条绘制，行内与邻列之间留足间距。"""
+    def children(node):
+        """按节点名解析预制体子节点引用，并保留渲染顺序。"""
+        return {battle[ref["__id__"]]["_name"]: battle[ref["__id__"]] for ref in node["_children"]}
+
+    def size(node):
+        """读取预制体上保存的设计尺寸。"""
+        return next(battle[ref["__id__"]]["_contentSize"] for ref in node["_components"]
+                    if battle[ref["__id__"]]["__type__"] == "cc.UITransform")
+
+    layers = children(battle[battle[0]["data"]["__id__"]])
+    assert list(layers).index("LayerField") < list(layers).index("LayerHud"), "状态层须在模型之上"
+    hp_rows = children(children(layers["LayerHud"])["HpBars"])
+    for side in ("Ally", "Enemy"):
+        for index in range(8):
+            hp = hp_rows[side + "Hp_" + str(index)]
+            names = children(hp)
+            assert {"Fill", "Label", "ElementIcon", "BuffRow"} <= names.keys(), (side, index, "头顶挂点缺失")
+            buffs = names["BuffRow"]
+            buff_size = size(buffs)
+            assert not buffs["_active"], (side, index, "进场前不展示 Buff")
+            assert buffs["_lpos"]["y"] - buff_size["height"] / 2 > size(hp)["height"] / 2, (
+                side, index, "Buff 与血条重叠")
+            # 两列中心相隔 144，外列 252.8；在未计容器的留白缩放前，两边也要保有空间。
+            effective_width = buff_size["width"] * hp["_lscale"]["x"]
+            assert effective_width < 2 * (320 - 252.8), (side, index, "Buff 行超过外列可用宽度")
+            right = -buff_size["width"] / 2
+            for icon in children(buffs).values():
+                half_width = size(icon)["width"] / 2
+                x = icon["_lpos"]["x"]
+                assert size(icon)["width"] == size(icon)["height"] >= 30, (side, index, "Buff 图标尺寸不足")
+                assert right <= x - half_width, (side, index, "Buff 图标越界或重叠")
+                right = x + half_width
+            assert right <= buff_size["width"] / 2, (side, index, "Buff 图标超过行末")
 
 
 def check():
@@ -80,12 +117,8 @@ def check():
         assert abs(point["x"] - expected_x) < 0.001
         assert abs(point["y"] - expected_y) < 0.001
     assert anchors["ModelScale"]["_lscale"]["x"] == 0.6
-    for side in ("Ally", "Enemy"):
-        for index in range(8):
-            hp = next(n for n in battle if n.get("_name") == side + "Hp_" + str(index))
-            names = {battle[r["__id__"]]["_name"] for r in hp["_children"]}
-            assert {"Fill", "Label", "ElementIcon"} <= names, (side, index, "头顶挂点缺失")
-    print(f"PASS {len(paths)} battle/settlement prefabs: 640 design width; {count} sliced sprites with valid borders or native-size zero borders")
+    check_buff_hud(battle)
+    print(f"PASS {len(paths)} battle/settlement prefabs: 640 design width; {count} sliced sprites; 16 HUD Buff rows")
 
 
 if __name__ == "__main__":

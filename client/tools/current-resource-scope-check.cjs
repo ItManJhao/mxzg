@@ -138,6 +138,9 @@ function approvedEffectsChanges() {
         'docs/validation/chapter-stage38-action-assets-20261119.json',
         'docs/validation/chapter-stage41-100-action-assets-20261119.json',
         'docs/validation/chapter-stage111-300-action-assets-20261120.json',
+        'docs/validation/gold-dungeon-stage3-action-assets-20261123.json',
+        'docs/validation/daily-dungeon-action-assets-20261123.json',
+        'docs/validation/tower-action-assets-20261123.json',
     ], '特效增量须逐批对应已核对的原图证据');
     assert.deepEqual([...delta.newAssets].sort(), ['legacy-stone.effect', 'legacy-stone.effect.meta',
         'legacy-spine-pma.effect', 'legacy-spine-pma.effect.meta'].sort(),
@@ -209,7 +212,7 @@ function approvedEffectsChanges() {
 
 const actualBundles = bundleEntries().map(entry => entry.name).sort();
 assert.deepEqual(effectsMove.bundleInventory.added.map(row => row.name), ['effects'], '本次仅新增effects素材包');
-const enabledModules = ['market', 'dungeon'];
+const enabledModules = ['market', 'dungeon', 'guild', 'vip', 'arena', 'tower'];
 for (const name of enabledModules) {
     const meta = read(resolveAssetPath(`bundles/module/${name}.meta`));
     assert.deepEqual(meta.userData, { isBundle: true, bundleName: name, priority: 2, bundleConfigID: 'remote-assets' });

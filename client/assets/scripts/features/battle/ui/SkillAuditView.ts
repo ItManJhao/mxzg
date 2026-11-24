@@ -109,8 +109,13 @@ export class SkillAuditView extends BaseView<SkillAuditOpenArgs> {
             void this.play();
         });
         const changed = () => this.paint();
-        this.search!.node.on(EditBox.EventType.TEXT_CHANGED, changed);
-        this.bindings.add(() => this.search?.node?.off(EditBox.EventType.TEXT_CHANGED, changed));
+        const searchNode = this.search!.node;
+        searchNode.on(EditBox.EventType.TEXT_CHANGED, changed);
+        this.bindings.add(() => {
+            if (searchNode.isValid) {
+                searchNode.off(EditBox.EventType.TEXT_CHANGED, changed);
+            }
+        });
         this.owner!.string = "只读技能演示 · 不修改玩家数据\n正在自动检测已有战报";
         this.selection!.string = "请选择英雄";
         this.message!.string = "选择英雄，再选择技能等级。\n有演示表示已检测到真实出手，不等同于已验收。";
@@ -146,12 +151,13 @@ export class SkillAuditView extends BaseView<SkillAuditOpenArgs> {
         }
     }
 
-    /** 将按钮监听登记到当前显示期；重开与关闭时均解除，避免同一点击触发多次。 */
+    /** 将按钮监听登记到当前显示期，只在原绑定节点存活时主动解除。 */
     private bind(button: Button, action: () => void): void {
-        button.node.on(Button.EventType.CLICK, action);
+        const node = button.node;
+        node.on(Button.EventType.CLICK, action);
         this.bindings.add(() => {
-            if (button.node.isValid) {
-                button.node.off(Button.EventType.CLICK, action);
+            if (node.isValid) {
+                node.off(Button.EventType.CLICK, action);
             }
         });
     }

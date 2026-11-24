@@ -5,7 +5,7 @@
  */
 import { _decorator, Button, Component, Label, Node, Sprite } from "cc";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
-import { RedDotManager } from "../../../framework/ui/RedDotManager";
+import { RedDotBinding } from "../../../framework/ui/RedDotBinding";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
@@ -36,12 +36,12 @@ export class MainChapterMilestoneCard extends Component {
     @property(Button) claimButton: Button | null = null;
     /** 显示进度、可领取或正在等待回包。 */
     @property(Label) claimLabel: Label | null = null;
-    /** 当前卡片奖励达到通关要求且未领取时显示的按钮红点。 */
-    @property(Node) claimDot: Node | null = null;
+    /** 达标待领取提醒的可选定位节点，保留原按钮相对位置。 */
+    @property(Node) claimDotAnchor: Node | null = null;
     /** 退页/停用时撤销的主线事件，不重复订阅。 */
     private stop: (() => void) | null = null;
-    /** 停用卡片时退出里程碑红点订阅，重新启用时立即同步。 */
-    private stopRedDot: (() => void) | null = null;
+    /** 当前卡片启用期间的动态红点，停用时释放。 */
+    private claimRedDot: RedDotBinding | null = null;
     /** 当前原配置目标；undefined表示未同步，null表示全部已领。 */
     private rewardId: number | null | undefined;
     /** 卡片当前点击流程引用，停用后旧续段不改新卡。 */
@@ -56,33 +56,33 @@ export class MainChapterMilestoneCard extends Component {
         return this.rewardId === null;
     }
 
-    /** 启用时登记交互、主线状态和里程碑红点，直接读取登录后已安装配置。 */
+    /** 启用时登记交互、主线状态和可选红点，直接读取登录后已安装配置。 */
     protected onEnable(): void {
         if (!this.rewardIcon || !this.heroHost || !this.progressFill || !this.rewardName
-                || !this.progressLabel || !this.claimButton || !this.claimLabel || !this.claimDot) {
+                || !this.progressLabel || !this.claimButton || !this.claimLabel) {
             throw new Error("主线常显里程碑卡静态绑定缺失");
         }
         this.claimButton.node.on(Button.EventType.CLICK, this.claim, this);
         this.stop = EventDispatcher.instance.on(MainChapterController.Updated, () => this.render());
-        const claimDot = this.claimDot;
-        this.stopRedDot = RedDotManager.instance.watch(GameRedDotKey.CHAPTER_MILESTONE, visible => {
-            claimDot.active = visible;
-        });
+        if (this.claimDotAnchor) {
+            this.claimRedDot = RedDotBinding.atAnchor(this.claimDotAnchor, GameRedDotKey.CHAPTER_MILESTONE);
+        }
         this.render();
     }
 
-    /** 停用时撤销红点和主线监听，领取结果仍由应用接收。 */
+    /** 停用时撤销红点、主线及仍存活的按钮监听，领取结果仍由应用接收。 */
     protected onDisable(): void {
         this.stop?.();
         this.stop = null;
-        this.stopRedDot?.();
-        this.stopRedDot = null;
+        this.claimRedDot?.dispose();
+        this.claimRedDot = null;
         this.intent = null;
         this.actor?.node.destroy();
         this.actor = null;
         this.iconId = 0;
-        if (this.claimButton?.isValid) {
-            this.claimButton.node.off(Button.EventType.CLICK, this.claim, this);
+        const claimNode = this.claimButton?.node;
+        if (claimNode?.isValid) {
+            claimNode.off(Button.EventType.CLICK, this.claim, this);
         }
     }
 

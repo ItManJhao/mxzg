@@ -2,10 +2,14 @@
  * 战报播放协调器：技能间顺序执行，同技能不同目标保持并行，Buff按真实实例维护因果顺序。
  * 耗尽移除等待对应命中，格挡等扩展由显示能力显式确认，死亡/重施不被旧回调覆盖；不改业务Model或数值。
  */
-import { BattleReplayStep, BattleReplayUtils } from "./utils/BattleReplayUtils";
+import { BattleReplayStep, BattleReplayUtils, type ParsedBattleReplay } from "./utils/BattleReplayUtils";
 
 /** 页面负责真实资源与动画完成通知；stop必须停止当前动画和释放本次挂点。 */
 export interface BattleReplayPresentation {
+    /** 正式战报在动作组起点等待本组素材，其他步骤同步放行。索引对应完整战报的步骤顺序。 */
+    beforeStep?(index: number): Promise<void> | undefined;
+    /** 开始播放单次技能前关联其中的动作与命中，只准备表现时序。 */
+    prepareSkill?(steps: readonly BattleReplayStep[]): void;
     /** 同组表现只驱动一次施法；targets保留每个实际目标，不合并伤害或Buff实例。 */
     play(step: BattleReplayStep, targets?: readonly BattleReplayStep[]): Promise<void>;
     /** 定位前恢复真实战报快照，不播放动画、不重新计算伤害。 */
@@ -31,11 +35,11 @@ export class BattleReplayPlayer {
     public constructor(private readonly presentation: BattleReplayPresentation) {}
 
     /**
-     * 先校验整包；定位时恢复前置状态，再按技能与实例依赖播放。
-     * 不同目标仍并行，耗尽移除等待对应命中。正常播完等待末次表现收尾，false 表示取消。
+     * 原始字节先校验整包；已由战场解析的报告直接使用同一组步骤。定位时恢复前置状态，再按技能与实例依赖播放。
+     * 宿主可在一组动作开始前等待素材；同一技能仍并行，耗尽移除等待对应命中。false 表示播放取消。
      */
-    public async play(bytes: Uint8Array, focus?: { skillId: number; level: number }): Promise<boolean> {
-        const steps = BattleReplayUtils.decode(bytes);
+    public async play(report: Uint8Array | ParsedBattleReplay, focus?: { skillId: number; level: number }): Promise<boolean> {
+        const steps = "steps" in report ? report.steps : BattleReplayUtils.decode(report);
         const start = focus ? steps.findIndex(step => step.kind === "skill.begin"
             && step.configId === focus.skillId && step.skillLevel === focus.level) : 0;
         if (start < 0) {
@@ -61,6 +65,13 @@ export class BattleReplayPlayer {
                     return false;
                 }
                 const step = steps[index];
+                const ready = this.presentation.beforeStep?.(index);
+                if (ready) {
+                    await ready;
+                    if (generation !== this.generation) {
+                        return false;
+                    }
+                }
                 if (this.requiresFollowingHit(step)) {
                     if (!this.hasRoundFollowingHit(steps, index)) {
                         throw new Error("状态耗尽缺少同阶段对应命中");
@@ -118,6 +129,7 @@ export class BattleReplayPlayer {
      * 依赖和Promise只活在本技能中，取消后不再启动迟到任务，也不另存一份战斗状态。
      */
     private async playSkill(effects: readonly BattleReplayStep[], generation: number): Promise<void> {
+        this.presentation.prepareSkill?.(effects);
         const groups: BattleReplayStep[][] = [];
         const deathRemovals: BattleReplayStep[] = [];
         const lastRevival = new Map<number, number>();

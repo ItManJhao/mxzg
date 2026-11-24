@@ -14,6 +14,9 @@ import { BagInfoView } from "../../features/bag/ui/BagInfoView";
 import { HeroListView } from "../../features/hero/ui/HeroListView";
 import { HeroInfoView } from "../../features/hero/ui/HeroInfoView";
 import { MainChapterView } from "../../features/battle/ui/MainChapterView";
+import { DungeonHallView } from "../../features/dungeon/ui/DungeonHallView";
+import { GuildView } from "../../features/guild/ui/GuildView";
+import { VipView } from "../../features/vip/ui/VipView";
 
 /** 页面只引用View类的唯一Prefab定义；预载不调用prepare。其他目标直接写资源或需要解析的配置。 */
 export type LoadingTarget = ResourceDescriptor | { bundle: string; path: string; type: ResourceKind }
@@ -31,8 +34,8 @@ export const LOADING_PLAN: {
     login: readonly LoadingTarget[];
     /** 登录成功后、主城出现前必须完成的目标。 */
     enterGame: readonly (LoadingTarget | LoadingAssetGroup)[];
-    /** 主城显示后逐项准备的常用目标，不阻塞进入主城。 */
-    background: readonly LoadingTarget[];
+    /** 主城显示后逐项准备，带 bottomTab 的入口使用主城底栏同一份解锁条件。 */
+    background: readonly (LoadingTarget | { page: ViewClass<unknown>; bottomTab: "dungeon" | "clan" })[];
 } = {
     login: [
         { config: GConfig.Language },
@@ -51,10 +54,14 @@ export const LOADING_PLAN: {
         { page: BagView },
     ],
     background: [
-        { page: BagInfoView },
         { page: HeroListView },
-        { page: HeroInfoView },
         { page: MainChapterView },
+        { page: DungeonHallView, bottomTab: "dungeon" },
+        { page: GuildView, bottomTab: "clan" },
+        { page: VipView },
+        // 两个常用详情排在底栏一级页面之后，共用现有的逐项让帧队列。
+        { page: BagInfoView },
+        { page: HeroInfoView },
         // 自定义资源示例：{ bundle: "spine", path: "shangcheng", type: "SkeletonData" }
         // 图片路径须指向SpriteFrame，例如：common包内ui/other_rare-4/spriteFrame。
     ],

@@ -12,6 +12,8 @@ function deferred<T>() {
   const promise = new Promise<T>(done => { resolve = done; });
   return { promise, resolve };
 }
+
+/** 验证资源作用域的共享与释放，以及预制体缓存的十分钟期限、容量和实例保护。 */
 async function main() {
   const pending = deferred<object>(); const asset = {};
   let loads = 0, pins = 0, releases = 0;
@@ -74,10 +76,14 @@ async function main() {
   PrefabLoader.retainPrefabForNode(planned, instance);
   assert.equal(planned.refCount, 3, "同节点重复保护不重复引用");
   assert.equal(PrefabLoader.collectPrefabCache(GameLog.monoNow() + PREFAB_IDLE_MS), 0, "活动/缓存实例仍持有时不得淘汰");
+  assert.equal(PREFAB_IDLE_MS, 600_000);
+  assert.equal(MAX_IDLE_PREFABS, 16);
+  const beforeLastInstanceClosed = GameLog.monoNow();
   instance.destroy();
   assert.equal(planned.refCount, 2);
   const preload = ResourceAssetsUtils.createAssetScope();
   await preload.load(ResourceAssetsUtils.describe("bootstrap", "prefabs/LoadingLayer", "Prefab"));
+  assert.equal(PrefabLoader.collectPrefabCache(beforeLastInstanceClosed + PREFAB_IDLE_MS - 1), 0);
   assert.equal(PrefabLoader.collectPrefabCache(GameLog.monoNow() + PREFAB_IDLE_MS), 1);
   assert.deepEqual(PrefabLoader.prefabCacheSnapshot(), { pending: 0, cached: 0 });
   assert.equal(planned.refCount, 1, "预加载仍通过共享池持有，闲置淘汰不得释放它");

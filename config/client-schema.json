@@ -375,6 +375,71 @@
         }
       }
     },
+    "VipMission": {
+      "path": "config/goddessmission",
+      "container": "rows",
+      "key": "idx",
+      "fields": {
+        "idx": {"type": "number", "required": true, "note": "契约任务编号"},
+        "vip_level": {"type": "number", "required": true, "note": "任务所属 VIP 档位"},
+        "task": {"type": "string", "required": true, "note": "旧版目标条件 JSON"},
+        "reward": {"type": "string", "required": true, "note": "旧版任务奖励 JSON"},
+        "lang": {"type": "number", "required": true, "note": "任务语言编号"},
+        "jump_info": {"type": "string", "required": true, "note": "旧版功能跳转配置 JSON"}
+      }
+    },
+    "VipLevel": {
+      "path": "config/goddessvip",
+      "container": "rows",
+      "key": "vip_level",
+      "fields": {
+        "vip_level": {"type": "number", "required": true, "note": "女神 VIP 等级"},
+        "unlock_goddess_10101": {"type": "number", "required": true, "note": "是否解锁 10101 女神"},
+        "unlock_goddess_10201": {"type": "number", "required": true, "note": "是否解锁 10201 女神"},
+        "unlock_goddess_10301": {"type": "number", "required": true, "note": "是否解锁 10301 女神"},
+        "unlock_goddess_10401": {"type": "number", "required": true, "note": "是否解锁 10401 女神"},
+        "unlock_goddess_10501": {"type": "number", "required": true, "note": "是否解锁 10501 女神"},
+        "battle_speed_2x": {"type": "number", "required": true, "note": "是否开启二倍速"},
+        "battle_speed_3x": {"type": "number", "required": true, "note": "是否开启三倍速"},
+        "charater_exp_bonus": {"type": "number", "required": true, "note": "挂机角色经验加成百分比"},
+        "gold_bonus": {"type": "number", "required": true, "note": "挂机金币加成百分比"},
+        "heroes_exp_bonus": {"type": "number", "required": true, "note": "挂机英雄经验加成百分比"},
+        "unlock_normal_wishpool_10": {"type": "number", "required": true, "note": "是否开启祈愿次数权益"},
+        "unlock_special_headpic": {"type": "number", "required": true, "note": "是否开启头像权益"},
+        "sacrifice_bonus": {"type": "number", "required": true, "note": "献祭加成百分比"},
+        "extra_market_times": {"type": "number", "required": true, "note": "市场付费刷新增加次数"},
+        "extra_bag_space": {"type": "number", "required": true, "note": "英雄名册增加格数"},
+        "extra_idle_time": {"type": "number", "required": true, "note": "挂机累计上限增加秒数"},
+        "extra_resource_times": {"type": "number", "required": true, "note": "资源副本额外次数"},
+        "buy_gold_bonus": {"type": "number", "required": true, "note": "购买金币额外加成百分比"},
+        "tavern": {"type": "number", "required": true, "note": "旧酒馆权益参数"},
+        "battle_skip": {"type": "number", "required": true, "note": "是否开启战斗跳过"},
+        "announce_lang": {"type": "number", "required": false, "note": "VIP 预告语言编号"}
+      }
+    },
+    "VipBenefitText": {
+      "path": "config/goddessviptext",
+      "container": "rows",
+      "key": "index",
+      "fields": {
+        "index": {"type": "number", "required": true, "note": "权益展示顺序编号"},
+        "key": {"type": "string", "required": true, "note": "匹配 VIP 配置列的名称"},
+        "type": {"type": "number", "required": true, "note": "布尔或数值展示类型"},
+        "text": {"type": "number", "required": true, "note": "权益语言编号"}
+      }
+    },
+    "VipUnlock": {
+      "path": "config/goddessunlock",
+      "container": "rows",
+      "key": "type",
+      "fields": {
+        "type": {"type": "number", "required": true, "note": "女神类型编号"},
+        "vip_level": {"type": "number", "required": true, "note": "解锁要求的 VIP 等级"},
+        "x": {"type": "number", "required": true, "note": "女神可视站位横坐标"},
+        "y": {"type": "number", "required": true, "note": "女神可视站位纵坐标"},
+        "skill": {"type": "number", "required": true, "note": "女神原始技能编号"}
+      }
+    },
     "RoleUpgradeFeature": {
       "path": "config/roleupgradefeature",
       "container": "rows",

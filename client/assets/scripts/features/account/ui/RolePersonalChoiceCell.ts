@@ -69,10 +69,11 @@ export class RolePersonalChoiceCell extends Component {
         this.updateHeadSelection();
     }
 
-    /** 回收格子时移除尺寸监听并停止选中动画。 */
+    /** 回收格子时停止选中动画，图标节点仍存在时移除尺寸监听。 */
     protected onDisable(): void {
-        if (this.titleArtworkBounds) {
-            this.icon!.node.off(Node.EventType.SIZE_CHANGED, this.fitTitleArtwork, this);
+        const icon = this.icon?.node;
+        if (this.titleArtworkBounds && icon?.isValid) {
+            icon.off(Node.EventType.SIZE_CHANGED, this.fitTitleArtwork, this);
         }
         this.stopHeadSelectionFade();
     }
@@ -137,12 +138,14 @@ export class RolePersonalChoiceCell extends Component {
         }
     }
 
-    /** 停止当前格的渐隐，使下次选中时从完整亮度开始。 */
+    /** 释放渐隐动画，选中标记仍存在时恢复完整亮度。 */
     private stopHeadSelectionFade(): void {
         if (this.headSelectionFade) {
             this.headSelectionFade.stop();
             this.headSelectionFade = null;
-            this.headSelectionOpacity!.opacity = 255;
+            if (this.headSelectionOpacity?.isValid) {
+                this.headSelectionOpacity.opacity = 255;
+            }
         }
     }
 

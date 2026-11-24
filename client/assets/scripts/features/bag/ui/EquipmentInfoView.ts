@@ -267,7 +267,7 @@ export class EquipmentInfoView extends BaseView<EquipmentInfoArgs> {
         this.removeButton!.interactable = ready;
     }
 
-    /** 解除本窗库存订阅与按钮，不清理其他页面或模块持有的监听。 */
+    /** 解除本窗库存订阅和仍有效的按钮监听。 */
     private releaseBindings(): void {
         EventDispatcher.instance.offTarget(this);
         if (this.closeButton?.node?.isValid) {
@@ -279,10 +279,10 @@ export class EquipmentInfoView extends BaseView<EquipmentInfoArgs> {
         if (this.equipButton?.node?.isValid) {
             this.equipButton.node.off(Button.EventType.CLICK, this.showEquipNotice, this);
         }
-        if (this.replaceButton?.node.isValid) {
+        if (this.replaceButton?.node?.isValid) {
             this.replaceButton.node.off(Button.EventType.CLICK, this.replace, this);
         }
-        if (this.removeButton?.node.isValid) {
+        if (this.removeButton?.node?.isValid) {
             this.removeButton.node.off(Button.EventType.CLICK, this.unequip, this);
         }
     }

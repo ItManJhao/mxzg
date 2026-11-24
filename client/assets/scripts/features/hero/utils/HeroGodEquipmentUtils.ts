@@ -4,6 +4,7 @@
  */
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
+import type { OwnedHero } from "../data/HeroSnapshotUtils";
 
 /** 实例随机词条，仅用于展示已真实生成的编号与等级。 */
 interface GodEquipmentModifier {
@@ -128,6 +129,21 @@ export class HeroGodEquipmentUtils {
     public static candidates(state: HeroGodEquipmentState | undefined, slot: number): readonly GodEquipmentItem[] {
         return state?.items.filter(item => item.heroId === undefined && item.slot === slot)
             .sort((left, right) => right.templateId - left.templateId || left.instanceId.localeCompare(right.instanceId)) ?? [];
+    }
+
+    /** 解锁后只提醒有同部位未穿实例的空槽，已穿槽位沿用旧版不提示换装的表现。 */
+    public static reminderSlots(state: HeroGodEquipmentState | undefined, hero: Pick<OwnedHero, "id" | "star">,
+        roleLevel: number): readonly number[] {
+        if (!state || this.gate(state, roleLevel, hero.star) !== null) {
+            return [];
+        }
+        const vacant = new Set(state.items.filter(item => item.heroId === undefined).map(item => item.slot));
+        for (const item of state.items) {
+            if (item.heroId === hero.id) {
+                vacant.delete(item.slot);
+            }
+        }
+        return Array.from(vacant);
     }
 
     /** 角色与世界等级限制探宝和穿戴，星级只限制穿戴。 */

@@ -102,6 +102,31 @@ export class HeroJewelUtils {
             .sort((a, b) => definitions.get(b.itemId)! - definitions.get(a.itemId)!);
     }
 
+    /** 从背包正余额中统计每个槽位可用宝石的最高星级，供同一名册的英雄共用。 */
+    public static bestAvailableStars(items: readonly BagItemData[], config = GameConfig.instance): ReadonlyMap<number, number> {
+        const stock = new Set(items.filter(item => item.quantity > 0).map(item => item.itemId));
+        const best = new Map<number, number>();
+        for (const jewel of this.table(config)?.jewels ?? []) {
+            if (stock.has(jewel.itemId) && jewel.star > (best.get(jewel.slot) ?? 0)) {
+                best.set(jewel.slot, jewel.star);
+            }
+        }
+        return best;
+    }
+
+    /** 返回已解锁且可填空或严格提升已镶星级的槽位，规则对应旧界面及一键镶嵌。 */
+    public static reminderSlots(heroStar: number, equipped: readonly HeroJewel[], available: ReadonlyMap<number, number>,
+        config = GameConfig.instance): readonly number[] {
+        return (this.table(config)?.slotStars ?? []).filter(rule => {
+            if (heroStar < rule.star) {
+                return false;
+            }
+            const current = equipped.find(item => item.slot === rule.slot);
+            const currentStar = current ? this.definition(current.templateId, config)?.star ?? 0 : 0;
+            return (available.get(rule.slot) ?? 0) > currentStar;
+        }).map(rule => rule.slot);
+    }
+
     /** 由目标现有权威配方反查下一档。攻击9星没有有效目标，生命1星的可合成目标仍生效。 */
     public static combineTarget(itemId: number, config = GameConfig.instance): HeroJewelDefinition | undefined {
         return this.table(config)?.jewels.find(row => row.recipe.some(material => material.itemId === itemId));

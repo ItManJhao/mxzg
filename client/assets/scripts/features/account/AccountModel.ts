@@ -38,6 +38,8 @@ export interface RoleProfile {
     readonly id: string;
     /** 个人空间展示的十进制角色编号，未同步时缺失。 */
     readonly publicId?: string;
+    /** 服务端确认的公会名称。空串表示未加入，缺失表示旧快照未同步。 */
+    readonly guildName?: string;
     /** 服务器确认的昵称。 */
     readonly nickname: string;
     /** false 表示服务器要求首次命名，未提供该字段时沿用原角色入口。 */

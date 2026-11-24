@@ -58,11 +58,14 @@ export class ChapterClearRewardCell extends Component {
         }
     }
 
-    /** 退出虚拟窗口时清货架监听和格子，下一次重新绑定再显示。 */
+    /** 退出虚拟窗口时解绑存活节点；销毁期间内层列表自行回收。 */
     protected onDisable(): void {
-        this.action?.node.off(Button.EventType.CLICK, this.perform, this);
+        const actionNode = this.action?.node;
+        if (actionNode?.isValid) {
+            actionNode.off(Button.EventType.CLICK, this.perform, this);
+        }
         this.disconnect();
-        if (this.rewards?.isValid && this.rewards.content?.isValid) {
+        if (this.rewards?.node?.isValid && this.rewards.content?.isValid) {
             this.rewards.list.clear();
         }
     }

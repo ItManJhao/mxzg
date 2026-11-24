@@ -1,4 +1,7 @@
-/** 按角色读取持久英雄；列表和详情共用映射，不生成展示用资产。 */
+/**
+ * 按角色读取持久英雄、图鉴和历史获得进度。
+ * 名册和详情共用属性映射，VIP 任务读取原发放记录和升星回执。
+ */
 package com.funsgamex.mxzg.hero;
 
 import java.util.ArrayList;
@@ -35,7 +38,7 @@ public class HeroRepository {
     }
     /** 与面板共用的服务端进化配置校验器。 */
     private final HeroEvolutionRules evolutionRules;
-    /** 容器注入的数据库入口，只读取指定角色数据。 */
+    /** 容器注入的数据库入口，按角色读写名册相关记录。 */
     private final JdbcTemplate jdbc;
     /** 快照共用的本角色持久装备读取入口。 */
     private final HeroEquipmentRepository equipment;
@@ -114,6 +117,21 @@ public class HeroRepository {
     public List<Illustration> illustrations(String roleId) {
         return jdbc.query("SELECT template_id,max_star FROM game_hero_illustration WHERE role_id=? ORDER BY template_id",
             (row, index) -> new Illustration(row.getInt("template_id"), row.getInt("max_star")), roleId);
+    }
+
+    /** 统计初始星级恰为五星的发放，以及升星恰好到五星的原回执。英雄离开名册后仍保留进度。 */
+    public int countFiveStarAcquisitions(String roleId) {
+        long count = jdbc.queryForObject("""
+                SELECT COALESCE((SELECT SUM(quantity) FROM game_hero_five_star_grant WHERE role_id=?), 0)
+                     + (SELECT COUNT(*) FROM game_hero_star_request WHERE role_id=? AND to_star=5)
+                """, Long.class, roleId, roleId);
+        return (int) Math.min(count, Integer.MAX_VALUE);
+    }
+
+    /** 同一发放事务中记录一个新建五星实例，将历史获得与名册消耗解耦。 */
+    void recordFiveStarGrant(String roleId, String instanceId) {
+        jdbc.update("INSERT INTO game_hero_five_star_grant(role_id,acquisition_key,quantity) VALUES (?,?,1)",
+                roleId, instanceId);
     }
 
     /** 调用者持有角色锁并已保存真实英雄实例，图鉴只提高该模板的历史最高星级。 */

@@ -43,7 +43,7 @@ export class HeroAttributesView extends BaseView<{ heroId: string }> {
     /** 标识当前数据与正式服全量加成的差距。 */
     @property(Label) coverageLabel: Label | null = null;
 
-    /** 上屏时订阅当前英雄和虚拟列表，关闭时同步清理。 */
+    /** 上屏时订阅英雄和列表节点，子节点销毁后关窗仍会清理英雄订阅。 */
     public onOpen(args: { heroId: string }): void {
         if (!args?.heroId || !this.panel || !this.closeButton || !this.list || !this.coverageLabel) {
             throw new Error("英雄属性窗缺少参数或预制体绑定");
@@ -53,8 +53,12 @@ export class HeroAttributesView extends BaseView<{ heroId: string }> {
         list.on(SuperContent.RENDER_ITEM, this.renderRow, this);
         close.on(Button.EventType.CLICK, this.close, this);
         this.ownListener(() => {
-            list.off(SuperContent.RENDER_ITEM, this.renderRow, this);
-            close.off(Button.EventType.CLICK, this.close, this);
+            if (list.isValid) {
+                list.off(SuperContent.RENDER_ITEM, this.renderRow, this);
+            }
+            if (close.isValid) {
+                close.off(Button.EventType.CLICK, this.close, this);
+            }
             EventDispatcher.instance.offTarget(this);
         });
         this.ownListener(ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitPanel()));

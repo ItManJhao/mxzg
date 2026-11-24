@@ -48,11 +48,11 @@ class GmTest {
  /** 英雄初始星级由配置决定；容量不足整笔拒绝。 */
  @Test void heroesAndCapacity(){var p=player();String token="Bearer "+p.session().accessToken();gm.grant(token,UUID.randomUUID().toString(),"hero",10102002,2);assertEquals(2,jdbc.queryForObject("SELECT COUNT(*) FROM game_hero WHERE role_id=? AND star=2 AND hero_level=1",Integer.class,p.role().id()));jdbc.update("UPDATE game_role SET hero_capacity=2 WHERE id=?",p.role().id());assertThrows(Exception.class,()->gm.grant(token,UUID.randomUUID().toString(),"hero",10101001,1));assertEquals(2,jdbc.queryForObject("SELECT COUNT(*) FROM game_hero WHERE role_id=?",Integer.class,p.role().id()));}
  /** 非法数量、未知配置、无效会话不创建回执或资产。 */
- @Test void rejectInvalid(){var p=player();String token="Bearer "+p.session().accessToken();for(int qty:new int[]{0,-1,10000})assertThrows(Exception.class,()->gm.grant(token,UUID.randomUUID().toString(),"item",900101,qty));assertThrows(Exception.class,()->gm.grant(token,UUID.randomUUID().toString(),"hero",1,1));assertThrows(Exception.class,()->gm.grant("Bearer invalid",UUID.randomUUID().toString(),"item",900101,1));assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM game_gm_grant WHERE role_id=?",Integer.class,p.role().id()));}
+ @Test void rejectInvalid(){var p=player();String token="Bearer "+p.session().accessToken();for(int qty:new int[]{0,-1,10000})assertThrows(Exception.class,()->gm.grant(token,UUID.randomUUID().toString(),"item",900102,qty));assertThrows(Exception.class,()->gm.grant(token,UUID.randomUUID().toString(),"hero",1,1));assertThrows(Exception.class,()->gm.grant("Bearer invalid",UUID.randomUUID().toString(),"item",900101,1));assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM game_gm_grant WHERE role_id=?",Integer.class,p.role().id()));}
 
- /** 百万级金币和钻石分别到账，重放只加一次，普通道具仍受数量保护。 */
+ /** 百万级金币、钻石和英雄经验分别到账，重放只加一次，其他普通道具仍受数量保护。 */
  @Test
- void largeWalletGrantsKeepOrdinaryItemLimit() {
+ void largeCurrencyAndHeroExperienceGrantsKeepOrdinaryItemLimit() {
   var player = player();
   String role = player.role().id();
   String token = "Bearer " + player.session().accessToken();
@@ -61,15 +61,19 @@ class GmTest {
   var grant = gm.grant(token, grantId, "item", 900001, 10_000_000);
   assertEquals(grant, gm.grant(token, grantId, "item", 900001, 10_000_000));
   gm.grant(token, UUID.randomUUID().toString(), "item", 900002, 2_000_000);
+  String experienceId = UUID.randomUUID().toString();
+  var experience = gm.grant(token, experienceId, "item", 900101, 10_000_000);
+  assertEquals(experience, gm.grant(token, experienceId, "item", 900101, 10_000_000));
   var rejected = assertThrows(ResponseStatusException.class,
-      () -> gm.grant(token, UUID.randomUUID().toString(), "item", 900101, 10_000));
+      () -> gm.grant(token, UUID.randomUUID().toString(), "item", 900102, 10_000));
   assertEquals("GM_INVALID", rejected.getReason());
   var after = snapshots.snapshot(token);
   assertEquals(before.role().gold() + 10_000_000, after.role().gold());
   assertEquals(before.role().diamonds() + 2_000_000, after.role().diamonds());
-  assertEquals(before.inventory(), after.inventory());
-  assertEquals(before.revision() + 2, after.revision());
-  assertEquals(2, count("game_gm_grant", role));
+  assertEquals(10_000_000L, after.inventory().stream().filter(item -> item.itemId() == 900101)
+      .findFirst().orElseThrow().quantity());
+  assertEquals(before.revision() + 3, after.revision());
+  assertEquals(3, count("game_gm_grant", role));
  }
 
  /** 设置角色等级统一同步且清零经验；不发升级赠钻，旧回执不能改写后来的等级。 */

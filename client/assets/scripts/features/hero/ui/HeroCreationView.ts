@@ -8,6 +8,7 @@ import { GConfig } from "../../../config/GConfig";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { ResManager } from "../../../framework/assets/ResManager";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { RedDotBinding } from "../../../framework/ui/RedDotBinding";
 import { SuperContent } from "../../../framework/ui/SuperContent";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { UILayer } from "../../../framework/ui/UILayer";
@@ -60,8 +61,8 @@ export class HeroCreationView extends BaseView<HeroCreationArgs> {
     @property(Button) skillButton: Button | null = null;
     /** 六个元素筛选，索引 0 为全部。 */
     @property([Button]) filters: Button[] = [];
-    /** 依次显示六个元素是否有材料准备齐全的配方。 */
-    @property([Node]) filterDots: Node[] = [];
+    /** 筛选提醒的布局锚点，与元素过滤按钮同序。 */
+    @property([Node]) filterReminderAnchors: Node[] = [];
     /** 虚拟英雄配方网格，复用名册头像格。 */
     @property(SuperScroll) list: SuperScroll | null = null;
     /** 当前选中配方英雄的名称。 */
@@ -86,8 +87,8 @@ export class HeroCreationView extends BaseView<HeroCreationArgs> {
     @property([Label]) materialNames: Label[] = [];
     /** 四个座位实际选择的数量。 */
     @property([Label]) materialCounts: Label[] = [];
-    /** 四个座位各自的合成备料提示。 */
-    @property([Node]) materialDots: Node[] = [];
+    /** 备料提醒的布局锚点，与四个材料按钮同序。 */
+    @property([Node]) materialReminderAnchors: Node[] = [];
     /** 固定道具成本，当前基础配方无固定费用时隐藏。 */
     @property(Label) costLabel: Label | null = null;
     /** 正式确认合成，按原版直接提交当前配方选择。 */
@@ -105,6 +106,10 @@ export class HeroCreationView extends BaseView<HeroCreationArgs> {
 
     /** 当前展示期已绑监听，重开同一实例时复用，关闭后为 false。 */
     private opened = false;
+    /** 筛选按钮的公共红点绑定，本次打开期间复用。 */
+    private filterReminders: (RedDotBinding | null)[] = [];
+    /** 材料座位的公共红点绑定，本次打开期间复用。 */
+    private materialReminders: (RedDotBinding | null)[] = [];
     /** 元素筛选，0 为全部，切换筛选后从首个配方开始。 */
     private element = 0;
     /** 当前显示的英雄模板，打开和选择配方后更新。 */
@@ -126,22 +131,21 @@ export class HeroCreationView extends BaseView<HeroCreationArgs> {
     /** 已收真实结果，等待匹配的名册快照再显示，完成后清空。 */
     private result: HeroStarReceipt | undefined;
 
-    /** 校验四个座位、筛选和列表结构；静态字段缺失时由 UIManager 报告。 */
+    /** 校验四个座位、筛选和列表所需的绑定，装饰红点可省略。 */
     public onBind(): void {
         if (!this.panel || !this.closeButton || !this.infoButton || !this.skillButton || !this.list
             || !this.heroName || !this.heroElement || !this.heroLevel || !this.heroPose || !this.heroFallback
             || !this.costLabel || !this.composeButton || !this.resultPanel || !this.resultText
-            || !this.resultButton || this.filters.length !== 6 || this.filterDots.length !== 6
+            || !this.resultButton || this.filters.length !== 6
             || this.resultIcons.length !== 2 || this.resultAttributes.length !== 4
             || this.heroStars.length !== 5 || this.attributes.length !== 4 || this.materialButtons.length !== 4
-            || this.materialIcons.length !== 4 || this.materialNames.length !== 4 || this.materialCounts.length !== 4
-            || this.materialDots.length !== 4) {
+            || this.materialIcons.length !== 4 || this.materialNames.length !== 4 || this.materialCounts.length !== 4) {
             throw new Error("创造法阵预制体绑定缺失");
         }
         this.list.validateBindings();
     }
 
-    /** 显示当前英雄配置，绑定共享快照、素材列表和法阵按钮。 */
+    /** 显示当前英雄配置，绑定快照、素材列表、法阵按钮和本次红点。 */
     public onOpen(args?: HeroCreationArgs): void {
         this.templateId = args?.templateId ?? 0;
         this.element = 0;
@@ -150,6 +154,8 @@ export class HeroCreationView extends BaseView<HeroCreationArgs> {
         this.resultPanel!.active = false;
         if (!this.opened) {
             this.opened = true;
+            this.filterReminders = this.filterReminderAnchors.map(anchor => anchor ? RedDotBinding.atAnchor(anchor) : null);
+            this.materialReminders = this.materialReminderAnchors.map(anchor => anchor ? RedDotBinding.atAnchor(anchor) : null);
             this.bindList();
             this.bindActions();
             this.ownListener(EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.refresh));
@@ -161,9 +167,13 @@ export class HeroCreationView extends BaseView<HeroCreationArgs> {
         this.list!.toStart();
     }
 
-    /** 窗口关闭时释放私有模型和本次草稿，由 BaseView 清除按钮及事件。 */
+    /** 窗口关闭时释放本次草稿和红点，由 BaseView 清除按钮及事件。 */
     public onClose(): void {
         this.opened = false;
+        this.filterReminders.forEach(binding => binding?.dispose());
+        this.materialReminders.forEach(binding => binding?.dispose());
+        this.filterReminders = [];
+        this.materialReminders = [];
         this.clearDraft();
         this.submittedId = undefined;
         this.beforeStats = undefined;
@@ -241,7 +251,7 @@ export class HeroCreationView extends BaseView<HeroCreationArgs> {
         }
     }
 
-    /** 从最新名册及道具库存更新待合成的配置网格、详情和结果反馈。 */
+    /** 从最新名册和库存刷新配方网格、筛选红点、详情及结果反馈。 */
     private refresh(): void {
         if (!this.opened) {
             return;
@@ -257,7 +267,7 @@ export class HeroCreationView extends BaseView<HeroCreationArgs> {
         this.filters.forEach((button, index) => {
             const scale = index === this.element ? 1 : .82;
             button.node.setScale(scale, scale, 1);
-            this.filterDots[index].active = this.options.some(row => row.ready && (index === 0 || row.face.elem === index));
+            this.filterReminders[index]?.setVisible(this.options.some(row => row.ready && (index === 0 || row.face.elem === index)));
         });
         this.list!.list.setData(visible);
         if (option) {
@@ -342,7 +352,7 @@ export class HeroCreationView extends BaseView<HeroCreationArgs> {
         this.costLabel!.node.active = this.costLabel!.string.length > 0;
     }
 
-    /** 更新预制体中一个完整的法阵格，已填满时压暗并消除红点。 */
+    /** 更新法阵格的内容，已填满时压暗并隐藏现有红点。 */
     private renderSlot(index: number, title: string, icon: string | null, count: number, need: number, available: boolean): void {
         const node = this.materialIcons[index];
         node.active = !!icon;
@@ -350,7 +360,7 @@ export class HeroCreationView extends BaseView<HeroCreationArgs> {
         node.getComponent(Sprite)!.grayscale = count === need;
         this.materialNames[index].string = title;
         this.materialCounts[index].string = `${count}/${need}`;
-        this.materialDots[index].active = available && count < need;
+        this.materialReminders[index]?.setVisible(available && count < need);
     }
 
     /** 读取本次仍选中的配方。 */

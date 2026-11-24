@@ -3,10 +3,13 @@
  * 场景向这里交付主城就绪状态。业务请求、恢复规则及页面交互由各模块实现。
  */
 import { AccountOperations } from "../../features/account/AccountOperations";
+import type { AccountModel } from "../../features/account/AccountModel";
 import { RoleController } from "../../features/account/RoleController";
+import { ArenaController } from "../../features/arena/ArenaController";
 import { BagController } from "../../features/bag/BagController";
 import { MainChapterSession } from "../../features/battle/MainChapterSession";
 import { DailyDungeonController } from "../../features/dungeon/DailyDungeonController";
+import { GuildController } from "../../features/guild/GuildController";
 import { FormationController } from "../../features/hero/FormationController";
 import { HeroArtifactController } from "../../features/hero/HeroArtifactController";
 import { HeroEquipmentController } from "../../features/hero/HeroEquipmentController";
@@ -18,9 +21,12 @@ import { HeroJewelController } from "../../features/hero/HeroJewelController";
 import { HeroGodEquipmentController } from "../../features/hero/HeroGodEquipmentController";
 import { MarketController } from "../../features/market/MarketController";
 import { RewardBinding } from "../../features/reward/RewardBinding";
+import { TowerController } from "../../features/tower/TowerController";
+import { VipController } from "../../features/vip/VipController";
 import { EventDispatcher } from "../../framework/EventDispatcher";
 import type { GameFrame } from "../../platform/GameProtocolCodecUtils";
 import { Protocol } from "../../platform/Protocol";
+import { ProtocolRouter } from "../../platform/ProtocolRouter";
 import { AccountComposition, type ApplicationAccount } from "./AccountComposition";
 import { AssetStateBinding } from "./AssetStateBinding";
 import { ApplicationRedDots } from "./ApplicationRedDots";
@@ -37,6 +43,8 @@ interface SessionModule {
 export class ApplicationModules {
     /** 当前应用的角色协议入口，主城首次命名窗口共用。 */
     public readonly role: RoleController;
+    /** 统一角色快照，用于识别已提交的公会身份变化。 */
+    private readonly accountModel: AccountModel;
     /** 负责整包校验、原子提交及角色变更时的模块清理。 */
     private readonly assets: AssetStateBinding;
     /** 本次应用唯一反馈队列，主城就绪后可以展示积压的通知。 */
@@ -49,7 +57,7 @@ export class ApplicationModules {
     private readonly unbind: () => void;
 
     /**
-     * 建立业务依赖，在账号恢复前绑定状态和通知。账号变化先关闭原角色页面，
+     * 建立模块依赖，在账号恢复前绑定统一状态和通知。账号变化先关闭原角色页面，
      * 然后由各模块清空本轮状态，再提交新角色的完整数据。
      */
     public constructor(
@@ -60,6 +68,7 @@ export class ApplicationModules {
         showConnectionNotice: (message: string) => void,
     ) {
         const {model, controller, socket} = account;
+        this.accountModel = model;
         const operations = new AccountOperations(controller, socket);
         this.rewards = new RewardBinding(controller);
         this.redDots = new ApplicationRedDots(model);
@@ -100,28 +109,44 @@ export class ApplicationModules {
         const dailyDungeon = DailyDungeonController.instance;
         dailyDungeon.configure(operations, this.rewards);
         dailyDungeon.initialize();
+        const tower = TowerController.instance;
+        tower.configure(operations, this.rewards);
+        tower.initialize();
+        const arena = ArenaController.instance;
+        arena.configure(operations, this.rewards);
+        arena.initialize();
+        const guild = GuildController.instance;
+        guild.configure(operations, model);
+        guild.initialize();
+        const vip = VipController.instance;
+        vip.configure(operations, this.rewards);
+        vip.initialize();
         const chapter = new MainChapterSession(controller, operations, this.rewards);
         this.sessions = [chapter, heroLevel, heroEquipment, heroStar, heroJewel, godEquipment,
-            heroArtifacts, market, dailyDungeon];
+            heroArtifacts, market, dailyDungeon, tower, arena, guild, vip];
         this.assets = new AssetStateBinding(model, bag, this.role,
             heroes, formation, () => {
                 clearRolePages();
                 this.rewards.resetSession();
                 this.redDots.resetSession();
-            }, chapter.controller, this.sessions);
+            }, chapter.controller, this.sessions, [vip]);
         this.unbind = AccountComposition.bind(account, frame => this.acceptState(frame),
-            frame => this.rewards.controller.receive(frame), showConnectionNotice);
+            frame => this.rewards.controller.receive(frame), showConnectionNotice,
+            frame => ProtocolRouter.instance.dispatch(guild, frame));
     }
 
     /** 整包提交后在同一通知批次更新红点，重连时重新校准独立状态。 */
     private acceptState(frame: GameFrame): void {
         const authenticated = frame.name === Protocol.SESSION_AUTHENTICATE;
+        const previousGuild = this.accountModel.snapshot.role?.guildName;
         const accepted = EventDispatcher.batchNotifications(() => {
             if (!this.assets.apply(frame)) {
                 return false;
             }
             if (authenticated) {
                 DailyDungeonController.instance.refreshVisible();
+                TowerController.instance.refreshVisible();
+                ArenaController.instance.refreshVisible();
             }
             this.redDots.refreshSnapshot(authenticated);
             return true;
@@ -130,6 +155,7 @@ export class ApplicationModules {
             return;
         }
         this.rewards.controller.observeRevision(this.assets.acceptedRevision);
+        GuildController.instance.refreshRoleState(authenticated, previousGuild !== this.accountModel.snapshot.role?.guildName);
         if (authenticated) {
             MarketController.instance.reloadVisible();
         }
@@ -139,6 +165,7 @@ export class ApplicationModules {
     public setHomeReady(ready: boolean): void {
         this.rewards.setReady(ready);
         this.redDots.setReady(ready);
+        GuildController.instance.setHomeReady(ready);
     }
 
     /** 撤销回调、停止操作，释放模块及其对协议和界面的订阅。 */

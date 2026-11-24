@@ -32,7 +32,7 @@ const BOTTOM_TABS: NavEntry[] = [
 /**
  * 主城底栏七格：主城、英雄、背包、战斗、副本、公会、VIP。
  * 「副本」的图文件名仍是 skin（lbl-skin / spr-skin），字是副本。
- * 最右一格是日服皇冠和 VIP 字，id 仍是 fetter，避免改点击和占位页。
+ * 最右一格使用日服皇冠和 VIP 字，旧入口标识 fetter 进入契约任务。
  * 战斗在正中，略大、略高。不使用日文文案。
  */
 export const CITY_BAR: NavEntry[] = [
@@ -41,7 +41,7 @@ export const CITY_BAR: NavEntry[] = [
     { id: "bag", title: "背包", gateId: "bag", blurb: "强化石、英雄碎片，以及可使用的金币袋和经验药水" },
     { id: "battle", title: "战斗", blurb: "主线战斗" },
     { id: "dungeon", title: "副本", gateId: "main_mission_hall", blurb: "副本大厅" },
-    { id: "clan", title: "公会", gateId: "main_clan", blurb: "公会占位。主线 Lv18 开启。公会系统还没接。" },
+    { id: "clan", title: "公会", gateId: "main_clan", blurb: "查找、创建与加入公会" },
     { id: "fetter", title: "VIP", gateId: "main_fetter", blurb: "VIP" },
 ];
 /** 主城入口与门槛的纯查询；实际页面栈仍由应用导航持有。 */

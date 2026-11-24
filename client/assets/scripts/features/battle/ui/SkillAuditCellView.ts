@@ -20,10 +20,11 @@ export class SkillAuditCellView extends Component {
     onDestroy(): void {
         this.clear();
     }
-    /** 解绑旧条目，避免一次点击选择多个配置。 */
+    /** 释放旧条目回调；按钮节点先销毁时由引擎清理节点监听。 */
     private clear(): void {
-        if (this.tap) {
-            this.button?.node?.off(Button.EventType.CLICK, this.tap);
+        const node = this.button?.node;
+        if (this.tap && node?.isValid) {
+            node.off(Button.EventType.CLICK, this.tap);
         }
         this.tap = null;
     }

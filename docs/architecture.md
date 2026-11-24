@@ -1,6 +1,6 @@
 # 项目架构与职责
 
-更新于 2026-11-23。开放范围见 [开发进度](development-progress.md)，字段与时序见 [通信契约](network-contract.md)。
+更新于 2026-11-24。开放范围见 [开发进度](development-progress.md)，字段与时序见 [通信契约](network-contract.md)。
 
 ## 不随技术重构改变的目标
 
@@ -74,7 +74,9 @@ BattleReplayPreview将type3/5/6/7/9的独立帧生命周期与角色动作完成
 
 BattleStatisticsUtils/BattleDetailLayer只读战报冻结的输出、实际承伤和治疗，不从移除或飘字重算，不改变旧护盾统计口径。独立DevelopmentPreview只在本机PREVIEW中复用LoadingPlan启动配置及原配置包，提前结束正常登录装配；固定只读PB资源服务不连接玩家库。只读结果也传原units，测试复用既有openStatistics方法，不另造统计页或奖励链。技能台每次从Creator扩展自动资源宿主扫描真实PB，按实际出手与当前解析匹配演示，已移除人工技能/等级白名单；它不生成战报或签署验收，独立测试输出被清理后会显示暂无演示。限定证据和时序/样本限制见[本批检查](validation/shield-depleted-review-20261117.json)、[本机记录](validation/shield-depleted-preview-20261117.json)；BRULE-002旧数值疑点仍保留。
 
-正式挑战先准备资源并隐藏模型、血条。ZDKS 按实际轨道到70%时衔接双方出场，原开始特效继续播完。出场各15帧，前9个完整帧结束后触发1秒模型渐入。开始特效、出场和渐入都结束后显示血条并播放战报。关闭沿战场作用域取消，挂机遇敌保留自己的进场流程。逐帧观察与适用范围见 [本机记录](validation/skill-audit-opening-navigation-review-20261117.json)。
+日常副本的关卡列表显示后，有可挑战的新关卡时预热共用战场、ZDKS 和双方出场帧。有效挑战发出时立即显示已有的副本背景，拒绝或断线后恢复列表，扫荡沿用原奖励流程。收到战报后，共用播放器启动 ZDKS，同时准备模型、出场帧和首组动作。模型与出场帧就绪且 ZDKS 到实际轨道的 70% 后，双方开始出场；第 9 帧触发 1 秒渐入，完成后显示血条。播放器复用同一份已解析战报，每组动作开始时预取下一组。当前组的技能帧、声音及状态素材全部就绪，再按原时序播放施法和命中。关闭战场会结束当前等待，挂机遇敌沿用单独的进场流程。[开场时序记录](validation/skill-audit-opening-navigation-review-20261117.json)
+
+正式战报沿用日服 `BattleReportBaseLayer` 的默认 1.5 倍速。按旧 `BattleController` 每次普攻或技能完成后留出 0.5 战斗秒。演员的归位等待配置时长和骨骼动作时长。直接伤害保留原 `buff.delay`，同次技能、同源、同目标可配对的近身、远程挂帧和目标投射还需等可见命中，群攻各目标独立显示。附身和场地装饰仍独立播放。Buff 图标与血条共用跟随站位的 HUD，绘制在双方模型上方。
 
 胜利页MainVictoryRewards采用Prefab顶锚列表：本轮将节点y从130改为260，content.y从130改为0，保持600×260视口与SuperScroll布局，避免首行越过列表顶端或标题区域，不另加运行时补偿。VS对阵栏和倍数栏保留LayerHud/MatchInfo、TopBar原路径，由Prefab新增ChapterInfoDock保存底部Widget（bottom=150、水平居中），原两个Chapter*Anchor移入其下，当前y为264.5/369.5。BattlePageUtils.alignChapterInfo在正式战场打开/resize的可见区回调内、等比缩放之后更新Widget目标为MainChapterBattleView，再将锚点worldPosition转回HUD局部坐标；不移动角色、血条或技能特效。本轮相关专项和最终严格类型通过，真实7项奖励已在实际挑战及原参数只读窗口核对：scroll.y=260、content.y=0、anchorY=1，列表底275高于确认按钮顶219。Creator的Nokia C2与iPhone14Pro机型选项下均实读VS底426.5、Panel顶418.5，间距8、完整显示；这是预览尺寸采样，不是两台真机。实际确认关闭返回主城后pages=1、residents/cached/opening/intents/modalActive均0，观察器清理、引擎恢复且视口override重置，过程无warn/error。运行观察与暂停静帧分开记录，不签收自然成长、发布包或其他机型；本轮不构建、不提交推送，见[显示调整记录](validation/battle-display-adjustment-review-20261117.json)。
 
@@ -152,11 +154,13 @@ Creator预览F9松键开关GmView，不再由角色资料设置打开。总菜�
 
 ## 游戏红点
 
-`RedDotManager` 按点分路径维护逻辑树，同一父级下有任一可操作项时显示红点。`GameRedDotKey` 集中定义当前入口与叶子。预制体保存挂点和原贴图，页面按路径订阅并在关闭时解绑，列表格复用时重绑当前条目。[红点管理](../client/assets/scripts/framework/ui/RedDotManager.ts)
+`RedDotManager` 按点分路径维护逻辑树，同一父级下有任一可操作项时显示红点。`GameRedDotKey` 集中定义当前入口与叶子。`RedDotBinding` 首次点亮时挂载公共 `RedDot.prefab`，各页面保留用于定位和尺寸的 `UITransform` 锚点，底栏使用公共默认布局。虚拟格换条目时重绑路径或显隐，滚出后隐藏并解除订阅，回到视口时复用同一节点。页面关闭或格子销毁时清理绑定和实例。[红点管理](../client/assets/scripts/framework/ui/RedDotManager.ts) · [公共红点绑定](../client/assets/scripts/framework/ui/RedDotBinding.ts)
 
-`ApplicationRedDots` 在完整快照提交和界面事件交付之间投影英雄及背包状态，主线奖励跟随主线状态通知。英雄详情显示自身升级及各装备槽，底栏和名册格只提示主线已上阵的英雄。背包只提示已达合成数量的精英碎片。通关和里程碑在条件满足时点亮，领取成功后随进度清除。召唤法阵汇总普通免费、高级免费和可兑换积分，时间读取公共服务器时钟。金币副本复用已有列表协议，从服务器确认解锁、挑战资格和剩余免费次数。
+`ApplicationRedDots` 在完整快照提交和界面事件交付之间投影英雄及背包状态，主线奖励跟随主线状态通知。英雄详情显示培养、升星和装备，以及宝石、神装可操作的页签提醒。升星按角色或世界门槛、准确星级、互斥素材和实际库存判断，升星与原培养、普通装备一起汇总到主线已上阵英雄的名册格和底栏。宝石读取解锁槽位和更高星级库存，神装读取门槛和可填空槽。背包只提示达到合成数量的精英碎片。创造法阵的入口和配方格按同一备料条件点亮。通关和里程碑在条件满足时点亮，领取成功后随进度清除。召唤法阵汇总普通免费、高级免费和可兑换积分，时间读取公共服务器时钟。五类日常副本依据各自的解锁、挑战资格与剩余免费次数点亮，再汇总到大厅卡片和底栏。
 
-红点不承担发奖、扣费或已读记录。角色变更先清空树，再由新快照和配置重算。日常副本独立数据在开放后首次读、重连、资格变化或跨日复核。市场、未接支付的祈愿和未开放玩法未设置提醒。
+公会底栏从已认证的公会回包汇总会长待审批的申请，大厅关闭时也能收到公会变化通知。VIP 底栏和任务格根据同一份服务端进度判断是否可领取。
+
+红点只表示当前可用的提示条件。角色变更先清空树，再由新快照和配置重算。日常副本独立数据在开放后首次读、重连、资格变化或跨日复核。缺少有效资格时，后台补读按 60 秒限频。市场、未接支付的祈愿和未开放玩法未设置提醒。
 
 ## Prefab 与通用列表
 
@@ -192,7 +196,11 @@ bundles/resources收纳audio/chapter/config/effects/font/icons/maps/spine；bund
 | features/bag | BagController 处理库存协议和精英碎片合成。BagModel 持有库存。BagInfoView、EquipmentInfoView、SpiritInfoView 按类型显示详情 | 普通道具使用、分解、图鉴及精灵养成待恢复 |
 | features/hero | HeroRosterController 收发召唤，HeroRosterModel 保存名册、阵容及佩戴状态。英雄详情按操作调用对应培养 Controller。FormationView 持有草稿，FormationController 收发保存 | 穿脱、升星、宝石、圣器与神装的具体入口见[英雄维护表](hero-lineup-contract.md#当前代码与开放范围) |
 | features/market | MarketController 查询货架、发送购买和刷新请求。MarketView 展示服务端价格、库存及刷新费用 | 主城普通市场与英雄模块的神装商店使用各自的货架和规则 |
-| features/dungeon | DungeonHallView 显示副本入口与产物。DailyDungeonController 查询资格，挑战和扫荡共用 `dungeon.gold.challenge`，由同一回包交付结算 | 当前可玩的关卡与解锁条件见[进度](development-progress.md) |
+| features/dungeon | DungeonHallView 显示副本入口与产物。五类日常副本复用同一关卡视图和消息结构。DailyDungeonController 按类型收发，DailyDungeonModel 按类型更新权威状态，挑战和扫荡由同一回包交付结算 | 当前可玩的关卡与解锁条件见[进度](development-progress.md) |
+| features/tower | TowerController 收发查询、挑战和里程碑领取，TowerModel 保存服务器返回的层数和领奖状态 | [幻境之塔协议](network-contract.md#幻境之塔) |
+| features/arena | ArenaController 收发对手刷新、挑战和购券，页面可回放历史战报 | [新手竞技场范围](network-contract.md#新手竞技场) |
+| features/vip | VipController 处理任务领奖，VipModel 从统一快照读取等级与任务进度，底栏红点读取同一状态 | [各档任务与进度来源](network-contract.md#vip-契约任务) |
+| features/guild | GuildController 收发目录和成员操作，GuildModel 接收权威公会状态。入会、退会和重新鉴权均由角色快照更新公会名 | 审批名单由成员事务按权限查询，`guild.updated` 提示相关页面更新。[公会维护](guild-membership.md) |
 | features/battle | MainChapterSession 装配主线，MainChapterController 处理挑战、结算、战报及各类领取。IdleClaimBinding 处理宝箱点击与确认。MainChapterModel 保存权威快照和本场结算进度 | 开发试战由 BattlePreviewController 发送和接收，只读播放 |
 | features/reward | RewardController 接收发奖推送并提交 RewardModel。RewardBinding 读取展示队列并打开通用弹窗或飘字 | 奖励回包供展示，角色资产由服务端快照提交 |
 | features/home、features/city | HomePageBinding 与 RemakeHomeView 绑定根页；city 提供地图、顶底栏与导航显示 | 地图中旧入口和资源不代表对应玩法已恢复 |

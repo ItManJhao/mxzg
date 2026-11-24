@@ -1,4 +1,7 @@
-/** 角色锁内持久化金币首关的历史通关、每日胜场和二进制回执，供服务端重试恢复。 */
+/**
+ * 按角色和副本类型持久化关卡进度及共享胜次。
+ * 副本服务在角色锁内写入，原回执用于重发和统计跨日累计参与次数。
+ */
 package com.funsgamex.mxzg.dungeon;
 
 import com.funsgamex.mxzg.protocol.GameProtocol;
@@ -14,8 +17,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class DailyDungeonRepository {
-    /** 角色的关卡进度；resetAtSeconds 是旧规则记录的上海零点 Unix 秒。 */
-    public record Progress(int wins, boolean cleared, long resetAtSeconds) {}
+    /** 同类型共享当日胜场；最高通关跨日保留，resetAtSeconds 为上海零点 Unix 秒。 */
+    public record Progress(int wins, int highestCleared, long resetAtSeconds) {}
 
     /** 冻结角色等级、女神 VIP、神职与战报攻方名称。 */
     public record Access(int level, int vip, int clergy, String nickname) {}
@@ -23,9 +26,10 @@ public class DailyDungeonRepository {
     /** 原命令及其结果，判断命令 ID 被误用或篡改。 */
     public record Recorded(boolean sweep, long maxDiamonds, DailyDungeonService.Challenge result) {}
 
-    /** 用现有摘要工具保存回执元信息，战报作为独立 Protobuf 二进制列。 */
+    /** 用摘要保护回执与独立的二进制战报，旧版金币回执没有类型字段。 */
     private record ReceiptData(String roleId, long assetRevision, String battleId, boolean won,
-                               DailyDungeonService.State state, RewardGrantResult actual, String replayHash) {}
+                               DailyDungeonService.State state, RewardGrantResult actual, String replayHash,
+                               String dungeonType) {}
 
     /** 共用角色锁事务的数据连接，呼叫方须先锁角色。 */
     private final JdbcTemplate jdbc;
@@ -44,28 +48,44 @@ public class DailyDungeonRepository {
                 (row, index) -> new Access(row.getInt(1), row.getInt(2), row.getInt(3), row.getString(4)), role);
     }
 
-    /** 返回原进度；尚未挑战的角色保持缺行。 */
-    public Progress progress(String role) {
-        return jdbc.query("SELECT wins,cleared,reset_at_seconds FROM game_daily_gold WHERE role_id=?", rows -> {
-            return rows.next() ? new Progress(rows.getInt(1), rows.getBoolean(2), rows.getLong(3)) : null;
-        }, role);
+    /** 返回指定类型的原进度，尚未挑战该类型时没有持久行。 */
+    public Progress progress(String role, DailyDungeonType type) {
+        return jdbc.query("""
+                SELECT wins,highest_cleared,reset_at_seconds FROM game_daily_dungeon
+                 WHERE role_id=? AND dungeon_type=?
+                """, rows -> {
+                    return rows.next() ? new Progress(rows.getInt(1), rows.getInt(2), rows.getLong(3)) : null;
+                }, role, type.key());
     }
 
-    /** 同角色锁内写入本场后的胜场与清扫资格。 */
-    public void saveProgress(String role, Progress before, Progress after) {
+    /** 同角色锁内写入本类型的共享胜场与最高通关。 */
+    public void saveProgress(String role, DailyDungeonType type, Progress before, Progress after) {
         if (before == null) {
-            jdbc.update("INSERT INTO game_daily_gold(role_id,wins,cleared,reset_at_seconds) VALUES (?,?,?,?)",
-                    role, after.wins(), after.cleared(), after.resetAtSeconds());
+            jdbc.update("""
+                    INSERT INTO game_daily_dungeon(role_id,dungeon_type,wins,highest_cleared,reset_at_seconds)
+                    VALUES (?,?,?,?,?)
+                    """, role, type.key(), after.wins(), after.highestCleared(), after.resetAtSeconds());
         } else if (!before.equals(after)) {
-            jdbc.update("UPDATE game_daily_gold SET wins=?,cleared=?,reset_at_seconds=? WHERE role_id=?",
-                    after.wins(), after.cleared(), after.resetAtSeconds(), role);
+            jdbc.update("""
+                    UPDATE game_daily_dungeon SET wins=?,highest_cleared=?,reset_at_seconds=?
+                     WHERE role_id=? AND dungeon_type=?
+                    """, after.wins(), after.highestCleared(), after.resetAtSeconds(), role, type.key());
         }
     }
 
-    /** 重发只读取已提交的原状态、实际奖励和冻结战报；发现损坏拒绝整包。 */
+    /** 按角色统计所有类型的已结算挑战及扫荡，包含失败战斗，超过任务进度上限时截断。 */
+    public int participationCount(String role) {
+        long count = jdbc.queryForObject("SELECT COUNT(*) FROM game_daily_dungeon_request WHERE role_id=?",
+                Long.class, role);
+        return (int) Math.min(count, Integer.MAX_VALUE);
+    }
+
+    /** 按角色及全类型唯一请求编号恢复冻结结果，验证类型、资产归属和战报摘要。 */
     public Recorded receipt(String role, String requestId) {
-        return jdbc.query("SELECT sweep,max_diamonds,report_bytes,receipt_json,receipt_hash "
-                + "FROM game_daily_gold_request WHERE role_id=? AND request_id=?", row -> {
+        return jdbc.query("""
+                SELECT sweep,max_diamonds,report_bytes,receipt_json,receipt_hash,dungeon_type
+                  FROM game_daily_dungeon_request WHERE role_id=? AND request_id=?
+                """, row -> {
                     if (!row.next()) {
                         return null;
                     }
@@ -73,24 +93,29 @@ public class DailyDungeonRepository {
                     long maxDiamonds = row.getLong(2);
                     var replayBytes = row.getBytes(3);
                     var saved = payloads.read(row.getString(4), row.getString(5), ReceiptData.class);
+                    var type = DailyDungeonType.fromKey(row.getString(6));
+                    var storedType = saved.dungeonType() == null
+                            ? DailyDungeonType.GOLD : DailyDungeonType.fromKey(saved.dungeonType());
                     if (!role.equals(saved.roleId()) || (saved.actual() != null && !role.equals(saved.actual().roleId()))
-                            || !Objects.equals(saved.replayHash(), replayHash(replayBytes))) {
-                        throw new IllegalStateException("金币副本历史结果归属或战报摘要无效");
+                            || type != storedType || !Objects.equals(saved.replayHash(), replayHash(replayBytes))) {
+                        throw new IllegalStateException("日常副本历史结果类型、归属或战报摘要无效");
                     }
-                    var receipt = new DailyDungeonService.Challenge(requestId, role, saved.assetRevision(),
+                    var receipt = new DailyDungeonService.Challenge(requestId, type, role, saved.assetRevision(),
                             saved.battleId(), saved.won(), sweep, replay(replayBytes), saved.state(), saved.actual());
                     return new Recorded(sweep, maxDiamonds, receipt);
                 }, role, requestId);
     }
 
-    /** 进度、资产和原命令只在同一事务成功后可见。 */
+    /** 同一资产事务冻结当前类型和原命令，不重复计算历史发奖。 */
     public void saveReceipt(long maxDiamonds, DailyDungeonService.Challenge result) {
         byte[] replayBytes = result.replay() == null ? null : result.replay().toByteArray();
         var payload = payloads.freeze(new ReceiptData(result.roleId(), result.assetRevision(), result.battleId(),
-                result.won(), result.state(), result.actual(), replayHash(replayBytes)));
-        jdbc.update("INSERT INTO game_daily_gold_request(role_id,request_id,sweep,max_diamonds,report_bytes,"
-                        + "receipt_json,receipt_hash) VALUES (?,?,?,?,?,?,?)",
-                result.roleId(), result.requestId(), result.sweep(), maxDiamonds, replayBytes, payload.json(), payload.hash());
+                result.won(), result.state(), result.actual(), replayHash(replayBytes), result.type().key()));
+        jdbc.update("""
+                INSERT INTO game_daily_dungeon_request(role_id,dungeon_type,request_id,sweep,max_diamonds,report_bytes,
+                    receipt_json,receipt_hash) VALUES (?,?,?,?,?,?,?,?)
+                """, result.roleId(), result.type().key(), result.requestId(), result.sweep(),
+                maxDiamonds, replayBytes, payload.json(), payload.hash());
     }
 
     /** 原二进制战报损坏时抛出持久化错误，扫荡没有回放内容。 */
@@ -101,7 +126,7 @@ public class DailyDungeonRepository {
         try {
             return GameProtocol.BattleReplay.parseFrom(bytes);
         } catch (InvalidProtocolBufferException failure) {
-            throw new IllegalStateException("金币副本原战报无法读取", failure);
+            throw new IllegalStateException("日常副本原战报无法读取", failure);
         }
     }
 
@@ -113,7 +138,7 @@ public class DailyDungeonRepository {
         try {
             return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
         } catch (NoSuchAlgorithmException failure) {
-            throw new IllegalStateException("缺少金币副本战报摘要算法", failure);
+            throw new IllegalStateException("缺少日常副本战报摘要算法", failure);
         }
     }
 }

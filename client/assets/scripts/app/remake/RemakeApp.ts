@@ -128,7 +128,7 @@ export class RemakeApp extends Component {
         });
     }
 
-    /** 账号状态变化后同步登录页或主城，同时管理启动层和后台资源的生命周期。 */
+    /** 账号状态变化后同步根页，主城揭开后按本轮角色等级启动底栏及常用详情的后台预载。 */
     private syncRootRoute(
         model: ApplicationAccount["model"],
         entry: LoginEntry,
@@ -174,9 +174,13 @@ export class RemakeApp extends Component {
             this.chrome?.setRatio(1);
             await this.reveal(epoch, route === "remake-home");
             if (epoch === this.routeEpoch) this.routePending = false;
-            if (route === "remake-home" && epoch === this.routeEpoch && this.alive) {
+            if (route === "remake-home" && epoch === this.routeEpoch && this.alive && model.snapshot.role) {
                 this.modules?.setHomeReady(true);
-                void this.resources.prepareBackground(() => this.afterPaint(), () => this.alive && epoch === this.routeEpoch && !model.snapshot.busy && !!model.snapshot.role).catch(error => {
+                void this.resources.prepareBackground(
+                    () => this.afterPaint(),
+                    () => this.alive && epoch === this.routeEpoch && !model.snapshot.busy && !!model.snapshot.role,
+                    model.snapshot.role.level,
+                ).catch(error => {
                     if (this.alive && epoch === this.routeEpoch) {
                         GameLog.shared.classified("APP", "warn", "RemakeApp", "后台资源准备失败，返回主城时可重试：" + String(error));
                     }

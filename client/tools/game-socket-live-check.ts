@@ -14,6 +14,8 @@ import {RoleController} from "../assets/scripts/features/account/RoleController"
 import {BagController} from "../assets/scripts/features/bag/BagController";
 import {BagModel} from "../assets/scripts/features/bag/BagModel";
 import { BagItemDataUtils } from "../assets/scripts/features/bag/data/BagItemDataUtils";
+import { BattleReplayUtils } from "../assets/scripts/features/battle/utils/BattleReplayUtils";
+import type { DailyDungeonState } from "../assets/scripts/features/dungeon/DailyDungeonModel";
 import {AssetStateBinding} from "../assets/scripts/app/remake/AssetStateBinding";
 import type { HeroLevelReceipt } from "../assets/scripts/features/hero/data/HeroLevelData";
 import type { RewardNotice } from "../assets/scripts/features/reward/data/RewardNoticeData";
@@ -540,15 +542,197 @@ async function checkDailyDungeon(client: ReturnType<typeof fixture>, account: st
     console.log("PASS real TS gold dungeon → isolated H2: replay, free and paid sweep, reward, reconnect and receipt idempotency");
 }
 
+/** 以旧请求通过首关，再连续挑战至第 3 关，验证真实战报、付费扫荡、到账和冷重登。 */
+async function checkGoldStageProgress(client: ReturnType<typeof fixture>, account: string): Promise<void> {
+    interface Receipt {
+        readonly state: DailyDungeonState;
+        readonly won: boolean;
+        readonly sweep: boolean;
+        readonly replay?: object;
+        readonly actual?: { readonly items: readonly { itemId: number; credited: number }[] };
+    }
+    const list = async () => (await client.operations.request(Protocol.DAILY_DUNGEON_LIST, {})).body as DailyDungeonState;
+    const challenge = async (requestId: string, sweep: boolean, maxDiamonds: number, stageId?: number) =>
+        (await client.operations.request(Protocol.DAILY_DUNGEON_CHALLENGE, {
+            requestId, sweep, maxDiamonds, ...(stageId === undefined ? {} : { stageId }),
+        })).body as Receipt;
+    const role = () => client.account.snapshot.role!;
+    const stones = () => client.model.quantity(900102);
+    assert(await client.service.login(account, "local-1"), client.account.snapshot.error);
+    const original = await list();
+    const before = { gold: role().gold, diamonds: role().diamonds, stones: stones() };
+    assert(original.stages?.length === 9);
+    const secondPreview = original.stages[1];
+    assert.equal(secondPreview.requiredPower, 30_000);
+    assert.equal(secondPreview.ribbon, 2);
+    assert.equal(secondPreview.unlocked, false);
+    assert.deepEqual(secondPreview.rewardPreview,
+        [{ itemId: 900001, quantity: 150_000 }, { itemId: 900102, quantity: 30 }]);
+    const thirdPreview = original.stages[2];
+    assert.equal(thirdPreview.requiredPower, 52_500);
+    assert.equal(thirdPreview.unlocked, false);
+    assert.deepEqual(thirdPreview.rewardPreview,
+        [{ itemId: 900001, quantity: 200_000 }, { itemId: 900102, quantity: 40 }]);
+    await assert.rejects(challenge(randomUUID(), false, 0, 10), { code: "DUNGEON_STAGE" });
+    await assert.rejects(challenge(randomUUID(), false, 0, 3), { code: "DUNGEON_PREVIOUS_STAGE" });
+    await assert.rejects(challenge(randomUUID(), false, 0, 2), { code: "DUNGEON_PREVIOUS_STAGE" });
+
+    const firstId = randomUUID();
+    const first = await challenge(firstId, false, 0);
+    assert.equal(first.won, true);
+    assert.equal(first.state.stageId, 1);
+    assert.equal(first.state.wins, 1);
+    assert.equal(first.state.stages?.[1].canChallenge, true);
+    await assert.rejects(challenge(firstId, false, 0, 2), { code: "DUNGEON_REQUEST_CONFLICT" });
+    await assert.rejects(challenge(randomUUID(), true, 0, 2), { code: "DUNGEON_SWEEP_LOCKED" });
+
+    const secondId = randomUUID();
+    const second = await challenge(secondId, false, 0, 2);
+    assert.equal(second.won, true);
+    assert.equal(second.state.stageId, 2);
+    assert.equal(second.state.wins, 2);
+    assert.equal(second.state.nextCostDiamonds, 50);
+    assert.equal(second.state.stages?.filter(stage => stage.cleared).length, 2);
+    assert(second.replay);
+    const parsed = BattleReplayUtils.parse(BattleReplayUtils.encodeVerified(second.replay));
+    assert.equal(parsed.units.filter(unit => unit.faction === 2).length, 6);
+    assert(parsed.units.filter(unit => unit.faction === 2).every(unit => unit.level === 20));
+    assert.deepEqual(second.actual?.items.map(item => ({ itemId: item.itemId, quantity: item.credited })),
+        secondPreview.rewardPreview);
+    await until(() => role().gold === before.gold + 250_000 && stones() === before.stones + 50);
+    assert.equal(role().diamonds, before.diamonds);
+
+    assert.equal(second.state.stages?.[2].canChallenge, true);
+    await assert.rejects(challenge(randomUUID(), true, 50, 3), { code: "DUNGEON_SWEEP_LOCKED" });
+    await assert.rejects(challenge(randomUUID(), false, 0, 3), { code: "DUNGEON_COST_CHANGED" });
+    const thirdId = randomUUID();
+    const third = await challenge(thirdId, false, 50, 3);
+    assert.equal(third.won, true);
+    assert.equal(third.state.stageId, 3);
+    assert.equal(third.state.wins, 3);
+    assert(third.replay);
+    const thirdGuards = BattleReplayUtils.parse(BattleReplayUtils.encodeVerified(third.replay)).units
+        .filter(unit => unit.faction === 2);
+    assert.deepEqual(thirdGuards.map(unit => unit.templateId),
+        [10404003, 10205007, 10305007, 10105007, 10505004, 10104004]);
+    assert(thirdGuards.every(unit => unit.level === 40));
+    assert.deepEqual(third.actual?.items.map(item => ({ itemId: item.itemId, quantity: item.credited })),
+        thirdPreview.rewardPreview);
+    await until(() => role().gold === before.gold + 450_000 && stones() === before.stones + 90
+        && role().diamonds === before.diamonds - 50);
+
+    const paidId = randomUUID();
+    const paid = await challenge(paidId, true, 50, 3);
+    assert.equal(paid.sweep, true);
+    assert.equal(paid.replay, undefined);
+    assert.equal(paid.state.wins, 4);
+    await until(() => role().gold === before.gold + 650_000 && stones() === before.stones + 130
+        && role().diamonds === before.diamonds - 100);
+    await assert.rejects(challenge(randomUUID(), true, 50, 1), { code: "DUNGEON_COUNT" });
+    const experience = (await client.operations.request(Protocol.EXPERIENCE_DUNGEON_LIST, {})).body as DailyDungeonState;
+    assert.equal(experience.wins, 0);
+
+    client.service.logout();
+    assert(await client.service.login(account, "local-1"), client.account.snapshot.error);
+    const restored = await list();
+    assert.deepEqual(restored.stages, paid.state.stages);
+    assert.equal(restored.wins, 4);
+    assert.deepEqual(await challenge(secondId, false, 0, 2), second);
+    assert.deepEqual(await challenge(thirdId, false, 50, 3), third);
+    assert.deepEqual(await challenge(paidId, true, 50, 3), paid);
+    assert.equal(role().gold, before.gold + 650_000);
+    assert.equal(role().diamonds, before.diamonds - 100);
+    assert.equal(stones(), before.stones + 130);
+    console.log("PASS real TS gold dungeon progression: three stage replays, shared quota, paid sweep and reconnect");
+}
+
+/** 使用两类真实协议核对经验副本首关、守军、经验到账、独立胜次和跨类型请求拒绝。 */
+async function checkExperienceDungeon(client: ReturnType<typeof fixture>, account: string): Promise<void> {
+    interface Receipt {
+        readonly requestId: string;
+        readonly state: DailyDungeonState;
+        readonly won: boolean;
+        readonly sweep: boolean;
+        readonly replay?: { readonly scenario: string };
+        readonly actual?: { readonly items: readonly { itemId: number; credited: number }[] };
+    }
+    const experienceList = async () =>
+        (await client.operations.request(Protocol.EXPERIENCE_DUNGEON_LIST, {})).body as DailyDungeonState;
+    const goldList = async () =>
+        (await client.operations.request(Protocol.DAILY_DUNGEON_LIST, {})).body as DailyDungeonState;
+    const challenge = async (requestId: string, sweep: boolean, maxDiamonds: number) =>
+        (await client.operations.request(Protocol.EXPERIENCE_DUNGEON_CHALLENGE, {
+            requestId, sweep, maxDiamonds, stageId: 1,
+        })).body as Receipt;
+    const role = () => client.account.snapshot.role!;
+    const heroExperience = () => client.model.quantity(900101);
+    assert(await client.service.login(account, "local-1"), client.account.snapshot.error);
+    const initial = await experienceList();
+    const gold = await goldList();
+    const before = { diamonds: role().diamonds, experience: heroExperience() };
+    assert.equal(gold.wins, 0);
+    assert.equal(initial.wins, 0);
+    assert.equal(initial.canChallenge, true);
+    assert.equal(initial.stages?.length, 9);
+    assert.equal(initial.stages[0].minimumLevel, 17);
+    assert.equal(initial.stages[0].requiredPower, 1);
+    assert.deepEqual(initial.rewardPreview, [{ itemId: 900101, quantity: 60_000 }]);
+    await assert.rejects(challenge(randomUUID(), true, 0), { code: "DUNGEON_SWEEP_LOCKED" });
+
+    const first = await challenge(randomUUID(), false, 0);
+    assert.equal(first.won, true);
+    assert.equal(first.state.wins, 1);
+    assert(first.replay);
+    assert.equal(first.replay.scenario, "dungeon:experience:1");
+    const report = BattleReplayUtils.parse(BattleReplayUtils.encodeVerified(first.replay));
+    assert.deepEqual(report.units.filter(unit => unit.faction === 2).map(unit => unit.templateId),
+        [10504002, 10305008, 10404002, 10102002, 10505005, 10503001]);
+    assert(report.units.filter(unit => unit.faction === 2).every(unit => unit.level === 5));
+    assert.deepEqual(first.actual?.items.map(({ itemId, credited }) => ({ itemId, quantity: credited })),
+        initial.rewardPreview);
+    await until(() => heroExperience() === before.experience + 60_000);
+    await assert.rejects(client.operations.request(Protocol.DAILY_DUNGEON_CHALLENGE, {
+        requestId: first.requestId, sweep: false, maxDiamonds: 0, stageId: 1,
+    }), { code: "DUNGEON_REQUEST_CONFLICT" });
+
+    const free = await challenge(randomUUID(), true, 0);
+    assert.equal(free.state.nextCostDiamonds, 50);
+    assert.equal(free.replay, undefined);
+    assert.equal(role().diamonds, before.diamonds);
+    const paid = await challenge(randomUUID(), true, 50);
+    assert.equal(paid.state.wins, 3);
+    await until(() => heroExperience() === before.experience + 180_000 && role().diamonds === before.diamonds - 50);
+    assert.deepEqual(await goldList(), gold);
+    await assert.rejects(challenge(randomUUID(), true, 50), { code: "DUNGEON_COUNT" });
+
+    client.service.logout();
+    assert(await client.service.login(account, "local-1"), client.account.snapshot.error);
+    assert.deepEqual(await experienceList(), paid.state);
+    assert.deepEqual(await challenge(first.requestId, false, 0), first);
+    assert.deepEqual(await challenge(paid.requestId, true, 50), paid);
+    assert.equal(heroExperience(), before.experience + 180_000);
+    assert.equal(role().diamonds, before.diamonds - 50);
+    assert.deepEqual(await goldList(), gold);
+    console.log("PASS real TS experience dungeon: roster, independent quota, experience awards, paid sweep and reconnect");
+}
+
 /** 登录首包、断线、顶号、换服、命名、赠礼、市场及首战成长均使用独立测试账号。 */
 async function main(){
- const [port,run,fixtureAccount]=process.argv.slice(2);assert(/^\d{4,5}$/.test(port)&&![18080,18081,3306].includes(Number(port)));assert(/^[0-9a-f-]{36}$/.test(run));assert(/^(?:market|gold_dungeon)_[0-9a-f]{8}$/.test(fixtureAccount));
+ const [port,run,fixtureAccount]=process.argv.slice(2);assert(/^\d{4,5}$/.test(port)&&![18080,18081,3306].includes(Number(port)));assert(/^[0-9a-f-]{36}$/.test(run));assert(/^(?:market|gold_dungeon(?:_progress)?|experience_dungeon)_[0-9a-f]{8}$/.test(fixtureAccount));
  // 测试身份探针不是游戏业务接口，只有测试上下文存在。
  const identity=await(await fetch("http://127.0.0.1:"+port+"/api/v1/socket-test-identity")).json() as any;
  assert.equal(identity.kind,"mxzg-owned-socket-it");assert.equal(identity.run,run);
- if (fixtureAccount.startsWith("gold_dungeon_")) {
+ if (fixtureAccount.startsWith("gold_dungeon_") || fixtureAccount.startsWith("experience_dungeon_")) {
   const client = fixture(port);
-  try { await checkDailyDungeon(client, fixtureAccount); }
+  try {
+   if (fixtureAccount.startsWith("experience_dungeon_")) {
+    await checkExperienceDungeon(client, fixtureAccount);
+   } else if (fixtureAccount.startsWith("gold_dungeon_progress_")) {
+    await checkGoldStageProgress(client, fixtureAccount);
+   } else {
+    await checkDailyDungeon(client, fixtureAccount);
+   }
+  }
   finally { client.stop(); }
   return;
  }

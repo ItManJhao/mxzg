@@ -4,18 +4,19 @@ import { AudioPreferences } from "../../../core/AudioPreferences";
 import { GameLog } from "../../../core/GameLog";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
-import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
+import { PrefabLoader } from "../../../framework/assets/PrefabLoader";
+import { ResourceAssetsUtils, type AssetScope } from "../../../framework/assets/ResourceAssetsUtils";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { UiKitUtils } from "../../../framework/ui/UiKitUtils";
 import { BattleReplayPlayer } from "../BattleReplayPlayer";
-import { BattleAttackUtils } from "../utils/BattleAttackUtils";
-import { BattleReplayUtils } from "../utils/BattleReplayUtils";
+import { BattleAttackUtils, type BattleAttackPlan } from "../utils/BattleAttackUtils";
+import { BattleReplayUtils, type BattleReplayStep } from "../utils/BattleReplayUtils";
 import { BattleInfoUtils } from "../utils/BattleInfoUtils";
 import { BattleNumberKind } from "../utils/BattleNumberUtils";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { BattleNumberPaintUtils } from "./BattleNumberPaintUtils";
-import { BattlePageUtils } from "./BattlePageUtils";
+import { BATTLE_PREFAB_PATH, BattlePageUtils } from "./BattlePageUtils";
 import { ChapterEndView } from "./ChapterEndView";
 import { MainChapterIdleDisplay } from "./MainChapterIdleDisplay";
 import { BattleBuffTipStyle, BattlePresentViewUtils } from "./BattlePresentViewUtils";
@@ -48,8 +49,35 @@ export interface SkillReplayFocus {
 }
 
 export class BattleReplayPreview {
-    /** 一次解析战场装配所需的战报数据，读取已安装配置并装载美术资源，开始骨骼到70%时出场、出场特效到60%时渐入模型，全部完成才显示HP并播放战报。
-     * 只读结果传原冻结名册；遇敌可借行军骨骼，关闭先归还再销毁，onIdleDeath不是奖励事件。
+    /** 玩法列表显示后即可预热共用战场和开场，动态资源由列表宿主持有至关页。 */
+    public static warmChallengeOpening(host: Node): void {
+        const assets = ResourceAssetsUtils.forNode(host);
+        void Promise.all([
+            PrefabLoader.loadPrefab(BATTLE_PREFAB_PATH),
+            assets.loadPath("spine/ZDKS", "SkeletonData"),
+            BattleReplayPreview.loadChallengeOpening(assets),
+        ]).catch(() => {
+            // 预热未成功时，正式播放器沿同一资源入口重试并处理失败。
+        });
+    }
+
+    /** 并行读取双方出场图，返回敌方、我方帧序列。开场骨骼可以独立播放。 */
+    private static async loadChallengeOpening(assets: AssetScope): Promise<readonly [SpriteFrame[], SpriteFrame[]]> {
+        return Promise.all([
+            BattleReplayPreview.loadAppearance(assets, "right"),
+            BattleReplayPreview.loadAppearance(assets, "left"),
+        ]);
+    }
+
+    /** 按原索引顺序取同一侧的 15 张出场帧，下载允许并行。 */
+    private static loadAppearance(assets: AssetScope, side: "left" | "right"): Promise<SpriteFrame[]> {
+        return Promise.all(Array.from({ length: 15 }, (_, index) =>
+            assets.loadPath(`battle/ui/battle-appear-${side}_${index}/spriteFrame`, "SpriteFrame")));
+    }
+
+    /** 挂入战场即播放正式开场，同时准备单位与首组动作。开场到70%且出场资源就绪后出场，出场到60%渐入模型。
+     * 后续动作按战报分组预取，整组素材就绪才开始本组计时；关闭或播放失败沿原宿主清理。
+     * 只读结果传原冻结名册，回合栏采用该玩法的上限；遇敌可借行军骨骼，关闭先归还再销毁。
      * @param formalTitle 其他正式玩法的己方称谓；传入时跳过主线专用信息栏布局及按钮。
      * @param onPlaybackError 活跃播放失败并清理后调用一次，由外层展示已确认的业务结果。 */
     public static async open(
@@ -68,20 +96,43 @@ export class BattleReplayPreview {
         formalTitle?: string,
         onPlaybackError?: (error: unknown) => void,
     ): Promise<() => void> {
-        const { steps, units, names } = BattleReplayUtils.parse(bytes);
+        const report = BattleReplayUtils.parse(bytes);
+        const { steps, units, names, maxRounds } = report;
         const config = GameConfig.instance.getFileByPath("config/buff");
-        const rows = (config as { rows: BuffRow[] }).rows;
+        const rows = new Map((config as { rows: BuffRow[] }).rows.map(row => [row.idx, row]));
         const elementPaths = ["hero/ui/hero-icon_elem-1/spriteFrame", "hero/ui/hero-icon_elem-2/spriteFrame",
             "hero/ui/hero-icon_elem-3/spriteFrame", "hero/ui/hero-icon_elem-4/spriteFrame",
             "hero/ui/hero-icon_elem-5/spriteFrame"];
         const selected = new Map<number, BuffRow>();
         // 一个旧Buff可展开多个并行表现，索引仅供本页资源缓存使用，不修改权威事件。
         const expanded = new Map<number, readonly BuffRow[]>();
-        for (const step of steps) {
+        const attackPlans = new Map<number, BattleAttackPlan>();
+        // 每个技能和相邻的技能外事件各有一个起点，群攻的所有命中共用同一道准备条件。
+        const actionGroups = new Map<number, Set<number>>();
+        const healthChanges = new Set<number>();
+        const namedStatuses = new Set<number>();
+        let groupStart = 0;
+        for (const [index, step] of steps.entries()) {
+            if (step.kind === "skill.begin") {
+                groupStart = index;
+            } else if (step.kind === "skill.end") {
+                groupStart = index + 1;
+            }
             if (step.kind === "presentation" || step.kind === "buff.upsert" || step.kind === "damage"
                 || step.kind === "recovery" || step.kind === "revival") {
-                const row = rows.find(row => row.idx === step.configId);
+                const row = rows.get(step.configId);
                 if (!row) throw new Error("缺少战斗表现配置：" + step.configId);
+                let group = actionGroups.get(groupStart);
+                if (!group) {
+                    group = new Set();
+                    actionGroups.set(groupStart, group);
+                }
+                if (step.kind === "damage" || step.kind === "recovery" || step.kind === "revival") {
+                    healthChanges.add(row.idx);
+                }
+                if (step.kind === "buff.upsert" && row.buff_name_lang > 0 && !idleEncounter) {
+                    namedStatuses.add(row.idx);
+                }
                 if (step.kind === "damage" && row.type === 100) BattleAttackUtils.damageSounds(row);
                 if (step.kind === "revival" && row.type !== 154) {
                     throw new Error("战报复活表现与旧技能类型不符：" + step.configId);
@@ -89,14 +140,18 @@ export class BattleReplayPreview {
                 if (step.kind === "presentation") {
                     const actions = BattleAttackUtils.legacyActions(row);
                     for (const action of actions) {
-                        BattleAttackUtils.plan(action);
+                        if (!attackPlans.has(action.idx)) {
+                            attackPlans.set(action.idx, BattleAttackUtils.plan(action));
+                        }
                         selected.set(action.idx, action);
+                        group.add(action.idx);
                     }
                     if (actions[0].idx !== row.idx) {
                         expanded.set(row.idx, actions);
                     }
                 } else {
                     selected.set(row.idx, row);
+                    group.add(row.idx);
                 }
             }
         }
@@ -165,13 +220,13 @@ export class BattleReplayPreview {
         // 借用的我方骨骼在所有退出路径先归还，不能随临时战场销毁。
         const returnActors: (() => void)[] = [];
         const slots = new Map<number, Node>();
-        /** 当前出场单位的头顶血条，随英雄槽移动；页面关闭时随预制体销毁。 */
+        /** 当前出场单位的血条和 Buff 图标行，随英雄槽移动，关场时随预制体销毁。 */
         const hpRows = new Map<number, Node>();
         // 挂机挂点和模型比例独立保存在Prefab；正式八槽及技能台保持各自布局。
         const idleLayout = shell.root.getChildByName("IdleLayout")!;
         const heroScale = idleEncounter ? idleLayout.getChildByName("ModelScale")!.scale.x : 0.48;
         const hpOffset = idleEncounter ? idleLayout.getChildByName("HpOffset")!.position.y : 120;
-        /** 血条保留HUD层，每帧跟随槽世界坐标，保证所有骨骼都绘制在血条下方。 */
+        /** 血条和 Buff 共用 HUD 锚点，每帧跟随槽世界坐标，绘制在全场骨骼之上。 */
         const syncHpRows = () => {
             for (const [id, row] of hpRows) {
                 const slot = slots.get(id);
@@ -291,6 +346,12 @@ export class BattleReplayPreview {
             waits.add(finish);
             tween(shell.root).delay(seconds / playbackScale).call(finish).start();
         });
+        /** 位移完成后才进入动作或收尾。关场与其他表现一样释放等待。 */
+        const move = (slot: Node, position: Vec3, seconds: number) => new Promise<void>(resolve => {
+            const finish = () => { waits.delete(finish); resolve(); };
+            waits.add(finish);
+            tween(slot).to(seconds / playbackScale, { position }).call(finish).start();
+        });
         /** 只更新预制体血条，实际扣血已由整包校验确认。 */
         const hp = (id: number, value: number) => {
             const label = hpRows.get(id)?.getChildByName("Label");
@@ -305,7 +366,7 @@ export class BattleReplayPreview {
         };
         /** 按完整实例维护状态；同配置共用一格并显示层数，循环装饰按类型共享，shader沿旧增减顺序选取。 */
         const paintBuffs = (id: number, change?: { kind: "upsert" | "remove"; type: number }) => {
-            const row = slots.get(id)!.getChildByPath("HeadAnchor/BuffRow");
+            const row = hpRows.get(id)?.getChildByName("BuffRow");
             if (!row) throw new Error("战斗Buff挂点缺失");
             const values = Array.from(activeBuffs.get(id)!.values());
             const counts = new Map<number, number>();
@@ -390,8 +451,8 @@ export class BattleReplayPreview {
                         countLabel = countNode.addComponent(Label);
                         countLabel.horizontalAlign = 1;
                         countLabel.verticalAlign = 1;
-                        countLabel.fontSize = 14;
-                        countLabel.lineHeight = 16;
+                        countLabel.fontSize = 16;
+                        countLabel.lineHeight = 18;
                         countLabel.enableOutline = true;
                         countLabel.outlineWidth = 2;
                     }
@@ -401,10 +462,9 @@ export class BattleReplayPreview {
         };
         const assets = ResourceAssetsUtils.forNode(shell.root);
         try {
-            shell.present.numberFonts = await BattleNumberPaintUtils.preload(shell.root);
-            /** 只为有真实具名状态的普通战报加载状态飘字资源。 */
             let buffTipStyle: BattleBuffTipStyle | undefined;
-            if (!idleEncounter && steps.some(step => step.kind === "buff.upsert" && selected.get(step.configId)!.buff_name_lang > 0)) {
+            /** 首组具名状态出现前准备旧飘字底图、字体和显示时长。 */
+            const loadBuffTip = async (): Promise<void> => {
                 const system = GameConfig.instance.getFileByPath("config/system") as
                     { rows: readonly { key: string; value: number }[] };
                 const [background, font] = await Promise.all([
@@ -412,10 +472,11 @@ export class BattleReplayPreview {
                     assets.loadPath("font/CloudYuanCuGBK", "TTFFont"),
                 ]);
                 buffTipStyle = { background, font, seconds: system.rows.find(row => row.key === "hero_buff_tip_last")?.value ?? 1 };
-            }
-            for (const [type, path] of [[1004, "effects/legacy-frozen"], [1006, "effects/legacy-stone"]] as const) {
-                if (!Array.from(selected.values()).some(row => row.type === type)) continue;
+            };
+            /** 冰冻和石化只为本场需要的状态准备材质，其他任务失败后不再创建。 */
+            const loadControlMaterial = async ([type, path]: readonly [number, string]) => {
                 const effect = await assets.loadPath(path, "EffectAsset");
+                if (stopped || isCancelled() || !shell.root.isValid) return;
                 const material = new Material();
                 material.initialize({ effectAsset: effect });
                 controlMaterials.set(type, material);
@@ -423,29 +484,22 @@ export class BattleReplayPreview {
                     && !units.every(unit => unit.templateId === 10205023)) {
                     UiKitUtils.setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, "独立冰冻验收");
                 }
-            }
-            for (const type of BattleAttackUtils.roundEffectTypes) {
-                if (idleEncounter && type === 1008) continue;
-                if (!Array.from(selected.values()).some(row => row.type === type)) continue;
-                roundFrames.set(type, await Promise.all(BattleAttackUtils.roundEffect(type).paths.map(path =>
-                    assets.loadPath(path, "SpriteFrame"))));
-            }
-            for (const row of selected.values()) {
+            };
+            /** 同一动作的帧、声音互不依赖，资源池合并其他动作重复引用的路径。 */
+            const loadActionAssets = async (row: BuffRow) => {
                 if (BattleAttackUtils.isActionType(row.type) || row.type === 100) {
-                    const names = row.type === 100 ? BattleAttackUtils.damageSounds(row) : BattleAttackUtils.plan(row).sounds;
-                    if (row.type !== 100) {
-                        const effect = BattleAttackUtils.plan(row).effect;
-                        if (effect) frames.set(row.idx, await Promise.all(effect.paths.map(path =>
-                            assets.loadPath(path, "SpriteFrame"))));
-                    }
-                    for (const name of names) {
-                        sounds.set(name, await assets.loadPath("audio/" + name, "AudioClip"));
-                    }
+                    const plan = row.type === 100 ? null : attackPlans.get(row.idx) ?? BattleAttackUtils.plan(row);
+                    const actionSounds = plan?.sounds ?? BattleAttackUtils.damageSounds(row);
+                    const effectFrames = plan?.effect?.paths.map(path => assets.loadPath(path, "SpriteFrame"));
+                    await Promise.all([
+                        effectFrames && Promise.all(effectFrames).then(sequence => { frames.set(row.idx, sequence); }),
+                        ...actionSounds.map(async name => { sounds.set(name, await assets.loadPath("audio/" + name, "AudioClip")); }),
+                    ]);
                 } else if (row.buff_icon) {
                     icons.set(row.idx, await assets.loadPath(
                         "hero/ui/skill-icon_" + row.buff_icon + "/spriteFrame", "SpriteFrame"));
                 }
-            }
+            };
             for (const side of ["ally", "enemy"] as const) {
                 for (let index = 0; index < 8; index++) {
                     shell.slot(side, index).active = false;
@@ -453,14 +507,16 @@ export class BattleReplayPreview {
                     if (label?.parent) label.parent.active = false;
                 }
             }
-            for (const unit of units) {
+            /** 同时装配各单位的元素图与骨骼；槽位和原点在异步开始前登记供取消清理。 */
+            const loadUnit = async (unit: typeof units[number]): Promise<void> => {
                 if (isCancelled()) throw new Error("战场打开已取消");
                 const side = unit.faction === 1 ? "ally" : "enemy";
                 const id = unit.unitId;
                 const index = unit.position - 1;
-                shell.slot(side, index).active = !(idleEncounter && unit.faction === 2);
-                shell.hpLabel(side, index)!.parent!.active = !formalOpening && !(idleEncounter && unit.faction === 2);
                 const slot = shell.slot(side, index);
+                const hpRow = shell.hpLabel(side, index)!.parent!;
+                slot.active = !(idleEncounter && unit.faction === 2);
+                hpRow.active = !formalOpening && !(idleEncounter && unit.faction === 2);
                 if (idleEncounter && unit.faction === 2) {
                     const order = units.filter(value => value.faction === 2).indexOf(unit) + 1;
                     slot.setPosition(idleLayout.getChildByName("Enemy" + order)!.position);
@@ -471,11 +527,7 @@ export class BattleReplayPreview {
                 if (typeof elem !== "number" || !Number.isInteger(elem) || elem < 1 || elem > 5) {
                     throw new Error("战斗英雄元素配置缺失");
                 }
-                const element = shell.hpLabel(side, index)!.parent!.getChildByName("ElementIcon")!;
-                element.getComponent(Sprite)!.spriteFrame = await assets.loadPath(
-                    elementPaths[elem - 1], "SpriteFrame");
-                element.active = true;
-                const hpRow = element.parent!;
+                const element = hpRow.getChildByName("ElementIcon")!;
                 hpRows.set(id, hpRow);
                 // 血条不再移入人物槽，保留预制体HUD层，避免被本方或其他骨骼遮挡。
                 slots.set(id, slot);
@@ -484,45 +536,120 @@ export class BattleReplayPreview {
                     const node = slot.getChildByName(name);
                     if (node) node.active = false;
                 }
-                if (idleEncounter && unit.faction === 1 && retainedIdle) {
-                    // 等敌方骨骼和出场帧全部就绪再一次性移交，资源加载期间行军英雄保持可见。
-                    hp(id, unit.initialHp);
-                    paintBuffs(id);
-                    continue;
-                }
-                const actor = await new Promise<SpineActor>((resolve, reject) => {
-                    const actor = BattleSpineService.instance.mountBattleSpine(slot, String(unit.templateId), () => reject(new Error("英雄骨骼加载失败")),
-                        { face: unit.faction === 1 ? 1 : -1, scale: heroScale, seatY: 0, onReady: () => resolve(actor) });
+                // 等敌方骨骼和出场帧全部就绪再一次性移交，资源加载期间行军英雄保持可见。
+                const borrowed = idleEncounter && unit.faction === 1 && !!retainedIdle;
+                const actorReady = borrowed ? null : new Promise<SpineActor>((resolve, reject) => {
+                    const actor = BattleSpineService.instance.mountBattleSpine(slot, String(unit.templateId),
+                        () => reject(new Error("英雄骨骼加载失败")), {
+                            face: unit.faction === 1 ? 1 : -1,
+                            scale: heroScale,
+                            seatY: 0,
+                            onReady: () => resolve(actor),
+                        });
                     // 在骨骼资源完成前就隐藏模型，揭开战场或慢载出场图片时都不能先闪出角色。
                     if (formalOpening || (idleEncounter && unit.faction === 2)) {
                         (actor.node.getComponent(UIOpacity) || actor.node.addComponent(UIOpacity)).opacity = 0;
                     }
                 });
-                actors.set(id, actor);
-                if (idleEncounter && unit.faction === 2) {
-                    (actor.node.getComponent(UIOpacity) || actor.node.addComponent(UIOpacity)).opacity = 0;
-                    slot.active = true;
+                const [elementFrame, actor] = await Promise.all([
+                    assets.loadPath(elementPaths[elem - 1], "SpriteFrame"), actorReady,
+                ]);
+                if (stopped || isCancelled() || !shell.root.isValid) return;
+                element.getComponent(Sprite)!.spriteFrame = elementFrame;
+                element.active = true;
+                if (actor) {
+                    actors.set(id, actor);
+                    if (idleEncounter && unit.faction === 2) slot.active = true;
                 }
-                const head = slot.getChildByName("HeadAnchor");
-                if (head) head.setSiblingIndex(slot.children.length - 1);
                 hp(id, unit.initialHp);
                 if (formalOpening || (idleEncounter && unit.faction === 2)) hpRow.active = false;
                 paintBuffs(id);
-            }
-            syncHpRows();
-            /** 两侧出场帧先全部就绪再展示战场；不让异步下载发生在模型/血条已经可见之后。 */
-            const loadEntry = (side: "left" | "right") => Promise.all(Array.from({ length: 15 }, (_, index) =>
-                assets.loadPath("battle/ui/battle-appear-" + side + "_" + index + "/spriteFrame", "SpriteFrame")));
-            const [rightFrames, leftFrames] = idleEncounter || formalOpening
-                ? await Promise.all([loadEntry("right"), formalOpening ? loadEntry("left") : Promise.resolve([])])
-                : [[], []];
-            if (closed || isCancelled() || !shell.root.isValid) throw new Error("战斗进场已取消");
+            };
+            /** 根据玩法选择双方或仅敌方的出场图；普通只读战报直接显示模型。 */
+            const loadEntry = async (): Promise<readonly [SpriteFrame[], SpriteFrame[]]> => {
+                if (formalOpening) return BattleReplayPreview.loadChallengeOpening(assets);
+                return [idleEncounter ? await BattleReplayPreview.loadAppearance(assets, "right") : [], []];
+            };
+            let numberFonts: Promise<void> | undefined;
+            let buffTip: Promise<void> | undefined;
+            const statusResources = new Map<number, Promise<void>>();
+            const actionResources = new Map<number, Promise<void>>();
+            /** 同类型的持续特效和材质共用一份；加载器只在该状态首次进入预取范围时启动。 */
+            const loadStatusResources = async (type: number): Promise<void> => {
+                if (type === 1004 || type === 1006) {
+                    await loadControlMaterial([type, type === 1004 ? "effects/legacy-frozen" : "effects/legacy-stone"]);
+                }
+                const roundType = BattleAttackUtils.roundEffectTypes.find(value => value === type);
+                if (roundType !== undefined && !(idleEncounter && roundType === 1008)) {
+                    const sequence = await Promise.all(BattleAttackUtils.roundEffect(roundType).paths
+                        .map(path => assets.loadPath(path, "SpriteFrame")));
+                    roundFrames.set(type, sequence);
+                }
+            };
+            /** 读取一行实际动作的全部素材；共享飘字与持续效果在同一场中只装配一次。 */
+            const prepareAction = (id: number): Promise<void> => {
+                let ready = actionResources.get(id);
+                if (!ready) {
+                    const row = selected.get(id)!;
+                    const tasks = [loadActionAssets(row)];
+                    if (healthChanges.has(id)) {
+                        numberFonts ??= BattleNumberPaintUtils.preload(shell.root).then(fonts => {
+                            if (!stopped) {
+                                shell.present.numberFonts = fonts;
+                            }
+                        });
+                        tasks.push(numberFonts);
+                    }
+                    if (namedStatuses.has(id)) {
+                        buffTip ??= loadBuffTip();
+                        tasks.push(buffTip);
+                    }
+                    if (row.type === 1004 || row.type === 1006
+                        || BattleAttackUtils.roundEffectTypes.some(type => type === row.type)) {
+                        let status = statusResources.get(row.type);
+                        if (!status) {
+                            status = loadStatusResources(row.type);
+                            statusResources.set(row.type, status);
+                        }
+                        tasks.push(status);
+                    }
+                    ready = Promise.all(tasks).then(() => {});
+                    actionResources.set(id, ready);
+                }
+                return ready;
+            };
+            const groups = Array.from(actionGroups);
+            let groupIndex = 0;
+            let upcoming: Promise<void> | undefined;
+            /** 正式战斗只提前准备下一组。当组读取失败时，播放到对应边界才报告错误。 */
+            const prefetchGroup = (): void => {
+                const group = groups[groupIndex];
+                if (group && !stopped && !isCancelled()) {
+                    upcoming = Promise.all(Array.from(group[1], prepareAction)).then(() => {});
+                    void upcoming.catch(() => {});
+                }
+            };
+            /** 关闭场景立即结束等待，即使冷素材仍在由引擎下载。迟到结果由节点作用域处理。 */
+            const whileOpen = <T>(work: Promise<T>): Promise<T> => new Promise((resolve, reject) => {
+                const cancel = () => reject(new Error("战场已关闭"));
+                if (stopped || closed || isCancelled()) {
+                    cancel();
+                } else {
+                    waits.add(cancel);
+                }
+                work.then(value => {
+                    waits.delete(cancel);
+                    resolve(value);
+                }, error => {
+                    waits.delete(cancel);
+                    reject(error);
+                });
+            });
             /** 开始骨骼保留完整播放；70%后与人物出场并行，关页由原waits同时释放两条等待。 */
             let openingComplete = Promise.resolve();
+            let openingProgress = Promise.resolve();
             if (formalOpening) {
                 // 原ZDKS/stand实际仅约1.2333秒；按真实轨道70%接出场，不再沿旧2.5秒固定空等。
-                await assets.loadPath("spine/ZDKS", "SkeletonData");
-                if (closed || isCancelled()) throw new Error("挑战开场已取消");
                 const opening = new Node("ChallengeOpeningEffect");
                 opening.layer = shell.root.layer;
                 opening.parent = shell.root;
@@ -535,7 +662,7 @@ export class BattleReplayPreview {
                     releaseComplete = finish;
                     waits.add(finish);
                 });
-                await new Promise<void>((resolve, reject) => {
+                openingProgress = new Promise<void>((resolve, reject) => {
                     let finished = false;
                     /** 进度门只放行一次；兑现或失败后立即移除引擎监听，不留下每帧回调。 */
                     const detach = () => {
@@ -594,7 +721,22 @@ export class BattleReplayPreview {
                         },
                     });
                 });
-                if (closed || isCancelled() || !shell.root.isValid) throw new Error("挑战开场已取消");
+            }
+            // 先提交开场骨骼，再启动模型与首招的读取。后段技能不参与入场条件。
+            const entry = loadEntry();
+            const unitsReady = Promise.all(units.map(loadUnit));
+            if (formalOpening) {
+                prefetchGroup();
+            }
+            const [[rightFrames, leftFrames]] = await whileOpen(Promise.all([
+                entry, unitsReady, openingProgress,
+                formalOpening ? undefined : Promise.all(Array.from(selected.keys(), prepareAction)),
+            ]));
+            if (closed || isCancelled() || !shell.root.isValid) {
+                throw new Error("战斗进场已取消");
+            }
+            syncHpRows();
+            if (formalOpening) {
                 shell.layerField.active = true;
                 GameLog.shared.classified("MODULE", "debug", "BattleReplayPreview", "opening.effects.started");
             }
@@ -715,9 +857,70 @@ export class BattleReplayPreview {
                 BattlePresentViewUtils.showHealthChange(shell.present, slots.get(step.targetId)!, 78,
                     step.reportedHpChange!, kind, unit.faction === 1, playbackScale, effects);
             };
+            /** 配对后的命中可由动作到位或关场完成，按当前技能的出手和目标独立保存。 */
+            let impacts = new Map<string, { ready: Promise<void>; finish: () => void }>();
+            const hitReadiness = new WeakMap<BattleReplayStep, Promise<void>>();
+            /** 同一群攻动作按来源和每个目标各自确认到达。 */
+            const impactKey = (actionId: number, sourceId: number, targetId: number) => `${actionId}:${sourceId}:${targetId}`;
             player = new BattleReplayPlayer({
                 stop,
                 restore,
+                /** 当前组在开场或上一组播放时已开始加载；到齐后再一起启动施法、位移和伤害。 */
+                beforeStep(index) {
+                    if (!formalOpening || groups[groupIndex]?.[0] !== index || !upcoming) {
+                        return;
+                    }
+                    return whileOpen(upcoming).then(() => {
+                        groupIndex++;
+                        prefetchGroup();
+                    });
+                },
+                /** 只给同技能、同来源且同目标的直接伤害配对可见命中，独立后续装饰不拖延打击。 */
+                prepareSkill(events) {
+                    impacts = new Map();
+                    const actions = events.filter(step => step.kind === "presentation");
+                    for (const step of events) {
+                        const damage = selected.get(step.configId);
+                        if (step.kind !== "damage" || damage?.type !== 100) {
+                            continue;
+                        }
+                        const damageDelay = BattleAttackUtils.delaySeconds(damage);
+                        let matched: BuffRow | undefined;
+                        let earliest = Infinity;
+                        for (const action of actions) {
+                            if (action.sourceId !== step.sourceId || action.targetId !== step.targetId) {
+                                continue;
+                            }
+                            for (const row of expanded.get(action.configId) ?? [selected.get(action.configId)!]) {
+                                const plan = attackPlans.get(row.idx)!;
+                                const offset = BattleAttackUtils.impactSeconds(plan);
+                                if (offset === null) {
+                                    continue;
+                                }
+                                const at = BattleAttackUtils.delaySeconds(row) + offset;
+                                if (at < earliest && (!plan.effectOnly || at <= damageDelay)) {
+                                    matched = row;
+                                    earliest = at;
+                                }
+                            }
+                        }
+                        if (!matched) {
+                            continue;
+                        }
+                        const key = impactKey(matched.idx, step.sourceId, step.targetId);
+                        let gate = impacts.get(key);
+                        if (!gate) {
+                            let finish!: () => void;
+                            const ready = new Promise<void>(resolve => {
+                                finish = () => { waits.delete(finish); resolve(); };
+                                waits.add(finish);
+                            });
+                            gate = { ready, finish };
+                            impacts.set(key, gate);
+                        }
+                        hitReadiness.set(step, gate.ready);
+                    }
+                },
                 /** 剩余伤害数字和状态飘字播完再进入结算，关场销毁节点会立即解除等待。 */
                 async finish() {
                     await Promise.all(shell.present.floatRoot.children.filter(child => effects.has(child))
@@ -729,7 +932,8 @@ export class BattleReplayPreview {
                 /**
                  * 播放真实步骤或旧覆盖子动作；type8按战场比例往返，空动作仅等待配置延迟。
                  * 伤害、治疗和复活各自使用报告值生成独立数字，血条仍用实际血量；具名状态采用旧版飘字。
-                 * 独立帧及投射不延长角色动作，仍归本战场持有；关闭后丢弃迟到回调，活跃帧失败统一取消。
+                 * 骨骼与配置都到收尾时才开始归位；直接伤害同时等原延迟和可见命中。
+                 * 空动作也处理配置中的延时和暗屏；关闭后丢弃迟到回调，活跃帧失败统一取消。
                  */
                 play: async function play(step, targets = [step]) {
                     const actions = step.kind === "presentation" ? expanded.get(step.configId) : undefined;
@@ -740,22 +944,14 @@ export class BattleReplayPreview {
                     const epoch = effectEpoch;
                     const cancelled = () => closed || epoch !== effectEpoch;
                     if (cancelled()) return;
+                    const skillImpacts = impacts;
                     const effectRow = selected.get(step.configId);
-                    if (step.kind === "presentation" && effectRow?.type === 1) {
-                        // 旧覆盖已在上方展开；这里只完成其中的空动作，不能连带丢弃同组真实特效。
-                        BattleAttackUtils.plan(effectRow);
-                        const delay = BattleAttackUtils.delaySeconds(effectRow);
-                        if (delay > 0) {
-                            await wait(delay);
-                        }
-                        if (!cancelled()) {
-                            GameLog.shared.classified("MODULE", "debug", "BattleReplayPreview",
-                                "effect.empty " + step.configId + " delay=" + delay);
-                        }
-                        return;
-                    }
+                    const empty = step.kind === "presentation" && effectRow?.type === 1;
                     if (effectRow && step.kind !== "buff.remove") {
-                        await wait(BattleAttackUtils.delaySeconds(effectRow));
+                        const delay = BattleAttackUtils.delaySeconds(effectRow);
+                        if (!empty || delay > 0) await wait(delay);
+                        const hitReady = hitReadiness.get(step);
+                        if (hitReady) await hitReady;
                         if (cancelled()) return;
                         if (effectRow.shake === 1) {
                             let shake = tween(shell.root);
@@ -776,15 +972,18 @@ export class BattleReplayPreview {
                                 .delay(times[1] / playbackScale).to(times[2] / playbackScale, { opacity: 0 }, { easing: "expoOut" }).start();
                         }
                         GameLog.shared.classified("MODULE", "debug", "BattleReplayPreview",
-                            "effect.start " + step.configId + " delay=" + BattleAttackUtils.delaySeconds(effectRow));
+                            (empty ? "effect.empty " : "effect.start ") + step.configId + " delay=" + delay);
+                        if (empty) return;
                     }
-                    UiKitUtils.setText(shell.roundLabel, "第" + step.round + "/15回合");
+                    UiKitUtils.setText(shell.roundLabel, `第${step.round}/${maxRounds}回合`);
                     if (step.kind === "skill.begin") record(step.skillType === 2 ? "普攻" : "释放技能");
                     else if (step.kind === "round.ready") record("第" + step.round + "回合");
                     if (step.kind === "round.ready") {
                         await wait(step.readySeconds!);
+                    } else if (step.kind === "skill.end" && !idleEncounter) {
+                        await wait(BattleInfoUtils.attackIntervalSeconds);
                     } else if (step.kind === "presentation") {
-                        const plan = BattleAttackUtils.plan(selected.get(step.configId)!);
+                        const plan = attackPlans.get(step.configId)!;
                         for (const sound of plan.sounds) {
                             audio.clip = sounds.get(sound)!;
                             AudioPreferences.playEffect(audio);
@@ -808,17 +1007,31 @@ export class BattleReplayPreview {
                             }
                             // 转回施法者槽的父坐标，保留双方槽组和战场缩放，不手写屏幕坐标。
                             const point = slot.parent!.getComponent(UITransform)!.convertToNodeSpaceAR(world);
-                            tween(slot).to(plan.moveSeconds / playbackScale, { position: point }).start();
-                            await wait(plan.moveSeconds);
+                            await move(slot, point, plan.moveSeconds);
                         }
                         if (cancelled()) return;
-                        if (!plan.effectOnly && !actors.get(step.sourceId)!.gesture(plan.action)) throw new Error("缺少英雄动作：" + plan.action);
-                        // 施法只播一次。独立帧由本战场持有，按旧attack_time挂出并继续播放，不延长角色动作。
+                        let clipSeconds = 0;
+                        if (!plan.effectOnly) {
+                            const actor = actors.get(step.sourceId)!;
+                            if (!actor.gesture(plan.action)) throw new Error("缺少英雄动作：" + plan.action);
+                            const track = actor.node.getComponent(sp.Skeleton)?.getCurrent?.(0);
+                            const duration = track ? track.animationEnd - track.animationStart : 0;
+                            if (Number.isFinite(duration) && duration > 0) {
+                                clipSeconds = duration;
+                            }
+                        }
+                        // 独立效果继续播完整段；与直接伤害配对的标记在近身到位、挂帧或投射到达时兑现。
                         const targetEffects = (async () => {
                             if (plan.attackSeconds > 0) {
                                 await wait(plan.attackSeconds);
                             }
-                            if (cancelled() || !plan.effect) return;
+                            if (cancelled()) return;
+                            if (plan.melee) {
+                                for (const hit of targets) {
+                                    skillImpacts.get(impactKey(step.configId, step.sourceId, hit.targetId))?.finish();
+                                }
+                            }
+                            if (!plan.effect) return;
                             const definition = plan.effect;
                             const fieldThrow = plan.projectileOffset !== null;
                             await Promise.all((plan.onSource || fieldThrow ? [step] : targets).map(async hit => {
@@ -868,13 +1081,18 @@ export class BattleReplayPreview {
                                 node.setScale(definition.scaleX * (flipEffect ? -1 : 1),
                                     definition.scaleY * (fieldThrow && sourceEnemy ? -1 : 1), 1);
                                 node.setPosition(plan.projectile ? from : to);
+                                const impact = skillImpacts.get(impactKey(step.configId, step.sourceId, hit.targetId));
                                 if (plan.projectile) {
                                     node.angle = Math.atan2(to.y - from.y, to.x - from.x) * 180 / Math.PI;
-                                    tween(node).to(definition.flightSeconds / playbackScale, { position: to }).start();
+                                    const flight = tween(node).to(definition.flightSeconds / playbackScale, { position: to });
+                                    if (impact) flight.call(impact.finish);
+                                    flight.start();
                                     if (fieldThrow) {
                                         GameLog.shared.classified("MODULE", "debug", "BattleReplayPreview",
                                             "effect.throw " + step.configId + " from=" + from + " to=" + to + " seconds=" + definition.flightSeconds);
                                     }
+                                } else {
+                                    impact?.finish();
                                 }
                                 GameLog.shared.classified("MODULE", "debug", "BattleReplayPreview",
                                     "effect.frames " + step.configId + " target=" + hit.targetId + " count=" + sequence.length);
@@ -884,14 +1102,15 @@ export class BattleReplayPreview {
                                     sprite.spriteFrame = sequence[index % sequence.length];
                                     await wait(definition.interval);
                                 }
+                                if (impact) await impact.ready;
                                 Tween.stopAllByTarget(node);
                                 effects.delete(node);
                                 if (node.isValid) node.destroy();
                             }));
                         })();
-                        const actorSeconds = plan.attackSeconds + plan.attackDelaySeconds
-                            + plan.actionSeconds + plan.beforeReturnSeconds;
-                        // 旧type5/10投射与type3帧均独立持有，完成只等角色动作；type6/7/9挂出即完成。
+                        const actorSeconds = Math.max(clipSeconds,
+                            plan.attackSeconds + plan.attackDelaySeconds + plan.actionSeconds + plan.beforeReturnSeconds);
+                        // 独立序列帧由战场持有，只有匹配的受击事件会等待命中，不拉长无关角色动作。
                         // 立即接住独立任务异常，角色完成后发生的帧失败仍停止整场，关场后不重复报告。
                         void targetEffects.catch(error => {
                             if (!cancelled()) {
@@ -903,10 +1122,8 @@ export class BattleReplayPreview {
                         }
                         if (cancelled()) return;
                         if (moving) {
-                            tween(slot).to(plan.moveSeconds / playbackScale, { position: origins.get(step.sourceId)! }).start();
-                            await wait(plan.moveSeconds);
+                            await move(slot, origins.get(step.sourceId)!, plan.moveSeconds);
                         }
-                        if (!cancelled() && !plan.effectOnly) actors.get(step.sourceId)!.play("stand");
                     } else if (step.kind === "damage") {
                         const row = selected.get(step.configId)!;
                         // 回合伤害不冒充直接伤害100；这里只恢复已核对的伤害音效来源。
@@ -993,7 +1210,7 @@ export class BattleReplayPreview {
                 for (const actor of actors.values()) {
                     actor.node.getComponent(sp.Skeleton)!.timeScale = playbackScale;
                 }
-                void player!.play(bytes, audit && !audit.passive ? { skillId: audit.skillId, level: audit.level } : undefined).then(async completed => {
+                void player!.play(report, audit && !audit.passive ? { skillId: audit.skillId, level: audit.level } : undefined).then(async completed => {
                     if (!closed && completed) {
                         const last = steps[steps.length - 1];
                         const allyHp = units.filter(unit => unit.faction === 1)

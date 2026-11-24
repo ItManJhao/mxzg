@@ -8,11 +8,13 @@ import { GameConfig } from "../../../config/GameConfig";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { ResManager } from "../../../framework/assets/ResManager";
 import type { BaseView } from "../../../framework/ui/BaseView";
+import { RedDotBinding } from "../../../framework/ui/RedDotBinding";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { BagModel } from "../../bag/BagModel";
 import { BagEvent } from "../../bag/utils/BagEvent";
 import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
 import { ConfirmView } from "../../common/ui/ConfirmView";
+import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
 import type { OwnedHero } from "../data/HeroSnapshotUtils";
 import { HeroStarController, type HeroStarMaterials } from "../HeroStarController";
 import { HeroJewelController } from "../HeroJewelController";
@@ -67,8 +69,8 @@ export class HeroGrowthPanel extends Component {
     @property([Label]) starCounts: Label[] = [];
     /** 三行材料品质框，随配方星级着色。 */
     @property([Node]) starFrames: Node[] = [];
-    /** 未选满且当前能凑齐材料时显示对应红点。 */
-    @property([Node]) starDots: Node[] = [];
+    /** 升星材料按钮的可用提醒锚点，顺序与材料格一致。 */
+    @property([Node]) starReminderAnchors: Node[] = [];
     /** 每张素材卡按从左到右绑定五枚星标。 */
     @property([Node]) materialStars: Node[] = [];
     /** 十星素材的翼徽，按配方行顺序绑定。 */
@@ -105,6 +107,8 @@ export class HeroGrowthPanel extends Component {
     @property([Node]) jewelPlus: Node[] = [];
     /** 未解锁的槽显示锁。 */
     @property([Node]) jewelLocks: Node[] = [];
+    /** 攻击、生命、速度槽以及一键镶嵌按钮的提醒锚点。 */
+    @property([Node]) jewelReminderAnchors: Node[] = [];
     /** 宝石右栏的已镶图标，小于圆盘上的宝石图标。 */
     @property([Node]) jewelAttributeIcons: Node[] = [];
     /** 已镶嵌时对应孔位下方的彩色宝石座。 */
@@ -126,9 +130,15 @@ export class HeroGrowthPanel extends Component {
     private slotActions: readonly GrowthSlot[] = [];
     /** 每次刷新按当前配方或槽位设置真实动作。 */
     private commands: readonly (GrowthAction | null)[] = [];
+    /** 按材料格索引保存公共红点，随面板销毁。 */
+    private starReminders: (RedDotBinding | null)[] = [];
+    /** 按宝石槽位或一键镶嵌按钮复用实例，隐藏时解除订阅。 */
+    private jewelReminders: (RedDotBinding | null)[] = [];
 
-    /** 只在组件挂载时绑定点击；监听随节点销毁回收。 */
+    /** 组件挂载时绑定点击和红点锚点，监听随节点销毁回收。 */
     protected onLoad(): void {
+        this.starReminders = this.starReminderAnchors.map(anchor => anchor ? RedDotBinding.atAnchor(anchor) : null);
+        this.jewelReminders = this.jewelReminderAnchors.map(anchor => anchor ? RedDotBinding.atAnchor(anchor) : null);
         this.slots.forEach((button, index) => {
             button.node.on(Button.EventType.CLICK, () => {
                 this.slotActions[index - slotOffsets[this.tab - 1]]?.click();
@@ -145,15 +155,30 @@ export class HeroGrowthPanel extends Component {
         EventDispatcher.instance.on("hero-god-equipment:updated", this, this.refresh);
     }
 
-    /** 随详情销毁释放当前选择，避免旧英雄窗口收到更新。 */
+    /** 重开时读取当前英雄的状态，再绑定被停用的宝石提醒。 */
+    protected onEnable(): void {
+        this.refresh();
+    }
+
+    /** 停用时隐藏材料提醒并解除宝石订阅，保留实例供页签复用。 */
+    protected onDisable(): void {
+        this.starReminders.forEach(binding => binding?.setVisible(false));
+        this.bindJewelReminders(null);
+    }
+
+    /** 随详情销毁释放当前选择和红点，避免旧英雄窗口继续更新。 */
     protected onDestroy(): void {
         EventDispatcher.instance.offTarget(this);
+        this.starReminders.forEach(binding => binding?.dispose());
+        this.jewelReminders.forEach(binding => binding?.dispose());
+        this.starReminders = [];
+        this.jewelReminders = [];
         this.owner = null;
         this.hero = null;
         this.materials = [];
     }
 
-    /** 进入页签或同步最新名册。切英雄和升星后的新配方都会重新开始选择。 */
+    /** 进入页签或同步名册；切英雄时重置草稿，离开宝石页时解除槽位提醒。 */
     public show(owner: BaseView, tab: number, hero: OwnedHero): void {
         if (hero.id !== this.hero?.id || hero.star !== this.hero.star) {
             this.materials = [];
@@ -161,6 +186,9 @@ export class HeroGrowthPanel extends Component {
         this.owner = owner;
         this.hero = hero;
         this.tab = tab;
+        if (tab !== 2) {
+            this.bindJewelReminders(null);
+        }
         this.panels.forEach((panel, index) => {
             panel.active = index === tab - 1;
         });
@@ -275,7 +303,7 @@ export class HeroGrowthPanel extends Component {
                 return ids;
             }, []);
             const canChoose = HeroStarUtils.candidates(hero, row, roster, occupied).length + stock >= row.count;
-            this.starDots[index].active = count < row.count && canChoose;
+            this.starReminders[index]?.setVisible(count < row.count && canChoose);
             const rarity = row.star >= 10 ? 5 : row.star >= 5 ? 4 : Math.max(1, row.star - 1);
             ResManager.setSprite(this.starFrames[index], ResManager.qualityFrame(rarity));
             this.showRank(row.star, this.materialStars.slice(index * 5, (index + 1) * 5),
@@ -385,9 +413,10 @@ export class HeroGrowthPanel extends Component {
             () => stars.upgrade(hero.id, hero.star, rows));
     }
 
-    /** 按实际三槽、已镶嵌实例和套装进度显示宝石。 */
+    /** 按实际三槽和套装进度显示宝石，槽位与一键镶嵌共用页签的红点路径。 */
     private renderJewels(hero: OwnedHero): void {
         const jewels = hero.gems?.items;
+        this.bindJewelReminders(jewels ? hero.id : null);
         if (!jewels) {
             this.render([], [], "宝石状态待同步");
             return;
@@ -429,6 +458,14 @@ export class HeroGrowthPanel extends Component {
             { label: "", click: () => this.notice("宝石说明", "达到对应星级可解锁槽位。镶满三槽后，按最低宝石星级激活套装加成。") },
             canCombine ? { label: "宝石合成", click: () => this.chooseJewelRecipe() } : null,
         ], set ? `${set.star}星宝石套装（${set.count}/3）　${HeroJewelUtils.attributesText(set.attributes)}` : "");
+    }
+
+    /** 三个槽位订阅各自叶子，一键镶嵌订阅同一汇总；未显示时解除所有绑定。 */
+    private bindJewelReminders(heroId: string | null): void {
+        this.jewelReminders.forEach((binding, index) => {
+            const slot = index < jewelSlots.length ? index + 1 : undefined;
+            binding?.bindPath(heroId === null ? null : GameRedDotKey.heroJewel(heroId, slot));
+        });
     }
 
     /** 当前槽位在同一窗列出卸下和可镶候选，只提交选择的真实配置。 */

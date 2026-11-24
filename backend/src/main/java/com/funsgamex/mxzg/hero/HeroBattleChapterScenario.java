@@ -1,5 +1,5 @@
 /**
- * 配置化战场：按真实关卡敌方、成长和技能驱动主线及日常副本到胜负。
+ * 配置化战场：按真实关卡敌方、成长和技能驱动主线、副本、幻境之塔和竞技场到胜负。
  * 正式阵容/挂机入口不依赖固定三关；旧initial仅保留独立审计用途，不接玩家库、进度或奖励。
  */
 package com.funsgamex.mxzg.hero;
@@ -355,11 +355,35 @@ public final class HeroBattleChapterScenario {
     /** 日常副本按旧战斗类型2复用主阵容及15回合执行链，守军来自指定关卡原表。 */
     public Result runDailyFormation(String scenario, HeroBattleInputService.Input input,
                                     List<ConfiguredEnemy> enemyRows, DoublePredicate decision) {
+        return runConfiguredFormation(scenario, input, enemyRows, decision, HeroBattleRoundUtils.MAX_ROUNDS, Map.of());
+    }
+
+    /** 按旧战斗类型4使用主阵容挑战指定机器人，接入竞技场独立回合上限和每回合累计攻击倍率。 */
+    Result runArenaFormation(String scenario, HeroBattleInputService.Input input, List<ConfiguredEnemy> enemyRows,
+                             Map<Integer, Long> attackRates, DoublePredicate decision) {
+        return runConfiguredFormation(scenario, input, enemyRows, decision,
+                HeroBattleRoundUtils.ARENA_MAX_ROUNDS, attackRates);
+    }
+
+    /** 原机器人战力先加队伍元素光环，再使用同源评分权重逐人取整。 */
+    int configuredPower(List<ConfiguredEnemy> enemies, HeroPowerRules powers) {
+        int total = 0;
+        var units = enemies.stream().map(this::configuredEnemy).toList();
+        for (var unit : applyElementHalo(units)) {
+            total = Math.addExact(total, powers.score(unit.attributes()));
+        }
+        return total;
+    }
+
+    /** 按调用方战斗类型组装已经鉴权的队伍、原守军和本场的回合规则。 */
+    private Result runConfiguredFormation(String scenario, HeroBattleInputService.Input input,
+                                          List<ConfiguredEnemy> enemyRows, DoublePredicate decision, int maxRounds,
+                                          Map<Integer, Long> attackRates) {
         var units = savedFormationUnits(input);
         for (var enemy : enemyRows) {
             units.add(configuredEnemy(enemy));
         }
-        return runBattle(scenario, applyElementHalo(units), decision);
+        return runBattle(scenario, applyElementHalo(units), decision, new Random(), maxRounds, attackRates);
     }
 
     /** 将已鉴权的真实主阵容转为开场单位，完整保留属性、技能和显示身份。 */
@@ -495,8 +519,14 @@ public final class HeroBattleChapterScenario {
         return runBattle(scenario, input, decision, new Random());
     }
 
-    /** 开战前冻结头像并注入独立随机源，抽样算法与旧randomList一致；概率待审标记不因此移除。 */
+    /** 审计夹具沿用普通战斗条件并注入独立随机源。 */
     private Result runBattle(String scenario, List<Unit> input, DoublePredicate decision, Random random) {
+        return runBattle(scenario, input, decision, random, HeroBattleRoundUtils.MAX_ROUNDS, Map.of());
+    }
+
+    /** 冻结开战头像，按战斗类型的回合规则完整执行并生成只读战报。 */
+    private Result runBattle(String scenario, List<Unit> input, DoublePredicate decision, Random random,
+                             int maxRounds, Map<Integer, Long> attackRates) {
         // 在战斗开始前冻结资源身份；之后的名册/配置变化不重算已持久战报。
         var initial = roster(input).stream().map(unit -> new Unit(unit.id(), unit.faction(), unit.template(),
             unit.level(), unit.star(), unit.stage(), unit.position(), unit.attributes(), unit.opening(),
@@ -523,11 +553,15 @@ public final class HeroBattleChapterScenario {
         var frames = new ArrayList<Frame>();
         var outcome = HeroBattleRoundUtils.Outcome.ONGOING;
         int completed = 0;
-        for (int round = 1; round <= HeroBattleRoundUtils.MAX_ROUNDS; round++) {
+        for (int round = 1; round <= maxRounds; round++) {
             var roundOrder = currentOrder(engine, initial);
             var before = snapshot(engine, initial);
             int damageStart = engine.damages().size();
             int traceStart = round == 1 ? 0 : engine.trace().size();
+            Long attackRate = attackRates.get(round);
+            if (attackRate != null) {
+                engine.addRoundAttackRate(attackRate);
+            }
             engine.beginRound(round, roundOrder, elements, decision);
             if (scenario.equals("audit:frozen") && round == 1) {
                 engine.applyFrozen(2234801, 1, 2, rate -> true);
@@ -557,7 +591,7 @@ public final class HeroBattleChapterScenario {
                 }
             }
             completed = round;
-            outcome = outcome(initial, snapshot(engine, initial), completed);
+            outcome = outcome(initial, snapshot(engine, initial), completed, maxRounds);
             if (outcome != HeroBattleRoundUtils.Outcome.ONGOING) break;
         }
         return new Result(scenario, outcome, completed, initial, turns, engine.damages(), frames,
@@ -570,8 +604,13 @@ public final class HeroBattleChapterScenario {
             .map(unit -> new HeroBattleRoundUtils.Unit(unit.id(), engine.currentSpeed(unit.id()))).toList());
     }
 
-    /** 完整生命快照严格匹配名册；双方同时全灭仍由旧规则先判攻方失败。 */
+    /** 按普通战场上限验证完整生命快照与胜负。 */
     public static HeroBattleRoundUtils.Outcome outcome(List<Unit> units, Map<Integer, Long> hp, int rounds) {
+        return outcome(units, hp, rounds, HeroBattleRoundUtils.MAX_ROUNDS);
+    }
+
+    /** 完整生命快照严格匹配名册；双方同时全灭仍由旧规则先判攻方失败。 */
+    static HeroBattleRoundUtils.Outcome outcome(List<Unit> units, Map<Integer, Long> hp, int rounds, int maxRounds) {
         var ids = new HashSet<Integer>();
         for (var unit : units) {
             ids.add(unit.id());
@@ -583,7 +622,7 @@ public final class HeroBattleChapterScenario {
         if (!ids.equals(hp.keySet())) throw new IllegalArgumentException("战斗单位生命快照不完整");
         return HeroBattleRoundUtils.outcome(
             units.stream().anyMatch(unit -> unit.faction() == 1 && hp.get(unit.id()) > 0),
-            units.stream().anyMatch(unit -> unit.faction() == 2 && hp.get(unit.id()) > 0), rounds);
+            units.stream().anyMatch(unit -> unit.faction() == 2 && hp.get(unit.id()) > 0), rounds, maxRounds);
     }
 
     /** 捕获引擎中所有单位生命，死亡单位保留0，避免改变名册身份。 */

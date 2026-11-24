@@ -3,7 +3,7 @@
  * 编辑器样板和明确关闭虚拟化时默认使用原生Layout；短行居中与虚拟池共用逻辑几何，不在页面手排。
  * 实际滚动只换绑，不重置惯性或发业务请求。
  */
-import { _decorator, Button, CCObject, Enum, instantiate, Layout, Node, Prefab, Size, UITransform, Widget } from "cc";
+import { _decorator, Button, CCObject, Enum, instantiate, Layout, Node, Prefab, Size, UITransform, Vec2, Widget } from "cc";
 import { EDITOR, PREVIEW } from "cc/env";
 
 const { ccclass, property, executeInEditMode } = _decorator;
@@ -352,6 +352,18 @@ export class SuperContent extends Layout {
     /** 清空展示条目和节点；页面自己的渲染/选择监听仍由页面关闭流程解除。 */
     clear(): void {
         this.setData([]);
+    }
+
+    /** 按已提交数据计算条目所在行列的居中滚动位置；短列表由宿主限制在合法范围。 */
+    public centeredOffset(index: number): Vec2 {
+        if (!Number.isInteger(index) || index < 0 || index >= this.count) {
+            throw this.error("定位条目超出列表范围：" + index);
+        }
+        const geometry = this.measure();
+        const line = Math.floor(index / geometry.across);
+        return geometry.vertical
+            ? new Vec2(0, this.paddingTop + line * geometry.stepY + (geometry.height - geometry.viewHeight) / 2)
+            : new Vec2(this.paddingLeft + line * geometry.stepX + (geometry.width - geometry.viewWidth) / 2, 0);
     }
 
     /** 每个新格子只登记一次原生Button点击；拖动取消仍由SuperScroll和Button处理。 */

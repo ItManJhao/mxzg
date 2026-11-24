@@ -1,10 +1,11 @@
 /**
- * 持久主线阵容的只读战斗入口：鉴权读取同一版本输入，按主线或日常关卡配置执行。
+ * 持久阵容的只读战斗入口：鉴权读取同一版本输入，按相应玩法的配置执行。
  * 战斗本身不修改通关、奖励或阵容；领域服务在外层事务决定结算。
  */
 package com.funsgamex.mxzg.hero;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.DoublePredicate;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
@@ -45,8 +46,31 @@ public class HeroLineupBattleService {
     /** 日常副本用同一持久主阵容与真实守军执行并检验完整战报。 */
     public Preview daily(String token, String scenario, List<HeroBattleChapterScenario.ConfiguredEnemy> enemies,
                          DoublePredicate decision) {
-        var input = inputs.current(token);
+        return configured(scenario, inputs.current(token), enemies, decision);
+    }
+
+    /** 幻境之塔等玩法提交已经鉴权读取的指定阵容，按普通回合规则执行并校验战报。 */
+    public Preview configured(String scenario, HeroBattleInputService.Input input,
+                              List<HeroBattleChapterScenario.ConfiguredEnemy> enemies, DoublePredicate decision) {
         var report = battles.runDailyFormation(scenario, input, enemies, decision);
+        return validate(input, report);
+    }
+
+    /** 竞技场沿用持久主阵容，并根据旧配置给存活双方追加每回合攻击倍率。 */
+    public Preview arena(String token, String scenario, List<HeroBattleChapterScenario.ConfiguredEnemy> enemies,
+                         Map<Integer, Long> attackRates, DoublePredicate decision) {
+        var input = inputs.current(token);
+        var report = battles.runArenaFormation(scenario, input, enemies, attackRates, decision);
+        return validate(input, report);
+    }
+
+    /** 配置机器人列表使用真实守军的开战属性计算战力，禁止根据角色等级伪造战力。 */
+    public int configuredPower(List<HeroBattleChapterScenario.ConfiguredEnemy> enemies, HeroPowerRules powers) {
+        return battles.configuredPower(enemies, powers);
+    }
+
+    /** 确保不同玩法返回同样完整的战报与其阵容输入版本。 */
+    private static Preview validate(HeroBattleInputService.Input input, HeroBattleChapterScenario.Result report) {
         HeroBattleReplayUtils.validate(report);
         return new Preview(input.assetRevision(), input.lineupVersion(), input.formationId(), input.pending(), report);
     }

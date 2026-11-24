@@ -12,6 +12,8 @@ import {LOADING_PLAN, LoadingAssetGroup, LoadingTarget} from "./LoadingPlan";
 import { StartupCancelled } from "./StartupFlowUtils";
 import { GameLog } from "../../core/GameLog";
 import { UIRegistry } from "../../framework/ui/UIRegistry";
+import { CityNavigationUtils } from "../../config/CityNavigationUtils";
+import { EntryGateUtils } from "../../config/EntryGateUtils";
 
 export class ApplicationResources {
     /** 所有已准备图片、动画、音频等持有至应用销毁；不保存玩家业务数据。 */
@@ -148,14 +150,24 @@ export class ApplicationResources {
         }
     }
 
-    /** 主城后逐项准备background配置目标；每项让帧，取消立即停止排队，失败继续且不假报完成。 */
-    public async prepareBackground(yieldFrame: () => Promise<void>, active: () => boolean): Promise<void> {
+    /** 主城显示后，按本轮角色等级选取已开放的入口并逐项让帧加载。锁定项不记为完成，解锁后可正常按需打开。 */
+    public async prepareBackground(
+        yieldFrame: () => Promise<void>,
+        active: () => boolean,
+        roleLevel: number,
+    ): Promise<void> {
         const epoch = ++this.backgroundEpoch;
         const valid = () => !this.closed && epoch === this.backgroundEpoch && active();
-        const rows = LOADING_PLAN.background.map(target => this.resolve(target));
         if (!valid()) {
             return;
         }
+        const rows = LOADING_PLAN.background.filter(target => {
+            if (!("bottomTab" in target)) {
+                return true;
+            }
+            const gate = CityNavigationUtils.bottomGate(target.bottomTab);
+            return !!gate && EntryGateUtils.isEntryOpen(gate, roleLevel, 0);
+        }).map(target => this.resolve(target));
         const pending = rows.filter(row => !this.completed.has(this.key(row)));
         const progress: {
             total: number;

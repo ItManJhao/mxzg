@@ -1,50 +1,21 @@
 # Bundle目录与三段加载维护
 
-当前目录采用两层普通分组；2026-11-13将章节地图归入resources，并将战斗帧特效拆为独立effects包：
+截至 2026-11-24，`client/assets/bundles` 下有 22 个业务与素材 Bundle。Creator 随主包发布 `bootstrap`，其余 21 个配置为远程包。远程资源在对应阶段或使用时按依赖加载。
 
-```text
-assets/bundles/
-├─ resources/                 通用素材分类；不是Bundle
-│  ├─ audio/
-│  ├─ chapter/                章节地图及挂机场景素材
-│  ├─ config/
-│  ├─ effects/                战斗帧特效，独立远程Bundle
-│  ├─ font/
-│  ├─ icons/
-│  ├─ maps/
-│  └─ spine/
-└─ module/                    页面与模块素材；不是Bundle
-   ├─ bootstrap/              启动必需，本地Bundle
-   ├─ login/
-   ├─ home/
-   ├─ bag/
-   ├─ hero/
-   ├─ battle/
-   ├─ common/                 跨页面共用格子、底板与界面图片
-   └─ gm/                     当前开发入口，local默认开启、production不装配
-```
+| 源目录 | 内容 | 维护入口 |
+|---|---|---|
+| `assets/bundles/module` | 14 个页面及模块包，包括本地启动包、主城、背包、英雄、战斗、副本、公会等 | 各模块根目录的 `.meta` 声明 Bundle，View 的 `@UIRegistry.view` 登记页面预制体 |
+| `assets/bundles/resources` | 8 个共用素材包，分别为 audio、chapter、config、effects、font、icons、maps、spine | 美术按类别归包，阶段性准备目标由 [LoadingPlan](../client/assets/scripts/app/remake/LoadingPlan.ts) 统一配置 |
 
-上述16个子目录是Bundle，其中15个远程、bootstrap本地；两个父目录均不勾选“配置为Bundle”。原15包的名称、优先级与远程配置不变，新增effects沿用原特效目录UUID并声明为远程包。这里的resources在assets/bundles内，是普通分组，不是Creator内置的顶层assets/resources目录，也不合并成一个大包。新增模块时在module内建立自己的Bundle，不需要另维护包名到目录的资源清单。
+两个父目录用于组织源文件。运行时沿用包名和包内路径，例如背包页使用 `bag/prefabs/BagView`，特效使用 `effects/包内路径`。模块的自动图集由 Creator 在构建时处理，动态加载继续使用资源原有的键。
 
-物理源路径与运行时加载键分开。例如背包页面的唯一注册源路径为`bundles/module/bag/prefabs/BagView`，加载器交给引擎的仍是Bundle `bag`内的`prefabs/BagView`；品质框仍用`common/ui/other_rare-4`。CDN输出继续是`remote/bag`、`remote/common`等，不因为分组而多加resources/module。三段配置、缓存和按需加载规则保持。
-
-战斗特效现位于`assets/bundles/resources/effects`，运行时使用`effects/包内路径`，不再使用`battle/effects/包内路径`。该目录内12,841份原文件（含6,237张图片、6,603份meta及1份效果文件）哈希全部保持；只有原根目录meta新增effects包声明，UUID不变。旧`battle/effects`物理地址只供离线工具定位历史证据，不是运行时兼容入口。见[特效拆包记录](validation/battle-effects-move-20261113.json)。本轮按指令未运行Creator预览或构建，不以源目录检查代替新包下载验收。
-
-common、bag、hero、battle的自动图集全部保留：目录分类负责人工查找，pac负责构建合并小图。common两份图集服务跨模块公共UI，bag图集保留背包专用分隔线；背景、立绘、物品图标和骨骼仍独立存放。代码不加载pac，也不为这次目录整理改为实体图集。
-
-保留不表示每个图集都是功能必需：common/atlas当前有7张小图，common/item-atlas和bag/atlas各只有1张，后两者当前合图收益有限，可以后续单独精简pac而保留原图。本次只迁目录，未删除或重建图集及UUID。
-
-2026-11-11的15包目录分组批次通过52项、类型、原文件字节及新目录独立环境预览检查，见[当批记录](validation/bundle-directory-groups-20261111.json)；当时背包、英雄、850关和真实第二关结算返回正常。该轮未构建，不能替代后续chapter/effects迁移。2026-11-14已用统一入口检查当前16源Bundle的实际输出（含引擎共18包）、依赖、配置过滤及本地远程下载，并完成限定发布运行，见[新发布记录](validation/config-package-release-review-20261114.json)。真实CDN与真机体量另验。
-
-资源统一在assets/bundles，当前16包（15远程＋bootstrap）、36份Prefab及49份共享目录JSON（含前批attrshow；类型化20表、Maven共享32表）。配置包接入前最近一次资源检查记录为170份TS、21个独立View，37份Prefab/Scene共86处绑定；本批增加配置包解码及生成脚本，不新增Prefab、View或Bundle。此前90未实现包和64旧Prefab清理的[15包历史记录](validation/current-resource-scope-cleanup-20261111.json)保持原样，范围检查已合并effects拆包、精灵专用详情、两份GM子窗、普通装备详情，以及既有道具/碎片组件调整。SpiritInfoView与EquipmentInfoView按需加载，未加入LoadingPlan，不新增模块资源清单。历史104远程包＋bootstrap、96Prefab及21,902个UUID不能写成当前范围；此前源目录减少约203.30MiB，不是新构建或下载体积。LoadingPlan仍是唯一三段显式配置，美术其余按需，复用ResManager和ResourcePool，不维护模块清单。
-
-目录分组之前的51项、类型和本机背包/英雄/850关/真实第二关闭环见[前批证据](validation/virtual-list-resource-review-20261111.json)。上述记录中的未提交状态、包数量和路径均是当时快照，当前交付状态统一见[开发进度](development-progress.md)。历史预览或构建包不能替代新路径的发布验证；真实CDN和真机仍待完成。
-
-2026-11-11使用当时发布包测得单轮配置目标准备：login 368.2ms、enterGame 547.5ms、background 470.6ms（4/4）；页面Promise不含过渡及按需图/骨骼。此测量没有重跑完整主线，不代表当前源码的耗时，也不能代替正式CDN、真机或长期内存验证。见[测量边界与请求记录](validation/loading-cache-review-20261111.json)。
+目录与 UUID 的历史核对分别见[目录分组](validation/bundle-directory-groups-20261111.json)和[特效拆包](validation/battle-effects-move-20261113.json)。2026-11-14 的 [Web 发布产物](validation/config-package-release-review-20261114.json)对应当时的 16 个源 Bundle。近期功能与预览数据见[开发进度](development-progress.md)。
 
 ## 人工修改入口
 
 登录成功后，`LoadingPlan.enterGame` 先安装配置包，再并行准备主城特效组。该组包含召唤阵、两组河流、光球、裂缝的 50 帧、`dx` 和 `chuanghu` 两套骨骼，以及 `dx` 播放失败时使用的 10 帧后备动画。主城沿用同一资源池和帧序列，完成后才进入页面，播放时直接复用已就绪资源。未在主城实际播放的同目录效果继续按需。
+
+主城与背包的一级页面预制体在进城前准备。主城显示后，后台队列先准备英雄、主线、副本大厅、公会和 VIP 的入口预制体，然后准备背包详情和英雄详情，每项开始前让出一帧。副本大厅、公会沿用底栏配置和本次进城角色等级，锁定入口跳过预载。角色在本次登录内解锁后点击，可立即按正常开页流程加载。预载只涉及这些预制体及其静态依赖，角色骨骼和技能按玩法准备。
 
 - 页面：assets/bundles/module/模块/prefabs。对应View的@UIRegistry.view保存唯一注册地址及缓存/模态配置；修改布局直接编辑Prefab，不到ApplicationPages重复登记地址。配置在进入主城前统一完成，页面不再登记配置prepare；必要的页面装配和美术资源prepare继续保留。
 - 动态图：assets/bundles/module/模块/ui，取图使用ResManager.ui(模块, 文件名)，例如common/ui/other_rare-4。ui只是模块内图片子目录，不是旧顶层目录。
@@ -55,15 +26,15 @@ common、bag、hero、battle的自动图集全部保留：目录分类负责人�
 
 ## 配置包与真实任务进度
 
-login中的`{config:GConfig.X}`声明登录前启动表，当前为2份；生成器直接读取这段配置确定包外源表，其他47份共享JSON统一写入config Bundle的`game-config.bin`。enterGame先准备这个BufferAsset，再解压、校验、逐表解析和建索引，全部完成才允许打开主城。background继续现有页面Prefab或美术目标，不另外分配city、hero、heroDetail、inventory四组配置；原四组和开页prepare属于此前的历史实现。
+登录前的启动表由 `LoadingPlan.login` 声明。以 2026-11-24 的包为准，2 张启动表独立读取，其余 67 张表打进 config Bundle 的一个 `game-config.bin`。进城阶段加载这一个资源，解压、校验并把索引安装进 `GameConfig`。页面打开后直接查询映射。
 
-这47份是一个压缩包里的配置表，不是47次网络下载。旧文案中的9/47、20/47反映包内解析或索引任务；本批去掉玩家文案中的表数，显示“加载游戏数据”“整理游戏数据”“准备游戏数据”，进度仍根据真实任务推进。两张启动表以及引擎Bundle/BufferAsset元数据分别读取，不能把元数据请求算成游戏配置逐表下载。
+加载页的“加载游戏数据”“整理游戏数据”“准备游戏数据”分别反映准备、解包及建索引进度。进入游戏所需的一份压缩包、两张启动表和引擎元数据可在网络面板中分别辨认。包内表数以生成的 manifest 为准。
 
 配置只由GameConfig持有，启动表与包表最终共用同一只读路径仓库。类型化表和按路径查询引用同一份数据，已就绪页面同步读取，不在开窗时补请求；未就绪和缺行仍明确失败，不返回假空表。包内未类型化的源表也经过结构/完整性检查并冻结，不产生第二套模块配置缓存。压缩BufferAsset通过现有资源池的临时作用域加载，成功、失败或取消都撤回本次引用，不列入应用长期阶段持有；解包对象移交GameConfig后不由装配工具继续缓存。
 
 前两段进度以实际完成目标为基础；配置包内另报告已完成解码及索引准备的文件数。文字和比例描述任务阶段，不是网络下载字节百分比，不按计时器伪造下载；后台统计分别记录成功、失败和总任务，失败不算完成。取消或旧阶段迟到不能提交配置、更新新阶段进度或允许开主城。运行时检查启动源同版、ZIP目录、文件字节数与CRC32；CRC只能检测损坏，不是可信内容签名，远程签名安装与回滚尚未实现。
 
-49份源JSON及原meta继续供Excel导出和后端共享。生成器用原UUID自动维护官方Bundle Asset排除规则，让47份非启动散表不再作为构建入口；不维护47表人工清单，不删源表，也不在构建结束后删JSON引用。正常默认Excel导出自动更新压缩包，直接改共享JSON后运行`node tools/generate_config_package.cjs --write`；`--check`只读核验包、过滤及生成解码器。生成细节与命令见[配置维护](config-pipeline.md#客户端压缩包与源表保留)。11-14新发布产物已确认全部包无47份源表副本，config仅两张启动表和唯一408,367字节bin；独立运行解压及开页不再补表已通过，具体网络与限制见[发布记录](validation/config-package-release-review-20261114.json)。
+源 JSON 与原 meta 供策划导出和后端共享。生成器按启动目标和原 UUID 维护构建过滤规则。默认 Excel 导出会更新压缩包，手动编辑源 JSON 后执行 `node tools/generate_config_package.cjs --write`，提交前用 `--check` 核验包、过滤规则及解码器。[配置维护说明](config-pipeline.md#客户端压缩包与源表保留)
 
 背包、英雄列表与英雄详情均直接加载对应完整页面Prefab，背景、纸面及英雄列表板是静态引用，不再额外加载PagePrefabShell或HeroListBoardView片段。Widget保存布局，ViewportScale只负责一个目标容器的统一比例；弹窗模态由ViewSpec配置，UIManager动态共用一份节点，不再加载各窗蒙版。它们不增加阶段资源清单。
 
@@ -83,7 +54,7 @@ login中的`{config:GConfig.X}`声明登录前启动表，当前为2份；生成
 
 ## 集中构建
 
-统一验收入口为[scripts/build-remake-h5.bat](../scripts/build-remake-h5.bat)，也可从仓库根执行：
+需要核对真实发布产物时使用 [Web 构建脚本](../scripts/build-remake-h5.bat)，也可从仓库根执行下列命令。日常开发按改动运行相关专项及 Creator 本机预览。
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File client/tools/build-remake-h5.ps1
@@ -125,21 +96,21 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File client/tools/build-remak
 | 配置包生成与过滤 | tools/generate_config_package.cjs（仓库根） | 默认检查；--write更新包、官方UUID过滤和生成解码器 |
 | 当前应用装配 | UIRegistry.bindViewRuntime、app/remake/ApplicationPages.ts | 仅注入Controller工厂或动态宿主，不覆盖页面静态定义 |
 | 统一取图 | framework/assets/ResManager.ts | 路径规则、获取、赋图及迟到保护 |
-| 页面闲置回收 | framework/ui/UIManager.ts | cacheIdleMs=120000毫秒，maxCachedPages=2 |
-| 预制体闲置回收 | framework/assets/PrefabLoader.ts | PREFAB_IDLE_MS=120000毫秒，MAX_IDLE_PREFABS=16 |
-| 预制体维护频率 | app/remake/RemakeApp.ts | 前台累计每30秒检查 |
+| 已关闭页面实例 | [UIManager.ts](../client/assets/scripts/framework/ui/UIManager.ts) | `cacheIdleMs = 600_000` 毫秒（10 分钟），`maxCachedPages = 6` |
+| 闲置预制体模板 | [PrefabLoader.ts](../client/assets/scripts/framework/assets/PrefabLoader.ts) | `PREFAB_IDLE_MS = 600_000` 毫秒，`MAX_IDLE_PREFABS = 16` |
+| 预制体维护频率 | [RemakeApp.ts](../client/assets/scripts/app/remake/RemakeApp.ts) | 前台累计每 30 秒检查一次 |
 
 除已标明仓库根的工具外，以上路径相对client/assets/scripts。参数只在代码入口维护，不增加模块清单。
 
-阶段美术预加载由ApplicationResources持有至应用销毁；配置包BufferAsset的引用只持续到本次安装结束，已解析配置由GameConfig继续持有。背包关闭后保留实例120秒，隐藏期间清理业务监听，重开读取最新Model；根页面替换和卸载清空闲置页面。当前显示与在途打开不参与淘汰。
+阶段预载的美术由 ApplicationResources 持有至应用销毁。配置包 BufferAsset 的引用持续到本次安装结束，已解析配置由 GameConfig 持有。背包等已启用页面缓存的实例在关闭后可保留 600 秒，期间移除页面监听，重开时读取最新 Model。第七个页面进入缓存时立即淘汰最早关闭的页面。根页面替换和卸载会清空闲置页面。
 
-PrefabLoader保护实际实例，最后一个实例退出后开始闲置计时。维护时淘汰超时或最久未使用的超额项；16份仅指闲置条目，不是内存预算或全部资源上限。前台通常120–150秒回收，后台暂停会推迟。页面实例和预制体计时独立，背包可能先等待实例120秒，再开始预制体120秒。
+PrefabLoader 在最后一个实例销毁后开始计算预制体的闲置时间。应用前台每 30 秒维护一次，淘汰超时的闲置预制体，数量超过 16 份时优先淘汰最久未用的。按时长到期的预制体在前台通常闲置 600～630 秒后回收，后台暂停会推迟。页面和模板分别计时，例如背包实例关闭 600 秒后销毁，此时模板才开始独立的 600 秒闲置计时。应用仍持有的预载引用继续生效。
 
-加载器只撤回自己的引用，阶段目标或其他实例仍持有时资源继续有效。ResManager.setSprite为每个图片节点保留当前显示与本次在途候选：新图赋值后才释放旧显示，相同当前图/在途任务复用，null、失效或销毁清理，不累积虚拟Cell访问过的历史图片。getSpriteFrame(owner)仍用显式节点作用域直到owner销毁；setSprite(null)不撤回该引用。未改TTL、增加图片闲置池或强制GC，释放引用不等于进程/GPU内存立即下降。
+加载器只撤回自己的引用，阶段目标或其他实例仍持有时资源继续有效。ResManager.setSprite为每个图片节点保留当前显示与本次在途候选：新图赋值后才释放旧显示，相同当前图/在途任务复用，null、失效或销毁清理，不累积虚拟Cell访问过的历史图片。getSpriteFrame(owner)仍用显式节点作用域直到owner销毁；setSprite(null)不撤回该引用。图片的生命周期按其持有者管理，实际进程和 GPU 内存由引擎及平台回收。
 
 
 ## 前批自然回收实测边界
 
-背包首开10.5ms、短期重开3.7ms复用同一实例；关闭120001ms后实例自然销毁，再开7.3ms为新实例，预加载Prefab仍由应用持有。未预加载资料页的Prefab约141.8秒后在维护周期回收，再开88.5ms完成重载。没有缩短TTL、手动强制回收或强制GC。
+2026-11-11 使用当时的 120 秒策略实测，背包首次打开 10.5 ms，短期重开复用同一实例，耗时 3.7 ms。关闭 120,001 ms 后实例销毁，重开 7.3 ms。未预载的资料页模板约在 141.8 秒后回收，重开耗时 88.5 ms。当前 600 秒策略下的副本重进数据见[本机复验](development-progress.md#11-月-24-日的体验与性能复验)。
 
 上述时间是UIManager打开Promise；背包实例到期重开仍有按需角色骨骼等后续请求，英雄/挂机重开也不保证零下载。资源拥有者退出后可撤回引用，缓存条目消失不等于GPU或进程内存已立即降低；不能据此认定长期无泄漏。

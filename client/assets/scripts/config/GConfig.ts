@@ -461,6 +461,88 @@ export interface TimeLimitItemRow {
   /** 有效时长（单位：天） */
   readonly valid_time: number;
 }
+export interface VipBenefitTextRow {
+  /** 未知 */
+  readonly index: number;
+  /** 未知 */
+  readonly key: string;
+  /** 未知 */
+  readonly text: number;
+  /** 未知 */
+  readonly type: number;
+}
+export interface VipLevelRow {
+  /** 开启预告 */
+  readonly announce_lang?: number;
+  /** 战斗跳过 */
+  readonly battle_skip: number;
+  /** 解锁战斗2x速度 */
+  readonly battle_speed_2x: number;
+  /** 解锁战斗3x速度 */
+  readonly battle_speed_3x: number;
+  /** 点金额外加成 */
+  readonly buy_gold_bonus: number;
+  /** 挂机角色经验额外百分比 */
+  readonly charater_exp_bonus: number;
+  /** 英雄数量背包上限 */
+  readonly extra_bag_space: number;
+  /** 离线挂机收益时长 */
+  readonly extra_idle_time: number;
+  /** 市场刷新次数上限 */
+  readonly extra_market_times: number;
+  /** 副本购买次数 */
+  readonly extra_resource_times: number;
+  /** 挂机金币额外百分比 */
+  readonly gold_bonus: number;
+  /** 挂机英雄经验额外百分比 */
+  readonly heroes_exp_bonus: number;
+  /** 献祭获得资源额外百分比 */
+  readonly sacrifice_bonus: number;
+  /** 酒馆任务数量 */
+  readonly tavern: number;
+  /** 解锁女神10101 */
+  readonly unlock_goddess_10101: number;
+  /** 解锁女神10201 */
+  readonly unlock_goddess_10201: number;
+  /** 解锁女神10301 */
+  readonly unlock_goddess_10301: number;
+  /** 解锁女神10401 */
+  readonly unlock_goddess_10401: number;
+  /** 解锁女神10501 */
+  readonly unlock_goddess_10501: number;
+  /** 解锁普通许愿池10连 */
+  readonly unlock_normal_wishpool_10: number;
+  /** 解锁专属头像 */
+  readonly unlock_special_headpic: number;
+  /** vip等级 */
+  readonly vip_level: number;
+}
+export interface VipMissionRow {
+  /** 唯一编号 */
+  readonly idx: number;
+  /** 转跳信息 */
+  readonly jump_info: string;
+  /** 任务描述语言表 */
+  readonly lang: number;
+  /** 任务奖励 */
+  readonly reward: string;
+  /** 任务类型 */
+  readonly task: string;
+  /** vip等级 */
+  readonly vip_level: number;
+}
+export interface VipUnlockRow {
+  /** 技能 */
+  readonly skill: number;
+  /** 羁绊类型 */
+  readonly type: number;
+  /** 需求vip等级 */
+  readonly vip_level: number;
+  /** 定位用 */
+  readonly x: number;
+  /** 定位用 */
+  readonly y: number;
+}
 export const GConfig = {
   AttributeShow: "AttributeShow",
   ChapterExtraReward: "ChapterExtraReward",
@@ -489,6 +571,10 @@ export const GConfig = {
   SpiritDisplay: "SpiritDisplay",
   SystemGate: "SystemGate",
   TimeLimitItem: "TimeLimitItem",
+  VipBenefitText: "VipBenefitText",
+  VipLevel: "VipLevel",
+  VipMission: "VipMission",
+  VipUnlock: "VipUnlock",
 } as const;
 export interface ConfigRowMap {
   AttributeShow: AttributeShowRow;
@@ -518,6 +604,10 @@ export interface ConfigRowMap {
   SpiritDisplay: SpiritDisplayRow;
   SystemGate: SystemGateRow;
   TimeLimitItem: TimeLimitItemRow;
+  VipBenefitText: VipBenefitTextRow;
+  VipLevel: VipLevelRow;
+  VipMission: VipMissionRow;
+  VipUnlock: VipUnlockRow;
 }
 export interface ConfigKeyMap {
   AttributeShow: number;
@@ -547,6 +637,10 @@ export interface ConfigKeyMap {
   SpiritDisplay: number;
   SystemGate: string;
   TimeLimitItem: number;
+  VipBenefitText: number;
+  VipLevel: number;
+  VipMission: number;
+  VipUnlock: number;
 }
 export interface ConfigFileMap {
   AttributeShow: { readonly rows: readonly AttributeShowRow[] };
@@ -576,6 +670,10 @@ export interface ConfigFileMap {
   SpiritDisplay: { readonly rows: readonly SpiritDisplayRow[] };
   SystemGate: { readonly rows: readonly SystemGateRow[] };
   TimeLimitItem: { readonly rows: readonly TimeLimitItemRow[] };
+  VipBenefitText: { readonly rows: readonly VipBenefitTextRow[] };
+  VipLevel: { readonly rows: readonly VipLevelRow[] };
+  VipMission: { readonly rows: readonly VipMissionRow[] };
+  VipUnlock: { readonly rows: readonly VipUnlockRow[] };
 }
 export type ConfigName = keyof ConfigRowMap;
 export const CONFIG_SCHEMA = {
@@ -1850,5 +1948,218 @@ export const CONFIG_SCHEMA = {
     },
     "key": "item_id",
     "path": "config/timelimititem"
+  },
+  "VipBenefitText": {
+    "container": "rows",
+    "fields": {
+      "index": {
+        "note": "权益展示顺序编号",
+        "required": true,
+        "type": "number"
+      },
+      "key": {
+        "note": "匹配 VIP 配置列的名称",
+        "required": true,
+        "type": "string"
+      },
+      "text": {
+        "note": "权益语言编号",
+        "required": true,
+        "type": "number"
+      },
+      "type": {
+        "note": "布尔或数值展示类型",
+        "required": true,
+        "type": "number"
+      }
+    },
+    "key": "index",
+    "path": "config/goddessviptext"
+  },
+  "VipLevel": {
+    "container": "rows",
+    "fields": {
+      "announce_lang": {
+        "note": "VIP 预告语言编号",
+        "required": false,
+        "type": "number"
+      },
+      "battle_skip": {
+        "note": "是否开启战斗跳过",
+        "required": true,
+        "type": "number"
+      },
+      "battle_speed_2x": {
+        "note": "是否开启二倍速",
+        "required": true,
+        "type": "number"
+      },
+      "battle_speed_3x": {
+        "note": "是否开启三倍速",
+        "required": true,
+        "type": "number"
+      },
+      "buy_gold_bonus": {
+        "note": "购买金币额外加成百分比",
+        "required": true,
+        "type": "number"
+      },
+      "charater_exp_bonus": {
+        "note": "挂机角色经验加成百分比",
+        "required": true,
+        "type": "number"
+      },
+      "extra_bag_space": {
+        "note": "英雄名册增加格数",
+        "required": true,
+        "type": "number"
+      },
+      "extra_idle_time": {
+        "note": "挂机累计上限增加秒数",
+        "required": true,
+        "type": "number"
+      },
+      "extra_market_times": {
+        "note": "市场付费刷新增加次数",
+        "required": true,
+        "type": "number"
+      },
+      "extra_resource_times": {
+        "note": "资源副本额外次数",
+        "required": true,
+        "type": "number"
+      },
+      "gold_bonus": {
+        "note": "挂机金币加成百分比",
+        "required": true,
+        "type": "number"
+      },
+      "heroes_exp_bonus": {
+        "note": "挂机英雄经验加成百分比",
+        "required": true,
+        "type": "number"
+      },
+      "sacrifice_bonus": {
+        "note": "献祭加成百分比",
+        "required": true,
+        "type": "number"
+      },
+      "tavern": {
+        "note": "旧酒馆权益参数",
+        "required": true,
+        "type": "number"
+      },
+      "unlock_goddess_10101": {
+        "note": "是否解锁 10101 女神",
+        "required": true,
+        "type": "number"
+      },
+      "unlock_goddess_10201": {
+        "note": "是否解锁 10201 女神",
+        "required": true,
+        "type": "number"
+      },
+      "unlock_goddess_10301": {
+        "note": "是否解锁 10301 女神",
+        "required": true,
+        "type": "number"
+      },
+      "unlock_goddess_10401": {
+        "note": "是否解锁 10401 女神",
+        "required": true,
+        "type": "number"
+      },
+      "unlock_goddess_10501": {
+        "note": "是否解锁 10501 女神",
+        "required": true,
+        "type": "number"
+      },
+      "unlock_normal_wishpool_10": {
+        "note": "是否开启祈愿次数权益",
+        "required": true,
+        "type": "number"
+      },
+      "unlock_special_headpic": {
+        "note": "是否开启头像权益",
+        "required": true,
+        "type": "number"
+      },
+      "vip_level": {
+        "note": "女神 VIP 等级",
+        "required": true,
+        "type": "number"
+      }
+    },
+    "key": "vip_level",
+    "path": "config/goddessvip"
+  },
+  "VipMission": {
+    "container": "rows",
+    "fields": {
+      "idx": {
+        "note": "契约任务编号",
+        "required": true,
+        "type": "number"
+      },
+      "jump_info": {
+        "note": "旧版功能跳转配置 JSON",
+        "required": true,
+        "type": "string"
+      },
+      "lang": {
+        "note": "任务语言编号",
+        "required": true,
+        "type": "number"
+      },
+      "reward": {
+        "note": "旧版任务奖励 JSON",
+        "required": true,
+        "type": "string"
+      },
+      "task": {
+        "note": "旧版目标条件 JSON",
+        "required": true,
+        "type": "string"
+      },
+      "vip_level": {
+        "note": "任务所属 VIP 档位",
+        "required": true,
+        "type": "number"
+      }
+    },
+    "key": "idx",
+    "path": "config/goddessmission"
+  },
+  "VipUnlock": {
+    "container": "rows",
+    "fields": {
+      "skill": {
+        "note": "女神原始技能编号",
+        "required": true,
+        "type": "number"
+      },
+      "type": {
+        "note": "女神类型编号",
+        "required": true,
+        "type": "number"
+      },
+      "vip_level": {
+        "note": "解锁要求的 VIP 等级",
+        "required": true,
+        "type": "number"
+      },
+      "x": {
+        "note": "女神可视站位横坐标",
+        "required": true,
+        "type": "number"
+      },
+      "y": {
+        "note": "女神可视站位纵坐标",
+        "required": true,
+        "type": "number"
+      }
+    },
+    "key": "type",
+    "path": "config/goddessunlock"
   }
 } as const;

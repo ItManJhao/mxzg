@@ -3,6 +3,7 @@
  * 关闭及异常退出时清理本页监听；业务 Model 和模块请求不随窗口释放。
  */
 import { _decorator, Component } from "cc";
+import { GameLog } from "../../core/GameLog";
 import { ViewCloseUtils } from "./ViewCloseUtils";
 import type { ViewBinding } from "./UIRegistry";
 import { EventScope } from "../EventScope";
@@ -97,7 +98,7 @@ export class BaseView<TArgs = unknown> extends Component {
     return this.ready || Promise.resolve();
   }
 
-  /** 第一次异步开页之前调用，让 open() 能等到格子挂上。 */
+  /** 开始等待页面就绪；同步开页失败早于 whenReady 时也处理拒绝，原等待结果仍可读取。 */
   protected beginOpen(): void {
     if (this.ready) return;
     this.readySettled = false;
@@ -105,6 +106,8 @@ export class BaseView<TArgs = unknown> extends Component {
       this.resolveReady = resolve;
       this.rejectReady = reject;
     });
+    // runOpen 可能在调用方取得等待前同步抛错并关页，保留原 Promise 给正常的错误处理入口。
+    void this.ready.catch(() => {});
   }
 
   protected finishOpen(): void {
@@ -198,6 +201,13 @@ export class BaseView<TArgs = unknown> extends Component {
     }
   }
 
-  /** 节点被引擎直接销毁时，同样释放本界面的业务回调与目标监听。 */
-  onDestroy(): void { this.runDispose(); }
+  /** 引擎直接销毁时仍释放页面。记录业务清理异常，让引擎继续销毁其他组件。 */
+  onDestroy(): void {
+    try {
+      this.runDispose();
+    } catch (error) {
+      const detail = error instanceof Error ? error.stack || error.message : String(error);
+      GameLog.shared.classified("FRAMEWORK", "error", "BaseView", this.constructor.name + " 销毁清理失败 " + detail);
+    }
+  }
 }

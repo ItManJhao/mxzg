@@ -2,6 +2,7 @@
 import { _decorator, Button, Component, Label, Node, Sprite, SpriteFrame } from "cc";
 import type { BagItemData, BagListItem } from "../data/BagItemDataUtils";
 import { ResManager } from "../../../framework/assets/ResManager";
+import { RedDotBinding } from "../../../framework/ui/RedDotBinding";
 import type { BagFace } from "../data/BagItemDataUtils";
 import { ItemDetailUtils } from "../utils/ItemDetailUtils";
 
@@ -34,9 +35,9 @@ export class BagItemView extends Component {
     @property(Node)
     shardCorner: Node | null = null;
 
-    /** 库存碎片达到合成数量时显示；奖励预览及复用的空格保持隐藏。 */
+    /** 保留碎片红点位置和尺寸的预制体锚点。 */
     @property(Node)
-    shardRedDot: Node | null = null;
+    shardReminderAnchor: Node | null = null;
 
     /** 旧精英碎片最多五颗黄星，位置和原图由Prefab保存。 */
     @property([Node])
@@ -64,6 +65,10 @@ export class BagItemView extends Component {
 
     /** 格子绘制代次，show 和销毁时递增，使异步旧图片失效；与库存版本无关。 */
     private revision = 0;
+    /** 当前条目是否显示碎片提醒，供虚拟格先赋数据再激活。 */
+    private shardReminderVisible = false;
+    /** 每个格子最多挂载一份公共红点，切换条目时复用。 */
+    private shardReminder: RedDotBinding | null = null;
 
     /** 检查物品格子必需绑定，缺失时报告具体字段。 */
     public validateBindings(): void {
@@ -111,8 +116,9 @@ export class BagItemView extends Component {
             throw new Error("BagItemView碎片持有数或需求无效");
         }
         this.shardCorner!.active = !!shard;
-        if (this.shardRedDot) {
-            this.shardRedDot.active = !!progress && canComposeShard;
+        this.shardReminderVisible = !!progress && canComposeShard;
+        if (this.enabled && this.node.activeInHierarchy) {
+            this.refreshShardReminder();
         }
         this.shardStars.forEach((star, index) => { star.active = !!shard && index < shard.star; });
         this.shardProgress!.active = !!progress;
@@ -140,9 +146,28 @@ export class BagItemView extends Component {
         }
     }
 
-    /** 销毁时使未完成贴图失效并撤回本格赋图；列表选择监听由所属列表解除。 */
+    /** 虚拟列表激活复用格后，显示当前条目的碎片提醒。 */
+    public onEnable(): void {
+        this.refreshShardReminder();
+    }
+
+    /** 离开视口时隐藏红点，已挂载实例留给本格下一条数据使用。 */
+    public onDisable(): void {
+        this.shardReminder?.setVisible(false);
+    }
+
+    /** 只为可合成的库存碎片加载公共红点，奖励和空格始终隐藏。 */
+    private refreshShardReminder(): void {
+        if (this.shardReminderVisible && !this.shardReminder && this.shardReminderAnchor?.isValid) {
+            this.shardReminder = RedDotBinding.atAnchor(this.shardReminderAnchor);
+        }
+        this.shardReminder?.setVisible(this.shardReminderVisible);
+    }
+
+    /** 销毁时释放红点并撤回本格赋图；列表选择监听由所属列表解除。 */
     public onDestroy(): void {
         this.revision++;
+        this.shardReminder?.dispose();
         ResManager.setSprite(this.frame, null);
         ResManager.setSprite(this.icon, null);
         ResManager.setSprite(this.shardIcon, null);

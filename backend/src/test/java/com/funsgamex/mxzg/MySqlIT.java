@@ -7,11 +7,19 @@ package com.funsgamex.mxzg;
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
 import com.funsgamex.mxzg.campaign.CampaignService;
 import com.funsgamex.mxzg.campaign.CampaignBattle;
+import com.funsgamex.mxzg.dungeon.DailyDungeonService;
+import com.funsgamex.mxzg.dungeon.DailyDungeonType;
+import com.funsgamex.mxzg.guild.GuildService;
 import com.funsgamex.mxzg.hero.HeroQueries;
+import com.funsgamex.mxzg.hero.HeroRepository;
 import com.funsgamex.mxzg.network.SessionSnapshotService;
 import com.funsgamex.mxzg.lineup.Lineup;
 import com.funsgamex.mxzg.lineup.LineupService;
+import com.funsgamex.mxzg.lineup.MainFormationCommandService;
+import com.funsgamex.mxzg.reward.RewardGrantService;
 import com.funsgamex.mxzg.role.RoleService;
+import com.funsgamex.mxzg.time.GameClock;
+import com.funsgamex.mxzg.vip.VipService;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.nio.file.*;
@@ -26,12 +34,23 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.server.ResponseStatusException;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class MySqlIT {
+    /** V3 旧角色夹具沿用至 V53，在迁移前补入已通过的金币副本和冻结战报。 */
+    private static final String LEGACY_GOLD_ROLE = "00000000-0000-4000-8000-000000000001";
+    /** 已结算的旧挑战编号，仅用于检查迁移后原记录能否读取。 */
+    private static final String LEGACY_GOLD_REQUEST = "00000000-0000-4000-8000-000000000053";
+    /** 固定的旧重置秒，只验证字段搬迁，避免验证跨越真实日期而影响断言。 */
+    private static final long LEGACY_GOLD_RESET_AT = 1_795_449_600;
+    /** 迁移前发过五星英雄、当前名册为空的独立角色。 */
+    private static final String LEGACY_HERO_ROLE = "00000000-0000-4000-8000-000000000058";
+
     private OwnedMysql mysql;
     private ConfigurableApplicationContext app;
     private JdbcTemplate jdbc;
@@ -66,9 +85,49 @@ class MySqlIT {
                 statement.executeUpdate("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES ('00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000001',10101001,2,1)");
                 statement.executeUpdate("INSERT INTO game_inventory(role_id,item_id,quantity) VALUES ('00000000-0000-4000-8000-000000000001',900101,100)");
             }
+            seedLegacyGoldBeforeMigration();
+            seedLegacyHeroBeforeMigration();
             boot();
         }
         catch (Exception | AssertionError failure) { close(); throw failure; }
+    }
+
+    /** 保留 V58 之前真实存在的开发发放回执格式，模拟英雄后来被消耗。 */
+    private void seedLegacyHeroBeforeMigration() throws Exception {
+        try (var connection = mysql.connect(); var statement = connection.createStatement()) {
+            statement.executeUpdate("""
+                INSERT INTO game_role(id,account_key,nickname,role_level,gold,diamonds,login_account,server_id)
+                VALUES ('%s','it_v58_migration','it_v58_migration',25,0,0,'it_v58_migration','local-1')
+                """.formatted(LEGACY_HERO_ROLE));
+            statement.executeUpdate("""
+                INSERT INTO game_gm_grant(role_id,request_id,kind,config_id,quantity)
+                VALUES ('%s','00000000-0000-4000-8000-000000000059','hero',10205020,2)
+                """.formatted(LEGACY_HERO_ROLE));
+        }
+    }
+
+    /** 将独占库迁到 V53 后保存旧式金币进度和原始回执，供实际 V54 升级验证。 */
+    private void seedLegacyGoldBeforeMigration() throws Exception {
+        org.flywaydb.core.Flyway.configure().dataSource(mysql.url(), mysql.user, mysql.password)
+                .cleanDisabled(true).target("53").load().migrate();
+        try (var connection = mysql.connect();
+             var progress = connection.prepareStatement(
+                     "INSERT INTO game_daily_gold(role_id,wins,cleared,reset_at_seconds) VALUES (?,2,TRUE,?)");
+             var receipt = connection.prepareStatement("""
+                     INSERT INTO game_daily_gold_request
+                       (role_id, request_id, sweep, max_diamonds, report_bytes, receipt_json, receipt_hash)
+                     VALUES (?,?,FALSE,0,?,?,?)
+                     """)) {
+            progress.setString(1, LEGACY_GOLD_ROLE);
+            progress.setLong(2, LEGACY_GOLD_RESET_AT);
+            progress.executeUpdate();
+            receipt.setString(1, LEGACY_GOLD_ROLE);
+            receipt.setString(2, LEGACY_GOLD_REQUEST);
+            receipt.setBytes(3, new byte[]{1, 25, 127});
+            receipt.setString(4, "{}");
+            receipt.setString(5, "e".repeat(64));
+            receipt.executeUpdate();
+        }
     }
 
     /** 每次重启都先执行隔离检查；最高优先级进程内配置不允许环境中的业务库覆盖。 */
@@ -574,6 +633,217 @@ class MySqlIT {
         assertEquals(2, secondBattle.state().maxCleared());
         assertEquals(16, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         System.out.println("[MYSQL-IT] main chapter V16: pending/replay/reward receipt survive two owned database and application restarts; concurrent claim grants once");
+    }
+
+    /** 在隔离 MySQL 验证公会与徽章迁移，重启后仍能恢复成员关系和选定徽章。 */
+    @Test @Order(21)
+    void guildMembershipSurvivesApplicationRestart() throws Exception {
+        var leader = player();
+        var applicant = player();
+        jdbc.update("UPDATE game_role SET role_level=18, diamonds=100 WHERE id IN (?,?)", leader.id(), applicant.id());
+        var guilds = app.getBean(GuildService.class);
+        var create = new GuildService.Command(UUID.randomUUID().toString(), GuildService.Action.CREATE,
+            null, null, "晨风", "欢迎新成员", 12);
+        var created = guilds.change(leader.id(), create);
+        var guildId = created.guild().id();
+        assertEquals(0, snapshots.snapshot(leader.token()).role().diamonds());
+        var listed = guilds.list(applicant.id(), "晨", 1).guilds().getFirst();
+        assertEquals(guildId, listed.id());
+        assertEquals(12, listed.badgeId());
+        guilds.change(applicant.id(), new GuildService.Command(UUID.randomUUID().toString(), GuildService.Action.APPLY,
+            guildId, null, null, null));
+        assertEquals(applicant.id(), guilds.list(leader.id(), "", 1).applications().getFirst().id());
+        guilds.change(leader.id(), new GuildService.Command(UUID.randomUUID().toString(), GuildService.Action.APPROVE,
+            guildId, applicant.id(), null, null));
+        app.close();
+        boot();
+        guilds = app.getBean(GuildService.class);
+        var restored = guilds.change(leader.id(), create);
+        assertEquals(2, restored.members().size());
+        assertEquals(12, restored.guild().badgeId());
+        assertEquals("晨风", snapshots.snapshot(applicant.token()).role().guildName());
+        guilds.change(applicant.id(), new GuildService.Command(UUID.randomUUID().toString(), GuildService.Action.LEAVE,
+            guildId, null, null, null));
+        assertEquals("", snapshots.snapshot(applicant.token()).role().guildName());
+    }
+
+    /** V53 真实发奖记录在应用重启后仍可恢复，同任务不会重复发放。 */
+    @Test @Order(22)
+    void vipClaimSurvivesApplicationRestart() throws Exception {
+        var player = player();
+        jdbc.update("UPDATE game_role SET role_level=5 WHERE id=?", player.id());
+        var before = snapshots.snapshot(player.token());
+        assertEquals(0, before.vip().level());
+        var requestId = UUID.randomUUID().toString();
+        var vip = app.getBean(com.funsgamex.mxzg.vip.VipService.class);
+        var receipt = vip.claim(player.token(), requestId, 100200);
+        app.close();
+        boot();
+        vip = app.getBean(com.funsgamex.mxzg.vip.VipService.class);
+        assertEquals(receipt, vip.claim(player.token(), requestId, 100200));
+        var restored = snapshots.snapshot(player.token());
+        assertEquals(before.role().diamonds() + 20, restored.role().diamonds());
+        assertEquals(receipt.assetRevision(), restored.revision());
+        assertTrue(restored.vip().tasks().stream().anyMatch(task -> task.id() == 100200 && task.claimed()));
+    }
+
+    /** 检查 MySQL 实际升级后首关资格、旧日次、日期和冻结回执都保留。 */
+    @Test @Order(23)
+    void dailyGoldMigrationKeepsLegacyProgressAndReceipt() {
+        assertEquals(1, number("SELECT COUNT(*) FROM flyway_schema_history WHERE version='54' AND success=1"));
+        assertEquals(1, number("SELECT COUNT(*) FROM flyway_schema_history WHERE version='55' AND success=1"));
+        assertEquals(1, number("SELECT COUNT(*) FROM game_daily_dungeon WHERE role_id=?", LEGACY_GOLD_ROLE));
+        var progress = jdbc.queryForMap("""
+                SELECT wins, highest_cleared, reset_at_seconds
+                  FROM game_daily_dungeon
+                 WHERE role_id=? AND dungeon_type='gold'
+                """, LEGACY_GOLD_ROLE);
+        assertEquals(2, ((Number) progress.get("wins")).intValue());
+        assertEquals(1, ((Number) progress.get("highest_cleared")).intValue());
+        assertEquals(LEGACY_GOLD_RESET_AT, ((Number) progress.get("reset_at_seconds")).longValue());
+        var receipt = jdbc.queryForMap("""
+                SELECT report_bytes, receipt_json, receipt_hash
+                  FROM game_daily_dungeon_request
+                 WHERE role_id=? AND request_id=? AND dungeon_type='gold'
+                """, LEGACY_GOLD_ROLE, LEGACY_GOLD_REQUEST);
+        assertArrayEquals(new byte[]{1, 25, 127}, (byte[]) receipt.get("report_bytes"));
+        assertEquals("{}", receipt.get("receipt_json"));
+        assertEquals("e".repeat(64), receipt.get("receipt_hash"));
+    }
+
+    /** 用真实 MySQL 核对两类次数独立，战斗及扫荡到账与原回执在应用重启后保留。 */
+    @Test @Order(24)
+    void experienceDungeonKeepsRewardsAndIndependentProgressAfterRestart() throws Exception {
+        var player = player();
+        String heroId = UUID.randomUUID().toString();
+        jdbc.update("UPDATE game_role SET role_level=17 WHERE id=?", player.id());
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10104004,100,4)",
+                heroId, player.id());
+        long beforeExp = inventory(player.token()).stream().filter(item -> item.itemId() == 900101)
+                .mapToLong(item -> item.quantity()).sum();
+        long formationVersion = snapshots.snapshot(player.token()).mainFormation().version();
+        app.getBean(MainFormationCommandService.class).save(player.token(), new MainFormationCommandService.Save(
+                UUID.randomUUID().toString(), formationVersion, 1, List.of(new Lineup.Slot(2, heroId))));
+
+        var dungeons = app.getBean(DailyDungeonService.class);
+        String challengeId = UUID.randomUUID().toString();
+        var fight = dungeons.challenge(player.token(), DailyDungeonType.EXPERIENCE, challengeId, 1, false, 0);
+        assertTrue(fight.won());
+        assertEquals("dungeon:experience:1", fight.replay().getScenario());
+        var conflict = assertThrows(ResponseStatusException.class,
+                () -> dungeons.challenge(player.token(), DailyDungeonType.GOLD, challengeId, 1, false, 0));
+        assertEquals("DUNGEON_REQUEST_CONFLICT", conflict.getReason());
+        String sweepId = UUID.randomUUID().toString();
+        var sweep = dungeons.challenge(player.token(), DailyDungeonType.EXPERIENCE, sweepId, 1, true, 0);
+        assertEquals(2, sweep.state().wins());
+        assertEquals(0, dungeons.current(player.token(), DailyDungeonType.GOLD).wins());
+
+        app.close();
+        boot();
+        var restored = app.getBean(DailyDungeonService.class);
+        assertEquals(sweep, restored.challenge(player.token(), DailyDungeonType.EXPERIENCE, sweepId, 1, true, 0));
+        assertEquals(2, restored.current(player.token(), DailyDungeonType.EXPERIENCE).wins());
+        assertEquals(0, restored.current(player.token(), DailyDungeonType.GOLD).wins());
+        long afterExp = inventory(player.token()).stream().filter(item -> item.itemId() == 900101)
+                .mapToLong(item -> item.quantity()).sum();
+        assertEquals(beforeExp + 120_000, afterExp);
+    }
+
+    /** 在独立 MySQL 上验证 V56/V57、两种战报的原回执及重启后的 VIP 进度。 */
+    @Test @Order(25)
+    void towerAndArenaKeepReceiptsAndVipProgressAfterRestart() throws Exception {
+        assertEquals(1, number("SELECT COUNT(*) FROM flyway_schema_history WHERE version='56' AND success=1"));
+        assertEquals(1, number("SELECT COUNT(*) FROM flyway_schema_history WHERE version='57' AND success=1"));
+        var player = player();
+        jdbc.update("UPDATE game_role SET role_level=16,goddess_vip=1 WHERE id=?", player.id());
+        var slots = new java.util.ArrayList<Lineup.Slot>();
+        int[] templates = {10104004, 10505005, 10204005, 10204004, 10405005};
+        int[] positions = {2, 3, 5, 6, 7};
+        for (int index = 0; index < templates.length; index++) {
+            String hero = UUID.randomUUID().toString();
+            jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,?,?,?)",
+                    hero, player.id(), templates[index], 100, index == 1 || index == 4 ? 5 : 4);
+            slots.add(new Lineup.Slot(positions[index], hero));
+        }
+        long version = snapshots.snapshot(player.token()).mainFormation().version();
+        app.getBean(MainFormationCommandService.class).save(player.token(), new MainFormationCommandService.Save(
+                UUID.randomUUID().toString(), version, 1, slots));
+        var tower = app.getBean(com.funsgamex.mxzg.tower.TowerService.class);
+        var arena = app.getBean(com.funsgamex.mxzg.arena.ArenaService.class);
+        tower.saveFormation(player.token(), tower.current(player.token()).formationVersion(), 1, slots);
+        String climbId = UUID.randomUUID().toString();
+        var climb = tower.challenge(player.token(), climbId, 1);
+        assertTrue(climb.won());
+        int opponent = arena.current(player.token()).opponents().getFirst().id();
+        String fightId = UUID.randomUUID().toString();
+        var fight = arena.challenge(player.token(), fightId, opponent);
+        var before = snapshots.snapshot(player.token());
+        assertTrue(before.vip().tasks().stream().anyMatch(task -> task.id() == 100700 && task.progress() == 1));
+        assertTrue(before.vip().tasks().stream().anyMatch(task -> task.id() == 100800 && task.progress() == 1));
+
+        app.close();
+        boot();
+        var restoredTower = app.getBean(com.funsgamex.mxzg.tower.TowerService.class);
+        var restoredArena = app.getBean(com.funsgamex.mxzg.arena.ArenaService.class);
+        assertEquals(climb, restoredTower.challenge(player.token(), climbId, 1));
+        assertEquals(fight, restoredArena.challenge(player.token(), fightId, opponent));
+        assertEquals(fight.replay(), restoredArena.replay(player.token(), fight.record().battleId()));
+        assertEquals(slots, restoredTower.current(player.token()).slots());
+        var restored = snapshots.snapshot(player.token());
+        assertEquals(before.vip(), restored.vip());
+        assertEquals(before.revision(), restored.revision());
+        assertEquals(before.inventory(), restored.inventory());
+    }
+
+    /** MySQL 跨版本恢复参与和五星获得，重启后保留升档、到账和同一回执。 */
+    @Test @Order(26)
+    void vipThreeProgressAndClaimsSurviveApplicationRestart() throws Exception {
+        assertEquals(1, number("SELECT COUNT(*) FROM flyway_schema_history WHERE version='58.1' AND success=1"));
+        var dungeon = app.getBean(com.funsgamex.mxzg.dungeon.DailyDungeonRepository.class);
+        var roster = app.getBean(HeroRepository.class);
+        assertEquals(1, dungeon.participationCount(LEGACY_GOLD_ROLE));
+        assertTrue(roster.list(LEGACY_HERO_ROLE).isEmpty());
+        assertEquals(2, roster.countFiveStarAcquisitions(LEGACY_HERO_ROLE));
+
+        var player = player();
+        jdbc.update("UPDATE game_role SET role_level=25,goddess_vip=2 WHERE id=?", player.id());
+        jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared) VALUES (?,70)", player.id());
+        var time = app.getBean(GameClock.class);
+        jdbc.update("INSERT INTO game_main_chapter_idle(role_id,started_at) VALUES (?,?)", player.id(), time.epochSeconds());
+        var slot = new Lineup.Slot(2, UUID.randomUUID().toString());
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10505005,100,5)",
+            slot.heroId(), player.id());
+        long version = snapshots.snapshot(player.token()).mainFormation().version();
+        app.getBean(MainFormationCommandService.class).save(player.token(), new MainFormationCommandService.Save(
+            UUID.randomUUID().toString(), version, 1, List.of(slot)));
+        String battleId = UUID.randomUUID().toString();
+        var battle = app.getBean(DailyDungeonService.class).challenge(player.token(), DailyDungeonType.GOLD,
+            battleId, 1, false, 0);
+        assertTrue(battle.won());
+
+        var grants = app.getBean(RewardGrantService.class);
+        new TransactionTemplate(app.getBean(PlatformTransactionManager.class)).executeWithoutResult(status ->
+            grants.grant(player.id(), List.of(new RewardGrantService.Reward(10205020, 3)),
+                new RewardGrantService.Context(time.epochSeconds(), 0), ThreadLocalRandom.current()));
+        var before = snapshots.snapshot(player.token());
+        assertEquals(List.of(70, 25, 1, 3), before.vip().tasks().stream().map(VipService.Task::progress).toList());
+        var vip = app.getBean(VipService.class);
+        for (int task : List.of(100900, 101000, 101100)) {
+            vip.claim(player.token(), UUID.randomUUID().toString(), task);
+        }
+        String claimId = UUID.randomUUID().toString();
+        var receipt = vip.claim(player.token(), claimId, 101200);
+
+        app.close();
+        boot();
+        var restored = snapshots.snapshot(player.token());
+        assertEquals(3, restored.vip().level());
+        assertEquals(before.role().diamonds() + 120, restored.role().diamonds());
+        assertEquals(3, app.getBean(HeroRepository.class).countFiveStarAcquisitions(player.id()));
+        assertEquals(battle, app.getBean(DailyDungeonService.class).challenge(player.token(), DailyDungeonType.GOLD,
+            battleId, 1, false, 0));
+        assertEquals(receipt, app.getBean(VipService.class).claim(player.token(), claimId, 101200));
+        assertEquals(restored.revision(), snapshots.snapshot(player.token()).revision());
     }
 
     /** 仅拥有本次新建数据目录的 MySQL 进程；不能配置或重用任何外部数据库。 */

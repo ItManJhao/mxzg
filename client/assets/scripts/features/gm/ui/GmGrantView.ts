@@ -53,7 +53,7 @@ export class GmGrantView extends BaseView<GmGrantArgs> {
     @property(Button) closeButton: Button | null = null;
     /** 名称或配置 ID 搜索输入。 */
     @property(EditBox) search: EditBox | null = null;
-    /** 正整数输入，金币和钻石按钱包上限校验。 */
+    /** 正整数输入，金币、钻石与英雄经验共用大额发放上限。 */
     @property(EditBox) quantity: EditBox | null = null;
     /** Prefab 保存的下拉区域。 */
     @property(Node) dropdown: Node | null = null;
@@ -88,10 +88,11 @@ export class GmGrantView extends BaseView<GmGrantArgs> {
         });
         this.bindButton(this.grantButton!, () => void this.grant());
         const search = () => this.paintOptions();
-        this.search!.node.on(EditBox.EventType.TEXT_CHANGED, search);
+        const searchNode = this.search!.node;
+        searchNode.on(EditBox.EventType.TEXT_CHANGED, search);
         this.stops.push(() => {
-            if (this.search?.node.isValid) {
-                this.search.node.off(EditBox.EventType.TEXT_CHANGED, search);
+            if (searchNode.isValid) {
+                searchNode.off(EditBox.EventType.TEXT_CHANGED, search);
             }
         });
         this.readOptions(args.kind);
@@ -137,7 +138,7 @@ export class GmGrantView extends BaseView<GmGrantArgs> {
     private instructions(): string {
         return this.args?.kind === "hero"
             ? "仅用于测试。英雄每次最多 20 个，发放后等待服务端同步。"
-            : "金币、钻石可超过 9999，其余按原上限。";
+            : "金币、钻石和英雄经验可超过 9999，其余按原上限。";
     }
 
     /** 搜索最多展示 100 条配置，列表位置、尺寸和复用完全交给 SuperScroll。 */

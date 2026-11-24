@@ -55,7 +55,7 @@ public class RoleRepository {
     private final RoleRules rules;
     /** 旧英雄容量配置，只在创建角色时提供持久初值。 */
     private final com.funsgamex.mxzg.hero.HeroCapacityService heroCapacity;
-    /** 行映射同时投影持久公开编号及赠礼资格，等级门槛按可信配置派生。 */
+    /** 读取基础角色行、公开编号及赠礼资格，公会名由同事务的快照装配补充。 */
     private RoleProfile map(java.sql.ResultSet row,int index) throws java.sql.SQLException {
         int level = row.getInt("role_level");
         var basics = new RoleBasics(row.getLong("role_experience"), row.getInt("cup"),
@@ -63,7 +63,7 @@ public class RoleRepository {
             row.getLong("created_at_seconds"), row.getLong("last_login_at_seconds"), rules.threshold(level));
         return new RoleProfile(row.getString("id"), row.getString("nickname"), level, row.getLong("gold"),
             row.getLong("diamonds"), row.getString("server_id"), basics, row.getBoolean("first_named"),
-            row.getBoolean("welcome_gift_available"), row.getString("public_id"));
+            row.getBoolean("welcome_gift_available"), row.getString("public_id"), null);
     }
     /** 资产版本与事务提交同步，由所有钱包写入共同使用。 */
     private final com.funsgamex.mxzg.network.AssetSyncService sync;
@@ -92,6 +92,18 @@ public class RoleRepository {
             sync.changed(roleId);
         }
         return changed;
+    }
+
+    /** 在角色锁内保存竞技场结算后的真实积分，同一次发奖和任务进度共用版本。 */
+    public void setArenaScore(String roleId, int score) {
+        if (score < 0) {
+            throw new IllegalArgumentException("竞技场积分不能为负");
+        }
+        sync.requireTransaction();
+        if (jdbc.update("UPDATE game_role SET cup=? WHERE id=?", score, roleId) != 1) {
+            throw new IllegalStateException("竞技场积分写入行数异常");
+        }
+        sync.changed(roleId);
     }
 
     /** 注入角色持久化与资产同步出口。 */
