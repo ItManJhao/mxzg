@@ -6487,24 +6487,10 @@
     },
     "specialAnchors": [
       {
-        "node": "Content",
+        "node": "PortraitIllustration",
         "anchor": [
-          0,
-          0
-        ]
-      },
-      {
-        "node": "HeroHeader",
-        "anchor": [
-          0,
-          0
-        ]
-      },
-      {
-        "node": "node_equip",
-        "anchor": [
-          0,
-          0
+          0.5,
+          1
         ]
       },
       {
@@ -6536,16 +6522,16 @@
         ]
       },
       {
-        "node": "HeroPower",
+        "node": "node_equip",
         "anchor": [
           0,
           0
         ]
       },
       {
-        "node": "node_panel",
+        "node": "HeroHeader",
         "anchor": [
-          0.5,
+          0,
           0
         ]
       },
@@ -6554,6 +6540,20 @@
         "anchor": [
           0.5,
           0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
         ]
       },
       {
@@ -6567,18 +6567,39 @@
         "node": "view",
         "anchor": [
           0.5,
-          0
+          1
         ]
       },
       {
         "node": "content",
         "anchor": [
-          0,
+          0.5,
           1
         ]
       },
       {
-        "node": "HeroActions",
+        "node": "DetailScroll",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "DetailBody",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "GrowthTabRow",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "HeroPower",
         "anchor": [
           0,
           0
@@ -6592,73 +6613,10 @@
         ]
       },
       {
-        "node": "menu_back",
+        "node": "HeroActions",
         "anchor": [
           0,
           0
-        ]
-      },
-      {
-        "node": "node_evolve",
-        "anchor": [
-          0,
-          0
-        ]
-      },
-      {
-        "node": "lbl_evolution_lv",
-        "anchor": [
-          0,
-          0.5
-        ]
-      },
-      {
-        "node": "DetailBody",
-        "anchor": [
-          0.5,
-          0
-        ]
-      },
-      {
-        "node": "DetailScroll",
-        "anchor": [
-          0.5,
-          1
-        ]
-      },
-      {
-        "node": "view",
-        "anchor": [
-          0.5,
-          1
-        ]
-      },
-      {
-        "node": "content",
-        "anchor": [
-          0.5,
-          1
-        ]
-      },
-      {
-        "node": "PortraitIllustration",
-        "anchor": [
-          0.5,
-          1
-        ]
-      },
-      {
-        "node": "FeaturePanel",
-        "anchor": [
-          0.5,
-          0
-        ]
-      },
-      {
-        "node": "GrowthTabRow",
-        "anchor": [
-          0,
-          0.5
         ]
       },
       {
@@ -6681,38 +6639,75 @@
           0.5,
           0
         ]
+      },
+      {
+        "node": "FeaturePanel",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "node_panel",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "menu_back",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_evolution_lv",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "node_evolve",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0,
+          0
+        ]
       }
     ],
     "scrolls": [
       {
         "node": "scroll_view_tab",
         "content": {
-          "__id__": 175
+          "__id__": 435
         }
       },
       {
         "node": "DetailScroll",
         "content": {
-          "__id__": 327
+          "__id__": 520
         }
       }
     ],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "Creator 独立浏览器使用测试快照，实测升星、宝石、神装页签及宝石槽和一键镶嵌提醒，更新到已完成的快照后熄灭，关闭后清理。截图见 client/temp/project-checks/red-dot-preview-star.png 与 red-dot-preview-jewels.png。",
-    "sha256": "c7174da079b7c956c00ef7235e3f455c05993148d30157c6dbfbbfaa98bba6d8",
-    "acceptanceFingerprintDifference": {
-      "difference": "仅CRLF/LF差异",
-      "recordedSha256": "e60a4e4474391f50405493742d97deeff3042e291866466455f2a9489ae53ad2",
-      "normalizedLfSha256": "c7174da079b7c956c00ef7235e3f455c05993148d30157c6dbfbbfaa98bba6d8"
-    },
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "Creator 已导入该指纹。结构、脚本字段、资源引用、英雄详情与装备专项通过，最新布局和翻页按钮待实画复验。",
+    "sha256": "a84828ff3f5a81e350dfff03e3a3941482efdedd65192069d23f03027151e57b",
     "acceptance": {
-      "sha256": "e60a4e4474391f50405493742d97deeff3042e291866466455f2a9489ae53ad2",
-      "date": "2026-11-23",
-      "status": "实际预览通过",
-      "scope": "Creator 独立浏览器使用测试快照，实测升星、宝石、神装页签及宝石槽和一键镶嵌提醒，更新到已完成的快照后熄灭，关闭后清理。截图见 client/temp/project-checks/red-dot-preview-star.png 与 red-dot-preview-jewels.png。",
-      "inspector": "验证范围限单一预览设备尺寸与红点相关行为，未操作 Creator Inspector。"
+      "sha256": "a84828ff3f5a81e350dfff03e3a3941482efdedd65192069d23f03027151e57b",
+      "date": "2026-11-25",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "Creator 已导入该指纹。结构、脚本字段、资源引用、英雄详情与装备专项通过，最新布局和翻页按钮待实画复验。",
+      "inspector": "保留此版本的 Creator 序列化数据，上一版实际预览证据见 supersededEntries。"
     }
   },
   {

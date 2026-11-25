@@ -304,11 +304,11 @@
       "inspector": "Creator 独立会话竖屏验证了 7 个不同星级样本，并确认名册和出阵加载同一 SpriteFrame；截图保留在 client/temp/project-checks/hero-roster-card-preview.png。"
     },
     "client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab": {
-      "sha256": "e60a4e4474391f50405493742d97deeff3042e291866466455f2a9489ae53ad2",
-      "date": "2026-11-23",
-      "status": "实际预览通过",
-      "scope": "Creator 独立浏览器使用测试快照，实测升星、宝石、神装页签及宝石槽和一键镶嵌提醒，更新到已完成的快照后熄灭，关闭后清理。截图见 client/temp/project-checks/red-dot-preview-star.png 与 red-dot-preview-jewels.png。",
-      "inspector": "验证范围限单一预览设备尺寸与红点相关行为，未操作 Creator Inspector。"
+      "sha256": "a84828ff3f5a81e350dfff03e3a3941482efdedd65192069d23f03027151e57b",
+      "date": "2026-11-25",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "Creator 已导入该指纹。结构、脚本字段、资源引用、英雄详情与装备专项通过，最新布局和翻页按钮待实画复验。",
+      "inspector": "保留此版本的 Creator 序列化数据，上一版实际预览证据见 supersededEntries。"
     },
     "client/assets/bundles/module/hero/prefabs/HeroListView.prefab": {
       "sha256": "6550d31d86d0689ef5b957ec0938bfb79c9d82faab6eb761e27d070525558064",
@@ -511,6 +511,18 @@
     "client/temp/project-checks"
   ],
   "supersededEntries": [
+    {
+      "path": "client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab",
+      "supersededOn": "2026-11-25",
+      "reason": "Creator 重新保存英雄详情，更新布局序列化数据及翻页箭头方向。原红点预览仍对应原文件指纹。",
+      "record": {
+        "sha256": "e60a4e4474391f50405493742d97deeff3042e291866466455f2a9489ae53ad2",
+        "date": "2026-11-23",
+        "status": "实际预览通过",
+        "scope": "Creator 独立浏览器使用测试快照，实测升星、宝石、神装页签及宝石槽和一键镶嵌提醒，更新到已完成的快照后熄灭，关闭后清理。截图见 client/temp/project-checks/red-dot-preview-star.png 与 red-dot-preview-jewels.png。",
+        "inspector": "验证范围限单一预览设备尺寸与红点相关行为，未操作 Creator Inspector。"
+      }
+    },
     {
       "path": "client/assets/bundles/module/home/prefabs/CityChromeView.prefab",
       "supersededOn": "2026-11-25",

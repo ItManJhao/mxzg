@@ -9,7 +9,7 @@
 | 参考 | 用途 | 不应替代的内容 |
 |---|---|---|
 | mxzg 旧客户端、服务端、策划表 | 确认玩法、规则、消耗、奖励、状态、流程、资源与配置含义 | 不能只看旧 UI 就猜服务端规则 |
-| 负责人提供的正式服测试入口 | 使用具备验收数据的测试角色核对布局、交互、动画与反馈 | 通用数值规则以源码、策划配置和已确认的决定为准 |
+| [正式服测试入口](https://meltia-jp-staging.funsgamex.com/perf-9003/) | 使用负责人已连接的游戏会话核对布局、交互、动画与反馈。新会话可能需要测试邀请 | 通用数值规则以源码、策划配置和已确认的决定为准 |
 | G:/游爱/trunk | 模块名称、明确方法、收包→更新数据→通知界面的阅读路径 | 不复制玩法、协议编号、Sproto、Laya 类或全局管理框架 |
 
 参考源码（相对 G:/游爱/trunk）：`src/game/main/model/SGModel.ts`、`src/game/main/controller/SGCtrl.ts`、`src/game/main/view/sg/SpiritGameMainView.ts`。SGModel 的 setData/setRecord、SGCtrl 的 onNotify 分发与明确业务方法、View 的 onShow/onHide 成对监听，是值得借鉴的可读性。mxzg 原源码路径和固定版本见 [架构核查](architecture.md#原项目架构核查2026-11-02)。
