@@ -1,6 +1,6 @@
 # 新版游戏后端
 
-当前通过长连接提供开发登录、统一快照、主线挑战和结算、挂机领取及里程碑。玩法开放范围和实际验证见 [项目进度](../docs/development-progress.md)。
+服务端通过 WebSocket 提供开发登录、角色和资产同步、各玩法事务，以及在线社交变更通知。按模块查看玩家入口与验证边界，请读[项目进度](../docs/development-progress.md)；要定位协议与事务，请读[通信契约](../docs/network-contract.md)。
 
 唯一协议见 [game.proto](../protocol/game.proto)，入口 /api/v1/game/socket，子协议 mxzg.protobuf.v2，Protobuf 二进制。登录和恢复成功回包一次包含角色、库存、持久版本，不再支持 session.sync/inventory.list。字段与时序见[通信契约](../docs/network-contract.md)。
 
@@ -15,7 +15,7 @@
 
 也可双击 scripts/start-remake-backend.bat。修改后端使用 restart-remake-backend.bat；只停止核对归属的本仓库 Java 进程。已有服务复用前验证 v2 子协议，不发英雄/角色/选服 HTTP 探针，不启动第二份进程。
 
-本机使用 Java 21 和 Maven Wrapper。local 绑定回环地址，默认使用 .local/game 文件 H2。当前迁移至 V28，V24/V25 保存挂机累计与回执，V26 保存独立冒险点，V27/V28 保存里程碑集合与领取回执。正式环境需要显式配置数据源。
+本机使用 Java 21 和 Maven Wrapper。local 绑定回环地址，默认使用 .local/game 文件 H2。迁移按版本顺序执行。V66～V70 分别覆盖主城榜点赞、邮箱、好友、竞技场攻防与赛季，完整序列见[迁移目录](src/main/resources/db/migration)。正式环境需要显式配置数据源。
 
 本机local的GM已按负责人确认默认开启，重启读取项目配置；显式`MXZG_GM_ENABLED=false`可关闭，production仍不装配GM。直接运行ps1被执行策略阻止时，使用上面的restart-remake-backend.bat，其Bypass仅作用于子进程，不改系统策略。使用说明见[开发GM](../docs/gm-development.md)。
 
@@ -26,7 +26,7 @@
 ## 状态与持久化
 
 - SessionService 持久化令牌摘要与过期时间，角色身份来自服务端会话。
-- SessionSnapshotService 在角色锁内读取钱包、库存和持久版本，包含持久英雄名册、容量及普通四槽装备；养成写入口仍暂停。
+- SessionSnapshotService 在角色锁内读取钱包、库存和持久版本，包含已接入的名册、阵容与穿戴状态。已开放的养成写操作和真实资产来源见[英雄维护契约](../docs/hero-lineup-contract.md)。
 - 业务用例在角色锁事务内改资产；RoleRepository/InventoryService 显式接入 AssetSyncService，写入前要求事务，同角色每事务递增一次版本，提交后发送 state.changed。
 - AssetSync自定义去重资源随独立事务挂起/恢复；提交后快照若回收期限物品，使用自己的revision与通知。通知异常不改变已提交结果，不阻断同次其他角色；不是重新发奖入口。
 - 钱包入账在真实角色行锁内分别精确相加金币/钻石，全部校验通过再单条更新；任一溢出不部分入账。当前75项关联及最后16项复验见[前置证据](../docs/validation/idle-settlement-prerequisites-review-20261113.json)，未运行MySQL或日常库。
@@ -48,7 +48,7 @@
 .\test-mysql.ps1 -MysqlHome G:/work/FsGame/Project/mxzg/backend/.tools/mysql-download/mysql-8.4.13-winx64
 ~~~
 
-此工具每轮新建专用MySQL实例、随机端口与受限库账号，核对UUID、库名、授权后才运行；不接受现有玩家库地址。测试结束只停止自己启动的进程并保留归属记录。覆盖范围以脚本和对应批次证据为准；当前至V28的迁移和领取增量验证以独立H2为主，尚未完成对应MySQL增量验收，不能用历史MySQL结果替代。
+此工具每轮新建专用MySQL实例、随机端口与受限库账号，核对UUID、库名、授权后才运行；不接受现有玩家库地址。测试结束只停止自己启动的进程并保留归属记录。覆盖范围以脚本和对应批次证据为准；H2 回归与目标 MySQL 的迁移、重启结果按批次分别记录。
 
 启动器黑盒测试：仓库根目录运行 node tools/test_backend_launcher.cjs，只创建随机端口的合成握手服务，不连接数据库。
 

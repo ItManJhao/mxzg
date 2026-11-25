@@ -9,7 +9,7 @@
 | 参考 | 用途 | 不应替代的内容 |
 |---|---|---|
 | mxzg 旧客户端、服务端、策划表 | 确认玩法、规则、消耗、奖励、状态、流程、资源与配置含义 | 不能只看旧 UI 就猜服务端规则 |
-| [旧正式服](https://mxzg-test.funsgamex.com/jp/) | 核对真实布局、交互、动画、战斗和反馈效果 | 单个测试号的等级/VIP/活动状态不等于通用数值规则 |
+| 负责人提供的正式服测试入口 | 使用具备验收数据的测试角色核对布局、交互、动画与反馈 | 通用数值规则以源码、策划配置和已确认的决定为准 |
 | G:/游爱/trunk | 模块名称、明确方法、收包→更新数据→通知界面的阅读路径 | 不复制玩法、协议编号、Sproto、Laya 类或全局管理框架 |
 
 参考源码（相对 G:/游爱/trunk）：`src/game/main/model/SGModel.ts`、`src/game/main/controller/SGCtrl.ts`、`src/game/main/view/sg/SpiritGameMainView.ts`。SGModel 的 setData/setRecord、SGCtrl 的 onNotify 分发与明确业务方法、View 的 onShow/onHide 成对监听，是值得借鉴的可读性。mxzg 原源码路径和固定版本见 [架构核查](architecture.md#原项目架构核查2026-11-02)。
@@ -678,7 +678,7 @@ SkillAuditUtils不再维护技能演示白名单。Creator项目扩展自动提�
 - RemakeHomeView 唯一持有 CityHubView / CityChromeView 子节点，负责打开、关闭、失败清理；子视图不再单独登记为 Hud。
 - UIManager 在预制体加载完成后复查打开意图。切页取消时释放已挂载但尚未就绪的页面。旧页关闭异常留在框架日志，故障实例直接释放。
 - 页面在 `onClose` 解除显示期监听，依附父页的弹窗使用 `openChild`。Creator 销毁父组件前可能已销毁子节点并清空子组件的 `node` 引用，销毁回调解绑时先判定实际节点是否仍可用。
-- 操作反馈统一调用UIManager.toast，由ToastManager复用Remake.scene的ApplicationNotice静态节点；登录前和独立技能台也可用，不另造页面提示节点。结果按有界队列去重、上浮和自动消失，页面保留加载进度/玩法状态/固定说明，不用正文承载成功或失败。换号clear，应用销毁dispose；已由UIManager报告的开窗异常不再次提示。
+- 操作反馈统一调用 UIManager.toast，由 ToastManager 复用 Remake.scene 的三个 ApplicationNotice 提示槽。登录前和独立技能台同样可用。每条反馈独立上浮和消失，满槽后依次播放。业务奖励按已确认的回执编号防重。页面正文保留加载进度、玩法状态和固定说明。换号调用 clear，应用销毁调用 dispose。已由 UIManager 报告的开窗异常无需再次提示。
 - 动态图片复用原ResourcePool。ResManager.setSprite只保留当前显示及本轮在途候选作用域；同图/相同在途请求复用，新图赋值后释放旧显示，null、失效与销毁撤回拥有者，失败按候选回退。getSpriteFrame(owner)仍显式持有至owner销毁，不能用setSprite(null)撤回该引用；不直接releaseAll或释放其他页面引用。
 - ResourcePool 成功结果只持有一次引擎引用；最后拥有者退出时 decRef，全部拥有者离开后才完成的加载也须回收。在途 Promise 与已加载缓存分开，失败可重试。
 - UIManager 管理已关闭的页面实例，PrefabLoader 单独管理模板。最后一个实例销毁后，模板开始计算闲置时间。应用定期淘汰闲置模板，应用销毁时清空加载器缓存。登录计划和主城底板各自持有的资源可复用至应用退出。具体上限和维护频率见[缓存参数](staged-resource-loading.md#人工维护入口与缓存边界)。

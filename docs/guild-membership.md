@@ -1,4 +1,4 @@
-# 公会成员
+# 公会成员与大厅玩法
 
 角色达到 18 级且所在区服世界等级达到 1 后，可以从底栏进入公会。未入会时显示「推荐、创建、查找」三个页签。点击「加入」直接提交申请。入会后显示公会大厅与可滚动公告，成员和申请列表各自打开独立窗口，退会在成员窗内二次确认。
 
@@ -24,6 +24,11 @@
 | 成员、退会与审批 | [GuildMemberView](../client/assets/scripts/features/guild/ui/GuildMemberView.ts)、[GuildApprovalView](../client/assets/scripts/features/guild/ui/GuildApprovalView.ts) |
 | 公会状态与已认证请求 | [GuildController](../client/assets/scripts/features/guild/GuildController.ts)、[GuildModel](../client/assets/scripts/features/guild/GuildModel.ts) |
 | 准入、扣费及成员事务 | [GuildService](../backend/src/main/java/com/funsgamex/mxzg/guild/GuildService.java)、[V51 成员迁移](../backend/src/main/resources/db/migration/V51__guild_membership.sql)、[V52 徽章迁移](../backend/src/main/resources/db/migration/V52__guild_badge.sql) |
+| 公会商店 | [GuildShopService](../backend/src/main/java/com/funsgamex/mxzg/guild/GuildShopService.java) 扣除勋章、校验个人周限购并发放物品 |
+| 捐献与贡献宝箱 | [GuildDonationService](../backend/src/main/java/com/funsgamex/mxzg/guild/GuildDonationService.java) 结算个人捐献、公会经验和每日贡献 |
+| 本服公会排行 | [GuildRankingService](../backend/src/main/java/com/funsgamex/mxzg/guild/GuildRankingService.java) 汇总成员历史战力并返回本会名次 |
+
+公会科技、公会副本、世界 Boss 与公会战的旧版入口、先后顺序和多人验收见[项目总计划](restructuring-plan.md)。
 
 ## 日服布局对照
 

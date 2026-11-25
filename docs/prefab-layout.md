@@ -1,6 +1,6 @@
 # Prefab 编辑与审查
 
-更新于 2026-11-24。[准入清单](../tools/prefab-plan.json)记录参与检查的预制体，[结构与验收报告](prefab-review.json)记录当前资源指纹、组件绑定及已验画面范围。从仓库根目录运行 `node client/tools/check-project.mjs --suite prefab-review` 可复查结构。英雄详情、主城、战场和出阵页的旧指纹签收均保存在[人工验收记录](../config/prefab-acceptance.json)的 `supersededEntries`。
+更新于 2026-11-25。[准入清单](../tools/prefab-plan.json)记录参与检查的预制体，[结构与验收报告](prefab-review.json)记录当前资源指纹、组件绑定及已验画面范围。从仓库根目录运行 `node client/tools/check-project.mjs --suite prefab-review` 可复查结构。报告的 SHA256 按 LF 规范文本生成，人工签收保留原始 SHA；改动节点、缩进或 BOM 均需重新核对。英雄详情、主城、战场和出阵页的旧签收保存在[人工验收记录](../config/prefab-acceptance.json)的 `supersededEntries`。
 
 11 月 23 日的本机 Creator 预览覆盖了下面两处布局改动。预览日志没有记录所加载资源的 SHA256，当前文件指纹的视觉签收仍待补录。
 

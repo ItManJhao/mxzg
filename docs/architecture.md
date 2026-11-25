@@ -1,6 +1,6 @@
 # 项目架构与职责
 
-更新于 2026-11-24。开放范围见 [开发进度](development-progress.md)，字段与时序见 [通信契约](network-contract.md)。
+更新于 2026-11-25。开放范围见 [开发进度](development-progress.md)，字段与时序见 [通信契约](network-contract.md)。
 
 ## 不随技术重构改变的目标
 
@@ -146,7 +146,7 @@ EquipmentDetailUtils是无状态配置投影，读取Item、Language、Equipment
 
 RemakeApp 持有唯一 ToastManager。UIManager.toast 统一提交成功、拒绝和网络失败反馈，登录前和独立技能台也复用 Remake.scene 的 ApplicationNotice。旧版及日服 Web 的 MessageView 从画面中央淡入，使用 `win-bg/block-bg-messageview.png` 九宫格和带阴影的淡黄色文字。日服的文字逻辑字号为 21，最大宽度 350，底板最小 300×36，按实测文字宽高增加 30 和 16 的留白。新版原面板位于 Canvas 局部 Y=-435，固定蓝底宽 540，普通提示播放 1.6 秒。现已移到中央，复用原九宫格，普通提示 0.1 秒淡入后用 3 秒上浮 30，最后 0.5 秒同步淡出。底板归本地 bootstrap，原 UUID 保留。文字使用 21 号系统粗体替代日服字库，以保留登录前显示和本地包大小。
 
-日服最多同时显示三条，并在有新提示时上推旧项。新版按项目约定保留单个场景节点、有界队列和重复文案去重。换号清空当前和待播项，应用销毁后停止展示。Creator Web 预览已在 393×852 和 360×640 实测居中出场、上浮及淡出。两尺寸的「钻石不足」底板均为 300×47.5，长句换行后为 380×97.5，实际高度随 Creator 字框和行高变化。
+飘字复用场景预置的三个提示槽，新提示从中间出现，并按底板实际高度向上排列旧项。超出三条的提示等空位后依次播放，每次 `UIManager.toast` 调用都独立显示。发奖模块仍按已确认的回执编号防重。换号清空播放和等待中的全部提示，应用销毁后停止展示。背景高度随 Creator 字框和行高变化，多行文字参与上推排布。
 
 页面正文保留加载进度、玩法状态和固定操作说明，框架开窗失败只报告一次。HomeFeatureNavigation 仅在同次有效开页真实等待满 350 毫秒且页面尚未显示时提示一次，缓存瞬开直接显示。完成、取消、替换、返回、身份重置和销毁会清理对应计时，开页失败复用 UIManager 已报告标记去重。
 
@@ -198,7 +198,10 @@ bundles/resources收纳audio/chapter/config/effects/font/icons/maps/spine；bund
 | features/market | MarketController 查询货架、发送购买和刷新请求。MarketView 展示服务端价格、库存及刷新费用 | 主城普通市场与英雄模块的神装商店使用各自的货架和规则 |
 | features/dungeon | DungeonHallView 显示副本入口与产物。五类日常副本复用同一关卡视图和消息结构。DailyDungeonController 按类型收发，DailyDungeonModel 按类型更新权威状态，挑战和扫荡由同一回包交付结算 | 当前可玩的关卡与解锁条件见[进度](development-progress.md) |
 | features/tower | TowerController 收发查询、挑战和里程碑领取，TowerModel 保存服务器返回的层数和领奖状态 | [幻境之塔协议](network-contract.md#幻境之塔) |
-| features/arena | ArenaController 收发对手刷新、挑战和购券，页面可回放历史战报 | [新手竞技场范围](network-contract.md#新手竞技场) |
+| features/arena | ArenaController 收发挑战、攻防、排名、赛季与商店请求，ArenaModel 保存快照与回执。ArenaView 负责四页签，防守编辑复用共享布阵，结算复用通用战报 | [竞技场协议](network-contract.md#竞技场) |
+| features/ranking | RankingController 处理主城榜首、榜单详情与点赞，RankingModel 保存本服和跨服榜单状态 | 公会战力来源与公会排行共用；竞技场积分榜归竞技场。[主城排行榜](network-contract.md#主城排行榜) |
+| features/friend、features/mail | FriendController 和 MailController 各自向唯一 Model 提交查询及写操作结果，在线变更通知由账号通道分发 | 好友关系、礼物和信箱各有持久记录；奖励到账走共享资产事务。[邮件与好友](network-contract.md#邮件与好友) |
+| features/quest | QuestController 收发任务与领奖消息，QuestModel 保存日常、活跃度与成就进度；完成提示由应用层展示 | 进度取自服务端已提交的玩法操作。[每日任务与成就](network-contract.md#每日任务与成就) |
 | features/vip | VipController 处理任务领奖，VipModel 从统一快照读取等级与任务进度，底栏红点读取同一状态 | [各档任务与进度来源](network-contract.md#vip-契约任务) |
 | features/guild | GuildController 收发目录和成员操作，GuildModel 接收权威公会状态。入会、退会和重新鉴权均由角色快照更新公会名 | 审批名单由成员事务按权限查询，`guild.updated` 提示相关页面更新。[公会维护](guild-membership.md) |
 | features/battle | MainChapterSession 装配主线，MainChapterController 处理挑战、结算、战报及各类领取。IdleClaimBinding 处理宝箱点击与确认。MainChapterModel 保存权威快照和本场结算进度 | 开发试战由 BattlePreviewController 发送和接收，只读播放 |
@@ -227,7 +230,7 @@ bundles/resources收纳audio/chapter/config/effects/font/icons/maps/spine；bund
 
 主城底栏在新功能页准备成功后直接切换，旧功能页同步关闭监听并交回原缓存或销毁；准备失败仍保留原可见页面。PageTransitionUtils、PageSlideUtils及其位移、缓动、过渡取消状态已删除，视口布局不再保留动画中跳过居中的特判。主城根和共用顶底栏继续保留，页面准备意图与350毫秒慢开提示仍归HomeFeatureNavigation。
 
-`CityChromeView.prefab` 采用 640×1280 设计。`TopDock`、`BottomDock` 分别由 `Widget` 锚定视口边缘，窄屏使用公共 `ViewportScale` 等比缩放，宽屏不拉大图标或间距。七个按钮的点击区固定，普通、选中与锁定图案都在预制体内，两种红点锚点随状态切换。活动栏和快捷行只在主城地图显示，箭头与加号只切换预制布局；未接通活动不生成倒计时或红点。聊天按钮独立放在前景 `FloatingDock`，默认位置由预制体决定，拖动时只限制在视口内、不吸边；切换底栏保留当前位置，退出主界面后不保存到账号。
+`CityChromeView.prefab` 采用 640×1280 设计。`TopDock`、`BottomDock` 分别由 `Widget` 锚定视口边缘，窄屏使用公共 `ViewportScale` 等比缩放，宽屏不拉大图标或间距。七个按钮的点击区固定，普通、选中与锁定图案都在预制体内，两种红点锚点随状态切换。活动栏和快捷行只在主城地图显示。加号由 CityUtilityFold 驱动快捷按钮的收放动画，排行榜、邮件和好友入口随之收起或展开；未接通活动不生成倒计时或红点。聊天按钮独立放在前景 `FloatingDock`，默认位置由预制体决定，拖动时只限制在视口内、不吸边；切换底栏保留当前位置，退出主界面后不保存到账号。
 
 VIP 页上方显示当前浏览女神的解锁档位、模型和技能，下方显示账号当前 VIP 等级与任务领取进度。两区不混用等级；羁绊养成入口尚未接通。「VIP 特权」使用共享模态，窗外点击关闭；默认预览下一档，满级打开最高档。解锁与数值加成按旧配置分组显示，翻档仅更新预览，不启用权益。
 
@@ -289,11 +292,7 @@ SessionSnapshotService 在数据库角色锁内读取完整钱包、背包和版
 
 ## 原项目架构核查（2026-11-02）
 
-以下为2026-11-02核查快照，涉及当时的代码、布局和未实施建议。当前入口按本页前半部分和 [实施路线](restructuring-plan.md) 查阅。
-
-本节为当时只读核查与差异快照，包含已退役的 HTTP 基线及当时建议；当前实现与优先级以本文前部、通信契约和进度为准。
-
-以下核查记录保留当时源码快照与迁移建议；后续用户已指定先登录/背包模板、再英雄。最新实施结果和顺序以 [开发进度](development-progress.md) 与 [通信契约](network-contract.md) 为准，不把历史差距重复判定为当前未实现。
+本节保留 11 月 2 日的旧服协议证据及迁移前的 HTTP 基线。查今日实现请读[模块入口](#按模块查找当前代码)与[通信契约](network-contract.md)，查后续顺序请读[总计划](restructuring-plan.md)。
 
 ### 结论与适用范围
 
@@ -305,7 +304,7 @@ SessionSnapshotService 在数据库角色锁内读取完整钱包、背包和版
 
 版本、80 个旧服一级模块和当前 16 个 HTTP 操作的完整枚举见 [源码核查索引](validation/architecture-source-index-20261102.json)。它是此次只读快照，不是已完成的逐玩法规则清单。
 
-原仓库根：`G:/work/FsGame/Demo/mj/program`。目录是 Git 裸仓库，不能按普通工作树打开文件。固定版本：
+旧源码现可直接从 `G:/work/FsGame/Demo/mj/program` 下的工作目录阅读。下列路径和提交号属于当时的裸仓库快照，供定位历史版本。
 
 | 代号 | 裸仓库相对路径 | 本次读取提交 |
 |---|---|---|
@@ -335,17 +334,17 @@ S 下 `mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/` 简写为 `GS/`�
 | 客户端更新 | C: client/idle/src/net/ChatResponse.lua、ClanResponse.lua | 更新聊天/未读/公会数据，再发事件或重新拉取公会快照 |
 | 协议源 | P: protofiles/game/{Login,Hero,Chat,Clan,Battle,BackPack}.proto | 旧协议源可作为规则和字段核对材料，不直接假设与每一份生成文件完全一致 |
 
-复核示例（PowerShell，只读）：
+阅读现行旧源码（PowerShell，只读）：
 
 ```powershell
-git --git-dir='G:/work/FsGame/Demo/mj/program/server/mxzg-server.git' show '672293145b4da0f87b87bad9826432e04d6402c0:mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/infrastructure/netty/SocketServerLifecycle.java'
+Get-Content -Encoding utf8 'G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/infrastructure/netty/SocketServerLifecycle.java'
 ```
 
 旧服 POM 的 Spring Boot 2.1.9 / Protobuf 2.6.1、gameserver/center/cross/large-cross 模块和 common 的 Akka 是源码构建事实，不代表本次已验证线上依赖、吞吐或安全状态。HeroDao 继承旧 BaseRepository；单线程 actor 不等于已证明跨实体资产事务和宕机恢复，不能照搬其一致性假设。
 
-### 当前实现的差距与保留判断
+### 11 月 2 日的差距与保留判断
 
-| 能力 | 当前新项目 | 处理结论 |
+| 能力 | 11 月 2 日的新项目 | 当时的处理结论 |
 |---|---|---|
 | 请求入口 | JsonClient/XhrAdapter，后端 9 组路由、16 个 GET/POST/PUT 操作 | 暂保留可运行基线；建议逐批迁入统一游戏消息入口 |
 | 会话 | SessionService 签发一小时令牌、保存哈希、每次请求鉴权 | 可复用身份验证基础；缺在线连接绑定、撤销/顶号、重连认证和会话恢复 |
@@ -361,7 +360,7 @@ git --git-dir='G:/work/FsGame/Demo/mj/program/server/mxzg-server.git' show '6722
 
 Java 21 / Spring Boot / JDBC / Flyway 不因需要 WebSocket 就必须推倒。Spring 本身支持 WebSocket Handler；原始 WebSocket 会话并发发送需要序列化与限界处理，不能多线程随意 write。参考 [Spring 官方 API 说明](https://docs.spring.io/spring-framework/reference/web/websocket/server.html)。本次建议保留技术底座，是基于已有业务可复用和可渐进验证，不是已完成生产选型压测。
 
-### 推荐调整方案（待实施，不是完成状态）
+### 当时的迁移建议
 
 - 游戏会话内的请求、回包、推送走同一 WSS 通道；平台身份交换、公告/资源下载、支付回调及管理接口按职责保留 HTTPS。不恢复开发 PowerShell 桥，不为长连接立即引入第二个框架或独立网关集群。
 - 首个验证链现已采用 Protobuf 强类型信封和载荷；操作名、协议版本、传输 requestId、业务 operationId、错误码、会话代次、状态 revision 分开定义。命名/字段以契约阶段最终落定为准。Protobuf 编码迁移已落实登录与背包；不因此重做数据库事务、库存 MVC 或其他玩法。

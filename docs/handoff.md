@@ -1,20 +1,37 @@
 # 开发交接
 
-更新于 2026-11-24。开发分支为 `hao`。开始前核对工作区和[仓库约定](../AGENTS.md)，查现有可用功能看[当前进度](development-progress.md)，查下一批规则、数据依赖和验收条件看[实施路线](restructuring-plan.md)。
+开发分支为 `hao`。动手前运行 `git status -sb` 核对分支与本地改动，阅读[仓库约定](../AGENTS.md)。查询已接通的行为和最近一次验证看[开发进度](development-progress.md)，选下一项工作看[项目总计划](restructuring-plan.md)。
 
 ## 从哪里改
 
-表内客户端路径相对 client/assets/scripts，服务端类在 backend/src/main/java/com/funsgamex/mxzg。
+查一个玩家操作，先从按钮所在 View 找到 Controller 的请求方法，再沿协议名查服务端处理。数据返回后跟到 Controller 的 `onNotify`、Model 提交和 View 事件刷新。需要跨模块查依赖时，再看[模块装配](../client/assets/scripts/app/remake/ApplicationModules.ts)和[架构](architecture.md)。
+
+### 主城与基础功能
+
+| 工作 | 代码入口与边界 |
+|---|---|
+| 聊天入口 | 浮动按钮的拖动与点击在 [CityChromeView.bindChat](../client/assets/scripts/features/city/ui/CityChromeView.ts) 和 [CityChatDrag](../client/assets/scripts/features/city/ui/CityChatDrag.ts)。当前点击只显示未开放提示。好友关系与屏蔽状态可从[好友模块](../client/assets/scripts/features/friend/FriendController.ts)追到服务端 |
+| 黑市入口 | 地图使用 `main_black_market`，节点名称可查[地图配置](../client/assets/scripts/features/city/ui/CityMapLayoutUtils.ts)。[主城导航](../client/assets/scripts/app/remake/HomeFeatureNavigation.ts)目前仅将 `main_shop` 路由到普通市场。现有交易流程见[普通市场协议](network-contract.md#普通市场) |
+| 邮件与好友 | [MailController](../client/assets/scripts/features/mail/MailController.ts) 处理列表、读信和领取，[MailService](../backend/src/main/java/com/funsgamex/mxzg/mail/MailService.java) 持久化邮件及附件领取。[FriendController](../client/assets/scripts/features/friend/FriendController.ts) 和 [FriendService](../backend/src/main/java/com/funsgamex/mxzg/friend/FriendService.java) 处理申请、好友、赠领与屏蔽 |
+| 排行与主城加号 | [CityUtilityFold](../client/assets/scripts/features/city/ui/CityUtilityFold.ts) 管理快捷入口的收展。[RankingController](../client/assets/scripts/features/ranking/RankingController.ts) 查询本服与跨服榜、提交点赞，服务端入口为 [RankService](../backend/src/main/java/com/funsgamex/mxzg/rank/RankService.java) |
+| 每日与成就 | [QuestController](../client/assets/scripts/features/quest/QuestController.ts) 提交任务回包并分发完成通知。领奖和顶部完成提示的触发时机见[任务协议](network-contract.md#每日任务与成就) |
+
+### 通用框架与会话
 
 | 工作 | 首先查看 |
 |---|---|
 | 页面布局、模态和列表 | 功能 View 的 UIRegistry.view 与同名 Prefab，框架 UIManager / BaseView / SuperScroll |
 | 关闭页面和闲置预制体的回收 | 打开了 `cache` 的页面关闭后，由 [UIManager](../client/assets/scripts/framework/ui/UIManager.ts) 保留最多 6 个实例、最长 600 秒。无实例持有的预制体由 [PrefabLoader](../client/assets/scripts/framework/assets/PrefabLoader.ts) 单独维护，最多 16 份、闲置 600 秒。动态素材的持有与释放查 [ResourcePool](../client/assets/scripts/framework/assets/ResourcePool.ts) |
-| 底栏导航 | app/remake 的 HomeFeatureNavigation 负责准备与延迟提示，RemakeNavigation 切换已经准备好的页面 |
+| 底栏导航 | [HomeFeatureNavigation](../client/assets/scripts/app/remake/HomeFeatureNavigation.ts) 准备页面，[RemakeNavigation](../client/assets/scripts/app/remake/RemakeNavigation.ts) 切换已就绪的页面 |
 | 配置、资源与预载 | 登录阶段与主城后的预载顺序查 [LoadingPlan](../client/assets/scripts/app/remake/LoadingPlan.ts)，实际调度查 [ApplicationResources](../client/assets/scripts/app/remake/ApplicationResources.ts)。业务读取 GameConfig 的配置映射。[分段加载](staged-resource-loading.md) |
 | 登录、换号、迟到响应 | [AccountController](../client/assets/scripts/features/account/AccountController.ts)、[AccountOperations](../client/assets/scripts/features/account/AccountOperations.ts) 和 [GameSocketClient](../client/assets/scripts/platform/GameSocketClient.ts) 管理认证与连接交付。Controller 通过现有账号通道发送当前角色的请求 |
 | 区服列表与选服 | [ServerSelectionController](../client/assets/scripts/features/account/ServerSelectionController.ts) 负责请求区服列表并保存当前选择 |
 | 统一资产快照 | [AssetStateBinding](../client/assets/scripts/app/remake/AssetStateBinding.ts) 核对区服、角色和版本，批量提交各模块，再通知视图。服务端入口为 SessionSnapshotService |
+
+### 玩法与资产
+
+| 工作 | 首先查看 |
+|---|---|
 | 主城召唤法阵 | 基础、友情、高级召唤与积分兑换共用 `HeroRosterController.summon(pool, count, maxDiamonds)`。控制器收发请求，服务端核定消耗、抽取结果和保底，名册与余额随快照更新。现行召唤页的脚本名仍为 FirstSummonView。[召唤页](../client/assets/scripts/features/hero/ui/FirstSummonView.ts) · [控制器](../client/assets/scripts/features/hero/HeroRosterController.ts) · [抽取服务](../backend/src/main/java/com/funsgamex/mxzg/hero/HeroSummonService.java) |
 | 背包碎片合成 | 详情「使用」 → [BagController.composeHeroPieces](../client/assets/scripts/features/bag/BagController.ts)。服务端校验资格，背包和名册读取统一快照 |
 | 主城普通市场 | 地图 `main_shop` → [MarketView](../client/assets/scripts/features/market/ui/MarketView.ts) → [MarketController](../client/assets/scripts/features/market/MarketController.ts) → [MarketService](../backend/src/main/java/com/funsgamex/mxzg/market/MarketService.java)。货架单独查询，钱包和库存沿用统一快照，购入复用奖励窗 |
@@ -32,7 +49,7 @@
 | GM 发放与试战 | F9 菜单把操作交给 [GmController](../client/assets/scripts/features/gm/GmController.ts) 或 [BattlePreviewController](../client/assets/scripts/features/battle/BattlePreviewController.ts) |
 | 协议修改 | [game.proto](../protocol/game.proto) 与 [通信时序](network-contract.md)。用生成工具更新产物 |
 
-查玩家操作，从按钮所在 View 进入本模块 Controller 的发送方法，再跟到 onNotify。Model 处理数据，View 监听事件后刷新。普通点击发送一次。断线重连由统一首包恢复钱包、库存、名册和玩法状态。查启动与退出看 RemakeApp，查模块依赖看 ApplicationModules。[模块装配](../client/assets/scripts/app/remake/ApplicationModules.ts) · [架构](architecture.md) · [断线恢复](reconnect-recovery.md)
+资产变更由服务端提交。客户端重新鉴权时从统一首包恢复钱包、库存和名册，各模块按各自契约恢复玩法状态。换号和重连交付见[断线恢复](reconnect-recovery.md)。
 
 ## 本机运行与独立验证
 
@@ -49,9 +66,9 @@
 | 开战与缓存 | 开场资源时序选 `battle-opening`，日常副本选择和挑战入口选 `dungeon-reminder`。底栏切换与关闭缓存选 `remake-navigation`，主城后预载选 `staged-loading`，资源池和闲置预制体选 `resources` |
 | 客户端类型 | 使用 Creator 3.8.8 自带 TypeScript，分别运行 `tsc --noEmit -p client/tsconfig.json` 和 `tsc -p client/tools/tsconfig.remake.json`。前者使用编辑器配置，后者对业务脚本启用 strict |
 | 英雄养成配置漂移 | 在统一入口选择对应的生成专项。名称、覆盖产物和更新步骤见[配置维护](config-pipeline.md#英雄养成配置) |
-| 协议生成 | node tools/generate_game_protocol.cjs --check |
-| 后端专项 | 在 backend 使用 Java 21 和 Maven Wrapper，运行 mvnw.cmd -Dtest=相关类 test |
+| 协议生成 | `node tools/generate_game_protocol.cjs --check` 核对生成物 |
+| 后端专项 | 在 `backend` 使用 Java 21 和 Maven Wrapper，例如 `.\mvnw.cmd -Dtest=MailServiceTest test` |
 | 关卡依赖 | `node tools/audit_main_chapter_dependencies.cjs --write` 重新取 Java 证据。归档新批次用独立的 `--snapshot=<标签>` |
-| 文档 | node client/tools/check-project.mjs --suite docs |
+| 文档 | `node client/tools/check-project.mjs --suite docs` 校验文件链接及章节锚点 |
 
 Python 专项需要可用解释器，可通过 MXZG_PYTHON 指定。单项报告写在 client/temp/project-checks，运行产物、截图和日志先留在忽略目录。值得保留的长期证据筛选后进入 [验收记录](validation/README.md)。
