@@ -18,6 +18,8 @@ export class GameRedDotKey {
     public static readonly CHAPTER_CLEAR = "battle.clearReward";
     /** 里程碑领奖按钮。 */
     public static readonly CHAPTER_MILESTONE = "battle.milestone";
+    /** 两处任务入口汇总可领取的每日、活跃或成就奖励。 */
+    public static readonly QUEST = "quest";
     /** 召唤法阵入口。 */
     public static readonly SUMMON = "city.summon";
     /** 创造法阵至少有一项配方的本体、素材和费用准备齐全。 */
@@ -46,6 +48,8 @@ export class GameRedDotKey {
     public static readonly GUILD = "guild";
     /** 会长有尚未处理的入会申请。 */
     public static readonly GUILD_APPLICATIONS = "guild.applications";
+    /** 今日尚可捐献或全会贡献已解锁本人可领宝箱。 */
+    public static readonly GUILD_DONATION = "guild.donation";
     /** VIP 底栏入口，汇总本档任务提醒。 */
     public static readonly VIP = "vip";
     /** 当前档位至少一项任务已达且未领。 */

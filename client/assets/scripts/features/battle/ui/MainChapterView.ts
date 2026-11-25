@@ -40,6 +40,11 @@ import type { ChapterBackgroundPlan } from "../utils/ChapterBackgroundUtils";
 
 const { ccclass, property } = _decorator;
 
+/** 主城导航注入战斗页可打开的跨模块入口。 */
+interface MainChapterOpenArgs {
+    readonly openQuest?: () => void;
+}
+
 @UIRegistry.view({
     id: "remake-campaign",
     prefab: "bundles/module/battle/prefabs/MainChapterView",
@@ -48,7 +53,7 @@ const { ccclass, property } = _decorator;
     allowMultiple: false,
 })
 @ccclass("MainChapterView")
-export class MainChapterView extends BaseView {
+export class MainChapterView extends BaseView<MainChapterOpenArgs> {
     /** 当前操作已反馈的结果，开始新请求后清空，防止时钟刷新重复飘字。 */
     private lastResultMessage = "";
     /** 对话由本页持有，跨遇敌保留冷却，挑战与关闭时隐藏。 */
@@ -91,6 +96,10 @@ export class MainChapterView extends BaseView {
     @property(Button) clearRewardButton: Button | null = null;
     /** 通关奖励红点的可选定位节点，保存原尺寸与偏移。 */
     @property(Node) clearRewardDotAnchor: Node | null = null;
+    /** 战斗主页的每日任务按钮，由应用导航打开共用任务窗口。 */
+    @property(Button) dailyTaskButton: Button | null = null;
+    /** 每日任务入口红点位置，与通关奖励分别布局。 */
+    @property(Node) dailyTaskDotAnchor: Node | null = null;
     /** 静态宝箱挂点；本页只挂载一次骨骼，跨档仅切动作。 */
     @property(Node) idleChestHost: Node | null = null;
     /** 超过十分钟显示的旧计时气泡，位置和图片保存在Prefab。 */
@@ -144,7 +153,7 @@ export class MainChapterView extends BaseView {
     private pendingBackgroundScope: AssetScope | null = null;
 
     /** 绑定主线入口和适配监听，有红点挂点时订阅显示，首次进入转交待结算恢复。 */
-    public onOpen(): void {
+    public onOpen(args?: MainChapterOpenArgs): void {
         if (!this.battleHost || !this.panel || !this.challengeButton || !this.quickBattleButton || !this.powerButton
             || !this.stageLabel || !this.statusLabel || !this.challengeLabel || !this.idleTimeLabel
             || !this.goldRateLabel || !this.roleExpRateLabel || !this.heroExpRateLabel || !this.idleClaimButton) throw new Error("主线页面绑定缺失");
@@ -181,6 +190,13 @@ export class MainChapterView extends BaseView {
             });
         });
         this.listen(this.clearRewardButton, () => this.openClearRewards());
+        if (this.dailyTaskButton && args?.openQuest) {
+            this.listen(this.dailyTaskButton, args.openQuest);
+        }
+        if (this.dailyTaskDotAnchor) {
+            const binding = RedDotBinding.atAnchor(this.dailyTaskDotAnchor, GameRedDotKey.QUEST);
+            this.ownListener(() => binding.dispose());
+        }
         if (this.clearRewardDotAnchor) {
             const binding = RedDotBinding.atAnchor(this.clearRewardDotAnchor, GameRedDotKey.CHAPTER_CLEAR);
             this.ownListener(() => binding.dispose());
@@ -368,6 +384,9 @@ export class MainChapterView extends BaseView {
         const state = model.state;
         if (this.clearRewardButton?.isValid) {
             this.clearRewardButton.node.active = !this.playing;
+        }
+        if (this.dailyTaskButton?.isValid) {
+            this.dailyTaskButton.node.active = !this.playing;
         }
         const completed = this.isChapterRangeComplete();
         const scopePending = !!state && state.challengeLimit === undefined;

@@ -220,7 +220,8 @@ class MainChapterIdleClaimServiceTest {
         inventory = new InventoryService(jdbc, sync, json, roles);
         tavernPoints = transactional(new TavernPointService(jdbc, roles, new TavernPointRules(json), sync),
                 TavernPointService.class);
-        var experience = transactional(new RoleExperienceService(roleRules, roles, jdbc, sync), RoleExperienceService.class);
+        var experience = transactional(new RoleExperienceService(roleRules, roles, jdbc, sync, ignored -> {}),
+                RoleExperienceService.class);
         var timedRules = new TimedItemRules(json);
         var timed = new TimedInventoryService(jdbc, sync, timedRules);
         spirits = transactional(new SpiritInventoryService(jdbc, roles, new SpiritRules(json), sync, json),
@@ -270,10 +271,11 @@ class MainChapterIdleClaimServiceTest {
                 MainChapterIdleClaimService.class);
     }
 
-    /** 快速战斗沿本库真实奖励、累计及回执实现，使用独立可控的游戏时钟。 */
+    /** 快速战斗沿本库真实奖励、累计及回执实现，使用独立时钟和无任务订阅的事件出口。 */
     private MainChapterQuickBattleService quickBattleService(MainChapterQuickBattleRepository repository, GameClock time) {
         return transactional(new MainChapterQuickBattleService(roles, jdbc, repository, idleRules, chapterRules,
-                inputs, states, tavernPoints, rewards, sync, feedback, time), MainChapterQuickBattleService.class);
+                inputs, states, tavernPoints, rewards, sync, feedback, time, ignored -> {}),
+                MainChapterQuickBattleService.class);
     }
 
     /** 验证真实扣付、每日/历史次数、共享掉落进度、拒绝与跨日重放均不消费宝箱时间。 */

@@ -7,7 +7,10 @@ package com.funsgamex.mxzg.hero;
 import com.funsgamex.mxzg.auth.SessionService;
 import com.funsgamex.mxzg.inventory.InventoryService;
 import com.funsgamex.mxzg.network.AssetSyncService;
+import com.funsgamex.mxzg.quest.QuestMetric;
+import com.funsgamex.mxzg.quest.QuestProgressEvent;
 import com.funsgamex.mxzg.role.RoleRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -69,11 +72,13 @@ public class HeroLevelService {
     private final AssetSyncService sync;
     /** 已上阵英雄的升级、进阶会刷新主阵容战力峰值。 */
     private final HeroMainPowerService powers;
+    /** 英雄真实等级变更时，促使任务领域按当前名册重新统计。 */
+    private final ApplicationEventPublisher events;
 
     /** 注入角色权威数据源与原事务版本出口。 */
     public HeroLevelService(SessionService sessions, RoleRepository roles, HeroRepository heroes,
             InventoryService inventory, HeroGrowthRules rules, JdbcTemplate jdbc, AssetSyncService sync,
-            HeroMainPowerService powers) {
+            HeroMainPowerService powers, ApplicationEventPublisher events) {
         this.sessions = sessions;
         this.roles = roles;
         this.heroes = heroes;
@@ -82,6 +87,7 @@ public class HeroLevelService {
         this.jdbc = jdbc;
         this.sync = sync;
         this.powers = powers;
+        this.events = events;
     }
 
     /** 预览也在角色锁内取一致的等级/钱包/库存快照，不从客户端接收可信数值。 */
@@ -109,7 +115,7 @@ public class HeroLevelService {
         return new Preview(hero, stage, limit, current, next, cost, gold, experience, status, rules.version());
     }
 
-    /** 原等级与级数按旧规则整笔结算，并更新上阵战力峰值；重复返回原收据，失败回滚。 */
+    /** 原等级与级数按旧规则整笔结算，并刷新战力峰值及名册等级成就；重试只重放。 */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Receipt upgrade(String token, String heroId, Request request) {
         String role = authorizeLocked(token);
@@ -156,6 +162,7 @@ public class HeroLevelService {
         jdbc.update("INSERT INTO game_hero_level_request(role_id,request_id,hero_id,from_level,to_level,"
                 + "config_version,asset_revision) VALUES (?,?,?,?,?,?,?)",
                 role, receipt.requestId(), heroId, from, to, receipt.configVersion(), receipt.assetRevision());
+        events.publishEvent(new QuestProgressEvent(role, QuestMetric.HAD_HIGH_LEVEL_HERO));
         return receipt;
     }
 

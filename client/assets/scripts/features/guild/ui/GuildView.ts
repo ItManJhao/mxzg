@@ -21,8 +21,11 @@ import { GuildModel, type GuildState, type GuildSummary } from "../GuildModel";
 import { GuildApprovalView } from "./GuildApprovalView";
 import { GuildBadgeUtils } from "./GuildBadgeUtils";
 import { GuildCreateView } from "./GuildCreateView";
+import { GuildDonationView } from "./GuildDonationView";
 import { GuildListCell, type GuildCellRow } from "./GuildListCell";
 import { GuildMemberView } from "./GuildMemberView";
+import { GuildRankingView } from "./GuildRankingView";
+import { GuildShopView } from "./GuildShopView";
 import { GuildTextInputView } from "./GuildTextInputView";
 
 /** 主城导航提供当前角色，用于大厅的会长入口和建会余额。 */
@@ -95,6 +98,14 @@ export class GuildView extends BaseView<GuildViewArgs> {
     @property(Button) private _editNotice: Button | null = null;
     @property(Button) private _members: Button | null = null;
     @property(Button) private _applications: Button | null = null;
+    /** 入会后可打开当前周的公会兑换窗口。 */
+    @property(Button) private _shop: Button | null = null;
+    /** 入会后可打开捐献和每日贡献宝箱窗口。 */
+    @property(Button) private _donation: Button | null = null;
+    /** 入会后可打开本服公会战力排行榜。 */
+    @property(Button) private _ranking: Button | null = null;
+    /** 大厅捐献图块右上角的公会提醒定位。 */
+    @property(Node) private _donationDotAnchor: Node | null = null;
     /** 审批提醒的可选定位节点，跟随原审批按钮层级。 */
     @property(Node) private _applicationDotAnchor: Node | null = null;
 
@@ -109,11 +120,12 @@ export class GuildView extends BaseView<GuildViewArgs> {
     /** 当前大厅已请求的徽章编号，避免申请通知重复加载同一图。 */
     private shownBadge: number | undefined;
 
-    /** 挂载表单、审批提醒和公告编辑入口，请求公会状态。 */
+    /** 挂载大厅、目录及入会后的子窗入口，读取公会状态。 */
     public onOpen(args?: GuildViewArgs): void {
         super.onOpen(args);
         if (!args?.account.snapshot.role || !this._createPanel || !this._createHost || !this._editQuery || !this._query
             || !this._guildLevel || !this._experience || !this._editNotice
+            || !this._shop || !this._donation || !this._ranking || !this._donationDotAnchor
             || this._tabButtons.length !== 3 || this._tabHighlights.length !== 3) {
             throw new Error("公会资料或页面挂点缺失");
         }
@@ -131,7 +143,12 @@ export class GuildView extends BaseView<GuildViewArgs> {
         this.listen(this._next!, () => this.turnPage(1));
         this.listen(this._members!, () => this.openMembers());
         this.listen(this._applications!, () => this.openApplications());
+        this.listen(this._shop, () => this.openMemberFeature("shop"));
+        this.listen(this._donation, () => this.openMemberFeature("donation"));
+        this.listen(this._ranking, () => this.openMemberFeature("ranking"));
         this.listen(this._editNotice, () => this.editNotice());
+        const donationDot = RedDotBinding.atAnchor(this._donationDotAnchor, GameRedDotKey.GUILD_DONATION);
+        this.ownListener(() => donationDot.dispose());
         if (this._applicationDotAnchor) {
             const binding = RedDotBinding.atAnchor(this._applicationDotAnchor, GameRedDotKey.GUILD_APPLICATIONS);
             this.ownListener(() => binding.dispose());
@@ -268,6 +285,21 @@ export class GuildView extends BaseView<GuildViewArgs> {
         }
     }
 
+    /** 仅在当前已入会时打开功能窗，离开大厅后统一清理子窗。 */
+    private openMemberFeature(feature: "shop" | "donation" | "ranking"): void {
+        const guildId = GuildModel.instance.snapshot?.guild?.id;
+        if (!guildId) {
+            return;
+        }
+        const ui = UIManager.instance;
+        const opening = feature === "shop" ? ui.openChild(this, GuildShopView, { guildId })
+            : feature === "donation" ? ui.openChild(this, GuildDonationView, { guildId })
+            : ui.openChild(this, GuildRankingView);
+        void opening.catch(() => {
+            // UIManager 统一反馈资源或绑定失败。
+        });
+    }
+
     /** 只有当前公会会长能提交新公告；关闭输入窗不会改动大厅文字。 */
     private editNotice(): void {
         const state = GuildModel.instance.snapshot;
@@ -294,12 +326,12 @@ export class GuildView extends BaseView<GuildViewArgs> {
         });
     }
 
-    /** 响应公会状态；入会时收起目录的编辑器并清空查找草稿。 */
+    /** 响应公会状态；跨越入会或退出边界时关闭旧子窗。 */
     private readonly render = (): void => {
         this.unschedule(this.render);
         const state = GuildModel.instance.snapshot;
         const guild = state?.guild;
-        if (guild && this._tabs!.active) {
+        if ((guild && this._tabs!.active) || (state && !guild && this._hall!.active)) {
             UIManager.instance.closeChildren(this);
         }
         this._tabs!.active = !guild;

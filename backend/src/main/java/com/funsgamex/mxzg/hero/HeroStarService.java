@@ -8,6 +8,8 @@ import com.funsgamex.mxzg.auth.SessionService;
 import com.funsgamex.mxzg.inventory.InventoryService;
 import com.funsgamex.mxzg.lineup.MainFormationStateService;
 import com.funsgamex.mxzg.network.AssetSyncService;
+import com.funsgamex.mxzg.quest.QuestMetric;
+import com.funsgamex.mxzg.quest.QuestProgressEvent;
 import com.funsgamex.mxzg.role.RoleRepository;
 import com.funsgamex.mxzg.world.WorldLevelService;
 import java.nio.charset.StandardCharsets;
@@ -22,6 +24,7 @@ import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -80,13 +83,15 @@ public class HeroStarService {
     private final ObjectMapper mapper;
     /** 资产事务只递增一次，成功提交后由统一入口推送。 */
     private final AssetSyncService sync;
+    /** 升星成功且写入回执后，登记以目标星级计算的获得进度。 */
+    private final ApplicationEventPublisher events;
 
     /** 注入角色、资产和成长规则入口，全部变更共用同一个持久事务。 */
     public HeroStarService(SessionService sessions, RoleRepository roles, HeroRepository heroes, HeroStarRules rules,
             HeroGrowthRules growth, WorldLevelService worldLevels, InventoryService inventory,
             HeroMaterialService heroMaterials,
             MainFormationStateService formations, HeroMainPowerService powers, JdbcTemplate jdbc,
-            ObjectMapper mapper, AssetSyncService sync) {
+            ObjectMapper mapper, AssetSyncService sync, ApplicationEventPublisher events) {
         this.sessions = sessions;
         this.roles = roles;
         this.heroes = heroes;
@@ -100,9 +105,10 @@ public class HeroStarService {
         this.jdbc = jdbc;
         this.mapper = mapper;
         this.sync = sync;
+        this.events = events;
     }
 
-    /** 真实升星一次；回包丢失时同键重放原收据，失败不扣物品、不销毁英雄。 */
+    /** 真实升星一次并记录目标星级；同键重放原收据，失败整笔回滚。 */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Receipt upgrade(String token, Request request) {
         var selections = readSelections(request);
@@ -174,6 +180,8 @@ public class HeroStarService {
                         + "material_fingerprint,refunded_json,asset_revision) VALUES (?,?,?,?,?,?,?,?)",
                 roleId, request.requestId(), target.id(), target.star(), recipe.toStar(), fingerprint,
                 mapper.writeValueAsString(refunded), receipt.assetRevision());
+        int acquiredStar = recipe.toStar();
+        events.publishEvent(new QuestProgressEvent(roleId, QuestMetric.GET_HERO, acquiredStar, acquiredStar == 5 ? 0 : 1));
         return receipt;
     }
 

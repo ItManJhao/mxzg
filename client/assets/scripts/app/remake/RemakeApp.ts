@@ -99,7 +99,8 @@ export class RemakeApp extends Component {
         const inHome = () => this.alive && this.started && entry.route(true) === "remake-home";
         const syncRoute = () => this.syncRootRoute(model, entry);
         this.modules = new ApplicationModules(account, this.development, inHome,
-            () => this.clearRolePages(), text => this.pages?.showNotice(text));
+            () => this.clearRolePages(), text => this.pages?.showNotice(text),
+            () => this.pages?.showAchievements() ?? false);
         this.pages = new ApplicationPages({
             pageHost: this.pageHost,
             account,

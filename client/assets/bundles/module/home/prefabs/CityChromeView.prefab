@@ -24222,9 +24222,6 @@
     "shortcutButtons": [
       {
         "__id__": 548
-      },
-      {
-        "__id__": 589
       }
     ],
     "btnChat": {
@@ -24248,7 +24245,10 @@
     "experienceFill": {
       "__id__": 821
     },
-    "_id": ""
+    "_id": "",
+    "btnDailyTask": {
+      "__id__": 589
+    }
   },
   {
     "__type__": "cc.CompPrefabInfo",

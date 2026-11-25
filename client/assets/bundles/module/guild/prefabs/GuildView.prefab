@@ -8272,6 +8272,9 @@
       },
       {
         "__id__": 340
+      },
+      {
+        "__id__": 456
       }
     ],
     "_prefab": {
@@ -8363,7 +8366,7 @@
     "_fillStart": 0,
     "_fillRange": 0,
     "_isTrimmedMode": false,
-    "_useGrayscale": true,
+    "_useGrayscale": false,
     "_atlas": null,
     "node": {
       "__id__": 335
@@ -8529,7 +8532,7 @@
       "z": 0
     },
     "_objFlags": 0,
-    "_children": [],
+    "_children": [{"__id__": 461}],
     "_name": "EntryDonate",
     "_mobility": 0,
     "_lscale": {
@@ -8544,6 +8547,9 @@
       },
       {
         "__id__": 352
+      },
+      {
+        "__id__": 458
       }
     ],
     "_prefab": {
@@ -8635,7 +8641,7 @@
     "_fillStart": 0,
     "_fillRange": 0,
     "_isTrimmedMode": false,
-    "_useGrayscale": true,
+    "_useGrayscale": false,
     "_atlas": null,
     "node": {
       "__id__": 347
@@ -8816,6 +8822,9 @@
       },
       {
         "__id__": 364
+      },
+      {
+        "__id__": 460
       }
     ],
     "_prefab": {
@@ -8907,7 +8916,7 @@
     "_fillStart": 0,
     "_fillRange": 0,
     "_isTrimmedMode": false,
-    "_useGrayscale": true,
+    "_useGrayscale": false,
     "_atlas": null,
     "node": {
       "__id__": 359
@@ -9998,6 +10007,10 @@
     "_members": {
       "__id__": 328
     },
+    "_shop": {"__id__": 456},
+    "_donation": {"__id__": 458},
+    "_ranking": {"__id__": 460},
+    "_donationDotAnchor": {"__id__": 461},
     "_applications": {
       "__id__": 392
     },
@@ -11206,5 +11219,15 @@
     "__prefab": {
       "__id__": 453
     }
-  }
+  },
+  {"__type__":"cc.CompPrefabInfo","fileId":"be58f68a-925b-4a8c-8c13-fb43473f456a"},
+  {"__type__":"cc.Button","_name":"","_enabled":true,"_objFlags":0,"__editorExtras__":{},"_id":"","clickEvents":[],"_interactable":true,"_transition":1,"_normalColor":{"__type__":"cc.Color","r":255,"g":255,"b":255,"a":255},"_hoverColor":{"__type__":"cc.Color","r":211,"g":211,"b":211,"a":255},"_pressedColor":{"__type__":"cc.Color","r":200,"g":200,"b":200,"a":255},"_disabledColor":{"__type__":"cc.Color","r":137,"g":132,"b":126,"a":255},"_normalSprite":null,"_hoverSprite":null,"_pressedSprite":null,"_disabledSprite":null,"_duration":0.1,"_zoomScale":0.9,"_target":{"__id__":335},"node":{"__id__":335},"__prefab":{"__id__":455}},
+  {"__type__":"cc.CompPrefabInfo","fileId":"be58f68a-925b-4a8c-8c13-fb43473f458a"},
+  {"__type__":"cc.Button","_name":"","_enabled":true,"_objFlags":0,"__editorExtras__":{},"_id":"","clickEvents":[],"_interactable":true,"_transition":1,"_normalColor":{"__type__":"cc.Color","r":255,"g":255,"b":255,"a":255},"_hoverColor":{"__type__":"cc.Color","r":211,"g":211,"b":211,"a":255},"_pressedColor":{"__type__":"cc.Color","r":200,"g":200,"b":200,"a":255},"_disabledColor":{"__type__":"cc.Color","r":137,"g":132,"b":126,"a":255},"_normalSprite":null,"_hoverSprite":null,"_pressedSprite":null,"_disabledSprite":null,"_duration":0.1,"_zoomScale":0.9,"_target":{"__id__":347},"node":{"__id__":347},"__prefab":{"__id__":457}},
+  {"__type__":"cc.CompPrefabInfo","fileId":"be58f68a-925b-4a8c-8c13-fb43473f460a"},
+  {"__type__":"cc.Button","_name":"","_enabled":true,"_objFlags":0,"__editorExtras__":{},"_id":"","clickEvents":[],"_interactable":true,"_transition":1,"_normalColor":{"__type__":"cc.Color","r":255,"g":255,"b":255,"a":255},"_hoverColor":{"__type__":"cc.Color","r":211,"g":211,"b":211,"a":255},"_pressedColor":{"__type__":"cc.Color","r":200,"g":200,"b":200,"a":255},"_disabledColor":{"__type__":"cc.Color","r":137,"g":132,"b":126,"a":255},"_normalSprite":null,"_hoverSprite":null,"_pressedSprite":null,"_disabledSprite":null,"_duration":0.1,"_zoomScale":0.9,"_target":{"__id__":359},"node":{"__id__":359},"__prefab":{"__id__":459}},
+  {"__type__":"cc.Node","_name":"DonationDotAnchor","_active":true,"_objFlags":0,"_layer":33554432,"_parent":{"__id__":347},"_children":[],"_components":[{"__id__":464}],"_prefab":{"__id__":462},"_lpos":{"__type__":"cc.Vec3","x":67,"y":42,"z":0},"_lrot":{"__type__":"cc.Quat","x":0,"y":0,"z":0,"w":1},"_lscale":{"__type__":"cc.Vec3","x":1,"y":1,"z":1},"_euler":{"__type__":"cc.Vec3","x":0,"y":0,"z":0},"_mobility":0,"_id":"","__editorExtras__":{}},
+  {"__type__":"cc.PrefabInfo","root":{"__id__":1},"asset":{"__id__":0},"fileId":"ae61eb55-6cb2-4e0d-8bd1-ae24328c46ef","instance":null,"targetOverrides":null,"nestedPrefabInstanceRoots":null},
+  {"__type__":"cc.CompPrefabInfo","fileId":"a07e68b9-325d-4df4-8516-54293a64a8a0"},
+  {"__type__":"cc.UITransform","_name":"","_enabled":true,"_objFlags":0,"__editorExtras__":{},"_id":"","node":{"__id__":461},"__prefab":{"__id__":463},"_contentSize":{"__type__":"cc.Size","width":25,"height":25},"_anchorPoint":{"__type__":"cc.Vec2","x":0.5,"y":0.5}}
 ]

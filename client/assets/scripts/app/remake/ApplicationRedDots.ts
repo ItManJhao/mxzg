@@ -22,6 +22,7 @@ import { FirstSummonData } from "../../features/hero/data/FirstSummonData";
 import { HeroRosterModel } from "../../features/hero/HeroRosterModel";
 import { HeroCreationUtils } from "../../features/hero/utils/HeroCreationUtils";
 import { HeroRedDotUtils } from "../../features/hero/utils/HeroRedDotUtils";
+import { QuestModel } from "../../features/quest/QuestModel";
 import { VipModel } from "../../features/vip/VipModel";
 
 export class ApplicationRedDots {
@@ -35,6 +36,8 @@ export class ApplicationRedDots {
     private readonly nextDungeonRefresh = new Map<DailyDungeonKind, number>();
     /** 主线进度监听在应用退出时解除。 */
     private readonly unbindChapter: () => void;
+    /** 任务快照变化后重算共用入口红点，随应用解除。 */
+    private readonly unbindQuest: () => void;
 
     /**
      * 接入独立主线回包，等待场景装配完成后再读配置。
@@ -42,6 +45,7 @@ export class ApplicationRedDots {
      */
     public constructor(private readonly account: AccountModel) {
         this.unbindChapter = EventDispatcher.instance.on(MainChapterController.Updated, this, this.refreshChapter);
+        this.unbindQuest = EventDispatcher.instance.on("quest.updated", this, this.refreshQuest);
     }
 
     /** 配置包和主城均可用后读取当前快照，启动召唤计时和副本资格补查。 */
@@ -53,6 +57,7 @@ export class ApplicationRedDots {
         if (ready) {
             this.refreshSnapshot();
             this.refreshChapter();
+            this.refreshQuest();
             this.clockTask = setInterval(() => {
                 this.refreshSummon();
                 this.refreshDungeonIfNeeded();
@@ -134,6 +139,7 @@ export class ApplicationRedDots {
     /** 释放应用的计时和主线通知，清空该应用显示状态。 */
     public dispose(): void {
         this.unbindChapter();
+        this.unbindQuest();
         this.resetSession();
     }
 
@@ -142,6 +148,18 @@ export class ApplicationRedDots {
         if (this.ready && GameConfig.instance.getPackageVersion()) {
             RedDotManager.instance.setMany(MainChapterRedDotUtils.project(MainChapterModel.instance.state));
         }
+    }
+
+    /** 任一任务或活跃档位可领时，点亮主城及战斗页上的任务入口。 */
+    private refreshQuest(): void {
+        if (!this.ready) {
+            return;
+        }
+        const snapshot = QuestModel.instance.snapshot;
+        const claimable = snapshot && (snapshot.daily.some(row => !row.claimed && row.current >= row.target)
+            || snapshot.achievements.some(row => !row.claimed && row.current >= row.target)
+            || snapshot.milestones.some(row => !row.claimed && snapshot.activityPoints >= row.points));
+        RedDotManager.instance.set(GameRedDotKey.QUEST, !!claimable);
     }
 
     /** 免费召唤冷却读取公共服务器时钟，积分提醒读取已同步库存。 */

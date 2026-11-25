@@ -5,6 +5,8 @@
 package com.funsgamex.mxzg.campaign;
 
 import com.funsgamex.mxzg.network.AssetSyncService;
+import com.funsgamex.mxzg.quest.QuestMetric;
+import com.funsgamex.mxzg.quest.QuestProgressEvent;
 import com.funsgamex.mxzg.reward.RewardFeedbackService;
 import com.funsgamex.mxzg.reward.RewardGrantResult;
 import com.funsgamex.mxzg.reward.RewardGrantService;
@@ -19,6 +21,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -60,6 +63,8 @@ public class MainChapterQuickBattleService {
     private final RewardFeedbackService feedback;
     /** 用于上海自然日和本次发奖时刻，支持现有本机 GM 校时。 */
     private final GameClock clock;
+    /** 成功回执用于任务计数；在原领取事务内通知任务服务重新读取。 */
+    private final ApplicationEventPublisher events;
 
     /** 本游戏日的玩家报价；次数用完后，费用字段为 0。 */
     public record State(boolean unlocked, int usedCount, int maxCount, int costDiamonds,
@@ -91,7 +96,7 @@ public class MainChapterQuickBattleService {
                                          IdleRules idleRules, MainChapterRules chapters, IdleRewardInputService inputs,
                                          MainChapterIdleStateRepository idleStates, TavernPointService tavernPoints,
                                          RewardGrantService grants, AssetSyncService sync, RewardFeedbackService feedback,
-                                         GameClock clock) {
+                                         GameClock clock, ApplicationEventPublisher events) {
         this.roles = roles;
         this.jdbc = jdbc;
         this.battles = battles;
@@ -104,6 +109,7 @@ public class MainChapterQuickBattleService {
         this.sync = sync;
         this.feedback = feedback;
         this.clock = clock;
+        this.events = events;
     }
 
     /** 查询当前日次数、下次价格和酒馆满额状态，未做快速战斗时不新增操作记录。 */
@@ -118,7 +124,7 @@ public class MainChapterQuickBattleService {
 
     /**
      * 应用一次玩家已确认的报价。旧请求原样重放，跨日或同日报价已被另一笔使用时要求重新确认。
-     * 发奖、掉落分窗、历史回执及资产版本由同一角色事务提交。
+     * 发奖、掉落分窗、历史回执、任务进度和资产版本由同一角色事务提交。
      */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Receipt claim(String roleId, String requestId, long resetAt, int usedCount) {
@@ -167,6 +173,7 @@ public class MainChapterQuickBattleService {
         var receipt = new Receipt(requestId, receiptId, revision, state(true, used + 1, resetAt, tavernFull(roleId, stage)),
                 actual, roleId, notice);
         battles.save(receipt);
+        events.publishEvent(new QuestProgressEvent(roleId, QuestMetric.QUICK_BATTLE));
         return receipt;
     }
 

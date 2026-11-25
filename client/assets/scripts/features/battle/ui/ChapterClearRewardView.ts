@@ -79,11 +79,11 @@ export class ChapterClearRewardView extends BaseView {
         }
     }
 
-    /** 使用现有视口适配整体和长列表，不改预制体内部几何。 */
+    /** 纸面最多铺满竖屏宽度，短屏维持高度上限；内部几何由预制体维护。 */
     private fit(): void {
         const box = ViewportLayoutUtils.fitVisibleRoot(this.node);
         const panel = this.panel!;
-        const scale = Math.min(1, box.width * 0.96 / panel.width, box.height * 0.84 / panel.height);
+        const scale = Math.min(1, box.width / panel.width, box.height * 0.84 / panel.height);
         panel.node.setScale(scale, scale, 1);
     }
 

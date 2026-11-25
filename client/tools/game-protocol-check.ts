@@ -12,6 +12,26 @@ import {ProtocolRouter} from "../assets/scripts/platform/ProtocolRouter";
 import { GameProtocolLogUtils } from "../assets/scripts/platform/GameProtocolLogUtils";
 import {mxzg} from "../assets/scripts/platform/GameProtocol.generated";
 const state={revision:2,role:{id:"role",nickname:"测试😀",level:1,gold:0,diamonds:0,serverId:"local-1"},heroes:[],heroRoster:{capacity:325,buySpaceTimes:1},inventory:[{itemId:900101,quantity:4}]};
+
+/** 已有账号的超额成就、领取期次与提交后通知均能二进制往返。 */
+function checkQuestWire(): void {
+    const request = { version: 1, kind: "request", name: Protocol.QUEST_CLAIM };
+    const quote = { requestId: "aad15d1b-be88-4b9e-8c84-075cbb9a52df", kind: "MILESTONE", id: 1, resetAt: 1795622400 };
+    const achievement = { id: 104100, title: "加入公会", current: 3, target: 1, claimed: false,
+        destination: "main_clan", rewards: [{ itemId: 900001, quantity: 50000 }] };
+    const snapshot = { resetAt: quote.resetAt, activityPoints: 20, daily: [], achievements: [achievement],
+        milestones: [{ id: 1, points: 20, claimed: false, rewards: [{ itemId: 900002, quantity: 50 }] }] };
+    const event = { version: 1, kind: "event", name: Protocol.QUEST_CHANGED, connectionId: "c" };
+    roundTrip({ ...request, name: Protocol.QUEST_LIST, body: {} });
+    roundTrip({ ...request, body: quote });
+    roundTrip({ version: 1, kind: "response", name: Protocol.QUEST_LIST, id: "q", ok: true, body: snapshot });
+    roundTrip({ version: 1, kind: "response", name: Protocol.QUEST_CLAIM, id: "q", ok: true,
+        body: { requestId: quote.requestId, snapshot } });
+    roundTrip({ ...event, body: { completed: [{ id: achievement.id, title: achievement.title }] } });
+    roundTrip({ ...event, body: { completed: [] } });
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, body: { ...quote, roleId: "other" } }), /任务领取请求无效/);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...event, body: { completed: [{ id: 0, title: "加入公会" }] } }), /成就完成通知无效/);
+}
 /** 公会进度、空公告及真实零战力继续走原有二进制协议。 */
 function checkGuildWire(): void {
     roundTrip({ version: 1, kind: "request", name: Protocol.GUILD_LIST, body: { query: "远征", page: 2 } });
@@ -32,6 +52,19 @@ function checkGuildWire(): void {
                 guilds: [guild], page: 1, hasMore: false, appliedGuildIds: [], rejoinAtSeconds: 0 } });
     }
     roundTrip({ version: 1, kind: "event", name: Protocol.GUILD_UPDATED, connectionId: "c", body: {} });
+    const guildId = "406060e1-5c6a-4ab8-9b03-24c759fb791f";
+    const quote = { requestId: command.requestId, guildId, productId: 1, count: 2, resetAtSeconds: 1795968000 };
+    roundTrip({ version: 1, kind: "request", name: Protocol.GUILD_SHOP_BUY, body: quote });
+    roundTrip({ version: 1, kind: "response", name: Protocol.GUILD_SHOP_BUY, id: "req", ok: true,
+        body: { requestId: quote.requestId, guildId, resetAtSeconds: quote.resetAtSeconds,
+            products: [{ productId: 1, itemId: 20104016, quantity: 30, cost: 1500, limit: 2, purchased: 2, purchasable: true }] } });
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ version: 1, kind: "request", name: Protocol.GUILD_SHOP_BUY,
+        body: { ...quote, count: 0 } }), /公会兑换或捐献请求无效/);
+    roundTrip({ version: 1, kind: "request", name: Protocol.GUILD_DONATION_CLAIM,
+        body: { requestId: command.requestId, guildId, resetAt: 1795622400, optionId: 1 } });
+    const ranked = { rank: 1, guildId, serverId: "local-1", name: "远征", badgeId: 4, leaderName: "测试", power: 2294226 };
+    roundTrip({ version: 1, kind: "response", name: Protocol.GUILD_RANKING, id: "req", ok: true,
+        body: { entries: [ranked], own: ranked } });
     for (const guildName of [guild.name, ""]) {
         roundTrip({ version: 1, kind: "event", name: Protocol.STATE_CHANGED,
             body: { ...state, role: { ...state.role, guildName, power: guildName ? 2294226 : 0 } } });
@@ -138,6 +171,7 @@ function roundTrip(frame:any){const bytes=GameProtocolCodecUtils.encodeGameFrame
 /** 验证统一状态、玩法指令和原奖励往返。显式 wire 参数只读取独立 Java 测试输出。 */
 function main(){
  checkGuildWire();
+ checkQuestWire();
  checkFormationPowerWire();
  checkVipWire();
  checkQuickBattleWire();

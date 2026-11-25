@@ -10,6 +10,7 @@ import { EntryGateUtils } from "../../config/EntryGateUtils";
 import { GameConfig } from "../../config/GameConfig";
 import { GConfig } from "../../config/GConfig";
 import type { AccountModel } from "../../features/account/AccountModel";
+import type { QuestTab } from "../../features/quest/data/QuestState";
 
 /** 导航需要的页面操作；不包含资源获取或业务协议。 */
 interface FeatureUi {
@@ -57,6 +58,19 @@ const routes: Readonly<Record<string, { page: string; title: string; tab: Featur
     fetter: {page: "vip", title: "VIP", tab: "fetter"},
 };
 
+/** 旧策划任务的跳转目标与现已开放的页面入口。 */
+const questDestinations: Readonly<Record<string, string | undefined>> = {
+    main_battle: "battle",
+    main_chapter: "battle",
+    main_hero: "hero",
+    main_summon: "main_summon",
+    main_pvp: "arena",
+    main_fantasy_tower: "tower",
+    main_clan: "clan",
+    main_shop: "main_shop",
+    main_mission: "gold-dungeon",
+};
+
 /** 管理最新功能打开意图，加载失败时保留已显示的主城或功能页。 */
 export class HomeFeatureNavigation {
     /** 从已登记的页面导出底栏开放状态；英雄详情与英雄列表只点亮同一个页签。 */
@@ -89,6 +103,9 @@ export class HomeFeatureNavigation {
 
     /** 转交已接通的功能入口和页内跳转，日常副本跳转按玩法自身门槛检查。 */
     open(id: string): boolean {
+        if (id === "quest") {
+            return this.openQuest("daily");
+        }
         if (id === "mainline") {
             id = "battle";
         }
@@ -146,6 +163,8 @@ export class HomeFeatureNavigation {
             args = { account: this.host.account };
         } else if (id === "fetter") {
             args = { openFeature: (featureId: string) => this.open(featureId) };
+        } else if (id === "battle") {
+            args = { openQuest: () => this.openQuest("daily") };
         }
         void this.ui.openById(page, args).then(() => {
             this.clearLoadingNotice(epoch);
@@ -166,6 +185,32 @@ export class HomeFeatureNavigation {
             GameLog.shared.classified("APP", "warn", "HomeFeatureNavigation", page + "打开失败：" + reason);
             if (!UIManager.isFailureReported(error)) {
                 this.host.notice(title + "界面加载失败，请再次点击重试");
+            }
+        });
+        return true;
+    }
+
+    /** 主城、战斗入口和顶部提示统一打开任务窗，并可指定页签。 */
+    public openQuest(tab: QuestTab): boolean {
+        const role = this.host.account?.snapshot.role;
+        if (this.disposed || !this.host.authorized() || !role) {
+            return false;
+        }
+        const gate = GameConfig.instance.getConfig(GConfig.OpenCondition, "act_achievement");
+        if (gate && !EntryGateUtils.isEntryOpen(gate, role.level, 0)) {
+            this.host.notice(`角色达到 ${gate.level} 级开启每日任务`);
+            return true;
+        }
+        void this.ui.openById("quest", {
+            tab,
+            canNavigate: (destination: string) => !!questDestinations[destination],
+            navigate: (destination: string) => {
+                const route = questDestinations[destination];
+                return route ? this.open(route) : false;
+            },
+        }).catch(error => {
+            if (!UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
+                this.host.notice("任务界面加载失败，请再次点击重试");
             }
         });
         return true;

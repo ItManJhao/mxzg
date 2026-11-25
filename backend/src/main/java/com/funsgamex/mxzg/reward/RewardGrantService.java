@@ -5,12 +5,13 @@
  */
 package com.funsgamex.mxzg.reward;
 
+import com.funsgamex.mxzg.hero.HeroGrantService;
 import com.funsgamex.mxzg.inventory.InventoryService;
 import com.funsgamex.mxzg.inventory.TimedInventoryService;
 import com.funsgamex.mxzg.inventory.TimedItemRules;
-import com.funsgamex.mxzg.hero.HeroGrantService;
-import org.springframework.beans.factory.annotation.Autowired;
 import com.funsgamex.mxzg.network.AssetSyncService;
+import com.funsgamex.mxzg.quest.QuestMetric;
+import com.funsgamex.mxzg.quest.QuestProgressEvent;
 import com.funsgamex.mxzg.role.RoleExperienceService;
 import com.funsgamex.mxzg.role.RoleRepository;
 import com.funsgamex.mxzg.role.RoleRules;
@@ -24,6 +25,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.random.RandomGenerator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +38,8 @@ public class RewardGrantService {
     private static final int MAX_TIMED_GRANT_QUANTITY = 1_000;
     /** 原item表的类型索引，仅支持明确接入的领域分路，未知类型没有普通库存兜底。 */
     private final Map<Integer, Integer> types;
+    /** 仅记录原物品配置 place=1 的装备品质，穿脱返还不经过奖励入口。 */
+    private final Map<Integer, Integer> equipmentQualities;
     /** 角色锁、钱包和真实前后资料，由Spring注入。 */
     private final RoleRepository roles;
     /** 角色经验及升级赠钻的唯一写入口。 */
@@ -53,6 +58,8 @@ public class RewardGrantService {
     private final AssetSyncService sync;
     /** 奖励英雄真实入库领域；旧无英雄专项可不装配，但不得据此创建假堆叠。 */
     private final HeroGrantService heroes;
+    /** 可信新获得装备按品质计入成就，和本次奖励一并提交。 */
+    private final ApplicationEventPublisher events;
 
     /**
      * 加成逐条取整后的可信最终理论量；同配置在本层精确合并。
@@ -80,7 +87,7 @@ public class RewardGrantService {
             InventoryService inventory, TimedItemRules timedRules, TimedInventoryService timed,
             SpiritInventoryService spirits, TavernPointService tavernPoints, AssetSyncService sync,
             ObjectMapper json) {
-        this(roles, experience, inventory, timedRules, timed, spirits, tavernPoints, sync, json, null);
+        this(roles, experience, inventory, timedRules, timed, spirits, tavernPoints, sync, json, null, ignored -> {});
     }
 
     /** 正常应用装配真实英雄领域，资格和幂等仍由调用业务持有。 */
@@ -88,7 +95,7 @@ public class RewardGrantService {
     public RewardGrantService(RoleRepository roles, RoleExperienceService experience,
             InventoryService inventory, TimedItemRules timedRules, TimedInventoryService timed,
             SpiritInventoryService spirits, TavernPointService tavernPoints, AssetSyncService sync,
-            ObjectMapper json, HeroGrantService heroes) {
+            ObjectMapper json, HeroGrantService heroes, ApplicationEventPublisher events) {
         this.roles = roles;
         this.experience = experience;
         this.inventory = inventory;
@@ -98,7 +105,9 @@ public class RewardGrantService {
         this.spirits = spirits;
         this.sync = sync;
         this.heroes = heroes;
+        this.events = events;
         var index = new HashMap<Integer, Integer>();
+        var qualities = new HashMap<Integer, Integer>();
         try (var input = getClass().getResourceAsStream("/gameplay/item.json")) {
             if (input == null) {
                 throw new IllegalStateException("奖励物品表缺失");
@@ -115,11 +124,15 @@ public class RewardGrantService {
                         || index.put(id.asInt(), type.asInt()) != null) {
                     throw new IllegalStateException("奖励物品类型配置无效");
                 }
+                if (row.path("place").asInt() == 1) {
+                    qualities.put(id.asInt(), row.path("rare_mark").asInt());
+                }
             }
         } catch (java.io.IOException failure) {
             throw new IllegalStateException("奖励物品表读取失败", failure);
         }
         types = Map.copyOf(index);
+        equipmentQualities = Map.copyOf(qualities);
     }
 
     /**
@@ -137,7 +150,7 @@ public class RewardGrantService {
 
     /**
      * 发放可信最终计划并返回事务内真实结果；重复调用会再次发放，外层必须先查业务回执。
-     * 整个计划在写入及实例抽样前完成类型、合并数量、实例批量与期限计算预检；任何失败由外层整体回滚。
+     * 计划在发放前完成类型、数量及期限预检，装备获得进度和奖励由外层整体提交。
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public RewardGrantResult grant(String roleId, List<Reward> rewards, Context context, RandomGenerator random) {
@@ -159,6 +172,7 @@ public class RewardGrantService {
         var timedItems = new ArrayList<TimedInventoryService.Item>();
         var spiritItems = new ArrayList<SpiritInventoryService.Item>();
         var heroItems = new ArrayList<HeroGrantService.Granted>();
+        var acquiredEquipment = new LinkedHashMap<Integer, Long>();
         for (var reward : merged) {
             int id = reward.itemId();
             long requested = reward.quantity();
@@ -179,7 +193,14 @@ public class RewardGrantService {
                                 RewardGrantResult.BonusSource.ROLE_LEVEL_UP, 900002, gain.diamonds()));
                     }
                 }
-                case 5, 6 -> stacks.add(inventory.credit(roleId, id, requested));
+                case 5, 6 -> {
+                    var added = inventory.credit(roleId, id, requested);
+                    stacks.add(added);
+                    Integer quality = equipmentQualities.get(id);
+                    if (quality != null) {
+                        acquiredEquipment.merge(quality, added.quantity(), Math::addExact);
+                    }
+                }
                 case 7 -> heroItems.addAll(heroes.grant(roleId, id, Math.toIntExact(requested)));
                 case 8 -> spiritItems.addAll(spirits.grant(roleId, id, Math.toIntExact(requested), random));
                 case 11 -> {
@@ -201,6 +222,8 @@ public class RewardGrantService {
             }
             outcomes.add(new RewardGrantResult.Outcome(id, requested, credited, requested - credited, reason));
         }
+        acquiredEquipment.forEach((quality, quantity) -> events.publishEvent(
+                new QuestProgressEvent(roleId, QuestMetric.GET_EQUIP_QUALITY, quality, quantity)));
         var after = roles.findById(roleId).orElseThrow();
         return new RewardGrantResult(roleId, outcomes,
                 new RoleRepository.CurrencyCredit(before.gold(), before.diamonds(), after.gold(), after.diamonds()),

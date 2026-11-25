@@ -13,6 +13,8 @@ import com.funsgamex.mxzg.hero.HeroPowerRules;
 import com.funsgamex.mxzg.inventory.InventoryService;
 import com.funsgamex.mxzg.network.AssetSyncService;
 import com.funsgamex.mxzg.protocol.GameProtocol.BattleReplay;
+import com.funsgamex.mxzg.quest.QuestMetric;
+import com.funsgamex.mxzg.quest.QuestProgressEvent;
 import com.funsgamex.mxzg.reward.RewardGrantResult;
 import com.funsgamex.mxzg.reward.RewardGrantService;
 import com.funsgamex.mxzg.reward.RewardGrantService.Reward;
@@ -28,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -56,6 +59,8 @@ public class ArenaService {
     private final AssetSyncService sync;
     /** 提供同一操作的计次、结算及回执时间。 */
     private final GameClock clock;
+    /** 消费成功的新结算回执及真实竞技场积分，由任务领域同步刷新。 */
+    private final ApplicationEventPublisher events;
     /** 按机器人编号缓存与战场配置同源的静态展示数据。 */
     private final Map<Integer, Opponent> opponentsById;
 
@@ -110,7 +115,7 @@ public class ArenaService {
     /** 注入领域服务，预检可能到账的物品并从原守军属性计算所有机器人战力。 */
     ArenaService(SessionService sessions, RoleRepository roles, ArenaRepository repository, ArenaRules rules,
                  HeroLineupBattleService battles, HeroPowerRules powers, InventoryService inventory,
-                 RewardGrantService grants, AssetSyncService sync, GameClock clock) {
+                 RewardGrantService grants, AssetSyncService sync, GameClock clock, ApplicationEventPublisher events) {
         this.sessions = sessions;
         this.roles = roles;
         this.repository = repository;
@@ -120,6 +125,7 @@ public class ArenaService {
         this.grants = grants;
         this.sync = sync;
         this.clock = clock;
+        this.events = events;
         grants.requireSupported(List.of(ArenaRules.TICKET_ID));
         grants.requireSupported(rules.config().rewards().stream().flatMap(drop -> drop.items().stream())
                 .map(Reward::itemId).distinct().toList());
@@ -196,6 +202,8 @@ public class ArenaService {
         var result = new Challenge(requestId, role.id(), roles.revision(role.id()), record, replay,
                 state(role.id(), score, latest, history), actual);
         repository.saveChallenge(result);
+        events.publishEvent(new QuestProgressEvent(role.id(), QuestMetric.ARENA_CHALLENGE));
+        events.publishEvent(new QuestProgressEvent(role.id(), QuestMetric.ARENA_SCORE));
         return result;
     }
 

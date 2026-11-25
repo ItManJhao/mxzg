@@ -75,6 +75,8 @@ const payloads = [
     "arenaState", "arenaChallengeRequest", "arenaReplayRequest", "arenaReplay", "arenaSettlement",
     "arenaTicketBuyRequest", "arenaTicketPurchase",
     "guildListRequest", "guildChangeRequest", "guildState", "vipClaimRequest", "vipClaimReceipt",
+    "guildShopBuyRequest", "guildShopState", "guildDonationRequest", "guildDonationState", "guildRankingState",
+    "questClaimRequest", "questSnapshot", "questClaimReceipt", "questChanged",
     "chapterQuickBattleState", "chapterQuickBattleClaim", "chapterQuickBattleReceipt",
 ];
 /** 无状态协议转换工具；不会持有会话、角色或网络连接。 */
@@ -225,6 +227,10 @@ export class GameProtocolCodecUtils {
                 case Protocol.ROLE_PEERAGE_DISPLAY: return "rolePeerageDisplay";
                 case Protocol.GUILD_LIST: return "guildListRequest";
                 case Protocol.GUILD_CHANGE: return "guildChangeRequest";
+                case Protocol.GUILD_SHOP_BUY: return "guildShopBuyRequest";
+                case Protocol.GUILD_DONATION_DONATE:
+                case Protocol.GUILD_DONATION_CLAIM: return "guildDonationRequest";
+                case Protocol.QUEST_CLAIM: return "questClaimRequest";
                 case Protocol.VIP_CLAIM: return "vipClaimRequest";
                 case Protocol.GM_LEVEL_SET: return "gmSetRoleLevel";
                 case Protocol.GM_CHAPTER_SET: return "gmSetChapter";
@@ -245,6 +251,9 @@ export class GameProtocolCodecUtils {
         }
         if (frame.kind === "event" && frame.name === Protocol.GUILD_UPDATED) {
             return "empty";
+        }
+        if (frame.kind === "event" && frame.name === Protocol.QUEST_CHANGED) {
+            return "questChanged";
         }
         if (frame.kind === "response") {
             switch (frame.name) {
@@ -286,6 +295,14 @@ export class GameProtocolCodecUtils {
                 case Protocol.MARKET_REFRESH: return "marketReceipt";
                 case Protocol.GUILD_LIST:
                 case Protocol.GUILD_CHANGE: return "guildState";
+                case Protocol.GUILD_SHOP_LIST:
+                case Protocol.GUILD_SHOP_BUY: return "guildShopState";
+                case Protocol.GUILD_DONATION_INFO:
+                case Protocol.GUILD_DONATION_DONATE:
+                case Protocol.GUILD_DONATION_CLAIM: return "guildDonationState";
+                case Protocol.QUEST_LIST: return "questSnapshot";
+                case Protocol.QUEST_CLAIM: return "questClaimReceipt";
+                case Protocol.GUILD_RANKING: return "guildRankingState";
                 case Protocol.VIP_CLAIM: return "vipClaimReceipt";
                 case Protocol.ROLE_NAME_RANDOM: return "roleName";
                 case Protocol.ROLE_NAME_SET:
@@ -1444,6 +1461,189 @@ export class GameProtocolCodecUtils {
         }
     }
 
+    /** 校验任务消息、领取凭据和完整列表，避免损坏的数据进入共享任务状态。 */
+    private static validateQuest(frame: GameFrame): void {
+        if (frame.ok === false || (frame.name !== Protocol.QUEST_LIST && frame.name !== Protocol.QUEST_CLAIM
+            && frame.name !== Protocol.QUEST_CHANGED)) {
+            return;
+        }
+        const body = GameProtocolCodecUtils.messageObject(frame.body);
+        const positive = (value: unknown): boolean => GameProtocolCodecUtils.isIntegerInRange(value, 1, 0x7fffffff);
+        const count = (value: unknown): boolean => GameProtocolCodecUtils.isIntegerInRange(value, 0, Number.MAX_SAFE_INTEGER);
+        const title = (value: unknown): boolean => typeof value === "string" && value.trim().length > 0 && value.length <= 300;
+        if (frame.kind === "request") {
+            if (frame.name === Protocol.QUEST_LIST && !Object.keys(body).length) {
+                return;
+            }
+            if (frame.name !== Protocol.QUEST_CLAIM || !GameProtocolCodecUtils.isUuid(body.requestId)
+                || !["DAILY", "ACHIEVEMENT", "MILESTONE"].includes(String(body.kind)) || !positive(body.id)
+                || !count(body.resetAt) || Object.keys(body).some(key => !["requestId", "kind", "id", "resetAt"].includes(key))) {
+                throw new Error("任务领取请求无效");
+            }
+            return;
+        }
+        if (frame.kind === "event") {
+            if (!GameProtocolCodecUtils.validQuestRows(body.completed, 128, row => title(row.title))) {
+                throw new Error("成就完成通知无效");
+            }
+            return;
+        }
+        if (frame.name === Protocol.QUEST_CLAIM && !GameProtocolCodecUtils.isUuid(body.requestId)) {
+            throw new Error("任务领取回执编号无效");
+        }
+        const snapshot = frame.name === Protocol.QUEST_CLAIM ? GameProtocolCodecUtils.messageObject(body.snapshot) : body;
+        const rewardRow = (row: Record<string, unknown>): boolean => typeof row.claimed === "boolean"
+            && Array.isArray(row.rewards) && row.rewards.length <= 16 && row.rewards.every(value => {
+                const reward = GameProtocolCodecUtils.messageObject(value);
+                return positive(reward.itemId) && count(reward.quantity) && Number(reward.quantity) > 0;
+            });
+        const taskRow = (row: Record<string, unknown>): boolean => rewardRow(row) && title(row.title)
+            && count(row.current) && count(row.target) && Number(row.target) > 0
+            && typeof row.destination === "string" && /^[a-z0-9_-]{0,64}$/.test(row.destination);
+        if (!count(snapshot.resetAt) || !count(snapshot.activityPoints)
+            || !GameProtocolCodecUtils.validQuestRows(snapshot.daily, 128, taskRow)
+            || !GameProtocolCodecUtils.validQuestRows(snapshot.achievements, 512, taskRow)
+            || !GameProtocolCodecUtils.validQuestRows(snapshot.milestones, 16, row => positive(row.points) && rewardRow(row))) {
+            throw new Error("任务快照无效");
+        }
+        if (body.notice !== undefined) {
+            GameProtocolCodecUtils.validateRewardNotice(GameProtocolCodecUtils.messageObject(body.notice));
+        }
+    }
+
+    /** 各类任务编号必须为正整数，同一列表只允许一个条目使用该编号。 */
+    private static validQuestRows(value: unknown, maximum: number,
+        validate: (row: Record<string, unknown>) => boolean): boolean {
+        if (!Array.isArray(value) || value.length > maximum) {
+            return false;
+        }
+        const ids = new Set<unknown>();
+        return value.every(entry => {
+            const row = GameProtocolCodecUtils.messageObject(entry);
+            if (!GameProtocolCodecUtils.isIntegerInRange(row.id, 1, 0x7fffffff) || ids.has(row.id) || !validate(row)) {
+                return false;
+            }
+            ids.add(row.id);
+            return true;
+        });
+    }
+
+    /** 拒绝公会报价、贡献和排行榜中不完整或非法的字段。 */
+    private static validateGuildFeature(frame: GameFrame): void {
+        const shop = frame.name === Protocol.GUILD_SHOP_LIST || frame.name === Protocol.GUILD_SHOP_BUY;
+        const donation = frame.name === Protocol.GUILD_DONATION_INFO || frame.name === Protocol.GUILD_DONATION_DONATE
+            || frame.name === Protocol.GUILD_DONATION_CLAIM;
+        const ranking = frame.name === Protocol.GUILD_RANKING;
+        if ((!shop && !donation && !ranking) || frame.ok === false) {
+            return;
+        }
+        const body = GameProtocolCodecUtils.messageObject(frame.body);
+        const uint = (value: unknown, min = 0): boolean => GameProtocolCodecUtils.isIntegerInRange(value, min, 0x7fffffff);
+        const timestamp = (value: unknown): boolean => GameProtocolCodecUtils.isIntegerInRange(value, 1);
+        const write = frame.name === Protocol.GUILD_SHOP_BUY || frame.name === Protocol.GUILD_DONATION_DONATE
+            || frame.name === Protocol.GUILD_DONATION_CLAIM;
+        if (frame.kind === "request" && !write) {
+            if (Object.keys(body).length) {
+                throw new Error("公会查询不接收额外参数");
+            }
+            return;
+        }
+        if (ranking) {
+            GameProtocolCodecUtils.validateGuildRanking(body);
+            return;
+        }
+        if (!GameProtocolCodecUtils.isUuid(body.guildId) || (write && !GameProtocolCodecUtils.isUuid(body.requestId))) {
+            throw new Error("公会操作归属或编号无效");
+        }
+        if (!timestamp(shop ? body.resetAtSeconds : body.resetAt)) {
+            throw new Error("公会刷新时间无效");
+        }
+        if (frame.kind === "request") {
+            const fields = shop ? ["productId", "count"] : ["optionId"];
+            const allowed = [...fields, "guildId", "requestId", shop ? "resetAtSeconds" : "resetAt"];
+            if (Object.keys(body).some(key => !allowed.includes(key)) || fields.some(key => !uint(body[key], 1))) {
+                throw new Error("公会兑换或捐献请求无效");
+            }
+        } else if (shop) {
+            const products = body.products;
+            if (!Array.isArray(products) || products.length > 100 || new Set(products.map(value => value?.productId)).size !== products.length
+                || products.some(value => {
+                    const row = GameProtocolCodecUtils.messageObject(value);
+                    return [row.productId, row.itemId, row.quantity, row.cost, row.limit].some(n => !uint(n, 1))
+                        || !uint(row.purchased) || Number(row.purchased) > Number(row.limit)
+                        || typeof row.purchasable !== "boolean";
+                })) {
+                throw new Error("公会商店货架无效");
+            }
+        } else {
+            GameProtocolCodecUtils.validateGuildDonation(body);
+        }
+    }
+
+    /** 校验三档捐献和三档宝箱的编号、实际消耗与领取状态。 */
+    private static validateGuildDonation(body: Record<string, unknown>): void {
+        const uint = (value: unknown, min = 0): boolean => GameProtocolCodecUtils.isIntegerInRange(value, min, 0x7fffffff);
+        const tiers = body.tiers;
+        const chests = body.chests;
+        if (!uint(body.level, 1) || [body.experience, body.nextLevelExperience, body.nextCapacity, body.dailyPoints].some(n => !uint(n))
+            || !uint(body.donatedTier) || Number(body.donatedTier) > 3 || !Array.isArray(tiers) || tiers.length !== 3
+            || !Array.isArray(chests) || chests.length !== 3) {
+            throw new Error("公会捐献状态无效");
+        }
+        for (let index = 0; index < 3; index++) {
+            const tier = GameProtocolCodecUtils.messageObject(tiers[index]);
+            const chest = GameProtocolCodecUtils.messageObject(chests[index]);
+            if (tier.id !== index + 1 || chest.id !== index + 1
+                || [tier.costItemId, tier.costAmount, tier.medals, tier.experience, chest.points].some(n => !uint(n, 1))
+                || typeof chest.claimed !== "boolean" || !Array.isArray(chest.rewards) || !chest.rewards.length
+                || chest.rewards.some(value => {
+                    const item = GameProtocolCodecUtils.messageObject(value);
+                    return !uint(item.itemId, 1) || !GameProtocolCodecUtils.isIntegerInRange(item.quantity, 1);
+                })) {
+                throw new Error("公会捐献档位或宝箱奖励无效");
+            }
+        }
+    }
+
+    /** 榜单名次应连续且战力降序；本人行可处于榜外，榜内应与相同名次对应。 */
+    private static validateGuildRanking(body: Record<string, unknown>): void {
+        const entries = body.entries;
+        if (!Array.isArray(entries) || entries.length > 100) {
+            throw new Error("公会排行榜长度无效");
+        }
+        const validate = (value: unknown, rank: number): Record<string, unknown> => {
+            const entry = GameProtocolCodecUtils.messageObject(value);
+            if (entry.rank !== rank || !GameProtocolCodecUtils.isUuid(entry.guildId)
+                || typeof entry.name !== "string" || !entry.name.length || typeof entry.serverId !== "string"
+                || !entry.serverId.length || typeof entry.leaderName !== "string" || !entry.leaderName.length
+                || !GameProtocolCodecUtils.isIntegerInRange(entry.badgeId, 0, 43)
+                || !GameProtocolCodecUtils.isIntegerInRange(entry.power, rank > 0 ? 1 : 0)) {
+                throw new Error("公会排行榜条目无效");
+            }
+            return entry;
+        };
+        let previous = Number.MAX_SAFE_INTEGER;
+        const ids = new Set<unknown>();
+        entries.forEach((value, index) => {
+            const entry = validate(value, index + 1);
+            if (Number(entry.power) > previous || ids.has(entry.guildId)) {
+                throw new Error("公会排行榜顺序或公会重复");
+            }
+            previous = Number(entry.power);
+            ids.add(entry.guildId);
+        });
+        if (body.own !== undefined) {
+            const rank = GameProtocolCodecUtils.messageObject(body.own).rank;
+            if (!GameProtocolCodecUtils.isIntegerInRange(rank, 0, entries.length)) {
+                throw new Error("本公会名次无效");
+            }
+            const own = validate(body.own, Number(rank));
+            if (rank ? entries[Number(rank) - 1].guildId !== own.guildId : ids.has(own.guildId)) {
+                throw new Error("本公会名次与榜单不符");
+            }
+        }
+    }
+
     /** 编码完整帧，校验各玩法指令和回执，返回可直接发送的独立 ArrayBuffer。 */
     public static encodeGameFrame(frame: GameFrame): ArrayBuffer {
         GameProtocolCodecUtils.validateIntegers(frame);
@@ -1462,6 +1662,8 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateVip(frame);
         GameProtocolCodecUtils.validateFormationPower(frame);
         GameProtocolCodecUtils.validateGuildProgress(frame);
+        GameProtocolCodecUtils.validateGuildFeature(frame);
+        GameProtocolCodecUtils.validateQuest(frame);
         HeroLevelData.validateFrame(frame);
         HeroLevelData.validateStageFrame(frame);
         const { body, ...envelope } = frame;
@@ -1527,6 +1729,8 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateVip(frame);
         GameProtocolCodecUtils.validateFormationPower(frame);
         GameProtocolCodecUtils.validateGuildProgress(frame);
+        GameProtocolCodecUtils.validateGuildFeature(frame);
+        GameProtocolCodecUtils.validateQuest(frame);
         HeroLevelData.validateFrame(frame);
         HeroLevelData.validateStageFrame(frame);
         GameProtocolCodecUtils.validateRoleName(frame, expected);

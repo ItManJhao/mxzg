@@ -7,12 +7,15 @@ package com.funsgamex.mxzg.hero;
 
 import com.funsgamex.mxzg.lineup.MainFormationStateService;
 import com.funsgamex.mxzg.network.AssetSyncService;
+import com.funsgamex.mxzg.quest.QuestMetric;
+import com.funsgamex.mxzg.quest.QuestProgressEvent;
 import com.funsgamex.mxzg.role.RoleRepository;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -35,6 +38,8 @@ public class HeroGrantService {
     private final MainFormationStateService formations;
     /** 原事务统一版本和提交后状态通知。 */
     private final AssetSyncService sync;
+    /** 真实新建英雄时登记原星级获得数量，由外层奖励事务一同提交。 */
+    private final ApplicationEventPublisher events;
     /** 真实模板到原始星级，只读配置不保存角色实例。 */
     private final Map<Integer, Integer> initialStars;
 
@@ -51,13 +56,15 @@ public class HeroGrantService {
 
     /** 注入原发放与图鉴依赖，读取同源英雄模板初始星级；坏配置在装配时拒绝。 */
     public HeroGrantService(JdbcTemplate jdbc, RoleRepository roles, HeroGrowthRules growth,
-            HeroRepository heroes, MainFormationStateService formations, AssetSyncService sync, ObjectMapper mapper) {
+            HeroRepository heroes, MainFormationStateService formations, AssetSyncService sync, ObjectMapper mapper,
+            ApplicationEventPublisher events) {
         this.jdbc = jdbc;
         this.roles = roles;
         this.growth = growth;
         this.heroes = heroes;
         this.formations = formations;
         this.sync = sync;
+        this.events = events;
         var stars = new HashMap<Integer, Integer>();
         try (var input = getClass().getResourceAsStream("/gameplay/herotype.json")) {
             if (input == null) {
@@ -92,7 +99,7 @@ public class HeroGrantService {
     }
 
     /**
-     * 在原角色锁事务创建独立英雄，登记图鉴与五星获得并返回实例身份供同事务冻结回执。
+     * 在原角色锁事务创建独立英雄，登记图鉴与原星级获得进度并返回实例身份供同事务冻结回执。
      * 奖励不做旧召唤入口的容量拦截；后续任一发奖失败由外层整体回滚。
      */
     @Transactional(propagation = Propagation.MANDATORY)
@@ -117,6 +124,7 @@ public class HeroGrantService {
         heroes.recordIllustration(roleId, templateId, star);
         formations.refresh(roleId);
         sync.changed(roleId);
+        events.publishEvent(new QuestProgressEvent(roleId, QuestMetric.GET_HERO, star, star == 5 ? 0 : quantity));
         return List.copyOf(created);
     }
 }

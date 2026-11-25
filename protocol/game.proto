@@ -122,8 +122,63 @@ message Frame {
     ChapterQuickBattleReceipt chapter_quick_battle_receipt = 112;
     FormationPowerRequest formation_power_request = 113;
     FormationPower formation_power = 114;
+    GuildShopBuyRequest guild_shop_buy_request = 115;
+    GuildShopState guild_shop_state = 116;
+    GuildDonationRequest guild_donation_request = 117;
+    GuildDonationState guild_donation_state = 118;
+    GuildRankingState guild_ranking_state = 119;
+    QuestClaimRequest quest_claim_request = 120;
+    QuestSnapshot quest_snapshot = 121;
+    QuestClaimReceipt quest_claim_receipt = 122;
+    QuestChanged quest_changed = 123;
   }
 }
+
+// 每日任务、活跃奖励与成就均由当前角色的服务端任务状态提供。
+message QuestClaimRequest {
+  required string request_id = 1;
+  required string kind = 2;
+  required uint32 id = 3;
+  required int64 reset_at = 4;
+}
+
+message QuestTask {
+  required uint32 id = 1;
+  required string title = 2;
+  required int64 current = 3;
+  required int64 target = 4;
+  required bool claimed = 5;
+  repeated ChapterReward rewards = 6;
+  required string destination = 7;
+}
+
+message QuestMilestone {
+  required uint32 id = 1;
+  required uint32 points = 2;
+  required bool claimed = 3;
+  repeated ChapterReward rewards = 4;
+}
+
+message QuestSnapshot {
+  required int64 reset_at = 1;
+  required uint32 activity_points = 2;
+  repeated QuestTask daily = 3;
+  repeated QuestTask achievements = 4;
+  repeated QuestMilestone milestones = 5;
+}
+
+message QuestClaimReceipt {
+  required string request_id = 1;
+  required QuestSnapshot snapshot = 2;
+  optional RewardNotice notice = 3;
+}
+
+message QuestCompletion {
+  required uint32 id = 1;
+  required string title = 2;
+}
+
+message QuestChanged { repeated QuestCompletion completed = 1; }
 message Empty {}
 // 普通市场中的单个货架商品。最终售价、限购及已购数量均由服务端返回。
 message MarketOffer {
@@ -225,6 +280,79 @@ message GuildState {
   required bool has_more = 10;
   repeated string applied_guild_ids = 11;
   required int64 rejoin_at_seconds = 12;
+}
+
+// 商品报价按公会余额货币与当前周结算。reset_at_seconds 绑定打开时的报价周期。
+message GuildShopBuyRequest {
+  required string request_id = 1;
+  required string guild_id = 2;
+  required uint32 product_id = 3;
+  required uint32 count = 4;
+  required int64 reset_at_seconds = 5;
+}
+message GuildShopProduct {
+  required uint32 product_id = 1;
+  required uint32 item_id = 2;
+  required uint32 quantity = 3;
+  required uint32 cost = 4;
+  required uint32 limit = 5;
+  required uint32 purchased = 6;
+  required bool purchasable = 7;
+}
+message GuildShopState {
+  optional string request_id = 1;
+  required string guild_id = 2;
+  required int64 reset_at_seconds = 3;
+  repeated GuildShopProduct products = 4;
+}
+
+// 两项写操作共用当前公会、当前自然日和持久幂等键；option 指档位或对应宝箱编号。
+message GuildDonationRequest {
+  required string request_id = 1;
+  required string guild_id = 2;
+  required int64 reset_at = 3;
+  required uint32 option_id = 4;
+}
+message GuildDonationTier {
+  required uint32 id = 1;
+  required uint32 cost_item_id = 2;
+  required uint32 cost_amount = 3;
+  required uint32 medals = 4;
+  required uint32 experience = 5;
+}
+message GuildDonationChest {
+  required uint32 id = 1;
+  required uint32 points = 2;
+  required bool claimed = 3;
+  repeated ChapterReward rewards = 4;
+}
+message GuildDonationState {
+  optional string request_id = 1;
+  required string guild_id = 2;
+  required int64 reset_at = 3;
+  required uint32 level = 4;
+  required uint32 experience = 5;
+  required uint32 next_level_experience = 6;
+  required uint32 next_capacity = 7;
+  required uint32 daily_points = 8;
+  required uint32 donated_tier = 9;
+  repeated GuildDonationTier tiers = 10;
+  repeated GuildDonationChest chests = 11;
+}
+
+// 榜单只包含当前区服，own 缺失代表未入会，rank 为零代表本公会未上榜。
+message GuildRankEntry {
+  required uint32 rank = 1;
+  required string guild_id = 2;
+  required string server_id = 3;
+  required string name = 4;
+  required uint32 badge_id = 5;
+  required string leader_name = 6;
+  required int64 power = 7;
+}
+message GuildRankingState {
+  repeated GuildRankEntry entries = 1;
+  optional GuildRankEntry own = 2;
 }
 
 // 单个日常副本关卡的原展示和资格。每日胜场、次数与报价在同类关卡间共用。

@@ -16,6 +16,8 @@ import com.funsgamex.mxzg.hero.HeroMainPowerService;
 import com.funsgamex.mxzg.hero.HeroMainPowerService.Measured;
 import com.funsgamex.mxzg.network.AssetSyncService;
 import com.funsgamex.mxzg.protocol.GameProtocol.BattleReplay;
+import com.funsgamex.mxzg.quest.QuestMetric;
+import com.funsgamex.mxzg.quest.QuestProgressEvent;
 import com.funsgamex.mxzg.reward.RewardGrantResult;
 import com.funsgamex.mxzg.reward.RewardGrantService;
 import com.funsgamex.mxzg.reward.RewardGrantService.Reward;
@@ -28,6 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -56,6 +59,8 @@ public class DailyDungeonService {
     private final AssetSyncService assetSync;
     /** 每日次数和本次奖励统一以同一游戏时点计算。 */
     private final GameClock clock;
+    /** 一次新挑战或扫荡结算后，同步发布真实参与进度。 */
+    private final ApplicationEventPublisher events;
 
     /** 一个关卡的展示与资格，从历史通关和角色真实等级、战力构成。 */
     public record StageState(int stageId, int titleLanguageId, int minimumLevel, long requiredPower,
@@ -100,7 +105,8 @@ public class DailyDungeonService {
     /** 注入游戏时钟和通用服务，预检全部奖励，并复用提交后的统一快照同步。 */
     public DailyDungeonService(SessionService sessions, RoleRepository roles, DailyDungeonRepository dungeon,
                                DailyDungeonRules rules, HeroMainPowerService powers, HeroLineupBattleService battles,
-                               RewardGrantService grants, AssetSyncService assetSync, GameClock clock) {
+                               RewardGrantService grants, AssetSyncService assetSync, GameClock clock,
+                               ApplicationEventPublisher events) {
         this.sessions = sessions;
         this.roles = roles;
         this.dungeon = dungeon;
@@ -110,6 +116,7 @@ public class DailyDungeonService {
         this.grants = grants;
         this.assetSync = assetSync;
         this.clock = clock;
+        this.events = events;
         grants.requireSupported(Arrays.stream(DailyDungeonType.values()).flatMap(type -> rules.get(type).stages().stream())
                 .flatMap(stage -> stage.rewardPreview().stream())
                 .map(Reward::itemId).distinct().toList());
@@ -181,6 +188,7 @@ public class DailyDungeonService {
         var result = new Challenge(requestId, type, role, roles.revision(role), UUID.randomUUID().toString(), won, sweep,
                 replay, state(selectedRules, stageId, access, progress, power), actual);
         dungeon.saveReceipt(maxDiamonds, result);
+        events.publishEvent(new QuestProgressEvent(role, QuestMetric.DAILY_DUNGEON_CHALLENGE, 0, 1));
         return result;
     }
 

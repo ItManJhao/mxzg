@@ -102,6 +102,24 @@ export class Protocol {
     public static readonly GUILD_CHANGE = "guild.change";
     /** 已提交的公会状态发生变化，通知打开的公会页更新。 */
     public static readonly GUILD_UPDATED = "guild.updated";
+    /** 读取当前周可兑换物品和个人限购。 */
+    public static readonly GUILD_SHOP_LIST = "guild.shop.list";
+    /** 使用服务器提供的周报价兑换公会商店物品。 */
+    public static readonly GUILD_SHOP_BUY = "guild.shop.buy";
+    /** 读取当天个人捐献资格与全公会点数。 */
+    public static readonly GUILD_DONATION_INFO = "guild.donation.info";
+    /** 向当前公会完成一档捐献。 */
+    public static readonly GUILD_DONATION_DONATE = "guild.donation.donate";
+    /** 根据全会每日贡献领取一个宝箱。 */
+    public static readonly GUILD_DONATION_CLAIM = "guild.donation.claim";
+    /** 读取本服公会榜和所属公会的名次。 */
+    public static readonly GUILD_RANKING = "guild.ranking";
+    /** 读取当前角色的每日任务、活跃奖励和成就。 */
+    public static readonly QUEST_LIST = "quest.list";
+    /** 领取指定分类和编号的任务或活跃奖励。 */
+    public static readonly QUEST_CLAIM = "quest.claim";
+    /** 已提交的任务进度变化，携带本次达成的成就。 */
+    public static readonly QUEST_CHANGED = "quest.changed";
     /** 领取当前 VIP 档位已达成的契约任务奖励。 */
     public static readonly VIP_CLAIM = "vip.claim";
     /** 读取金币副本的关卡资格、原产物及当天挑战次数。 */
@@ -215,7 +233,9 @@ export type ReadProtocol = typeof Protocol.SESSION_HEARTBEAT | typeof Protocol.G
     | typeof Protocol.ROLE_DECORATIONS_LIST
     | typeof Protocol.MARKET_LIST | DailyDungeonRoutes["list"]
     | typeof Protocol.TOWER_STATE | typeof Protocol.ARENA_STATE | typeof Protocol.ARENA_REPLAY
-    | typeof Protocol.GUILD_LIST | typeof Protocol.CHAPTER_QUICK_BATTLE_INFO | typeof Protocol.FORMATION_POWER;
+    | typeof Protocol.GUILD_LIST | typeof Protocol.GUILD_SHOP_LIST | typeof Protocol.GUILD_DONATION_INFO
+    | typeof Protocol.GUILD_RANKING | typeof Protocol.CHAPTER_QUICK_BATTLE_INFO | typeof Protocol.FORMATION_POWER
+    | typeof Protocol.QUEST_LIST;
 /** 具有角色归属回执的操作；查询与原命令经同一条认证连接。 */
 export type RoleOperationProtocol = typeof Protocol.HERO_SUMMON | typeof Protocol.HERO_NORMAL_SUMMON
     | typeof Protocol.HERO_FIRST_SUMMON | typeof Protocol.HERO_FIRST_SUMMON_STATUS
@@ -232,7 +252,8 @@ export type RoleOperationProtocol = typeof Protocol.HERO_SUMMON | typeof Protoco
     | typeof Protocol.HERO_EQUIPMENT_CHANGE | typeof Protocol.MARKET_BUY | typeof Protocol.MARKET_REFRESH
     | typeof Protocol.CHAPTER_FIRST_REWARD_CLAIM | typeof Protocol.CHAPTER_FIRST_REWARD_STATUS
     | typeof Protocol.ROLE_WELCOME_CLAIM | DailyDungeonRoutes["challenge"] | typeof Protocol.GUILD_CHANGE
-    | typeof Protocol.VIP_CLAIM | typeof Protocol.CHAPTER_QUICK_BATTLE_CLAIM
+    | typeof Protocol.GUILD_SHOP_BUY | typeof Protocol.GUILD_DONATION_DONATE | typeof Protocol.GUILD_DONATION_CLAIM
+    | typeof Protocol.VIP_CLAIM | typeof Protocol.QUEST_CLAIM | typeof Protocol.CHAPTER_QUICK_BATTLE_CLAIM
     | typeof Protocol.TOWER_CHALLENGE | typeof Protocol.TOWER_SWEEP
     | typeof Protocol.TOWER_MILESTONE_CLAIM | typeof Protocol.ARENA_CHALLENGE | typeof Protocol.ARENA_TICKET_BUY;
 
@@ -296,6 +317,15 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.GUILD_LIST, module: "公会", description: "查询本区公会和成员状态" },
     { name: Protocol.GUILD_CHANGE, module: "公会", description: "创建、申请、审批或退出公会" },
     { name: Protocol.GUILD_UPDATED, module: "公会", description: "公会状态已提交更新" },
+    { name: Protocol.GUILD_SHOP_LIST, module: "公会", description: "读取公会商店周报价" },
+    { name: Protocol.GUILD_SHOP_BUY, module: "公会", description: "兑换公会商店物品" },
+    { name: Protocol.GUILD_DONATION_INFO, module: "公会", description: "读取捐献档位和宝箱" },
+    { name: Protocol.GUILD_DONATION_DONATE, module: "公会", description: "提交每日公会捐献" },
+    { name: Protocol.GUILD_DONATION_CLAIM, module: "公会", description: "领取公会捐献宝箱" },
+    { name: Protocol.GUILD_RANKING, module: "公会", description: "读取本服公会战力榜" },
+    { name: Protocol.QUEST_LIST, module: "任务", description: "读取每日任务和成就" },
+    { name: Protocol.QUEST_CLAIM, module: "任务", description: "领取任务、成就或活跃奖励" },
+    { name: Protocol.QUEST_CHANGED, module: "任务", description: "任务进度更新和新成就" },
     { name: Protocol.VIP_CLAIM, module: "VIP", description: "领取当前档位的契约任务奖励" },
     { name: Protocol.CHAPTER_QUICK_BATTLE_INFO, module: "主线", description: "读取今日快速战斗次数与报价" },
     { name: Protocol.CHAPTER_QUICK_BATTLE_CLAIM, module: "主线", description: "确认报价并结算快速战斗" },

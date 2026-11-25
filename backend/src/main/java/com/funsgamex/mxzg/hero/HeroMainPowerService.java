@@ -5,8 +5,11 @@
 package com.funsgamex.mxzg.hero;
 
 import com.funsgamex.mxzg.auth.SessionService;
+import com.funsgamex.mxzg.quest.QuestMetric;
+import com.funsgamex.mxzg.quest.QuestProgressEvent;
 import com.funsgamex.mxzg.role.RoleRepository;
 import java.util.*;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -32,6 +35,8 @@ public class HeroMainPowerService {
     private final HeroBattleElementRules elements;
     /** 逐英雄按同源评分阈值换算战力。 */
     private final HeroPowerRules powers;
+    /** 主阵容战力峰值写入后通知任务领域，始终使用持久战力。 */
+    private final ApplicationEventPublisher events;
 
     /** 队伍总分、逐英雄分值与输入版本；pending非空时不能声称完整还原旧服战力。 */
     public record State(long assetRevision, long lineupVersion, int total,
@@ -56,20 +61,25 @@ public class HeroMainPowerService {
 
     /** 注入认证、阵容、英雄和评分规则，草稿与保存后的队伍共用同一口径。 */
     public HeroMainPowerService(SessionService sessions, HeroBattleInputService inputs, HeroRepository heroes, RoleRepository roles,
-                                HeroBattleElementRules elements, HeroPowerRules powers) {
+                                HeroBattleElementRules elements, HeroPowerRules powers, ApplicationEventPublisher events) {
         this.sessions = sessions;
         this.inputs = inputs;
         this.heroes = heroes;
         this.roles = roles;
         this.elements = elements;
         this.powers = powers;
+        this.events = events;
     }
 
-    /** 在角色锁内同步当前值并记录峰值，阵容或装备走低时保留原最高值。 */
+    /** 在角色锁内同步当前值和记录峰值，刷新纪录才通知任务领域。 */
     @Transactional(propagation = Propagation.MANDATORY)
     public Measured observe(String roleId) {
         int current = readCurrentForRole(roleId);
-        return new Measured(current, roles.observeMainPower(roleId, current));
+        var observed = roles.observeMainPower(roleId, current);
+        if (observed.increased()) {
+            events.publishEvent(new QuestProgressEvent(roleId, QuestMetric.ROLE_MAX_FIGHTING));
+        }
+        return new Measured(current, observed.maximum());
     }
 
     /** 同一角色锁内读取并评分本人草稿，回显一次性请求编号；不写阵容或战力记录。 */

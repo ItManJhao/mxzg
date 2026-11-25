@@ -5,6 +5,9 @@
 package com.funsgamex.mxzg.role;
 
 import com.funsgamex.mxzg.network.AssetSyncService;
+import com.funsgamex.mxzg.quest.QuestMetric;
+import com.funsgamex.mxzg.quest.QuestProgressEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -20,19 +23,23 @@ public class RoleExperienceService {
     private final JdbcTemplate jdbc;
     /** 同事务只递增一次版本，回滚不推送。 */
     private final AssetSyncService sync;
+    /** 真实等级增长在同事务通知任务服务重新读取角色等级。 */
+    private final ApplicationEventPublisher events;
 
     /** 注入现有角色和同步入口，不持有本地玩家副本。 */
-    public RoleExperienceService(RoleRules rules, RoleRepository roles, JdbcTemplate jdbc, AssetSyncService sync) {
+    public RoleExperienceService(RoleRules rules, RoleRepository roles, JdbcTemplate jdbc, AssetSyncService sync,
+                                 ApplicationEventPublisher events) {
         this.rules = rules;
         this.roles = roles;
         this.jdbc = jdbc;
         this.sync = sync;
+        this.events = events;
     }
 
     /**
      * 在已鉴权奖励事务内给指定角色增加经验，内部复用角色行锁。
      * 必须加入外层事务，禁止单独自动提交；不创建英雄升级、穿脱或玩家发奖接口。
-     * 升级钻石复用钱包的旧余额及精确加法校验，与等级经验共享版本和回滚边界。
+     * 升级钻石、等级经验和任务进度共用角色锁及回滚边界。
      * @param roleId 外层已鉴权的持久角色ID，不接收客户端指定的领奖对象
      * @param amount 本次可信奖励申请的正经验数量
      * @return 实际前后经验、接纳与满级忽略量及升级附赠；已满级空操作不推进资产版本
@@ -56,6 +63,9 @@ public class RoleExperienceService {
             roles.creditCurrency(roleId, 0, result.diamonds());
         }
         sync.changed(roleId);
+        if (result.level() != role.level()) {
+            events.publishEvent(new QuestProgressEvent(roleId, QuestMetric.ADVENTURE_LEVEL));
+        }
         return result;
     }
 }

@@ -27,6 +27,7 @@ import "../../features/arena/ui/ArenaView";
 import "../../features/tower/ui/TowerView";
 import "../../features/guild/ui/GuildView";
 import "../../features/vip/ui/VipView";
+import "../../features/quest/ui/QuestView";
 import {AccountLoginBinding} from "../../features/account/ui/AccountLoginBinding";
 import {AccountLoginView} from "../../features/account/ui/AccountLoginView";
 import { CityMapService } from "../../features/city/ui/CityMapService";
@@ -137,6 +138,11 @@ export class ApplicationPages {
     /** 把连接和页面提示交给当前主城；根页尚未挂载时没有提示栏。 */
     public showNotice(message: string): void {
         this.home?.showNotice(message);
+    }
+
+    /** 由顶部成就提示跳到当前角色的成就页。 */
+    public showAchievements(): boolean {
+        return this.features.openQuest("achievement");
     }
 
     /** 同步结束旧角色的开页意图并关闭功能页、常驻窗和闲置界面。 */

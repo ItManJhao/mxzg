@@ -1,4 +1,5 @@
 /** 公会目录、成员和审批列表的唯一客户端状态，由查询与变更回包整份替换。 */
+import type { GuildRankingState } from "./data/GuildRankingData";
 
 /** 服务端给出的公会列表或当前公会资料。 */
 export interface GuildSummary {
@@ -51,6 +52,57 @@ export interface GuildState {
     readonly rejoinAtSeconds: number;
 }
 
+/** 周货架中的单个报价，cost 为一次兑换所需的公会勋章。 */
+export interface GuildShopProduct {
+    readonly productId: number;
+    readonly itemId: number;
+    readonly quantity: number;
+    readonly cost: number;
+    readonly limit: number;
+    readonly purchased: number;
+    readonly purchasable: boolean;
+}
+
+/** 当前公会周货架，余额继续读背包，由统一快照同步。 */
+export interface GuildShopState {
+    readonly requestId?: string;
+    readonly guildId: string;
+    readonly resetAtSeconds: number;
+    readonly products: readonly GuildShopProduct[];
+}
+
+/** 单档捐献的实际扣除与个人勋章、公会经验。 */
+export interface GuildDonationTier {
+    readonly id: number;
+    readonly costItemId: number;
+    readonly costAmount: number;
+    readonly medals: number;
+    readonly experience: number;
+}
+
+/** 一档全会宝箱的门槛、个人领取状态和只读奖励预览。 */
+export interface GuildDonationChest {
+    readonly id: number;
+    readonly points: number;
+    readonly claimed: boolean;
+    readonly rewards: readonly { readonly itemId: number; readonly quantity: number }[];
+}
+
+/** 今日捐献及公会等级状态；resetAt 为服务器 Unix 秒，0 档表示本人尚未捐献。 */
+export interface GuildDonationState {
+    readonly requestId?: string;
+    readonly guildId: string;
+    readonly resetAt: number;
+    readonly level: number;
+    readonly experience: number;
+    readonly nextLevelExperience: number;
+    readonly nextCapacity: number;
+    readonly dailyPoints: number;
+    readonly donatedTier: number;
+    readonly tiers: readonly GuildDonationTier[];
+    readonly chests: readonly GuildDonationChest[];
+}
+
 export class GuildModel {
     /** 应用与公会页面共用的状态实例。 */
     public static readonly instance = new GuildModel();
@@ -60,10 +112,46 @@ export class GuildModel {
 
     /** 最近一次通过协议校验的公会数据，换角色时释放。 */
     private state: GuildState | null = null;
+    /** 通过服务端确认的周货架；离开当前公会或切换角色时清除。 */
+    private shopState: GuildShopState | null = null;
+    /** 通过服务端确认的日捐献投影；离开当前公会或切换角色时清除。 */
+    private donationState: GuildDonationState | null = null;
+    /** 当前区服排行与本人公会名次；公会身份变化时使本人行失效。 */
+    private rankingState: GuildRankingState | null = null;
 
     /** 返回一次服务端读写产生的完整公会状态。 */
     public get snapshot(): GuildState | null {
         return this.state;
+    }
+
+    /** 返回已校验的周货架，空值表示还未取得有效结果。 */
+    public get shop(): GuildShopState | null {
+        return this.shopState;
+    }
+
+    /** 返回已校验的捐献投影，供大厅提醒和子窗读取。 */
+    public get donation(): GuildDonationState | null {
+        return this.donationState;
+    }
+
+    /** 返回已校验的本服排行榜，空值表示还未查询或已清理。 */
+    public get ranking(): GuildRankingState | null {
+        return this.rankingState;
+    }
+
+    /** 用查询或兑换回包替换当前周货架，清理时传 null。 */
+    public replaceShop(state: GuildShopState | null): void {
+        this.shopState = state;
+    }
+
+    /** 用查询或操作回包替换当前捐献状态，清理时传 null。 */
+    public replaceDonation(state: GuildDonationState | null): void {
+        this.donationState = state;
+    }
+
+    /** 提交本服排行榜与当前角色公会的名次，清理时传 null。 */
+    public replaceRanking(state: GuildRankingState | null): void {
+        this.rankingState = state;
     }
 
     /** 按服务端名单判断当前角色是否是现任会长。 */

@@ -44,12 +44,19 @@
       "scope": "本批共享模态、Widget布局或完整英雄页面重构，已校验绑定与原资源UUID；正在Creator本机复验，不沿用旧视觉签收。",
       "inspector": "未操作Creator Inspector"
     },
-    "client/assets/bundles/module/battle/prefabs/ChapterClearRewardView.prefab": {
-      "sha256": "701a6a0ca9f4a38e4e31d6f150bc7d1df2c2c30e8b785a3f27a94c0dcf00db32",
-      "date": "2026-11-18",
+    "client/assets/bundles/module/battle/prefabs/ChapterClearRewardCell.prefab": {
+      "sha256": "8c9f002aff4855d2439f0e538c7f1cc230f5906d300d4a763f1166f9cce3dc6d",
+      "date": "2026-11-25",
       "status": "实际预览通过",
-      "scope": "Creator本机iPhone14Pro预览连接独立内存服。未通关显示前往战斗，超过开放范围显示暂未开放。首通第1关后显示可领，领取弹出通用获得窗，两件装备进背包，列表重排，关闭返回正常。",
-      "inspector": "未操作Creator原生Inspector。"
+      "scope": "Creator 393×852 竖屏独立会话核对标题、按钮、装备一星与二星、碎片星级和原奖励数量。",
+      "inspector": "本机 Creator 浏览器预览。"
+    },
+    "client/assets/bundles/module/battle/prefabs/ChapterClearRewardView.prefab": {
+      "sha256": "82bfa2a75f0f5dbf01478e9c774a522680cff2aa77356d624ee069d037a9cdfc",
+      "date": "2026-11-25",
+      "status": "实际预览通过",
+      "scope": "Creator 393×852 竖屏独立会话核对简中横幅和列表裁剪，实领第 5 关奖励后列表重排。",
+      "inspector": "本机 Creator 浏览器预览。"
     },
     "client/assets/bundles/module/battle/prefabs/ChapterEndView.prefab": {
       "sha256": "2b628c90eb6a3f3f3380927374e6778dd330903de36bfedf3f1ef441ab326b9a",
@@ -72,12 +79,19 @@
       "scope": "393x852及360x720完整850关；首屏5行节点，多次实际拖动及8次大跨度跳转后池保持7；横向拖动不误开，末关复用格实际选中雷鸣之足，两页签重绑和关闭返回正常。最终31表重载后再次到达850，5节点。 证据docs/validation/virtual-list-resource-review-20261111.json；仅本轮实际范围，不代表新发布包或全机型。",
       "inspector": "未操作Creator或Inspector；本机浏览器连接独立内存测试服复验。"
     },
+    "client/assets/bundles/module/battle/prefabs/MainChapterQuickBattleView.prefab": {
+      "sha256": "3afdb86cc8da2b77f6a946e009432087c27391e6fe81ec52ba4791bbeff7552a",
+      "date": "2026-11-25",
+      "status": "实际预览通过",
+      "scope": "Creator 393×852 竖屏独立会话核对外框边距、真实 4 次报价、四列向下滚动、规则窗及首次免费结算。",
+      "inspector": "本机 Creator 浏览器预览。"
+    },
     "client/assets/bundles/module/battle/prefabs/MainChapterView.prefab": {
-      "sha256": "c8cdc22fe91c6f2bcaeaf5e565209480814b06a7924cbd46ab004a083f55d121",
-      "date": "2026-11-23",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
-      "inspector": "未操作Creator Inspector"
+      "sha256": "7c69a1a785dbc86e6ad42de58d821075e8809ca6f7ae0eb59e4fdb546e7044bb",
+      "date": "2026-11-25",
+      "status": "实际预览通过",
+      "scope": "Creator 393×852 竖屏独立会话，验证日常任务按钮与通关奖励并排，能打开共用任务窗并实际领取。",
+      "inspector": "本机 Creator 浏览器预览，限新增任务入口。"
     },
     "client/assets/bundles/module/battle/prefabs/SkillAuditView.prefab": {
       "sha256": "27248211cd95f5e4b417e9a2f9fc93f02308545f3b5dad6891ceb6bee74632ed",
@@ -178,11 +192,32 @@
       "inspector": "Creator 393×852 Web 预览核实真实输入、回车、按钮和长度；未覆盖真机软键盘。"
     },
     "client/assets/bundles/module/guild/prefabs/GuildView.prefab": {
-      "sha256": "1b363d90fa2569323d384d29178263140595c395452eb261ce083b6d9b504147",
-      "date": "2026-11-24",
+      "sha256": "a33c761b14ff37c8628531e29a2c0e464537276f8d404a61b433499f98675e95",
+      "date": "2026-11-25",
       "status": "实际预览通过",
-      "scope": "入会大厅按日服重排，左侧显示实际等级、经验和人数，右侧公告卡提供编辑入口；未入会三页和审批锚点保持。",
-      "inspector": "Creator 393×852 双角色实际预览核对经验 0/750、会长提交、普通成员权限提示、两端公告同步及打开成员窗。"
+      "scope": "大厅新增商店、捐献和排行入口，捐献后大厅经验从 250/1600 更新至 300/1600。",
+      "inspector": "Creator 393×852 浏览器预览与真实隔离服务端。"
+    },
+    "client/assets/bundles/module/guild/prefabs/GuildShopView.prefab": {
+      "sha256": "b13295fb4cbbb09984159e3acad1ceb59baff304f6128d5e3ab3d2b8553ae3bd",
+      "date": "2026-11-25",
+      "status": "实际预览通过",
+      "scope": "三列、余额、真实周倒计时、滚动和数量确认通过，首商品兑换两份到账 60 碎片并显示限购 2/2。",
+      "inspector": "Creator 393×852 浏览器预览与真实隔离服务端。"
+    },
+    "client/assets/bundles/module/guild/prefabs/GuildDonationView.prefab": {
+      "sha256": "cc1e5c2ebd971462c06544c1a6823a1561b65af3b283e0136590cebf59514113",
+      "date": "2026-11-25",
+      "status": "实际预览通过",
+      "scope": "三色档位、规则、未达宝箱预览、1000 宝箱和金币捐献到账，核对日贡献、经验和按钮状态。",
+      "inspector": "Creator 393×852 浏览器预览与真实隔离服务端。"
+    },
+    "client/assets/bundles/module/guild/prefabs/GuildRankingView.prefab": {
+      "sha256": "6a15fe52f4f3815e69908a3fa1c1be71320c05a83a1f3d8a8e1ab5d84a972a09",
+      "date": "2026-11-25",
+      "status": "实际预览通过",
+      "scope": "用本区三个隔离公会核对前三台、降序战力和我的公会第三名显示。",
+      "inspector": "Creator 393×852 浏览器预览与真实隔离服务端。"
     },
     "client/assets/bundles/module/guild/prefabs/GuildMemberView.prefab": {
       "sha256": "65625dc37a4784df20def30bc852f1b5990ece26ad340e5067a6e5ea085f8322",
@@ -304,11 +339,11 @@
       "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
     },
     "client/assets/bundles/module/home/prefabs/CityChromeView.prefab": {
-      "sha256": "d8c618837f2fc9dcd571b3429d984af3514d0a2a334a4a7c10e34db59188dd79",
-      "date": "2026-11-24",
+      "sha256": "e7d7ad665ac5f3b1272f074cf9bfba6cdd580497451d9d08942b12c55cbe3c51",
+      "date": "2026-11-25",
       "status": "实际预览通过",
-      "scope": "聊天按钮移至独立前景层，支持任意位置停留、完整图标边界限制，切换底栏保留位置；短点击仍执行原入口。",
-      "inspector": "Creator 393×852 独立浏览器实测真实鼠标拖放、边界夹紧、不误触、短点击和切换至 VIP 保留位置；窄屏缩放及销毁清理由专项覆盖。"
+      "scope": "Creator 393×852 竖屏独立会话，验证主城原任务快捷入口点亮红点，能点击进入每日与成就窗口。",
+      "inspector": "本机 Creator 浏览器预览，限新增任务入口绑定。"
     },
     "client/assets/bundles/module/home/prefabs/CityHubView.prefab": {
       "sha256": "c0ec7d6d876592f6ad11c22a4a01b57d02e9ff813fdc27e7a67077168bd75883",
@@ -435,15 +470,92 @@
       "status": "实际预览通过",
       "scope": "Creator 隔离会话核对五类首关及滚动到各类第 9 关，确认关卡牌匾、配置材料、先后锁定和通关后的扫荡按钮。",
       "inspector": "未操作 Creator Inspector。"
+    },
+    "client/assets/bundles/module/common/prefabs/QuestView.prefab": {
+      "sha256": "3d1f721b0601d47ffb187c7dc91c39eb4ff2bb728655b70e841429e3ba67a138",
+      "date": "2026-11-25",
+      "status": "实际预览通过",
+      "scope": "核对每日与成就两页、真实进度、五档图标与红点，实领登录、召唤、捐献日常及 20 点活跃奖励。",
+      "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
+    },
+    "client/assets/bundles/module/common/prefabs/QuestCompletionView.prefab": {
+      "sha256": "97cbb910861e8b09f34d245f5bd8ed97d74a2e139ead3cadae16241887b96826",
+      "date": "2026-11-25",
+      "status": "实际预览通过",
+      "scope": "通过真实建会达成加入公会成就。顶部横幅显示成就名称，比实际发奖弹窗更上一层，点按可切到成就页。",
+      "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
     }
   },
   "evidenceDirectories": [
+    "backend/target/quest-browser",
+    "client/temp/guild-features-preview",
+    "client/temp/battle-reward-ui-preview",
     "client/temp/prefab-acceptance-20261102",
     "client/temp/prefab-followup-20261102",
     "client/temp/formation-align-preview",
     "client/temp/project-checks"
   ],
   "supersededEntries": [
+    {
+      "path": "client/assets/bundles/module/battle/prefabs/MainChapterView.prefab",
+      "supersededOn": "2026-11-25",
+      "reason": "增加日常任务入口，进度奖励卡的实测保留原指纹。",
+      "record": {
+        "sha256": "1a5829944e393435dd1a038edf18956a2db775aac6800be9fccefe070cc7afe4",
+        "date": "2026-11-25",
+        "status": "实际预览通过",
+        "scope": "限进度奖励卡。Creator 393×852 竖屏独立会话核对 8/15 进度、英雄和提示，实领第 15 关后切换至 15/30。",
+        "inspector": "本机 Creator 浏览器预览。"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/home/prefabs/CityChromeView.prefab",
+      "supersededOn": "2026-11-25",
+      "reason": "接通主城的任务快捷按钮，聊天拖放的实测保留原指纹。",
+      "record": {
+        "sha256": "d8c618837f2fc9dcd571b3429d984af3514d0a2a334a4a7c10e34db59188dd79",
+        "date": "2026-11-24",
+        "status": "实际预览通过",
+        "scope": "聊天按钮移至独立前景层，支持任意位置停留、完整图标边界限制，切换底栏保留位置；短点击仍执行原入口。",
+        "inspector": "Creator 393×852 独立浏览器实测真实鼠标拖放、边界夹紧、不误触、短点击和切换至 VIP 保留位置；窄屏缩放及销毁清理由专项覆盖。"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/guild/prefabs/GuildView.prefab",
+      "supersededOn": "2026-11-25",
+      "reason": "大厅接入三项独立功能，旧资料与公告实测随原指纹留存。",
+      "record": {
+        "sha256": "1b363d90fa2569323d384d29178263140595c395452eb261ce083b6d9b504147",
+        "date": "2026-11-24",
+        "status": "实际预览通过",
+        "scope": "入会大厅按日服重排，左侧显示实际等级、经验和人数，右侧公告卡提供编辑入口；未入会三页和审批锚点保持。",
+        "inspector": "Creator 393×852 双角色实际预览核对经验 0/750、会长提交、普通成员权限提示、两端公告同步及打开成员窗。"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/battle/prefabs/MainChapterView.prefab",
+      "supersededOn": "2026-11-25",
+      "reason": "常显进度奖励卡重排，旧红点布局随原指纹留存。",
+      "record": {
+        "sha256": "c8cdc22fe91c6f2bcaeaf5e565209480814b06a7924cbd46ab004a083f55d121",
+        "date": "2026-11-23",
+        "status": "结构检查通过但视觉待验收",
+        "scope": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
+        "inspector": "未操作Creator Inspector"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/battle/prefabs/ChapterClearRewardView.prefab",
+      "supersededOn": "2026-11-25",
+      "reason": "补原横幅并重新布置通关奖励列表，原领取验收随旧指纹留存。",
+      "record": {
+        "sha256": "701a6a0ca9f4a38e4e31d6f150bc7d1df2c2c30e8b785a3f27a94c0dcf00db32",
+        "date": "2026-11-18",
+        "status": "实际预览通过",
+        "scope": "Creator本机iPhone14Pro预览连接独立内存服。未通关显示前往战斗，超过开放范围显示暂未开放。首通第1关后显示可领，领取弹出通用获得窗，两件装备进背包，列表重排，关闭返回正常。",
+        "inspector": "未操作Creator原生Inspector。"
+      }
+    },
     {
       "path": "client/assets/bundles/module/hero/prefabs/FormationView.prefab",
       "supersededOn": "2026-11-24",

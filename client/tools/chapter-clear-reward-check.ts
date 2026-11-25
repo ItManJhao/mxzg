@@ -17,7 +17,7 @@ function state(maxCleared: number, claimedChapters: number[], eligibleChapters: 
     })!;
 }
 
-/** 用真实配置校验独立档位、领取按钮及开发回退关卡后的已领展示。 */
+/** 用真实配置校验进度、领取文案、装备金星及开发回退关卡后的已领展示。 */
 async function verifyList(): Promise<void> {
     const config = await ConfigFixtureUtils.installReal(new GameConfig());
     const entries = ChapterClearRewardUtils.config(config.getFileByPath("config/firstrewardchapter"));
@@ -26,6 +26,13 @@ async function verifyList(): Promise<void> {
 
     const rows = ChapterClearRewardUtils.rows(entries, state(15, [1], [5, 10, 15]));
     assert.deepEqual(rows.slice(0, 4).map(row => [row.chapter, row.status]), [[5, "claim"], [10, "claim"], [15, "claim"], [20, "battle"]]);
+    assert.deepEqual(rows.slice(0, 4).map(row => [row.progress, row.actionText]),
+        [[15, "领取"], [15, "领取"], [15, "领取"], [15, "前往"]], "进度大于目标时保留已通关总数");
+    const itemStarsAt = (chapter: number) => entries.find(row => row.chapter === chapter)!.items
+        .map(item => ChapterClearRewardUtils.equipmentStars(item.itemId, config));
+    assert.deepEqual(itemStarsAt(5), [0, 0], "碎片和钻石沿用各自外观，不叠装备星");
+    assert.deepEqual(itemStarsAt(10), [1, 1], "第10关装备显示配置中的一星");
+    assert.deepEqual(itemStarsAt(20), [2, 2], "同品质装备仍按真实星级显示两星");
     assert.equal(rows.length, entries.length);
     assert.equal(rows[rows.length - 1].status, "claimed");
     assert.equal(rows[rows.length - 1].chapter, 1);

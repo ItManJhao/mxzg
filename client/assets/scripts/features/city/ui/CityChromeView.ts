@@ -47,6 +47,8 @@ export interface CityChromeOpenArgs {
         readonly openActivity: () => void;
         readonly openMore: () => void;
         readonly openMail: () => void;
+        /** 打开每日和成就的共用窗口。 */
+        readonly openQuest?: () => void;
     };
 }
 
@@ -157,6 +159,9 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> {
     /** 预制体绑定的邮件按钮，点击转交主城注入的邮件操作。 */
     @property(Node)
     btnMail: Node | null = null;
+    /** 主城右侧的每日任务按钮，进入已接通的任务窗口。 */
+    @property(Node)
+    btnDailyTask: Node | null = null;
     /** 预制体绑定的排行工具按钮，当前统一转交更多入口。 */
     @property(Node)
     btnRank: Node | null = null;
@@ -361,6 +366,11 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> {
             }
         });
         this.bindClick(this.requireNode(this.btnMail, "BtnMail"), actions.openMail);
+        if (this.btnDailyTask && actions.openQuest) {
+            this.bindClick(this.btnDailyTask, actions.openQuest);
+            const binding = new RedDotBinding(this.btnDailyTask, GameRedDotKey.QUEST);
+            this.ownListener(() => binding.dispose());
+        }
     }
 
     /** 绑定预制体中的浮动聊天按钮；拖动不触发原有未开放提示。 */

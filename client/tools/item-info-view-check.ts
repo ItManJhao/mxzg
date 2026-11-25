@@ -198,7 +198,7 @@ async function settle(): Promise<void> {
     }
 }
 
-/** 验证共享格子的数量上下文、进度钳制、异步复用与非碎片清理。 */
+/** 验证共享格子的数量上下文、显式装备奖励金星、进度钳制及异步复用清理。 */
 function checkSharedCell(): void {
     const root = instantiate(cellPath);
     const cell = root.getComponent(BagItemView)! as any;
@@ -228,6 +228,12 @@ function checkSharedCell(): void {
         cell.show({ itemId: 950001, quantity: 0 }, false, display.face(950001, 0));
         assert(!cell.shardProgress.active, "产物候选的quantity=0不是库存不足进度");
         assert(!cell.count.node.active, "产物候选未提供数量时按旧setNum隐藏数字");
+
+        cell.show({ itemId: 1001002, quantity: 1 }, false, display.face(1001002, 1), true, false, false, 2);
+        assert.equal(cell.shardStars.filter((star: Node) => star.active).length, 2, "装备奖励使用共用居中星位");
+        assert(cell.icon.active && !cell.shardIcon.active && !cell.shardCorner.active && !cell.shardProgress.active,
+            "装备金星不切换成碎片图标或进度");
+        assert(cell.count.node.active && cell.count.string === "1", "装备星级和发放数量同时可见");
 
         for (const itemId of [30104004, 900102, 1001001, 908101]) {
             cell.show({ itemId, quantity: 2 }, false, display.face(itemId, 2), true, true);

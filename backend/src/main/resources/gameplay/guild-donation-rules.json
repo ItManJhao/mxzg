@@ -1,0 +1,12 @@
+{
+  "tiers": [
+    { "id": 1, "costItemId": 900001, "costAmount": 20000, "medals": 100, "experience": 50, "points": 50 },
+    { "id": 2, "costItemId": 900002, "costAmount": 100, "medals": 250, "experience": 100, "points": 100 },
+    { "id": 3, "costItemId": 900002, "costAmount": 300, "medals": 800, "experience": 200, "points": 200 }
+  ],
+  "chests": [
+    { "id": 1, "points": 1000, "rewards": [{ "itemId": 901301, "quantity": 50 }, { "itemId": 900001, "quantity": 10000 }] },
+    { "id": 2, "points": 2000, "rewards": [{ "itemId": 901301, "quantity": 100 }, { "itemId": 900001, "quantity": 15000 }] },
+    { "id": 3, "points": 3000, "rewards": [{ "itemId": 901301, "quantity": 200 }, { "itemId": 900001, "quantity": 20000 }] }
+  ]
+}

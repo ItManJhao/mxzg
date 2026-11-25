@@ -46,7 +46,9 @@ public final class GameProtocolCodec {
         "arenaState", "arenaChallengeRequest", "arenaReplayRequest", "arenaReplay", "arenaSettlement",
         "arenaTicketBuyRequest", "arenaTicketPurchase",
         "guildListRequest", "guildChangeRequest", "guildState", "vipClaimRequest", "vipClaimReceipt",
-        "chapterQuickBattleState", "chapterQuickBattleClaim", "chapterQuickBattleReceipt");
+        "guildShopBuyRequest", "guildShopState", "guildDonationRequest", "guildDonationState", "guildRankingState",
+        "chapterQuickBattleState", "chapterQuickBattleClaim", "chapterQuickBattleReceipt",
+        "questClaimRequest", "questSnapshot", "questClaimReceipt", "questChanged");
     /** 工具类不持有实例状态。 */
     private GameProtocolCodec() {}
 
@@ -127,6 +129,9 @@ public final class GameProtocolCodec {
                 case "market.refresh" -> "marketRefreshRequest";
                 case "guild.list" -> "guildListRequest";
                 case "guild.change" -> "guildChangeRequest";
+                case "guild.shop.buy" -> "guildShopBuyRequest";
+                case "guild.donation.donate", "guild.donation.claim" -> "guildDonationRequest";
+                case "quest.claim" -> "questClaimRequest";
                 case "vip.claim" -> "vipClaimRequest";
                 case "tower.formation.save" -> "towerFormationSave";
                 case "tower.challenge", "tower.sweep", "tower.milestone.claim" -> "towerRequest";
@@ -147,6 +152,7 @@ public final class GameProtocolCodec {
         if (kind.equals("event") && name.equals("session.kicked")) return "kicked";
         if (kind.equals("event") && name.equals("reward.granted")) return "rewardNotice";
         if (kind.equals("event") && name.equals("guild.updated")) return "empty";
+        if (kind.equals("event") && name.equals("quest.changed")) return "questChanged";
         if (kind.equals("response")) return switch (name) {
             case "session.login", "session.authenticate" -> "accepted"; case "servers.list" -> "servers";
             case "chapter.idle.claim" -> "chapterIdleClaimReceipt";
@@ -177,6 +183,11 @@ public final class GameProtocolCodec {
             case "market.list" -> "marketState";
             case "market.buy", "market.refresh" -> "marketReceipt";
             case "guild.list", "guild.change" -> "guildState";
+            case "guild.shop.list", "guild.shop.buy" -> "guildShopState";
+            case "guild.donation.info", "guild.donation.donate", "guild.donation.claim" -> "guildDonationState";
+            case "quest.list" -> "questSnapshot";
+            case "quest.claim" -> "questClaimReceipt";
+            case "guild.ranking" -> "guildRankingState";
             case "vip.claim" -> "vipClaimReceipt";
             case "tower.state", "tower.formation.save" -> "towerState";
             case "tower.challenge", "tower.sweep", "tower.milestone.claim" -> "towerSettlement";

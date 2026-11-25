@@ -81,6 +81,14 @@ class GuildRepository {
         jdbc.update("UPDATE game_guild SET description=? WHERE id=?", notice, guildId);
     }
 
+    /** 在公会锁内结转捐献经验，下一次入会同时使用新的持久等级和容量。 */
+    void updateExperience(String guildId, int level, int experience) {
+        int changed = jdbc.update("UPDATE game_guild SET guild_level=?,experience=? WHERE id=?", level, experience, guildId);
+        if (changed != 1) {
+            throw new IllegalStateException("公会经验更新未找到已锁定的公会");
+        }
+    }
+
     /** 读取本公会当前人数，用于容量和会长退出限制。 */
     int memberCount(String guildId) {
         return jdbc.queryForObject("SELECT COUNT(*) FROM game_guild_member WHERE guild_id=?", Integer.class, guildId);

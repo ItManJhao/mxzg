@@ -15,6 +15,8 @@ import com.funsgamex.mxzg.lineup.MainFormationRules;
 import com.funsgamex.mxzg.lineup.MainFormationStateService;
 import com.funsgamex.mxzg.network.AssetSyncService;
 import com.funsgamex.mxzg.protocol.GameProtocol.BattleReplay;
+import com.funsgamex.mxzg.quest.QuestMetric;
+import com.funsgamex.mxzg.quest.QuestProgressEvent;
 import com.funsgamex.mxzg.reward.RewardGrantResult;
 import com.funsgamex.mxzg.reward.RewardGrantService;
 import com.funsgamex.mxzg.reward.RewardGrantService.Reward;
@@ -30,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -69,6 +72,8 @@ public class TowerService {
     private final AssetSyncService sync;
     /** 读取同一操作使用的服务器时间。 */
     private final GameClock clock;
+    /** 塔挑战与扫荡真实结算后，在原事务登记每日任务次数。 */
+    private final ApplicationEventPublisher events;
 
     /** 结算动作，挑战有战报，扫荡与里程碑直接发奖。 */
     public enum Action { CHALLENGE, SWEEP, MILESTONE }
@@ -129,7 +134,8 @@ public class TowerService {
     public TowerService(SessionService sessions, RoleRepository roles, TowerRepository tower, TowerRules rules,
                         MainFormationStateService formations, MainFormationRules formationRules, HeroRepository heroes,
                         HeroBattleInputService battleInputs, HeroLineupBattleService battles,
-                        RewardGrantService grants, AssetSyncService sync, GameClock clock) {
+                        RewardGrantService grants, AssetSyncService sync, GameClock clock,
+                        ApplicationEventPublisher events) {
         this.sessions = sessions;
         this.roles = roles;
         this.tower = tower;
@@ -142,6 +148,7 @@ public class TowerService {
         this.grants = grants;
         this.sync = sync;
         this.clock = clock;
+        this.events = events;
         this.floors = config.floors().stream().map(row -> new FloorState(row.floor(), row.recommendedPower(),
                 row.firstRewards(), row.sweepRewards(), row.enemies().stream().map(enemy -> new EnemyState(
                     enemy.position(), enemy.template(), enemy.level(), enemy.star())).toList())).toList();
@@ -202,7 +209,7 @@ public class TowerService {
         return settle(token, requestId, Action.MILESTONE, milestoneId, 0);
     }
 
-    /** 重试先读取原回执，在同一角色锁内核对层数、执行操作并提交发奖。 */
+    /** 重试先读取原回执，新结算在角色锁内提交发奖及挑战或扫荡进度。 */
     private Settlement settle(String token, String requestId, Action action, int targetId, long maxDiamonds) {
         if (!RewardReceiptPayloads.validId(requestId) || targetId < 1 || maxDiamonds < 0 || maxDiamonds > MAX_DIAMONDS) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "TOWER_REQUEST_INVALID");
@@ -235,6 +242,9 @@ public class TowerService {
         var result = new Settlement(requestId, role, roles.revision(role), action, outcome.floor(), actual != null,
                 outcome.replay(), state(role, outcome.progress()), actual);
         tower.saveReceipt(targetId, maxDiamonds, result);
+        if (action != Action.MILESTONE) {
+            events.publishEvent(new QuestProgressEvent(role, QuestMetric.TOWER_CHALLENGE, 0, 1));
+        }
         return result;
     }
 

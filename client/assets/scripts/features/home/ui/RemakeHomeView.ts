@@ -111,6 +111,7 @@ export class RemakeHomeView extends BaseView implements HomeView {
                     openActivity: () => this.actions?.openFeature("activity"),
                     openMore: () => this.actions?.openFeature("more"),
                     openMail: () => this.actions?.openFeature("mail"),
+                    openQuest: () => this.actions?.openFeature("quest"),
                 },
             });
             const avatar = this.chrome.avatar;

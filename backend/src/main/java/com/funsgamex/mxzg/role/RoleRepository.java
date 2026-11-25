@@ -122,15 +122,19 @@ public class RoleRepository {
         }
     }
 
-    /** 角色锁内写当前值，并且只有实际值更高才更新用于副本门槛的历史峰值。 */
-    public int observeMainPower(String roleId, int power) {
+    /** 真实主阵容峰值及本事务是否刷新了纪录，供副本和成就判定使用。 */
+    public record MainPowerObservation(int maximum, boolean increased) {}
+
+    /** 角色锁内更新当前投影；只在新值更高时提升历史峰值并标记刷新纪录。 */
+    public MainPowerObservation observeMainPower(String roleId, int power) {
         sync.requireTransaction();
+        int previous = jdbc.queryForObject("SELECT max_main_power FROM game_role WHERE id=?", Integer.class, roleId);
+        int maximum = Math.max(power, previous);
         jdbc.update("""
-            UPDATE game_role SET current_main_power=?,
-                max_main_power=CASE WHEN max_main_power<? THEN ? ELSE max_main_power END
+            UPDATE game_role SET current_main_power=?, max_main_power=?
             WHERE id=? AND (current_main_power IS NULL OR current_main_power<>? OR max_main_power<?)
-            """, power, power, power, roleId, power, power);
-        return jdbc.queryForObject("SELECT max_main_power FROM game_role WHERE id=?", Integer.class, roleId);
+            """, power, maximum, roleId, power, maximum);
+        return new MainPowerObservation(maximum, maximum > previous);
     }
 
     /** 持有角色锁的统一快照补齐当前投影；相同值直接保留，不写历史峰值或增加资产版本。 */

@@ -48,6 +48,8 @@ export class GameSocketClient {
   onReward: ((frame: GameFrame) => void) | null = null;
   /** 当前已认证连接收到公会变更后刷新公会窗口，公会名仍由角色快照提交。 */
   onGuildUpdated: ((frame: GameFrame) => void) | null = null;
+  /** 当前认证连接的任务状态变化或新达成成就。 */
+  onQuestChanged: ((frame: GameFrame) => void) | null = null;
   /** 当前连接最近的完整帧，供本次登录交付，不另建资产 Model。 */
   latestState: GameFrame | null = null;
   onDisconnected: ((message: string) => void) | null = null;
@@ -276,7 +278,7 @@ export class GameSocketClient {
     }
   }
 
-  /** 只接纳本连接上的会话、资产、奖励与公会通知。顶号消息在连接已识别时即可生效。 */
+  /** 只接纳本连接上的会话、资产、奖励、公会和任务通知。顶号消息在连接已识别时即可生效。 */
   private onServerEvent(frame: GameFrame): void {
     if (!this.connectionId) {
       throw new SocketFailure("INVALID_MESSAGE");
@@ -296,11 +298,16 @@ export class GameSocketClient {
         this.onStateChanged(frame);
         return;
       case Protocol.GUILD_UPDATED:
+      case Protocol.QUEST_CHANGED:
         if (frame.id !== undefined || frame.ok !== undefined || frame.error !== undefined) {
           throw new SocketFailure("INVALID_MESSAGE");
         }
         if (this.traceReceived(frame)) {
-          this.onGuildUpdated?.(frame);
+          if (frame.name === Protocol.QUEST_CHANGED) {
+            this.onQuestChanged?.(frame);
+          } else {
+            this.onGuildUpdated?.(frame);
+          }
         }
         return;
       case Protocol.REWARD_GRANTED: {
@@ -400,6 +407,9 @@ export class GameSocketClient {
     }
     if (receipt.actual !== undefined && this.object(receipt.actual).roleId !== this.roleId) {
       throw new SocketFailure("INVALID_MESSAGE", "奖励明细不属于当前角色");
+    }
+    if (frame.name === Protocol.QUEST_CLAIM && body.notice !== undefined && this.object(body.notice).roleId !== this.roleId) {
+      throw new SocketFailure("INVALID_MESSAGE", "任务奖励不属于当前角色");
     }
   }
 
@@ -541,6 +551,27 @@ export class GameSocketClient {
       case "GUILD_APPLICATION_MISSING": return "该入会申请已处理或失效";
       case "GUILD_REQUEST_CONFLICT": return "操作已发生变化，请刷新公会状态";
       case "GUILD_REQUEST_INVALID": return "公会操作参数无效";
+      case "GUILD_SHOP_MEMBERSHIP_CHANGED":
+      case "GUILD_DONATION_CHANGED": return "公会成员关系已变化，请重新打开窗口";
+      case "GUILD_SHOP_RESET": return "公会商店已刷新，请重新确认兑换";
+      case "GUILD_SHOP_PRODUCT_UNAVAILABLE": return "该公会商店商品暂未开放";
+      case "GUILD_SHOP_LIMIT": return "已达到商品的每周兑换上限";
+      case "GUILD_SHOP_INSUFFICIENT": return "公会勋章不足";
+      case "GUILD_SHOP_REQUEST_INVALID":
+      case "GUILD_DONATION_REQUEST_INVALID": return "公会操作参数无效";
+      case "GUILD_SHOP_REQUEST_REUSED":
+      case "GUILD_DONATION_REQUEST_CONFLICT": return "操作已变化，请重新打开窗口";
+      case "GUILD_DONATION_RESET": return "已进入新的捐献周期，请重新确认";
+      case "GUILD_DONATION_ALREADY_DONATED": return "今天已完成公会捐献";
+      case "GUILD_DONATION_INSUFFICIENT": return "今天所选档位的捐献材料不足";
+      case "GUILD_DONATION_CHEST_LOCKED": return "公会今日贡献尚未达到该宝箱要求";
+      case "GUILD_DONATION_CHEST_CLAIMED": return "今天已领取该公会宝箱";
+      case "QUEST_RESET": return "每日任务已刷新，请重新确认";
+      case "QUEST_NOT_FOUND": return "该任务奖励已刷新";
+      case "QUEST_NOT_COMPLETE": return "尚未达到领取条件";
+      case "QUEST_ALREADY_CLAIMED": return "该奖励已领取";
+      case "QUEST_REQUEST_INVALID":
+      case "QUEST_REQUEST_CONFLICT": return "任务操作已变化，请重试";
       case "VIP_REQUEST_INVALID": return "VIP 任务参数无效";
       case "VIP_REQUEST_CONFLICT": return "VIP 任务操作已变化，请重新选择";
       case "VIP_TASK_TIER": return "当前档位无法领取该任务";

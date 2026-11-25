@@ -6,6 +6,8 @@ package com.funsgamex.mxzg.guild;
 
 import com.funsgamex.mxzg.hero.HeroMainPowerService;
 import com.funsgamex.mxzg.network.AssetSyncService;
+import com.funsgamex.mxzg.quest.QuestMetric;
+import com.funsgamex.mxzg.quest.QuestProgressEvent;
 import com.funsgamex.mxzg.role.RoleProfile;
 import com.funsgamex.mxzg.role.RoleRepository;
 import com.funsgamex.mxzg.time.GameClock;
@@ -229,9 +231,10 @@ public class GuildService {
         return guild;
     }
 
-    /** 入会后撤销同角色在本区其他公会的申请，并同步其个人资料及所有受影响名单。 */
+    /** 在入会角色锁内登记成就和成员身份，撤销其他申请并同步所有受影响名单。 */
     private void join(String guildId, String roleId, long now, Set<String> affected) {
         guilds.insertMember(guildId, roleId, now);
+        events.publishEvent(new QuestProgressEvent(roleId, QuestMetric.JOIN_CLAN, 0, 1));
         affected.addAll(guilds.clearApplications(roleId));
         affected.addAll(guilds.memberIds(guildId));
         sync.changed(roleId);
@@ -293,7 +296,7 @@ public class GuildService {
     }
 
     /** 读取鉴权角色，并按原条件同时核对角色和当前区服世界等级。 */
-    private RoleProfile requireAccess(String roleId) {
+    RoleProfile requireAccess(String roleId) {
         var profile = roles.findById(roleId).orElseThrow(() ->
             new ResponseStatusException(HttpStatus.UNAUTHORIZED, "INVALID_SESSION"));
         requireLevel(profile);

@@ -3,7 +3,7 @@
  * 领取按钮提交当前配置编号，服务端快照更新已领取的目标。
  * 结构和样式保存在主线 Prefab，停用时清理本页监听。
  */
-import { _decorator, Button, Component, Label, Node, Sprite } from "cc";
+import { _decorator, Button, Component, Label, Node, RichText, Sprite, SpriteFrame } from "cc";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { RedDotBinding } from "../../../framework/ui/RedDotBinding";
 import { UIManager } from "../../../framework/ui/UIManager";
@@ -15,6 +15,7 @@ import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
 import { MainChapterController } from "../MainChapterController";
 import { MainChapterModel } from "../MainChapterModel";
 import { ChapterMilestoneUtils } from "../utils/ChapterMilestoneUtils";
+import { HeroTalkUtils } from "../utils/HeroTalkUtils";
 import { BattleSpineService } from "./BattleSpineService";
 import type { SpineActor } from "./BattleSpineService";
 
@@ -26,15 +27,25 @@ export class MainChapterMilestoneCard extends Component {
     @property(Sprite) rewardIcon: Sprite | null = null;
     /** 原英雄模型静态挂点，骨架复用BattleSpineService，不创建第二份资源池。 */
     @property(Node) heroHost: Node | null = null;
+    /** 模型后的淡光，等待主线同步时隐藏。 */
+    @property(Node) rewardGlow: Node | null = null;
     /** 原进度填充，比例来自最新绝对通关数/目标。 */
     @property(Sprite) progressFill: Sprite | null = null;
-    /** 配置奖励名称与数量。 */
-    @property(Label) rewardName: Label | null = null;
+    /** 模型上方的原奖励定位图，由当前配置的 tip_img 选帧。 */
+    @property(Sprite) tipArtwork: Sprite | null = null;
+    /** 原定位图静态帧，按 tip_img 从 1 开始排列。 */
+    @property([SpriteFrame]) tipFrames: SpriteFrame[] = [];
+    /** 原通关说明横条，达成后随说明一起隐藏。 */
+    @property(Node) tipBackdrop: Node | null = null;
+    /** 进度下方的原通关说明，保留配置中奖励名称和关卡颜色。 */
+    @property(RichText) progressTip: RichText | null = null;
     /** 原绝对通关数/目标，仅未达到时显示。 */
     @property(Label) progressLabel: Label | null = null;
-    /** 达标直接提交稳定业务键，未达标点击只提示剩余关数。 */
+    /** 仅在达标时显示，点击后直接提交当前里程碑配置号。 */
     @property(Button) claimButton: Button | null = null;
-    /** 显示进度、可领取或正在等待回包。 */
+    /** 按钮原图，自带领取字样，发送后隐藏以免覆盖确认中提示。 */
+    @property(Sprite) claimArtwork: Sprite | null = null;
+    /** 发出领取后覆盖按钮原字样，等待回执期间显示确认中。 */
     @property(Label) claimLabel: Label | null = null;
     /** 达标待领取提醒的可选定位节点，保留原按钮相对位置。 */
     @property(Node) claimDotAnchor: Node | null = null;
@@ -58,8 +69,9 @@ export class MainChapterMilestoneCard extends Component {
 
     /** 启用时登记交互、主线状态和可选红点，直接读取登录后已安装配置。 */
     protected onEnable(): void {
-        if (!this.rewardIcon || !this.heroHost || !this.progressFill || !this.rewardName
-                || !this.progressLabel || !this.claimButton || !this.claimLabel) {
+        if (!this.rewardIcon || !this.heroHost || !this.rewardGlow || !this.progressFill || !this.tipArtwork
+                || !this.tipFrames.length || !this.tipBackdrop || !this.progressTip || !this.progressLabel
+                || !this.claimButton || !this.claimArtwork || !this.claimLabel) {
             throw new Error("主线常显里程碑卡静态绑定缺失");
         }
         this.claimButton.node.on(Button.EventType.CLICK, this.claim, this);
@@ -77,9 +89,7 @@ export class MainChapterMilestoneCard extends Component {
         this.claimRedDot?.dispose();
         this.claimRedDot = null;
         this.intent = null;
-        this.actor?.node.destroy();
-        this.actor = null;
-        this.iconId = 0;
+        this.clearRewardDisplay();
         const claimNode = this.claimButton?.node;
         if (claimNode?.isValid) {
             claimNode.off(Button.EventType.CLICK, this.claim, this);
@@ -95,47 +105,77 @@ export class MainChapterMilestoneCard extends Component {
             id => GameConfig.instance.getConfig(GConfig.Language, id)?.value);
         this.rewardId = hint.kind === "complete" ? null
             : hint.kind === "unavailable" ? undefined : hint.rewardId;
-        if (this.rewardId == null) {
-            this.rewardIcon!.node.active = false;
-            this.heroHost!.active = false;
-            this.rewardName!.string = this.rewardId === null ? "通关奖励已领完" : "通关奖励同步中";
+        if (hint.kind !== "target" || this.rewardId == null) {
+            this.clearRewardDisplay();
+            this.rewardGlow!.active = false;
+            this.tipArtwork!.node.active = false;
+            this.progressTip!.string = this.rewardId === null ? "" : "进度奖励同步中";
+            this.tipBackdrop!.active = !this.completed;
+            this.progressTip!.node.active = !this.completed;
             this.progressLabel!.string = "";
-            this.claimLabel!.string = this.rewardId === null ? "已领取" : "等待同步";
+            this.progressFill!.node.parent!.active = false;
             this.claimButton!.interactable = false;
+            this.claimButton!.node.active = false;
+            if (this.completed) {
+                this.node.active = false;
+            }
             return;
         }
         const row = GameConfig.instance.requireConfig(GConfig.ChapterExtraReward, this.rewardId);
-        const rewards = JSON.parse(row.reward) as { item_type: number; item_num: number }[];
-        if (!Array.isArray(rewards) || !rewards.length || rewards.some(item =>
-                !Number.isSafeInteger(item.item_type) || item.item_type <= 0
-                || !Number.isSafeInteger(item.item_num) || item.item_num <= 0)) {
-            throw new Error("主线里程碑奖励配置无效");
-        }
-        this.rewardName!.string = rewards.map(item => BagItemCatalog.face(item.item_type, item.item_num).title
-            + " ×" + item.item_num).join("\n");
+        const tipFrame = this.tipFrames[row.tip_img - 1];
+        this.tipArtwork!.spriteFrame = tipFrame ?? null;
+        this.tipArtwork!.node.active = !!tipFrame;
+        this.rewardGlow!.active = true;
         if (this.iconId !== row.show_model) {
-            this.iconId = row.show_model;
-            this.actor?.node.destroy();
-            this.actor = null;
-            const face = BagItemCatalog.face(row.show_model, 1);
-            ResManager.setSprite(this.rewardIcon!.node, [face.icon, face.fallback], () => this.isValid);
-            const hero = GameConfig.instance.requireConfig(GConfig.Item, row.show_model).type === 7;
-            this.rewardIcon!.node.active = !hero;
-            this.heroHost!.active = hero;
-            if (hero) {
-                // 旧Hero.cpp读取原骨架时缩放0.5，再乘Cell的0.67*0.8*1.42；不使用战场默认0.58。
-                this.actor = BattleSpineService.instance.mountBattleSpine(this.heroHost!, String(row.show_model), () => {},
-                    { face: 1, scale: 0.5 * 0.67 * 0.8 * 1.42, seatY: 0 });
-                this.actor.gesture("stand");
-            }
+            this.showRewardDisplay(row.show_model);
         }
-        const cleared = state?.maxCleared;
-        const reached = cleared !== undefined && cleared >= row.chapter;
-        this.progressLabel!.string = reached ? "" : "通关 " + (cleared ?? "?") + "/" + row.chapter;
-        this.progressFill!.fillRange = Math.max(0, Math.min(1, (cleared || 0) / row.chapter));
+        const cleared = state!.maxCleared;
+        const reached = hint.remaining === 0;
+        this.progressLabel!.string = reached ? "" : `${cleared}/${row.chapter}`;
+        this.progressFill!.fillRange = Math.min(1, cleared / row.chapter);
         this.progressFill!.node.parent!.active = !reached;
-        this.claimLabel!.string = this.intent ? "确认中" : reached ? "领取奖励" : "第" + row.chapter + "关奖励";
-        this.claimButton!.interactable = !this.intent;
+        // 胜利页文案以剩余关数填占位，常显卡使用原目标关卡。
+        const template = GameConfig.instance.getConfig(GConfig.Language, row.tips_lang)?.value;
+        this.progressTip!.string = reached || !template ? ""
+            : `<outline color=#41290a width=1>${HeroTalkUtils.richText(template.replace(/%[sd]/, String(row.chapter)))}</outline>`;
+        this.tipBackdrop!.active = !reached;
+        this.progressTip!.node.active = !reached;
+        this.claimArtwork!.enabled = !this.intent;
+        this.claimLabel!.node.active = !!this.intent;
+        this.claimButton!.interactable = reached && !this.intent;
+        this.claimButton!.node.active = reached;
+    }
+
+    /** 切换奖励模型并释放原骨架；旧道具贴图晚到时不覆盖当前目标。 */
+    private showRewardDisplay(modelId: number): void {
+        this.clearRewardDisplay();
+        this.iconId = modelId;
+        const hero = GameConfig.instance.requireConfig(GConfig.Item, modelId).type === 7;
+        this.rewardIcon!.node.active = !hero;
+        this.heroHost!.active = hero;
+        if (hero) {
+            // 旧Hero.cpp读取骨架时缩放0.5，再乘卡片的0.67*0.8*1.42。
+            this.actor = BattleSpineService.instance.mountBattleSpine(this.heroHost!, String(modelId), () => {},
+                { face: 1, scale: 0.5 * 0.67 * 0.8 * 1.42, seatY: 0 });
+            this.actor.gesture("stand");
+        } else {
+            const face = BagItemCatalog.face(modelId, 1);
+            ResManager.setSprite(this.rewardIcon!.node, [face.icon, face.fallback], () => this.isValid && this.iconId === modelId);
+        }
+    }
+
+    /** 清空模型和道具展示归属，销毁骨架节点并使原贴图请求失效。 */
+    private clearRewardDisplay(): void {
+        this.actor?.node.destroy();
+        this.actor = null;
+        this.iconId = 0;
+        if (this.rewardIcon?.node?.isValid) {
+            this.rewardIcon.node.active = false;
+            this.rewardIcon.spriteFrame = null;
+        }
+        if (this.heroHost?.isValid) {
+            this.heroHost.active = false;
+        }
     }
 
     /** 达标后把领奖交给主线控制器，未达标时提示剩余关数。 */

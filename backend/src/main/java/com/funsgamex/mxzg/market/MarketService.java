@@ -5,6 +5,8 @@
 package com.funsgamex.mxzg.market;
 
 import com.funsgamex.mxzg.auth.SessionService;
+import com.funsgamex.mxzg.quest.QuestMetric;
+import com.funsgamex.mxzg.quest.QuestProgressEvent;
 import com.funsgamex.mxzg.reward.RewardFeedbackService;
 import com.funsgamex.mxzg.reward.RewardGrantService;
 import com.funsgamex.mxzg.reward.RewardReceiptPayloads;
@@ -15,6 +17,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -27,6 +30,8 @@ public class MarketService {
     private static final ZoneId SERVER_ZONE = ZoneId.of("Asia/Shanghai");
     /** 紫色、金色精灵的真实实例规则和详情尚未恢复，只展示原商品。 */
     private static final List<Integer> PENDING_REWARDS = List.of(2_000_003, 2_000_004);
+    /** 原任务配置用于区分市场购买与其他商店的类型编号。 */
+    private static final int MARKET_SHOP_TYPE = 100100;
 
     /** 一件配置商品及本货架的真实累购次数。优惠字段为百分比，价格已是实际成交价。 */
     public record Offer(int productId, int itemId, long quantity, int costItemId, long costQuantity,
@@ -62,10 +67,13 @@ public class MarketService {
     private final RewardFeedbackService feedback;
     /** 货架刷新、自然日限额及期限奖励共用的游戏时钟。 */
     private final GameClock clock;
+    /** 原普通市场购买结算的任务进度通知，刷新货架时不使用。 */
+    private final ApplicationEventPublisher events;
 
     /** 装配游戏时钟与资产服务，预检现阶段可买商品的实际发奖能力。 */
     MarketService(SessionService sessions, RoleRepository roles, MarketRepository market, MarketRules rules,
-                  RewardGrantService grants, RewardFeedbackService feedback, GameClock clock) {
+                  RewardGrantService grants, RewardFeedbackService feedback, GameClock clock,
+                  ApplicationEventPublisher events) {
         this.sessions = sessions;
         this.roles = roles;
         this.market = market;
@@ -73,6 +81,7 @@ public class MarketService {
         this.grants = grants;
         this.feedback = feedback;
         this.clock = clock;
+        this.events = events;
         grants.requireSupported(rules.config().products().stream().map(MarketRules.Product::itemId)
                 .filter(itemId -> !PENDING_REWARDS.contains(itemId)).distinct().toList());
     }
@@ -125,6 +134,7 @@ public class MarketService {
                 ThreadLocalRandom.current());
         var receipt = new Receipt(requestId, roleId, roles.revision(roleId), state(roleId, stock, access.vip()));
         market.saveReceipt(command, receipt);
+        events.publishEvent(new QuestProgressEvent(roleId, QuestMetric.SHOP_BUY, MARKET_SHOP_TYPE, count));
         feedback.publish(UUID.randomUUID().toString(), roleId, receipt.assetRevision(),
                 RewardFeedbackService.Mode.POPUP, actual, requestId);
         return receipt;

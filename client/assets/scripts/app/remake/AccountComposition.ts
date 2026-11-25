@@ -88,6 +88,7 @@ export class AccountComposition {
         acceptReward: (frame: GameFrame) => void,
         showConnectionNotice: (message: string) => void,
         acceptGuildUpdate: ((frame: GameFrame) => void) | null = null,
+        acceptQuestChange: ((frame: GameFrame) => void) | null = null,
     ): () => void {
         const {model, socket, controller} = account;
         let disconnected = false;
@@ -95,6 +96,7 @@ export class AccountComposition {
         socket.onState = acceptState;
         socket.onReward = acceptReward;
         socket.onGuildUpdated = acceptGuildUpdate;
+        socket.onQuestChanged = acceptQuestChange;
         socket.onRejected = (token, message) => controller.rejectSession(token, message);
         socket.onReady = () => {
             if (disconnected) {
@@ -116,6 +118,7 @@ export class AccountComposition {
             socket.onState = null;
             socket.onReward = null;
             socket.onGuildUpdated = null;
+            socket.onQuestChanged = null;
             socket.onRejected = null;
             socket.onReady = null;
             socket.onDisconnected = null;

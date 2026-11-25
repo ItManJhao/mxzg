@@ -4,6 +4,7 @@ import { SuperContent } from "../../../framework/ui/SuperContent";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { BagItemView } from "../../bag/ui/BagItemView";
 import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
+import { ChapterClearRewardUtils } from "../utils/ChapterClearRewardUtils";
 import type { ChapterClearRewardItem, ChapterClearRewardRow } from "../utils/ChapterClearRewardUtils";
 
 const { ccclass, property } = _decorator;
@@ -34,14 +35,14 @@ export class ChapterClearRewardCell extends Component {
     /** 内层列表监听归属；离开虚拟视口或销毁时解除。 */
     private content: Node | null = null;
 
-    /** 校验预制体提供实际绑定；输入变化只重绘当前复用行。 */
+    /** 校验预制体绑定后刷新当前行，标题保留旧版原进度及分隔符。 */
     public bind(row: ChapterClearRewardRow): void {
         if (!this.title || !this.rewards || !this.action || !this.actionLabel || !this.battleButtonFrame
             || !this.claimButtonFrame || !this.disabledButtonFrame || !this.action.node.getComponent(Sprite)) {
             throw new Error("ChapterClearRewardCell.prefab 缺少行内容或动作绑定");
         }
         this.row = row;
-        this.title.string = "通关" + row.chapter + "关（" + (row.progress ?? "—") + "/" + row.chapter + "）";
+        this.title.string = `通关${row.chapter}关 (${row.progress ?? "—"} / ${row.chapter})`;
         this.actionLabel.string = row.actionText;
         this.action.interactable = row.enabled;
         this.action.node.getComponent(Sprite)!.spriteFrame = !row.enabled ? this.disabledButtonFrame
@@ -88,13 +89,15 @@ export class ChapterClearRewardCell extends Component {
         this.rewards!.toStart();
     }
 
-    /** 按原配置数量绘制只读共用格；不展示库存或合成完成度。 */
+    /** 按原配置绘制装备金星和奖励数量，碎片继续使用共用外观。 */
     private renderItem(node: Node, item: ChapterClearRewardItem): void {
         const cell = node.getComponent(BagItemView);
         if (!cell) {
             throw new Error("通关奖励缺少共用物品格");
         }
-        cell.show(item, false, BagItemCatalog.face(item.itemId, item.quantity));
+        const face = BagItemCatalog.face(item.itemId, item.quantity);
+        const equipmentStars = ChapterClearRewardUtils.equipmentStars(item.itemId);
+        cell.show(item, false, face, true, false, false, equipmentStars);
     }
 
     /** 只把当前可用动作送给所属列表，不持有窗口或请求回调。 */

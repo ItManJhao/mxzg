@@ -1,4 +1,6 @@
 /** 独立通关奖励的配置与状态投影：完整展示旧目录，只有服务器可领集合才能启用领取。 */
+import { GameConfig } from "../../../config/GameConfig";
+import { GConfig } from "../../../config/GConfig";
 import type { MainChapterFirstRewardProgress } from "../data/MainChapterFirstRewardData";
 import type { MainChapterState } from "../MainChapterModel";
 
@@ -95,7 +97,7 @@ export class ChapterClearRewardUtils {
         });
     }
 
-    /** 按服务器资格渲染，等待回包时只更新操作按钮的显示。 */
+    /** 按服务器资格渲染短按钮文案；分子保留实际通关关卡，等待回包时只更新按钮。 */
     public static rows(
         config: readonly ChapterClearRewardConfig[],
         state: MainChapterState | null,
@@ -113,16 +115,22 @@ export class ChapterClearRewardUtils {
             } else if (progress?.eligibleChapters.includes(row.chapter)) {
                 status = "claim";
                 enabled = activeChapter === null;
-                actionText = activeChapter === row.chapter ? "确认中" : "领取奖励";
+                actionText = activeChapter === row.chapter ? "确认中" : "领取";
             } else if (state && progress && state.challengeLimit !== undefined && row.chapter <= state.challengeLimit
                 && row.chapter > state.maxCleared) {
                 status = "battle";
                 enabled = true;
-                actionText = "前往战斗";
+                actionText = "前往";
             }
             return Object.freeze({ ...row, status, enabled,
                 progress: state?.maxCleared ?? null, actionText });
         }).sort((left, right) => rank[left.status] - rank[right.status] || left.idx - right.idx);
+    }
+
+    /** 读取此窗口装备图标的金星数；当前奖励目录只含一至四星，缺行或超出金星组时隐藏。 */
+    public static equipmentStars(itemId: number, config = GameConfig.instance): number {
+        const stars = config.getConfig(GConfig.EquipmentType, itemId)?.star ?? 0;
+        return Number.isSafeInteger(stars) && stars > 0 && stars <= 5 ? stars : 0;
     }
 
     /** 配置和协议都使用正且无符号32位安全整数。 */

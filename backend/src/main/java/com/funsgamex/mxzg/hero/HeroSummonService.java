@@ -8,6 +8,8 @@ import com.funsgamex.mxzg.auth.SessionService;
 import com.funsgamex.mxzg.hero.HeroSummonRules.Advanced;
 import com.funsgamex.mxzg.hero.HeroSummonRules.Pool;
 import com.funsgamex.mxzg.inventory.InventoryService;
+import com.funsgamex.mxzg.quest.QuestMetric;
+import com.funsgamex.mxzg.quest.QuestProgressEvent;
 import com.funsgamex.mxzg.reward.RewardGrantResult;
 import com.funsgamex.mxzg.reward.RewardGrantService;
 import com.funsgamex.mxzg.reward.RewardReceiptPayloads;
@@ -19,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -50,6 +53,8 @@ public class HeroSummonService {
     private final RewardReceiptPayloads payloads;
     /** 普通和高级召唤免费时点及实际奖励共用的时钟。 */
     private final GameClock clock;
+    /** 成功抽取落库后，将真实单抽或十连次数交给任务领域。 */
+    private final ApplicationEventPublisher events;
 
     /** 快照按真实持久资格显示免费、积分和祈愿，旧回执允许缺少新增字段。 */
     public record State(int schemaVersion, boolean firstNormalCompleted, long normalFreeAtSeconds,
@@ -115,7 +120,8 @@ public class HeroSummonService {
     /** 注入共享角色锁、发奖、背包、回执入口和召唤冷却时钟。 */
     public HeroSummonService(SessionService sessions, RoleRepository roles, JdbcTemplate jdbc,
             HeroCapacityService capacity, HeroSummonRules rules, RewardGrantService grants,
-            InventoryService inventory, RewardReceiptPayloads payloads, GameClock clock) {
+            InventoryService inventory, RewardReceiptPayloads payloads, GameClock clock,
+            ApplicationEventPublisher events) {
         this.sessions = sessions;
         this.roles = roles;
         this.jdbc = jdbc;
@@ -125,6 +131,7 @@ public class HeroSummonService {
         this.inventory = inventory;
         this.payloads = payloads;
         this.clock = clock;
+        this.events = events;
     }
 
     /** 旧普通单抽入口，同一请求仍使用原发奖和旧回执格式。 */
@@ -139,7 +146,7 @@ public class HeroSummonService {
         return drawNormal(authorize(token, requestId), requestId, true);
     }
 
-    /** 新召唤入口按游戏时钟与授权金额扣费，同角色同请求只允许同参数回放。 */
+    /** 新召唤入口按授权金额扣费，成功抽取计入任务，同请求只允许同参数回放。 */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public DrawReceipt draw(String token, String requestId, Pool pool, int count, long maxDiamonds) {
         if (pool == null || count != 1 && count != 10 || pool == Pool.POINTS && count != 1
@@ -198,6 +205,7 @@ public class HeroSummonService {
                         + "asset_revision,payload_json,payload_hash) VALUES (?,?,?,?,?,?,?,?,?)",
                 role, requestId, pool.name(), count, maxDiamonds, receipt.receiptId(), receipt.assetRevision(),
                 frozen.json(), frozen.hash());
+        events.publishEvent(new QuestProgressEvent(role, QuestMetric.SUMMON, 0, count));
         return receipt;
     }
 
@@ -223,7 +231,7 @@ public class HeroSummonService {
                 rules.pointsCost(entitlement.clergyLevel()), 0L);
     }
 
-    /** 普通单抽按游戏时间判断免费与用券，沿用原表保存唯一回执。 */
+    /** 普通单抽按游戏时间判断免费与用券，原表保存唯一回执后计一次每日进度。 */
     private Receipt drawNormal(String role, String requestId, boolean firstOnly) {
         if (findDraw(role, requestId) != null) {
             throw new Rejected("SUMMON_REQUEST_CONFLICT", "召唤编号已用于另一种召唤");
@@ -254,6 +262,7 @@ public class HeroSummonService {
         jdbc.update("INSERT INTO game_hero_normal_summon(role_id,request_id,first_draw,receipt_id,asset_revision,"
                         + "normal_free_at_seconds,payload_json,payload_hash) VALUES (?,?,?,?,?,?,?,?)",
                 role, requestId, first, receipt.receiptId(), receipt.assetRevision(), freeAt, frozen.json(), frozen.hash());
+        events.publishEvent(new QuestProgressEvent(role, QuestMetric.SUMMON, 0, 1));
         return receipt;
     }
 

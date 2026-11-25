@@ -20,6 +20,7 @@ import { HeroStarController } from "../../features/hero/HeroStarController";
 import { HeroJewelController } from "../../features/hero/HeroJewelController";
 import { HeroGodEquipmentController } from "../../features/hero/HeroGodEquipmentController";
 import { MarketController } from "../../features/market/MarketController";
+import { QuestController } from "../../features/quest/QuestController";
 import { RewardBinding } from "../../features/reward/RewardBinding";
 import { TowerController } from "../../features/tower/TowerController";
 import { VipController } from "../../features/vip/VipController";
@@ -30,6 +31,7 @@ import { ProtocolRouter } from "../../platform/ProtocolRouter";
 import { AccountComposition, type ApplicationAccount } from "./AccountComposition";
 import { AssetStateBinding } from "./AssetStateBinding";
 import { ApplicationRedDots } from "./ApplicationRedDots";
+import { QuestCompletionBinding } from "./QuestCompletionBinding";
 import type { DevelopmentPreview } from "./DevelopmentPreview";
 
 /** 含页面操作状态的模块随账号重置，并在场景结束时释放。 */
@@ -51,6 +53,8 @@ export class ApplicationModules {
     private readonly rewards: RewardBinding;
     /** 角色状态到红点树的订阅，随会话重置、随应用回收。 */
     private readonly redDots: ApplicationRedDots;
+    /** 待显示的成就通知只属于当前场景和角色。 */
+    private readonly questCompletion: QuestCompletionBinding;
     /** 需要随账号重置和应用释放的操作模块。 */
     private readonly sessions: readonly SessionModule[];
     /** 模块卸载时先结束连接回调，再释放状态订阅。 */
@@ -66,12 +70,14 @@ export class ApplicationModules {
         inHome: () => boolean,
         clearRolePages: () => void,
         showConnectionNotice: (message: string) => void,
+        openAchievements: () => boolean,
     ) {
         const {model, controller, socket} = account;
         this.accountModel = model;
         const operations = new AccountOperations(controller, socket);
         this.rewards = new RewardBinding(controller);
         this.redDots = new ApplicationRedDots(model);
+        this.questCompletion = new QuestCompletionBinding(openAchievements);
         this.role = new RoleController(model, operations, this.rewards);
         preview.configureRewards(notice => this.rewards.restore(notice));
         preview.configureGm(controller, operations, inHome);
@@ -121,18 +127,23 @@ export class ApplicationModules {
         const vip = VipController.instance;
         vip.configure(operations, this.rewards);
         vip.initialize();
+        const quests = QuestController.instance;
+        quests.configure(operations, notice => this.rewards.restore(notice));
+        quests.initialize();
         const chapter = new MainChapterSession(controller, operations, this.rewards);
         this.sessions = [chapter, heroLevel, heroEquipment, heroStar, heroJewel, godEquipment,
-            heroArtifacts, market, dailyDungeon, tower, arena, guild, vip];
+            heroArtifacts, market, dailyDungeon, tower, arena, guild, vip, quests];
         this.assets = new AssetStateBinding(model, bag, this.role,
             heroes, formation, () => {
                 clearRolePages();
                 this.rewards.resetSession();
                 this.redDots.resetSession();
+                this.questCompletion.resetSession();
             }, chapter.controller, this.sessions, [vip]);
         this.unbind = AccountComposition.bind(account, frame => this.acceptState(frame),
             frame => this.rewards.controller.receive(frame), showConnectionNotice,
-            frame => ProtocolRouter.instance.dispatch(guild, frame));
+            frame => ProtocolRouter.instance.dispatch(guild, frame),
+            frame => ProtocolRouter.instance.dispatch(quests, frame));
     }
 
     /** 整包提交后在同一通知批次更新红点，重连时重新校准独立状态。 */
@@ -158,6 +169,7 @@ export class ApplicationModules {
         GuildController.instance.refreshRoleState(authenticated, previousGuild !== this.accountModel.snapshot.role?.guildName);
         if (authenticated) {
             MarketController.instance.reloadVisible();
+            QuestController.instance.refresh();
         }
     }
 
@@ -166,6 +178,8 @@ export class ApplicationModules {
         this.rewards.setReady(ready);
         this.redDots.setReady(ready);
         GuildController.instance.setHomeReady(ready);
+        QuestController.instance.setHomeReady(ready);
+        this.questCompletion.setReady(ready);
     }
 
     /** 撤销回调、停止操作，释放模块及其对协议和界面的订阅。 */
@@ -173,6 +187,7 @@ export class ApplicationModules {
         this.unbind();
         this.assets.dispose();
         this.redDots.dispose();
+        this.questCompletion.dispose();
         for (const module of this.sessions) {
             module.dispose();
         }

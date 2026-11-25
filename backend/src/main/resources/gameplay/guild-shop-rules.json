@@ -1,0 +1,22 @@
+{
+  "currency": 901301,
+  "products": [
+    { "productId": 1, "itemId": 20104016, "quantity": 30, "cost": 1500, "limit": 2 },
+    { "productId": 2, "itemId": 20204004, "quantity": 30, "cost": 1500, "limit": 2 },
+    { "productId": 3, "itemId": 20304005, "quantity": 30, "cost": 1500, "limit": 2 },
+    { "productId": 4, "itemId": 20404003, "quantity": 30, "cost": 2000, "limit": 2 },
+    { "productId": 5, "itemId": 20504002, "quantity": 30, "cost": 2000, "limit": 2 },
+    { "productId": 6, "itemId": 20205020, "quantity": 50, "cost": 15000, "limit": 1 },
+    { "productId": 7, "itemId": 20305009, "quantity": 50, "cost": 15000, "limit": 1 },
+    { "productId": 8, "itemId": 20105013, "quantity": 50, "cost": 15000, "limit": 1 },
+    { "productId": 9, "itemId": 20005000, "quantity": 10, "cost": 2500, "limit": 1 },
+    { "productId": 10, "itemId": 1001012, "quantity": 1, "cost": 20000, "limit": 1 },
+    { "productId": 11, "itemId": 1002012, "quantity": 1, "cost": 20000, "limit": 1 },
+    { "productId": 12, "itemId": 1003012, "quantity": 1, "cost": 20000, "limit": 1 },
+    { "productId": 13, "itemId": 1004012, "quantity": 1, "cost": 20000, "limit": 1 },
+    { "productId": 14, "itemId": 2000003, "quantity": 1, "cost": 2500, "limit": 2 },
+    { "productId": 15, "itemId": 2000002, "quantity": 1, "cost": 500, "limit": 5 },
+    { "productId": 16, "itemId": 900201, "quantity": 1, "cost": 50, "limit": 5 },
+    { "productId": 17, "itemId": 908004, "quantity": 20, "cost": 10000, "limit": 1 }
+  ]
+}

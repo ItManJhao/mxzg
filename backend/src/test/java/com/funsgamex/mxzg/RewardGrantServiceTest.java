@@ -126,7 +126,7 @@ class RewardGrantServiceTest {
         inventory = new InventoryService(jdbc, sync, json, roles);
         tavernPoints = transactional(new TavernPointService(jdbc, roles, new TavernPointRules(json), sync),
                 TavernPointService.class);
-        var experience = transactional(new RoleExperienceService(roleRules, roles, jdbc, sync),
+        var experience = transactional(new RoleExperienceService(roleRules, roles, jdbc, sync, ignored -> {}),
                 RoleExperienceService.class);
         var timedRules = new TimedItemRules(json);
         var timed = new TimedInventoryService(jdbc, sync, timedRules);

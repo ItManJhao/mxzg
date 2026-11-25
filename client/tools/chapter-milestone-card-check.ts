@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
-import { Node, Label, Button, Prefab, Sprite, UITransform } from "cc";
+import { Node, Label, Button, Prefab, RichText, Sprite, SpriteFrame, UITransform } from "cc";
 import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 import { MainChapterMilestoneCard } from "../assets/scripts/features/battle/ui/MainChapterMilestoneCard";
 import { MainChapterModel } from "../assets/scripts/features/battle/MainChapterModel";
@@ -22,16 +22,23 @@ import { GameLog } from "../assets/scripts/core/GameLog";
 /** 读取正式静态绑定，避免只测工具临时拼接节点而遗漏实际Prefab。 */
 function staticBindings(): void {
     const objects = JSON.parse(readFileSync("client/assets/bundles/module/battle/prefabs/MainChapterView.prefab", "utf8"));
-    const component = objects.find((row: any) => row.rewardIcon && row.rewardName && row.claimLabel && row.heroHost);
+    const component = objects.find((row: any) => row.rewardIcon && row.tipArtwork && row.claimLabel && row.heroHost);
     assert(component, "常显原目标卡必须存在于正式MainChapterView Prefab");
-    for (const field of ["rewardIcon", "rewardName", "progressLabel", "claimButton", "claimLabel", "claimDotAnchor", "heroHost", "progressFill"]) {
+    for (const field of ["rewardIcon", "progressTip", "tipBackdrop", "tipArtwork", "rewardGlow", "progressLabel",
+        "claimButton", "claimArtwork", "claimLabel", "claimDotAnchor", "heroHost", "progressFill"]) {
         assert(objects[component[field].__id__], "目标卡缺少静态引用：" + field);
     }
+    const expectedArt = [1, 2, 3, 4, "btn-reward-1"].map(name => JSON.parse(readFileSync(
+        `client/assets/bundles/module/battle/ui/chapter-reward-lang_${name}.png.meta`, "utf8")).subMetas.f9941.uuid);
+    assert.deepEqual(component.tipFrames.map((asset: any) => asset.__uuid__), expectedArt.slice(0, 4));
+    assert.equal(objects[component.claimArtwork.__id__]._spriteFrame.__uuid__, expectedArt[4]);
+    assert.equal(objects[component.progressTip.__id__].__type__, "cc.RichText");
+    assert.equal(objects[objects[component.claimButton.__id__].node.__id__]._active, false);
     const anchor = objects[component.claimDotAnchor.__id__];
     assert.equal(anchor._active, true);
     assert.equal(anchor._parent.__id__, objects[component.claimButton.__id__].node.__id__);
-    assert.equal(anchor._lpos.x, 82);
-    assert.equal(anchor._lpos.y, 21);
+    assert.equal(anchor._lpos.x, 68);
+    assert.equal(anchor._lpos.y, 19);
     const transforms = anchor._components.map((ref: any) => objects[ref.__id__]);
     assert.deepEqual(transforms.map((row: any) => row.__type__), ["cc.UITransform"]);
     assert.equal(transforms[0]._contentSize.width, 23);
@@ -42,6 +49,7 @@ function staticBindings(): void {
     const sprite = frame._components.map((ref: any) => objects[ref.__id__]).find((row: any) => row.__type__ === "cc.Sprite");
     const meta = JSON.parse(readFileSync("client/assets/bundles/module/battle/atlas/chapter-reward_spr-item-bg-1.png.meta", "utf8"));
     assert.equal(sprite._spriteFrame.__uuid__, meta.uuid + "@f9941");
+    assert.equal(sprite._color.a, 86);
     assert.equal(meta.subMetas.f9941.userData.rawWidth, 150);
     assert.equal(meta.subMetas.f9941.userData.rawHeight, 150);
 }
@@ -61,9 +69,14 @@ function card(): MainChapterMilestoneCard {
     value.rewardIcon = new Node("RewardIcon").addComponent(Sprite);
     value.rewardIcon.node.parent = root;
     value.heroHost = new Node("HeroHost"); value.heroHost.parent = root;
-    value.rewardName = new Node("RewardName").addComponent(Label);
+    value.rewardGlow = new Node("RewardGlow"); value.rewardGlow.parent = root;
+    value.progressTip = new Node("ProgressTip").addComponent(RichText);
+    value.tipBackdrop = new Node("TipBackdrop");
+    value.tipArtwork = new Node("TipArtwork").addComponent(Sprite);
+    value.tipFrames = Array.from({ length: 4 }, () => new SpriteFrame());
     value.progressLabel = new Node("ProgressLabel").addComponent(Label);
     value.claimButton = new Node("ClaimButton").addComponent(Button);
+    value.claimArtwork = value.claimButton.node.addComponent(Sprite);
     value.claimLabel = new Node("ClaimLabel").addComponent(Label);
     value.claimDotAnchor = new Node("ClaimDotAnchor");
     value.claimDotAnchor.parent = value.claimButton.node;
@@ -115,8 +128,13 @@ async function main(): Promise<void> {
         assert.equal(actors[0].scale, 0.5 * 0.67 * 0.8 * 1.42);
         assert.deepEqual(actors[0].gestures, ["stand"]);
         assert.equal(value.rewardIcon!.node.active, false, "原英雄骨架不应被图标覆盖");
-        assert(value.rewardName!.string.includes("烈焰骑士"));
-        assert.equal(value.progressLabel!.string, "通关 14/15");
+        assert(value.progressTip!.string.includes("烈焰骑士"));
+        assert(value.progressTip!.string.includes(">15<"));
+        assert.equal(value.progressLabel!.string, "14/15");
+        assert.equal(value.progressFill!.fillRange, 14 / 15);
+        assert.equal(value.tipBackdrop!.active, true);
+        assert.equal(value.claimButton!.node.active, false);
+        assert.equal(value.tipArtwork!.spriteFrame, value.tipFrames[0]);
         let entries = 0;
         MainChapterController.instance.claimMilestone = async () => { entries++; };
         await (value as any).claim();
@@ -130,7 +148,11 @@ async function main(): Promise<void> {
         assert.equal(RedDotManager.instance.isVisible(GameRedDotKey.BATTLE), true);
         assert.equal(actors.length, 1, "同目标快照不重复创建模型");
         assert.equal(value.rewardIcon!.node.active, false);
-        assert.equal(value.claimLabel!.string, "领取奖励");
+        assert.equal(value.claimButton!.node.active, true);
+        assert.equal(value.claimArtwork!.enabled, true);
+        assert.equal(value.claimLabel!.node.active, false);
+        assert.equal(value.tipBackdrop!.active, false);
+        assert.equal(value.progressFill!.node.parent!.active, false);
         let finish!: () => void;
         MainChapterController.instance.claimMilestone = async rewardId => {
             assert.equal(rewardId, 100);
@@ -140,47 +162,52 @@ async function main(): Promise<void> {
         const click = (value as any).claim();
         await (value as any).claim();
         assert.equal(entries, 1);
-        assert.equal(value.claimLabel!.string, "确认中");
+        assert.equal(value.claimArtwork!.enabled, false);
+        assert.equal(value.claimLabel!.node.active, true);
         state(15, [100]);
         assert.equal(dot?.active, false);
         assert.equal(RedDotManager.instance.isVisible(GameRedDotKey.BATTLE), false);
         finish(); await click;
         assert.equal(actors[0].node.isValid, false, "切到物品目标须释放旧英雄节点");
-        assert(value.rewardName!.string.includes("500"));
-        assert.equal(value.progressLabel!.string, "通关 15/30");
+        assert(value.progressTip!.string.includes("海量进阶石"));
+        assert.equal(value.tipArtwork!.spriteFrame, value.tipFrames[1]);
+        assert.equal(value.progressLabel!.string, "15/30");
         assert.equal(value.rewardIcon!.node.active, true);
         assert.equal(value.heroHost!.active, false);
         (value as any).onDisable();
         assert.equal(value.claimDotAnchor!.getChildByName("RedDot"), null);
         assert.equal(EventDispatcher.instance.listenerCount(MainChapterController.Updated), before);
-        const previous = value.rewardName!.string;
+        const previous = value.progressTip!.string;
         state(20, [100]);
-        assert.equal(value.rewardName!.string, previous, "停用后不能继续收页面刷新");
+        assert.equal(value.progressTip!.string, previous, "停用后不能继续收页面刷新");
         (value as any).onEnable();
-        assert.equal(value.progressLabel!.string, "通关 20/30");
+        assert.equal(value.progressLabel!.string, "20/30");
 
         state(49, [100, 150]);
-        assert.equal(value.progressLabel!.string, "通关 49/50");
-        assert(value.rewardName!.string.includes("×800"));
+        assert.equal(value.progressLabel!.string, "49/50");
+        assert(value.progressTip!.string.includes(">50<"));
         state(50, [100, 150]);
-        assert.equal(value.claimLabel!.string, "领取奖励");
+        assert.equal(value.claimArtwork!.enabled, true);
         MainChapterController.instance.claimMilestone = async rewardId => {
             assert.equal(rewardId, 200);
             state(50, [100, 150, 200]);
         };
         await (value as any).claim();
-        assert.equal(value.progressLabel!.string, "通关 50/80");
-        assert(value.rewardName!.string.endsWith("×1"));
+        assert.equal(value.progressLabel!.string, "50/80");
+        assert(value.progressTip!.string.includes("绝世红武"));
+        assert.equal(value.tipArtwork!.spriteFrame, value.tipFrames[2]);
         assert.equal(value.rewardIcon!.node.active, true);
         assert.equal(value.heroHost!.active, false);
         state(80, [100, 150, 200]);
-        assert.equal(value.claimLabel!.string, "领取奖励");
+        assert.equal(value.claimArtwork!.enabled, true);
         MainChapterController.instance.claimMilestone = async rewardId => {
             assert.equal(rewardId, 300);
             state(80, [100, 150, 200, 300]);
         };
         await (value as any).claim();
-        assert.equal(value.progressLabel!.string, "通关 80/110");
+        assert.equal(value.progressLabel!.string, "80/110");
+        assert(value.progressTip!.string.includes("章鱼公主"));
+        assert.equal(value.tipArtwork!.spriteFrame, value.tipFrames[3]);
 
         state(140, [100, 150, 200, 300, 400, 500]);
         assert.equal(value.completed, true);
@@ -189,7 +216,7 @@ async function main(): Promise<void> {
         value.claimDotAnchor = null;
         (value as any).onEnable();
         state(15);
-        assert.equal(value.claimLabel!.string, "领取奖励", "缺少红点时仍展示可领取状态");
+        assert.equal(value.claimButton!.node.active, true, "缺少红点时仍展示可领取状态");
         (value.claimButton as unknown as { node: Node | null }).node = null;
         assert.doesNotThrow(() => (value as any).onDisable());
         assert.equal(EventDispatcher.instance.listenerCount(MainChapterController.Updated), before);

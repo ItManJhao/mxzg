@@ -13,8 +13,13 @@ import com.funsgamex.mxzg.campaign.MainChapterQuickBattleService;
 import com.funsgamex.mxzg.dungeon.DailyDungeonService;
 import com.funsgamex.mxzg.dungeon.DailyDungeonType;
 import com.funsgamex.mxzg.guild.GuildChanged;
+import com.funsgamex.mxzg.guild.GuildDonationService;
+import com.funsgamex.mxzg.guild.GuildRankingService;
 import com.funsgamex.mxzg.guild.GuildService;
+import com.funsgamex.mxzg.guild.GuildShopService;
 import com.funsgamex.mxzg.vip.VipService;
+import com.funsgamex.mxzg.quest.QuestChanged;
+import com.funsgamex.mxzg.quest.QuestService;
 import com.funsgamex.mxzg.hero.HeroArtifactService;
 import com.funsgamex.mxzg.hero.HeroEquipmentService;
 import com.funsgamex.mxzg.hero.HeroMainPowerService;
@@ -101,8 +106,16 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final MarketService market;
     /** 本区的公会列表和成员操作，所有写入都以当前连接的角色为发起人。 */
     private final GuildService guilds;
+    /** 权威周货架与兑换事务。 */
+    private final GuildShopService guildShop;
+    /** 公会捐献、等级与宝箱事务。 */
+    private final GuildDonationService guildDonations;
+    /** 当前区服战力榜投影。 */
+    private final GuildRankingService guildRanking;
     /** 契约任务领取和 VIP 升档由同一个角色事务处理。 */
     private final VipService vip;
+    /** 当前角色任务及成就的权威读取和领取服务。 */
+    private final QuestService quests;
     /** 金币副本首关资格、真实挑战和清扫回执由原事务服务处理。 */
     private final DailyDungeonService dailyDungeon;
     /** 幻境之塔专用阵容、次数及实际结算由爬塔事务负责。 */
@@ -127,7 +140,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final ThreadLocal<GuildNotifications> guildNotifications = new ThreadLocal<>();
 
     /** 快照与公会页刷新分别按角色去重。 */
-    private record GuildNotifications(Set<String> snapshots, Set<String> pages) {}
+    private record GuildNotifications(Set<String> snapshots, Set<String> pages, List<QuestChanged> quests) {}
 
     private static final class Connection {
         final WebSocketSession socket;
@@ -161,7 +174,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             HeroLevelService heroLevels, HeroLockService heroLocks, HeroEquipmentService heroEquipment,
             HeroStarService heroStars, HeroJewelService heroJewels, HeroGodEquipmentService heroGodEquipment,
             HeroArtifactService heroArtifacts, HeroGodEquipmentShopService godEquipmentShop,
-            MarketService market, GuildService guilds, VipService vip,
+            MarketService market, GuildService guilds, GuildShopService guildShop,
+            GuildDonationService guildDonations, GuildRankingService guildRanking, VipService vip, QuestService quests,
             DailyDungeonService dailyDungeon, TowerService tower, ArenaService arena,
             RoleService roles, RoleProfileService profiles, WelcomeGiftService welcomeGifts, GameClock clock,
             HeroMainPowerService formationPower) {
@@ -177,7 +191,11 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         this.godEquipmentShop = godEquipmentShop;
         this.market = market;
         this.guilds = guilds;
+        this.guildShop = guildShop;
+        this.guildDonations = guildDonations;
+        this.guildRanking = guildRanking;
         this.vip = vip;
+        this.quests = quests;
         this.dailyDungeon = dailyDungeon;
         this.tower = tower;
         this.arena = arena;
@@ -244,8 +262,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             } else {
                 ReentrantLock roleLock = roleLock(connection.role);
                 if (!awaitLock(roleLock)) throw rejected("BUSY");
-                var notifications = name.equals("guild.change")
-                    ? new GuildNotifications(new LinkedHashSet<>(), new LinkedHashSet<>()) : null;
+                var notifications = name.equals("guild.change") || name.equals("guild.donation.donate")
+                    ? new GuildNotifications(new LinkedHashSet<>(), new LinkedHashSet<>(), new java.util.ArrayList<>()) : null;
                 if (notifications != null) {
                     guildNotifications.set(notifications);
                 }
@@ -256,6 +274,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                         guildNotifications.remove();
                         notifications.snapshots().forEach(id -> assetsChanged(new AssetSyncService.Changed(id)));
                         notifications.pages().forEach(this::notifyGuildUpdated);
+                        notifications.quests().forEach(this::questChanged);
                     }
                 }
             }
@@ -406,8 +425,20 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             guild(connection, request, name);
             return;
         }
+        switch (name) {
+            case "guild.shop.list", "guild.shop.buy", "guild.donation.info", "guild.donation.donate",
+                    "guild.donation.claim", "guild.ranking" -> {
+                guildFeature(connection, request, name);
+                return;
+            }
+            default -> { /* 其余已认证业务继续按现有入口分流。 */ }
+        }
         if (name.equals("vip.claim")) {
             claimVipTask(connection, request);
+            return;
+        }
+        if (name.equals("quest.list") || name.equals("quest.claim")) {
+            questRequest(connection, request, name);
             return;
         }
         switch (name) {
@@ -1220,6 +1251,71 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         }
     }
 
+    /** 公会功能请求只使用连接身份，兑换和捐献另校验所打开的公会及报价周期。 */
+    private void guildFeature(Connection connection, JsonNode request, String name) throws IOException {
+        var body = request.path("body");
+        try {
+            switch (name) {
+                case "guild.shop.list" -> {
+                    fields(body, Set.of());
+                    respond(connection, request, guildShop.list(connection.role));
+                }
+                case "guild.shop.buy" -> {
+                    fields(body, Set.of("requestId", "guildId", "productId", "count", "resetAtSeconds"));
+                    var code = "GUILD_SHOP_REQUEST_INVALID";
+                    var buy = new GuildShopService.BuyRequest(text(body, "requestId", UUID_PATTERN),
+                        text(body, "guildId", UUID_PATTERN), operationIndex(body, "productId", code),
+                        operationIndex(body, "count", code), operationAmount(body, "resetAtSeconds", code));
+                    respond(connection, request, guildShop.buy(connection.role, buy));
+                }
+                case "guild.donation.info" -> {
+                    fields(body, Set.of());
+                    respond(connection, request, guildDonations.info(connection.role));
+                }
+                case "guild.donation.donate", "guild.donation.claim" -> {
+                    fields(body, Set.of("requestId", "guildId", "resetAt", "optionId"));
+                    var code = "GUILD_DONATION_REQUEST_INVALID";
+                    var command = new GuildDonationService.Command(text(body, "requestId", UUID_PATTERN),
+                        text(body, "guildId", UUID_PATTERN), operationAmount(body, "resetAt", code),
+                        operationIndex(body, "optionId", code));
+                    respond(connection, request, name.equals("guild.donation.donate")
+                        ? guildDonations.donate(connection.role, command) : guildDonations.claim(connection.role, command));
+                }
+                case "guild.ranking" -> {
+                    fields(body, Set.of());
+                    respond(connection, request, guildRanking.list(connection.role));
+                }
+                default -> throw rejected("GUILD_REQUEST_INVALID");
+            }
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException error) {
+            fail(connection, request, "BUSY", "公会数据正忙，请稍后重试", true);
+        }
+    }
+
+    /** 读取本连接的任务快照，或领取经期次和业务流水校验的奖励。 */
+    private void questRequest(Connection connection, JsonNode request, String name) throws IOException {
+        var body = request.path("body");
+        try {
+            if (name.equals("quest.list")) {
+                fields(body, Set.of());
+                respond(connection, request, quests.snapshot(connection.role));
+                return;
+            }
+            fields(body, Set.of("requestId", "kind", "id", "resetAt"));
+            var requestId = text(body, "requestId", UUID_PATTERN);
+            var kind = QuestService.QuestKind.valueOf(text(body, "kind", "DAILY|ACHIEVEMENT|MILESTONE"));
+            var id = operationIndex(body, "id", "QUEST_REQUEST_INVALID");
+            var resetAt = operationAmount(body, "resetAt", "QUEST_REQUEST_INVALID");
+            var result = quests.claim(connection.role, kind, id, resetAt, requestId, request.path("id").asString());
+            respond(connection, request, Map.of("requestId", requestId, "snapshot", result.snapshot(),
+                    "notice", result.rewardNotice()));
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException error) {
+            fail(connection, request, "BUSY", "任务数据正忙，请稍后重试", true);
+        }
+    }
+
     /** 以稳定任务编号领取，快照同步档位，冻结奖励通知也随回包交付以覆盖即时推送缺失。 */
     private void claimVipTask(Connection connection, JsonNode request) throws IOException {
         var body = request.path("body");
@@ -1311,6 +1407,31 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                 try {
                     send(connection, Map.of("version", 1, "kind", "event", "name", "guild.updated",
                         "connectionId", connection.socket.getId(), "body", Map.of()));
+                } catch (IOException | RuntimeException error) {
+                    close(connection, CloseStatus.SERVER_ERROR);
+                }
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** 已提交的任务变更发往目标角色，公会跨角色业务等当前请求解锁后再通知。 */
+    @org.springframework.context.event.EventListener
+    public void questChanged(QuestChanged event) {
+        var notifications = guildNotifications.get();
+        if (notifications != null) {
+            notifications.quests().add(event);
+            return;
+        }
+        var lock = roleLock(event.roleId());
+        lock.lock();
+        try {
+            var connection = online.get(event.roleId());
+            if (connection != null && connection.ready && connection.socket.isOpen()) {
+                try {
+                    send(connection, Map.of("version", 1, "kind", "event", "name", "quest.changed",
+                        "connectionId", connection.socket.getId(), "body", Map.of("completed", event.completed())));
                 } catch (IOException | RuntimeException error) {
                     close(connection, CloseStatus.SERVER_ERROR);
                 }
