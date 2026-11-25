@@ -120,6 +120,26 @@ export class Protocol {
     public static readonly QUEST_CLAIM = "quest.claim";
     /** 已提交的任务进度变化，携带本次达成的成就。 */
     public static readonly QUEST_CHANGED = "quest.changed";
+    /** 获取本服与已开放跨服榜首及当日点赞状态。 */
+    public static readonly RANKING_OVERVIEW = "ranking.overview";
+    /** 获取指定榜的前列名次及本人名次。 */
+    public static readonly RANKING_LIST = "ranking.list";
+    /** 向指定榜首点赞，按已展示的日界及榜首校验。 */
+    public static readonly RANKING_LIKE = "ranking.like";
+    /** 读取角色邮件箱及各封邮件的状态。 */
+    public static readonly MAIL_LIST = "mail.list";
+    /** 打开、领取或删除邮件。 */
+    public static readonly MAIL_CHANGE = "mail.change";
+    /** 事务提交后通知在线角色读取邮件。 */
+    public static readonly MAIL_CHANGED = "mail.changed";
+    /** 读取好友、礼物、申请与黑名单。 */
+    public static readonly FRIEND_STATE = "friend.state";
+    /** 按角色名称或编号搜索，也提供空查询推荐。 */
+    public static readonly FRIEND_SEARCH = "friend.search";
+    /** 提交好友关系及友情礼物操作。 */
+    public static readonly FRIEND_CHANGE = "friend.change";
+    /** 好友关系或礼物提交后的刷新通知。 */
+    public static readonly FRIEND_CHANGED = "friend.changed";
     /** 领取当前 VIP 档位已达成的契约任务奖励。 */
     public static readonly VIP_CLAIM = "vip.claim";
     /** 读取金币副本的关卡资格、原产物及当天挑战次数。 */
@@ -162,6 +182,22 @@ export class Protocol {
     public static readonly ARENA_REPLAY = "arena.replay";
     /** 购买原竞技场门票，余额由资产快照提交。 */
     public static readonly ARENA_TICKET_BUY = "arena.ticket.buy";
+    /** 读取当前赛季本服积分榜与自己的名次。 */
+    public static readonly ARENA_RANKING = "arena.ranking";
+    /** 读取挑战截止时间、宝箱进度和两类奖励。 */
+    public static readonly ARENA_SEASON = "arena.season";
+    /** 领取达到挑战场次的赛季宝箱。 */
+    public static readonly ARENA_CHEST_CLAIM = "arena.chest.claim";
+    /** 给当前榜单上的其他角色点赞。 */
+    public static readonly ARENA_LIKE = "arena.like";
+    /** 读取自己的专用防守阵容及版本。 */
+    public static readonly ARENA_DEFENSE = "arena.defense";
+    /** 保存通过名册和槽位校验的防守阵容。 */
+    public static readonly ARENA_DEFENSE_SAVE = "arena.defense.save";
+    /** 读取每周自然日刷新的竞技商店。 */
+    public static readonly ARENA_SHOP = "arena.shop";
+    /** 以竞技积分币兑换商店商品。 */
+    public static readonly ARENA_SHOP_BUY = "arena.shop.buy";
     /** 查询本机 GM 实际开关。 */
     public static readonly GM_STATUS = "gm.status";
     /** 向当前角色发放开发资产；服务端持久幂等。 */
@@ -233,9 +269,12 @@ export type ReadProtocol = typeof Protocol.SESSION_HEARTBEAT | typeof Protocol.G
     | typeof Protocol.ROLE_DECORATIONS_LIST
     | typeof Protocol.MARKET_LIST | DailyDungeonRoutes["list"]
     | typeof Protocol.TOWER_STATE | typeof Protocol.ARENA_STATE | typeof Protocol.ARENA_REPLAY
+    | typeof Protocol.ARENA_RANKING | typeof Protocol.ARENA_SEASON | typeof Protocol.ARENA_DEFENSE
+    | typeof Protocol.ARENA_SHOP
     | typeof Protocol.GUILD_LIST | typeof Protocol.GUILD_SHOP_LIST | typeof Protocol.GUILD_DONATION_INFO
     | typeof Protocol.GUILD_RANKING | typeof Protocol.CHAPTER_QUICK_BATTLE_INFO | typeof Protocol.FORMATION_POWER
-    | typeof Protocol.QUEST_LIST;
+    | typeof Protocol.QUEST_LIST | typeof Protocol.RANKING_OVERVIEW | typeof Protocol.RANKING_LIST
+    | typeof Protocol.MAIL_LIST | typeof Protocol.FRIEND_STATE | typeof Protocol.FRIEND_SEARCH;
 /** 具有角色归属回执的操作；查询与原命令经同一条认证连接。 */
 export type RoleOperationProtocol = typeof Protocol.HERO_SUMMON | typeof Protocol.HERO_NORMAL_SUMMON
     | typeof Protocol.HERO_FIRST_SUMMON | typeof Protocol.HERO_FIRST_SUMMON_STATUS
@@ -253,9 +292,12 @@ export type RoleOperationProtocol = typeof Protocol.HERO_SUMMON | typeof Protoco
     | typeof Protocol.CHAPTER_FIRST_REWARD_CLAIM | typeof Protocol.CHAPTER_FIRST_REWARD_STATUS
     | typeof Protocol.ROLE_WELCOME_CLAIM | DailyDungeonRoutes["challenge"] | typeof Protocol.GUILD_CHANGE
     | typeof Protocol.GUILD_SHOP_BUY | typeof Protocol.GUILD_DONATION_DONATE | typeof Protocol.GUILD_DONATION_CLAIM
-    | typeof Protocol.VIP_CLAIM | typeof Protocol.QUEST_CLAIM | typeof Protocol.CHAPTER_QUICK_BATTLE_CLAIM
+    | typeof Protocol.VIP_CLAIM | typeof Protocol.QUEST_CLAIM | typeof Protocol.RANKING_LIKE
+    | typeof Protocol.CHAPTER_QUICK_BATTLE_CLAIM | typeof Protocol.MAIL_CHANGE | typeof Protocol.FRIEND_CHANGE
     | typeof Protocol.TOWER_CHALLENGE | typeof Protocol.TOWER_SWEEP
-    | typeof Protocol.TOWER_MILESTONE_CLAIM | typeof Protocol.ARENA_CHALLENGE | typeof Protocol.ARENA_TICKET_BUY;
+    | typeof Protocol.TOWER_MILESTONE_CLAIM | typeof Protocol.ARENA_CHALLENGE | typeof Protocol.ARENA_TICKET_BUY
+    | typeof Protocol.ARENA_CHEST_CLAIM | typeof Protocol.ARENA_LIKE | typeof Protocol.ARENA_DEFENSE_SAVE
+    | typeof Protocol.ARENA_SHOP_BUY;
 
 /** 现行主线请求，包括历史回执和只读战报。 */
 export type ChapterProtocol = Extract<ProtocolName, `chapter.${string}`>;
@@ -326,6 +368,16 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.QUEST_LIST, module: "任务", description: "读取每日任务和成就" },
     { name: Protocol.QUEST_CLAIM, module: "任务", description: "领取任务、成就或活跃奖励" },
     { name: Protocol.QUEST_CHANGED, module: "任务", description: "任务进度更新和新成就" },
+    { name: Protocol.RANKING_OVERVIEW, module: "排行", description: "读取本服和跨服榜首" },
+    { name: Protocol.RANKING_LIST, module: "排行", description: "读取榜单和自己的名次" },
+    { name: Protocol.RANKING_LIKE, module: "排行", description: "点赞榜首并领取金币" },
+    { name: Protocol.MAIL_LIST, module: "邮件", description: "读取邮件列表和状态" },
+    { name: Protocol.MAIL_CHANGE, module: "邮件", description: "打开、领取或删除邮件" },
+    { name: Protocol.MAIL_CHANGED, module: "邮件", description: "邮件箱状态已更新" },
+    { name: Protocol.FRIEND_STATE, module: "好友", description: "读取好友、礼物、申请与黑名单" },
+    { name: Protocol.FRIEND_SEARCH, module: "好友", description: "搜索并推荐好友" },
+    { name: Protocol.FRIEND_CHANGE, module: "好友", description: "处理好友关系和赠领" },
+    { name: Protocol.FRIEND_CHANGED, module: "好友", description: "好友状态已更新" },
     { name: Protocol.VIP_CLAIM, module: "VIP", description: "领取当前档位的契约任务奖励" },
     { name: Protocol.CHAPTER_QUICK_BATTLE_INFO, module: "主线", description: "读取今日快速战斗次数与报价" },
     { name: Protocol.CHAPTER_QUICK_BATTLE_CLAIM, module: "主线", description: "确认报价并结算快速战斗" },
@@ -344,11 +396,19 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.TOWER_CHALLENGE, module: "幻境之塔", description: "挑战下一层及结算" },
     { name: Protocol.TOWER_SWEEP, module: "幻境之塔", description: "扫荡已通关最高层" },
     { name: Protocol.TOWER_MILESTONE_CLAIM, module: "幻境之塔", description: "领取通关里程碑奖励" },
-    { name: Protocol.ARENA_STATE, module: "竞技场", description: "读取新手对手、积分、次数与战报列表" },
-    { name: Protocol.ARENA_REFRESH, module: "竞技场", description: "刷新新手对手" },
+    { name: Protocol.ARENA_STATE, module: "竞技场", description: "读取当前对手、积分、次数与战报列表" },
+    { name: Protocol.ARENA_REFRESH, module: "竞技场", description: "刷新当前对手" },
     { name: Protocol.ARENA_CHALLENGE, module: "竞技场", description: "发起挑战并结算积分与奖励" },
     { name: Protocol.ARENA_REPLAY, module: "竞技场", description: "读取冻结战报" },
     { name: Protocol.ARENA_TICKET_BUY, module: "竞技场", description: "购买挑战门票" },
+    { name: Protocol.ARENA_RANKING, module: "竞技场", description: "读取当前积分榜及个人名次" },
+    { name: Protocol.ARENA_SEASON, module: "竞技场", description: "读取赛季、宝箱和名次奖励" },
+    { name: Protocol.ARENA_CHEST_CLAIM, module: "竞技场", description: "领取赛季宝箱" },
+    { name: Protocol.ARENA_LIKE, module: "竞技场", description: "给积分榜角色点赞" },
+    { name: Protocol.ARENA_DEFENSE, module: "竞技场", description: "读取防守阵容" },
+    { name: Protocol.ARENA_DEFENSE_SAVE, module: "竞技场", description: "保存专用防守阵容" },
+    { name: Protocol.ARENA_SHOP, module: "竞技场", description: "读取竞技商店周限购目录" },
+    { name: Protocol.ARENA_SHOP_BUY, module: "竞技场", description: "兑换竞技商店奖励" },
     { name: Protocol.GM_STATUS, module: "开发GM", description: "GM 开关" },
     { name: Protocol.GM_GRANT, module: "开发GM", description: "当前角色资产发放回执" },
     { name: Protocol.GM_LEVEL_SET, module: "开发GM", description: "设置当前角色等级" },

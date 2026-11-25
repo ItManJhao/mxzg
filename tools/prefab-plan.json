@@ -58,10 +58,20 @@
         "BagItemView",
         "CommonPanel1",
         "ConfirmView",
+        "FriendCell",
+        "FriendSearchView",
+        "FriendView",
         "HeroRewardView",
+        "MailCell",
+        "MailDetailView",
+        "MailView",
         "QuestCompletionView",
         "QuestTaskCell",
         "QuestView",
+        "RankingBoardCell",
+        "RankingDetailView",
+        "RankingEntryCell",
+        "RankingView",
         "RedDot",
         "RewardView",
         "RoleUpgradeView",
@@ -232,9 +242,14 @@
       "phases": [
         "当前已实现"
       ],
-      "reason": "主城竞技场新手对手与冻结战斗历史",
+      "reason": "竞技场挑战、积分榜、奖励、防守入口、历史与商店",
       "names": [
         "ArenaEntryCell",
+        "ArenaHistoryView",
+        "ArenaRankCell",
+        "ArenaRewardCell",
+        "ArenaShopCell",
+        "ArenaShopView",
         "ArenaView"
       ]
     }

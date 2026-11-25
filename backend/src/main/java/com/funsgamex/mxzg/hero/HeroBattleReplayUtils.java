@@ -7,21 +7,22 @@ public final class HeroBattleReplayUtils {
     /** 工具类不保存跨场状态。 */
     private HeroBattleReplayUtils() {}
 
-    /** 按原顺序核对阵容生命和胜负；幻境层数由玩法目录决定，竞技场沿用独立回合上限。 */
+    /** 按原顺序核对阵容生命和胜负；真人竞技场不要求机器人固定人数，两者共用竞技场回合上限。 */
     public static void validate(HeroBattleChapterScenario.Result report) {
         boolean dailyDungeon = report.scenario().matches("dungeon:(gold|experience|hero|fetter|spirit):[1-9][0-9]{0,9}");
         boolean tower = report.scenario().matches("tower:[1-9][0-9]{0,9}");
-        boolean arena = report.scenario().matches("arena:(?:[1-9]|1[0-9]|2[0-4])");
-        boolean indexed = indexedScenario(report.scenario()) || dailyDungeon || tower || arena;
-        int maxRounds = arena ? HeroBattleRoundUtils.ARENA_MAX_ROUNDS : HeroBattleRoundUtils.MAX_ROUNDS;
+        boolean robotArena = report.scenario().matches("arena:(?:[1-9]|1[0-9]|2[0-4])");
+        boolean playerArena = report.scenario().matches("arena:pvp:[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}");
+        boolean indexed = indexedScenario(report.scenario()) || dailyDungeon || tower || robotArena || playerArena;
+        int maxRounds = robotArena || playerArena ? HeroBattleRoundUtils.ARENA_MAX_ROUNDS : HeroBattleRoundUtils.MAX_ROUNDS;
         if ((!indexed && !Set.of("main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:duel", "audit:charm", "audit:charm-death", "audit:teams", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed", "audit:round-limit").contains(report.scenario()))
             || report.rounds() < 1 || report.rounds() > maxRounds || report.frames().isEmpty()) {
             throw new IllegalArgumentException("战斗回放场景或回合范围无效");
         }
         var units = HeroBattleChapterScenario.roster(report.initial());
-        if (dailyDungeon || tower || arena) {
+        if (dailyDungeon || tower || robotArena) {
             long defenders = units.stream().filter(unit -> unit.faction() == 2).count();
-            if (defenders != (arena ? 4 : 6)) {
+            if (defenders != (robotArena ? 4 : 6)) {
                 throw new IllegalArgumentException("配置化战报缺少原守军");
             }
         }

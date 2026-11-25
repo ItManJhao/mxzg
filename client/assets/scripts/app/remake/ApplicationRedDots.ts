@@ -23,6 +23,9 @@ import { HeroRosterModel } from "../../features/hero/HeroRosterModel";
 import { HeroCreationUtils } from "../../features/hero/utils/HeroCreationUtils";
 import { HeroRedDotUtils } from "../../features/hero/utils/HeroRedDotUtils";
 import { QuestModel } from "../../features/quest/QuestModel";
+import { RankingModel } from "../../features/ranking/RankingModel";
+import { FriendModel } from "../../features/friend/FriendModel";
+import { MailModel } from "../../features/mail/MailModel";
 import { VipModel } from "../../features/vip/VipModel";
 
 export class ApplicationRedDots {
@@ -38,6 +41,10 @@ export class ApplicationRedDots {
     private readonly unbindChapter: () => void;
     /** 任务快照变化后重算共用入口红点，随应用解除。 */
     private readonly unbindQuest: () => void;
+    /** 排行总览变化后重算主城入口的点赞红点。 */
+    private readonly unbindRanking: () => void;
+    /** 好友通知和收件箱通知各有独立的解绑。 */
+    private readonly unbindSocial: readonly (() => void)[];
 
     /**
      * 接入独立主线回包，等待场景装配完成后再读配置。
@@ -46,6 +53,11 @@ export class ApplicationRedDots {
     public constructor(private readonly account: AccountModel) {
         this.unbindChapter = EventDispatcher.instance.on(MainChapterController.Updated, this, this.refreshChapter);
         this.unbindQuest = EventDispatcher.instance.on("quest.updated", this, this.refreshQuest);
+        this.unbindRanking = EventDispatcher.instance.on("ranking.updated", this, this.refreshRanking);
+        this.unbindSocial = [
+            EventDispatcher.instance.on("friend.updated", this, this.refreshSocial),
+            EventDispatcher.instance.on("mail.updated", this, this.refreshSocial),
+        ];
     }
 
     /** 配置包和主城均可用后读取当前快照，启动召唤计时和副本资格补查。 */
@@ -58,6 +70,8 @@ export class ApplicationRedDots {
             this.refreshSnapshot();
             this.refreshChapter();
             this.refreshQuest();
+            this.refreshRanking();
+            this.refreshSocial();
             this.clockTask = setInterval(() => {
                 this.refreshSummon();
                 this.refreshDungeonIfNeeded();
@@ -140,6 +154,8 @@ export class ApplicationRedDots {
     public dispose(): void {
         this.unbindChapter();
         this.unbindQuest();
+        this.unbindRanking();
+        this.unbindSocial.forEach(stop => stop());
         this.resetSession();
     }
 
@@ -160,6 +176,27 @@ export class ApplicationRedDots {
             || snapshot.achievements.some(row => !row.claimed && row.current >= row.target)
             || snapshot.milestones.some(row => !row.claimed && snapshot.activityPoints >= row.points));
         RedDotManager.instance.set(GameRedDotKey.QUEST, !!claimable);
+    }
+
+    /** 本服或已开放的跨服榜有可点赞榜首时点亮主城按钮。 */
+    private refreshRanking(): void {
+        if (this.ready) {
+            const boards = RankingModel.instance.state?.boards ?? [];
+            RedDotManager.instance.set(GameRedDotKey.RANKING, boards.some(board => !!board.leader && !board.liked));
+        }
+    }
+
+    /** 由权威收件箱、申请和礼物投影主城快捷红点。 */
+    private refreshSocial(): void {
+        if (!this.ready) {
+            return;
+        }
+        const friends = FriendModel.instance.state;
+        RedDotManager.instance.setMany({
+            [GameRedDotKey.MAIL]: MailModel.instance.state?.entries.some(entry => !entry.read) ?? false,
+            [GameRedDotKey.FRIEND]: !!friends && (friends.applications.length > 0
+                || friends.gifts.some(gift => gift.giftState === 1)),
+        });
     }
 
     /** 免费召唤冷却读取公共服务器时钟，积分提醒读取已同步库存。 */

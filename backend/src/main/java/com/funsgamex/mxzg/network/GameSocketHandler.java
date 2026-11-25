@@ -7,6 +7,7 @@
 package com.funsgamex.mxzg.network;
 
 import com.funsgamex.mxzg.arena.ArenaService;
+import com.funsgamex.mxzg.arena.ArenaSeasonService;
 import com.funsgamex.mxzg.auth.SessionService;
 import com.funsgamex.mxzg.campaign.MainChapterFirstRewardService;
 import com.funsgamex.mxzg.campaign.MainChapterQuickBattleService;
@@ -20,6 +21,10 @@ import com.funsgamex.mxzg.guild.GuildShopService;
 import com.funsgamex.mxzg.vip.VipService;
 import com.funsgamex.mxzg.quest.QuestChanged;
 import com.funsgamex.mxzg.quest.QuestService;
+import com.funsgamex.mxzg.rank.RankService;
+import com.funsgamex.mxzg.friend.FriendChanged;
+import com.funsgamex.mxzg.friend.FriendService;
+import com.funsgamex.mxzg.mail.MailService;
 import com.funsgamex.mxzg.hero.HeroArtifactService;
 import com.funsgamex.mxzg.hero.HeroEquipmentService;
 import com.funsgamex.mxzg.hero.HeroMainPowerService;
@@ -116,12 +121,20 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final VipService vip;
     /** 当前角色任务及成就的权威读取和领取服务。 */
     private final QuestService quests;
+    /** 本服和跨服排行榜的权威读取及点赞入口。 */
+    private final RankService rankings;
+    /** 当前角色的邮件查询及处理入口。 */
+    private final MailService mail;
+    /** 好友关系、请求和礼物的权威入口。 */
+    private final FriendService friends;
     /** 金币副本首关资格、真实挑战和清扫回执由原事务服务处理。 */
     private final DailyDungeonService dailyDungeon;
     /** 幻境之塔专用阵容、次数及实际结算由爬塔事务负责。 */
     private final TowerService tower;
-    /** 新手竞技场的对手、门票、积分及历史战报。 */
+    /** 竞技场的对手、防守、门票、积分及历史战报。 */
     private final ArenaService arena;
+    /** 本服赛季、排名、周宝箱和竞技商店。 */
+    private final ArenaSeasonService arenaSeason;
     /** 首次命名与随机名由角色服务处理。 */
     private final RoleService roles;
     /** 当前鉴权角色的形象、称号和二次改名入口。 */
@@ -136,11 +149,12 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final ConcurrentMap<String, Connection> online = new ConcurrentHashMap<>();
     private final Semaphore capacity = new Semaphore(128);
     private final ReentrantLock[] roleLocks = new ReentrantLock[64];
-    /** 一次公会请求提交后待通知的角色，仅保存到当前请求释放角色锁为止。 */
-    private final ThreadLocal<GuildNotifications> guildNotifications = new ThreadLocal<>();
+    /** 跨角色业务的提交后通知，等当前请求释放角色锁再按目标发出。 */
+    private final ThreadLocal<RoleNotifications> roleNotifications = new ThreadLocal<>();
 
-    /** 快照与公会页刷新分别按角色去重。 */
-    private record GuildNotifications(Set<String> snapshots, Set<String> pages, List<QuestChanged> quests) {}
+    /** 各类快照与页面失效按目标去重，成就批次保留独立内容。 */
+    private record RoleNotifications(Set<String> snapshots, Set<String> guildPages,
+                                     List<QuestChanged> quests, Set<String> friendPages, Set<String> mailPages) {}
 
     private static final class Connection {
         final WebSocketSession socket;
@@ -151,7 +165,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         int rateCount;
         volatile String role;
         String token;
-        boolean ready;
+        /** 鉴权完成后可向其他角色公开在线状态；连接关闭另行核验。 */
+        volatile boolean ready;
 
         /** 包装发送通道，限制并发发送缓冲；连接标识使用底层会话随机标识。 */
         Connection(WebSocketSession socket) {
@@ -176,7 +191,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             HeroArtifactService heroArtifacts, HeroGodEquipmentShopService godEquipmentShop,
             MarketService market, GuildService guilds, GuildShopService guildShop,
             GuildDonationService guildDonations, GuildRankingService guildRanking, VipService vip, QuestService quests,
-            DailyDungeonService dailyDungeon, TowerService tower, ArenaService arena,
+            RankService rankings, MailService mail, FriendService friends,
+            DailyDungeonService dailyDungeon, TowerService tower, ArenaService arena, ArenaSeasonService arenaSeason,
             RoleService roles, RoleProfileService profiles, WelcomeGiftService welcomeGifts, GameClock clock,
             HeroMainPowerService formationPower) {
         this.firstRewards = firstRewards;
@@ -196,9 +212,13 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         this.guildRanking = guildRanking;
         this.vip = vip;
         this.quests = quests;
+        this.rankings = rankings;
+        this.mail = mail;
+        this.friends = friends;
         this.dailyDungeon = dailyDungeon;
         this.tower = tower;
         this.arena = arena;
+        this.arenaSeason = arenaSeason;
         this.roles = roles;
         this.profiles = profiles;
         this.welcomeGifts = welcomeGifts;
@@ -263,18 +283,22 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                 ReentrantLock roleLock = roleLock(connection.role);
                 if (!awaitLock(roleLock)) throw rejected("BUSY");
                 var notifications = name.equals("guild.change") || name.equals("guild.donation.donate")
-                    ? new GuildNotifications(new LinkedHashSet<>(), new LinkedHashSet<>(), new java.util.ArrayList<>()) : null;
+                    || name.equals("friend.change") || name.startsWith("arena.")
+                    ? new RoleNotifications(new LinkedHashSet<>(), new LinkedHashSet<>(), new ArrayList<>(),
+                        new LinkedHashSet<>(), new LinkedHashSet<>()) : null;
                 if (notifications != null) {
-                    guildNotifications.set(notifications);
+                    roleNotifications.set(notifications);
                 }
                 try { dispatch(connection, request, name); }
                 finally {
                     roleLock.unlock();
                     if (notifications != null) {
-                        guildNotifications.remove();
+                        roleNotifications.remove();
                         notifications.snapshots().forEach(id -> assetsChanged(new AssetSyncService.Changed(id)));
-                        notifications.pages().forEach(this::notifyGuildUpdated);
+                        notifications.guildPages().forEach(id -> notifyRolePage(id, "guild.updated"));
                         notifications.quests().forEach(this::questChanged);
+                        notifications.friendPages().forEach(id -> notifyRolePage(id, "friend.changed"));
+                        notifications.mailPages().forEach(id -> notifyRolePage(id, "mail.changed"));
                     }
                 }
             }
@@ -441,12 +465,25 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             questRequest(connection, request, name);
             return;
         }
+        if (name.equals("ranking.overview") || name.equals("ranking.list") || name.equals("ranking.like")) {
+            rankingRequest(connection, request, name);
+            return;
+        }
+        switch (name) {
+            case "mail.list", "mail.change", "friend.state", "friend.search", "friend.change" -> {
+                socialRequest(connection, request, name);
+                return;
+            }
+            default -> { /* 其余已认证业务继续按原入口处理。 */ }
+        }
         switch (name) {
             case "tower.state", "tower.formation.save", "tower.challenge", "tower.sweep", "tower.milestone.claim" -> {
                 towerRequest(connection, request, name);
                 return;
             }
-            case "arena.state", "arena.refresh", "arena.challenge", "arena.replay", "arena.ticket.buy" -> {
+            case "arena.state", "arena.refresh", "arena.challenge", "arena.replay", "arena.ticket.buy",
+                 "arena.ranking", "arena.season", "arena.chest.claim", "arena.like", "arena.defense",
+                 "arena.defense.save", "arena.shop", "arena.shop.buy" -> {
                 arenaRequest(connection, request, name);
                 return;
             }
@@ -1160,7 +1197,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         }
     }
 
-    /** 竞技场路由只交付当前连接的角色操作；读取历史战报须经领域校验归属。 */
+    /** 竞技场路由校验参数并使用现行会话，攻防、赛季结算和回执由对应事务处理。 */
     private void arenaRequest(Connection connection, JsonNode request, String name) throws IOException {
         var body = request.path("body");
         try {
@@ -1171,9 +1208,14 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                         ? arena.current(connection.token) : arena.refresh(connection.token));
                 }
                 case "arena.challenge" -> {
-                    fields(body, Set.of("requestId", "opponentId"));
+                    fields(body, Set.of("requestId", "opponentId", "opponentRoleId"));
+                    String targetRole = body.has("opponentRoleId") ? text(body, "opponentRoleId", UUID_PATTERN) : null;
+                    long targetIndex = operationAmount(body, "opponentId", "ARENA_REQUEST_INVALID");
+                    if (targetIndex > Integer.MAX_VALUE || (targetIndex == 0) != (targetRole != null)) {
+                        throw rejected("ARENA_REQUEST_INVALID");
+                    }
                     var result = arena.challenge(connection.token, text(body, "requestId", UUID_PATTERN),
-                        operationIndex(body, "opponentId", "ARENA_REQUEST_INVALID"));
+                        (int) targetIndex, targetRole);
                     var response = new LinkedHashMap<String, Object>();
                     response.put("requestId", result.requestId());
                     response.put("roleId", result.roleId());
@@ -1195,6 +1237,56 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                     fields(body, Set.of("requestId", "quantity"));
                     respond(connection, request, arena.buyTickets(connection.token, text(body, "requestId", UUID_PATTERN),
                         operationIndex(body, "quantity", "ARENA_REQUEST_INVALID")));
+                }
+                case "arena.ranking" -> {
+                    fields(body, Set.of());
+                    respond(connection, request, arenaSeason.ranking(connection.token));
+                }
+                case "arena.season" -> {
+                    fields(body, Set.of());
+                    respond(connection, request, arenaSeason.current(connection.token));
+                }
+                case "arena.chest.claim" -> {
+                    fields(body, Set.of("requestId", "chestId", "seasonEndsAt"));
+                    respond(connection, request, arenaSeason.claimChest(connection.token,
+                        text(body, "requestId", UUID_PATTERN), operationIndex(body, "chestId", "ARENA_REQUEST_INVALID"),
+                        operationAmount(body, "seasonEndsAt", "ARENA_REQUEST_INVALID")));
+                }
+                case "arena.like" -> {
+                    fields(body, Set.of("requestId", "targetRoleId", "dailyEndsAt"));
+                    respond(connection, request, arenaSeason.like(connection.token, text(body, "requestId", UUID_PATTERN),
+                        text(body, "targetRoleId", UUID_PATTERN), operationAmount(body, "dailyEndsAt", "ARENA_REQUEST_INVALID")));
+                }
+                case "arena.defense" -> {
+                    fields(body, Set.of());
+                    respond(connection, request, arena.defense(connection.token));
+                }
+                case "arena.defense.save" -> {
+                    fields(body, Set.of("requestId", "expectedVersion", "formationId", "slots"));
+                    var slots = body.path("slots");
+                    if (!slots.isArray() || slots.size() > 9) {
+                        throw rejected("ARENA_REQUEST_INVALID");
+                    }
+                    var lineup = new ArrayList<Lineup.Slot>();
+                    for (JsonNode slot : slots) {
+                        fields(slot, Set.of("position", "heroId"));
+                        lineup.add(new Lineup.Slot(operationIndex(slot, "position", "ARENA_REQUEST_INVALID"),
+                            text(slot, "heroId", UUID_PATTERN)));
+                    }
+                    respond(connection, request, arena.saveDefense(connection.token, text(body, "requestId", UUID_PATTERN),
+                        operationAmount(body, "expectedVersion", "ARENA_REQUEST_INVALID"),
+                        operationIndex(body, "formationId", "ARENA_REQUEST_INVALID"), lineup));
+                }
+                case "arena.shop" -> {
+                    fields(body, Set.of());
+                    respond(connection, request, arenaSeason.shop(connection.token));
+                }
+                case "arena.shop.buy" -> {
+                    fields(body, Set.of("requestId", "offerId", "quantity", "refreshAt"));
+                    respond(connection, request, arenaSeason.buy(connection.token, text(body, "requestId", UUID_PATTERN),
+                        operationIndex(body, "offerId", "ARENA_REQUEST_INVALID"),
+                        operationIndex(body, "quantity", "ARENA_REQUEST_INVALID"),
+                        operationAmount(body, "refreshAt", "ARENA_REQUEST_INVALID")));
                 }
                 default -> throw rejected("ARENA_REQUEST_INVALID");
             }
@@ -1293,6 +1385,85 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         }
     }
 
+    /** 邮件和好友只对当前鉴权角色操作，公开搜索仅投影当前在线推荐和同服匹配。 */
+    private void socialRequest(Connection connection, JsonNode request, String name) throws IOException {
+        var body = request.path("body");
+        try {
+            switch (name) {
+                case "mail.list" -> {
+                    fields(body, Set.of());
+                    respond(connection, request, mail.list(connection.role));
+                }
+                case "mail.change" -> {
+                    fields(body, Set.of("requestId", "action", "mailId"));
+                    var action = MailService.Action.valueOf(text(body, "action", "OPEN|CLAIM|CLAIM_ALL|DELETE|DELETE_READ"));
+                    var id = body.has("mailId") ? text(body, "mailId", UUID_PATTERN) : null;
+                    var command = new MailService.Command(text(body, "requestId", UUID_PATTERN), action, id);
+                    respond(connection, request, mail.change(connection.role, command));
+                }
+                case "friend.state" -> {
+                    fields(body, Set.of());
+                    respond(connection, request, friends.state(connection.role));
+                }
+                case "friend.search" -> {
+                    fields(body, Set.of("query"));
+                    var query = text(body, "query", "[^\\p{Cntrl}]{0,80}").strip();
+                    var targets = query.isEmpty() ? onlineFriendCandidates() : Set.<String>of();
+                    respond(connection, request, friends.search(connection.role, query, targets));
+                }
+                case "friend.change" -> {
+                    fields(body, Set.of("requestId", "action", "targetId", "resetAt"));
+                    var action = FriendService.Action.valueOf(text(body, "action",
+                            "APPLY|ACCEPT|REJECT|REMOVE|BLOCK|UNBLOCK|SEND|SEND_ALL|CLAIM|CLAIM_ALL"));
+                    var target = body.has("targetId") ? text(body, "targetId", UUID_PATTERN) : null;
+                    var command = new FriendService.Command(text(body, "requestId", UUID_PATTERN), action,
+                            target, operationAmount(body, "resetAt", "FRIEND_INVALID"));
+                    respond(connection, request, friends.change(connection.role, command));
+                }
+                default -> throw rejected("INVALID_MESSAGE");
+            }
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException error) {
+            fail(connection, request, "BUSY", "社交数据正忙，请稍后重试", true);
+        }
+    }
+
+    /** 复制当前连接候选，仅用于空查询推荐，区服及资格仍由好友领域校验。 */
+    private Set<String> onlineFriendCandidates() {
+        long now = System.nanoTime();
+        return online.entrySet().stream().filter(entry -> {
+            var connection = entry.getValue();
+            return connection.ready && connection.socket.isOpen() && !timedOut(connection, now);
+        }).map(Map.Entry::getKey).collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
+    /** 按连接角色读取排行榜，点赞只提交看到的榜首和当日期次。 */
+    private void rankingRequest(Connection connection, JsonNode request, String name) throws IOException {
+        var body = request.path("body");
+        try {
+            if (name.equals("ranking.overview")) {
+                fields(body, Set.of());
+                respond(connection, request, rankings.overview(connection.role));
+                return;
+            }
+            var kind = RankService.BoardKind.valueOf(text(body, "kind", "CHAPTER|GUILD|POWER|CROSS_GUILD|CROSS_POWER"));
+            if (name.equals("ranking.list")) {
+                fields(body, Set.of("kind"));
+                respond(connection, request, rankings.list(connection.role, kind));
+                return;
+            }
+            fields(body, Set.of("kind", "requestId", "targetId", "resetAt"));
+            var requestId = text(body, "requestId", UUID_PATTERN);
+            var targetId = text(body, "targetId", UUID_PATTERN);
+            var resetAt = operationAmount(body, "resetAt", "RANK_INVALID");
+            var result = rankings.like(connection.role, new RankService.LikeCommand(requestId, kind, targetId, resetAt));
+            respond(connection, request, Map.of("requestId", requestId, "overview", result.overview(), "notice", result.rewardNotice()));
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException error) {
+            fail(connection, request, "BUSY", "排行榜数据正忙，请稍后重试", true);
+        }
+    }
+
     /** 读取本连接的任务快照，或领取经期次和业务流水校验的奖励。 */
     private void questRequest(Connection connection, JsonNode request, String name) throws IOException {
         var body = request.path("body");
@@ -1367,10 +1538,10 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         }
     }
 
-    /** 将公会造成的跨角色快照暂留到请求解锁，其余资产提交按原方式发送。 */
+    /** 跨角色业务的快照暂留到请求解锁，其余资产提交按原方式发送。 */
     @org.springframework.context.event.EventListener
     public void assetsChanged(AssetSyncService.Changed event) {
-        var notifications = guildNotifications.get();
+        var notifications = roleNotifications.get();
         if (notifications != null) {
             notifications.snapshots().add(event.roleId());
             return;
@@ -1389,23 +1560,45 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     /** 公会成员或待审列表提交后，只通知相关在线角色重新读取页面状态。 */
     @org.springframework.transaction.event.TransactionalEventListener
     public void guildChanged(GuildChanged event) {
-        var notifications = guildNotifications.get();
+        var notifications = roleNotifications.get();
         if (notifications != null) {
-            notifications.pages().addAll(event.roleIds());
+            notifications.guildPages().addAll(event.roleIds());
             return;
         }
-        event.roleIds().forEach(this::notifyGuildUpdated);
+        event.roleIds().forEach(id -> notifyRolePage(id, "guild.updated"));
     }
 
-    /** 同一角色锁内检查现行连接，空通知不携带成员或申请资料。 */
-    private void notifyGuildUpdated(String roleId) {
+    /** 新发信事务提交后通知收件人刷新，离线角色下一次登录读取邮件。 */
+    @org.springframework.transaction.event.TransactionalEventListener
+    public void mailChanged(MailService.Changed event) {
+        var notifications = roleNotifications.get();
+        if (notifications != null) {
+            notifications.mailPages().add(event.roleId());
+            return;
+        }
+        notifyRolePage(event.roleId(), "mail.changed");
+    }
+
+    /** 好友事务提交后通知双方，先结束当前角色的请求锁。 */
+    @org.springframework.transaction.event.TransactionalEventListener
+    public void friendChanged(FriendChanged event) {
+        var notifications = roleNotifications.get();
+        if (notifications != null) {
+            notifications.friendPages().addAll(event.roleIds());
+            return;
+        }
+        event.roleIds().forEach(id -> notifyRolePage(id, "friend.changed"));
+    }
+
+    /** 同一角色锁内检查现行连接，页面失效事件不携带私人资料。 */
+    private void notifyRolePage(String roleId, String protocol) {
         var lock = roleLock(roleId);
         lock.lock();
         try {
             var connection = online.get(roleId);
             if (connection != null && connection.ready && connection.socket.isOpen()) {
                 try {
-                    send(connection, Map.of("version", 1, "kind", "event", "name", "guild.updated",
+                    send(connection, Map.of("version", 1, "kind", "event", "name", protocol,
                         "connectionId", connection.socket.getId(), "body", Map.of()));
                 } catch (IOException | RuntimeException error) {
                     close(connection, CloseStatus.SERVER_ERROR);
@@ -1416,10 +1609,10 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         }
     }
 
-    /** 已提交的任务变更发往目标角色，公会跨角色业务等当前请求解锁后再通知。 */
+    /** 已提交的任务变更发往目标角色，涉及其他角色时等当前请求解锁。 */
     @org.springframework.context.event.EventListener
     public void questChanged(QuestChanged event) {
-        var notifications = guildNotifications.get();
+        var notifications = roleNotifications.get();
         if (notifications != null) {
             notifications.quests().add(event);
             return;

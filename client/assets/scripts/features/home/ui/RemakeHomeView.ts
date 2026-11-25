@@ -55,6 +55,14 @@ export class RemakeHomeView extends BaseView implements HomeView {
     private musicSource: AudioSource | null = null;
 
     get featureHost(): Node | null { return this.cityHost; }
+
+    /** 浮层竞技场关闭后恢复当前主城内容自己的音乐。 */
+    public resumeVisibleMusic(): void {
+        if (!this.closed) {
+            this.syncMusic();
+        }
+    }
+
     /** 切换主城或功能页并刷新底栏选中、音乐和顶栏。英雄详情显示英雄经验。 */
     showFeature(
         id: "city" | "hero" | "bag" | "battle" | "summon" | "market" | "dungeon" | "clan" | "fetter" | "arena" | "tower",
@@ -111,7 +119,9 @@ export class RemakeHomeView extends BaseView implements HomeView {
                     openActivity: () => this.actions?.openFeature("activity"),
                     openMore: () => this.actions?.openFeature("more"),
                     openMail: () => this.actions?.openFeature("mail"),
+                    openFriend: () => this.actions?.openFeature("main_friend"),
                     openQuest: () => this.actions?.openFeature("quest"),
+                    openRanking: () => this.actions?.openFeature("main_rank"),
                 },
             });
             const avatar = this.chrome.avatar;

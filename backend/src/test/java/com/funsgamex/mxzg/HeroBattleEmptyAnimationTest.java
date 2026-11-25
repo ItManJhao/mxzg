@@ -26,12 +26,14 @@ class HeroBattleEmptyAnimationTest {
     /** 直接复用生产客户端表现预检，不维护第5关专属动作映射。 */
     private final HeroSkillPanelRules rules = new HeroSkillPanelRules(mapper);
 
-    /** 四个同源真空占位按结构通过；有遮罩或神祇声音的type1不能被当作空动作放开。 */
+    /** 四个空占位及金妮原表遮罩可以播放；错配的金妮遮罩与神祇音效仍须被拒绝。 */
     @Test
-    void acceptsEmptyPlaceholdersWithoutOpeningSoundOnlyTypeOne() {
+    void acceptsEmptyPlaceholdersAndJinnyMaskWithoutOpeningSoundOnlyTypeOne() throws Exception {
         for (int id : List.of(1130200, 2050100, 2160100, 4130100)) {
             assertTrue(rules.battleProjectile(id));
         }
+        assertTrue(rules.battleProjectile(1150100));
+        mutableBuff(1150100).put("dimly", 0);
         assertThrows(IllegalArgumentException.class, () -> rules.battleProjectile(1150100));
         assertThrows(IllegalArgumentException.class, () -> rules.battleProjectile(9011601));
         var ordinary = rules.battleSchedule(rules.select(10204005, 4, 0)).stream()

@@ -28,6 +28,9 @@ import "../../features/tower/ui/TowerView";
 import "../../features/guild/ui/GuildView";
 import "../../features/vip/ui/VipView";
 import "../../features/quest/ui/QuestView";
+import "../../features/ranking/ui/RankingView";
+import "../../features/friend/ui/FriendView";
+import "../../features/mail/ui/MailView";
 import {AccountLoginBinding} from "../../features/account/ui/AccountLoginBinding";
 import {AccountLoginView} from "../../features/account/ui/AccountLoginView";
 import { CityMapService } from "../../features/city/ui/CityMapService";
@@ -86,6 +89,7 @@ export class ApplicationPages {
             current: () => this.navigation.current,
             authorized: () => context.inHome() && !model.snapshot.busy && !!model.snapshot.role,
             notice: text => this.showNotice(text),
+            resumeMusic: () => this.home?.resumeVisibleMusic(),
         });
         ui.install(this.navigation, {showToast: context.showToast});
         this.unregister = [

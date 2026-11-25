@@ -13,6 +13,8 @@ export interface SettledBattle {
     readonly won: boolean;
     readonly notice: string;
     readonly rewards: readonly { itemId: number; quantity: number }[];
+    /** 已结算后直接打开结算窗，只供主动跳过演出的玩法。 */
+    readonly skipPlayback?: boolean;
 }
 
 /** 页面关闭随时退出演出；播放错误仍能交付已确认的胜负。 */
@@ -37,8 +39,8 @@ export class SettledBattlePlayback {
         private readonly onShown: () => void,
     ) {}
 
-    /** 开始真实战报播放，完成后打开同一套结算及统计窗口。 */
-    public play(battle: SettledBattle): void {
+    /** 使用真实战报打开播放或直接结算，两个入口共用统计窗口。 */
+    public play(battle: SettledBattle, skip = battle.skipPlayback === true): void {
         const generation = ++this.generation;
         this.active = true;
         let settling = false;
@@ -48,7 +50,6 @@ export class SettledBattlePlayback {
                 return;
             }
             settling = true;
-            const { units, names } = BattleReplayUtils.parse(battle.bytes);
             const finish = () => {
                 if (!stale()) {
                     this.close();
@@ -56,6 +57,7 @@ export class SettledBattlePlayback {
                 }
             };
             try {
+                const { units, names } = BattleReplayUtils.parse(battle.bytes);
                 await UIManager.instance.openChild(this.page, ChapterEndView, {
                     won: battle.won, rewards: battle.rewards, notice: battle.notice, units, names,
                     settledBattle: true, onClosed: finish,
@@ -64,6 +66,10 @@ export class SettledBattlePlayback {
                 finish();
             }
         };
+        if (skip) {
+            void settle();
+            return;
+        }
         const failed = (error: unknown) => {
             if (!stale()) {
                 GameLog.shared.classified("MODULE", "warn", "SettledBattlePlayback", `${this.title}战报播放失败：${String(error)}`);

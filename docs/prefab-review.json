@@ -13,14 +13,14 @@
       },
       "scale": {
         "__type__": "cc.Vec3",
-        "z": 1,
+        "x": 1,
         "y": 1,
-        "x": 1
+        "z": 1
       },
       "size": {
         "__type__": "cc.Size",
-        "width": 572,
-        "height": 100
+        "width": 567,
+        "height": 128
       },
       "anchor": {
         "__type__": "cc.Vec2",
@@ -42,12 +42,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "依赖所属页面检查的组合资源",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "f0fb70030c79ba79b729b001c1ca84eb7278dc07541861e68e883ab870e9b670"
+    "sha256": "0012ee0ea36a15ab1f9c4db1c5b4b8841bed3ed8ebf1f1c627f942f2d6245d74"
   },
   {
-    "path": "client/assets/bundles/module/arena/prefabs/ArenaView.prefab",
+    "path": "client/assets/bundles/module/arena/prefabs/ArenaHistoryView.prefab",
     "classes": [
-      "ArenaView"
+      "ArenaHistoryView"
     ],
     "root": {
       "position": {
@@ -58,9 +58,9 @@
       },
       "scale": {
         "__type__": "cc.Vec3",
-        "z": 1,
+        "x": 1,
         "y": 1,
-        "x": 1
+        "z": 1
       },
       "size": {
         "__type__": "cc.Size",
@@ -74,7 +74,7 @@
       }
     },
     "components": {
-      "Widget": 2,
+      "Widget": 0,
       "Layout": 0,
       "Mask": 1,
       "ScrollView": 0,
@@ -95,7 +95,277 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "0b1cf9e2c52d7a2d47e6b8044466a12552f35853934f7a325d2f24db3fc75cca"
+    "sha256": "91c34c65a665df376de468d36fcaa29bef6212ca44a988d075f64b35df38c2f3"
+  },
+  {
+    "path": "client/assets/bundles/module/arena/prefabs/ArenaRankCell.prefab",
+    "classes": [
+      "ArenaRankCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 555,
+        "height": 126
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "11a2378046f79b043c67be498726b8e5d56b82399d46fea77e8330f47b18c962"
+  },
+  {
+    "path": "client/assets/bundles/module/arena/prefabs/ArenaRewardCell.prefab",
+    "classes": [
+      "ArenaRewardCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 555,
+        "height": 105
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "bcd6bcf1dea30453ffaf186c3ef901e3faa7a26c3d8cf956b416d8d6c0bef1c2"
+  },
+  {
+    "path": "client/assets/bundles/module/arena/prefabs/ArenaShopCell.prefab",
+    "classes": [
+      "ArenaShopCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 168,
+        "height": 214
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 1
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "638e565f4fe5d7bb6656a00f0d44f29514cdd1a1e6abf4507bd4679eee0bb4d0"
+  },
+  {
+    "path": "client/assets/bundles/module/arena/prefabs/ArenaShopView.prefab",
+    "classes": [
+      "ArenaShopView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "b0834f8469f9cdb76fe97c7529f1588575568d2d81439c93a1c270f70f833171"
+  },
+  {
+    "path": "client/assets/bundles/module/arena/prefabs/ArenaView.prefab",
+    "classes": [
+      "ArenaView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 4,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "c6cb88b9e16ec085133b25cb3e2d37925abab2a2f275c6c46cb903e59564e64e"
   },
   {
     "path": "client/assets/bundles/module/bag/prefabs/BagInfoView.prefab",
@@ -233,7 +503,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "仅本批设备选项393×852、浏览器1280×720的Creator本机预览：普通道具条件按钮、随机/指定碎片、英雄材料缺正文、长文滚动、无操作留白、只读产物副标题与双窗返回；追加RichText后实测两种礼包逐项换行/橙色、长文首尾、随机碎片及关闭注销。均用独立H2/WS真实库存；不沿用旧多尺寸签收，不代表真机或发布包。详见docs/validation/item-shard-review-20261114.json。",
-    "sha256": "695a86268302959121af6048793a8bf647dc1c671980cbf553e45b103be1c9bb",
+    "sha256": "d3ab86997bff04a92ee9e936f82ccd8995d546f3ebf2aa5d4b733cf5f7b24d3c",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "695a86268302959121af6048793a8bf647dc1c671980cbf553e45b103be1c9bb",
+      "normalizedLfSha256": "d3ab86997bff04a92ee9e936f82ccd8995d546f3ebf2aa5d4b733cf5f7b24d3c"
+    },
     "acceptance": {
       "sha256": "695a86268302959121af6048793a8bf647dc1c671980cbf553e45b103be1c9bb",
       "date": "2026-11-14",
@@ -813,7 +1088,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "Creator 独立 H2 HeroInfoView 已穿银制利剑原详情可打开，展示名称、评分、属性、更换和卸下。更换正确进入同部位候选，单件卸下退回背包。背包入口和各品质/套装投影复验使用专项。",
-    "sha256": "6ba0b170a55f6ff8450ea4c189a15c2792d5b3eb406fbb41ab53a3ebffe364e0",
+    "sha256": "abbaac692c69360a266ff75dfa26240f8f1ea3a5d7761101b13a81b8476999e8",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "6ba0b170a55f6ff8450ea4c189a15c2792d5b3eb406fbb41ab53a3ebffe364e0",
+      "normalizedLfSha256": "abbaac692c69360a266ff75dfa26240f8f1ea3a5d7761101b13a81b8476999e8"
+    },
     "acceptance": {
       "sha256": "6ba0b170a55f6ff8450ea4c189a15c2792d5b3eb406fbb41ab53a3ebffe364e0",
       "date": "2026-11-19",
@@ -866,7 +1146,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "b5cde938475a3c758963aa4220739191fe1badba593891a58b8ba94e838e6a5c"
+    "sha256": "3b009d78e49c52bc944da4ce40182beaa5c5bb722153e994ca1f2a1809358a4d"
   },
   {
     "path": "client/assets/bundles/module/bag/prefabs/SpiritInfoView.prefab",
@@ -969,7 +1249,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "51dd3e722561ad165a35ad3fb641fe06667497ed08ebac877483862aba3bf90d"
+    "sha256": "fbcc5f29044feb772224c893a99255fe172abd07cefff78c169bdf30e999464a"
   },
   {
     "path": "client/assets/bundles/module/battle/prefabs/BattleDetailCell.prefab",
@@ -1266,7 +1546,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "138643d33e371818924f9177b1c31e9ffbf6b9f8b57d58c5fb78b65e7a910f55"
+    "sha256": "d19ca367a9ee64207434310d486ab5df2b6e5f985822cf7b0679024bf225e202"
   },
   {
     "path": "client/assets/bundles/module/battle/prefabs/ChapterClearRewardCell.prefab",
@@ -1319,7 +1599,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "Creator 393×852 竖屏独立会话核对标题、按钮、装备一星与二星、碎片星级和原奖励数量。",
-    "sha256": "8c9f002aff4855d2439f0e538c7f1cc230f5906d300d4a763f1166f9cce3dc6d",
+    "sha256": "53e0720f3f2fc5fd7ee166e9f7cbde760f7403d27067d4d03eaca7c9c47eb23c",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "8c9f002aff4855d2439f0e538c7f1cc230f5906d300d4a763f1166f9cce3dc6d",
+      "normalizedLfSha256": "53e0720f3f2fc5fd7ee166e9f7cbde760f7403d27067d4d03eaca7c9c47eb23c"
+    },
     "acceptance": {
       "sha256": "8c9f002aff4855d2439f0e538c7f1cc230f5906d300d4a763f1166f9cce3dc6d",
       "date": "2026-11-25",
@@ -1379,7 +1664,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "Creator 393×852 竖屏独立会话核对简中横幅和列表裁剪，实领第 5 关奖励后列表重排。",
-    "sha256": "82bfa2a75f0f5dbf01478e9c774a522680cff2aa77356d624ee069d037a9cdfc",
+    "sha256": "eb4518d6e1f805ca6d303a3b4b5434147d13026a902861e68f65755272033484",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "82bfa2a75f0f5dbf01478e9c774a522680cff2aa77356d624ee069d037a9cdfc",
+      "normalizedLfSha256": "eb4518d6e1f805ca6d303a3b4b5434147d13026a902861e68f65755272033484"
+    },
     "acceptance": {
       "sha256": "82bfa2a75f0f5dbf01478e9c774a522680cff2aa77356d624ee069d037a9cdfc",
       "date": "2026-11-25",
@@ -1709,7 +1999,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "beb0bca6c87e46c72d799b98c473c4df5ab9ede05d167363822359e43f1a58cf"
+    "sha256": "9214eaafa31043a582b6420fec835904214b114a4f9512e7150af9c3f24b6f27"
   },
   {
     "path": "client/assets/bundles/module/battle/prefabs/MainChapterQuickBattleView.prefab",
@@ -1882,7 +2172,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "依赖所属页面检查的组合资源",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "b375a71d8e2c723e45127feb686cdb6712af8fe4ab4ae3e8a4d294af6c8b3c9f"
+    "sha256": "2ac5f0245b1df782a0123ad1c0bb885b0ee334bf2dc8e40323427c4ab1f6929d"
   },
   {
     "path": "client/assets/bundles/module/battle/prefabs/SkillAuditView.prefab",
@@ -1977,12 +2267,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。移除旧Notice，目录正常，未选技能的播放操作由全局飘字反馈；未逐技能演示。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
-    "sha256": "5bb1960ac87541c2ae0ffca734f295b6008309744e077a4d5e39d37502dae526",
-    "acceptanceFingerprintDifference": {
-      "difference": "仅CRLF/LF差异",
-      "recordedSha256": "27248211cd95f5e4b417e9a2f9fc93f02308545f3b5dad6891ceb6bee74632ed",
-      "normalizedLfSha256": "27248211cd95f5e4b417e9a2f9fc93f02308545f3b5dad6891ceb6bee74632ed"
-    },
+    "sha256": "27248211cd95f5e4b417e9a2f9fc93f02308545f3b5dad6891ceb6bee74632ed",
     "acceptance": {
       "sha256": "27248211cd95f5e4b417e9a2f9fc93f02308545f3b5dad6891ceb6bee74632ed",
       "date": "2026-11-14",
@@ -2040,7 +2325,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-    "sha256": "aa7e7d4d239c76cec2df2c7bf9836b671f0387c131c97889d4e1beb2c4bc9096",
+    "sha256": "20b19f387b87067e41540d5135aef27b6617964c922825e20c9d5b49757280d5",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "aa7e7d4d239c76cec2df2c7bf9836b671f0387c131c97889d4e1beb2c4bc9096",
+      "normalizedLfSha256": "20b19f387b87067e41540d5135aef27b6617964c922825e20c9d5b49757280d5"
+    },
     "acceptance": {
       "sha256": "aa7e7d4d239c76cec2df2c7bf9836b671f0387c131c97889d4e1beb2c4bc9096",
       "date": "2026-11-02",
@@ -2092,7 +2382,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
-    "sha256": "9bea2a44a683aa2a55dd51e4d4d21e2cb818afddfe3a2e743bb9e03f853d3ba8",
+    "sha256": "fa76a6783eafd0e787c8bde969c619f038c7f8e563719ed0bcbb5a08796cf7ca",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "9bea2a44a683aa2a55dd51e4d4d21e2cb818afddfe3a2e743bb9e03f853d3ba8",
+      "normalizedLfSha256": "fa76a6783eafd0e787c8bde969c619f038c7f8e563719ed0bcbb5a08796cf7ca"
+    },
     "acceptance": {
       "sha256": "9bea2a44a683aa2a55dd51e4d4d21e2cb818afddfe3a2e743bb9e03f853d3ba8",
       "date": "2026-11-23",
@@ -2196,7 +2491,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "本批Creator 393×852设备预览/浏览器1280×720：共用旧3500/2220文案及双按钮布局、取消无奖励、确认进入通用队列。空标题/单按钮由Prefab Layout和专项验证，未做本批单按钮实际画面或全机型验收。 证据见docs/validation/reward-preview-review-20261116.json。",
-    "sha256": "dead69094b19a3cc5ec5e4cc788a47d103551a55fe45a27ead6a3411a8549c9b",
+    "sha256": "c323ac7ea83788b3021deaec125ad21cc0971beea62b177eddf7c2fd671cbf6b",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "dead69094b19a3cc5ec5e4cc788a47d103551a55fe45a27ead6a3411a8549c9b",
+      "normalizedLfSha256": "c323ac7ea83788b3021deaec125ad21cc0971beea62b177eddf7c2fd671cbf6b"
+    },
     "acceptance": {
       "sha256": "dead69094b19a3cc5ec5e4cc788a47d103551a55fe45a27ead6a3411a8549c9b",
       "date": "2026-11-16",
@@ -2204,6 +2504,171 @@
       "scope": "本批Creator 393×852设备预览/浏览器1280×720：共用旧3500/2220文案及双按钮布局、取消无奖励、确认进入通用队列。空标题/单按钮由Prefab Layout和专项验证，未做本批单按钮实际画面或全机型验收。 证据见docs/validation/reward-preview-review-20261116.json。",
       "inspector": "负责人刷新，浏览器检查；未操作Creator原生窗口或Inspector。"
     }
+  },
+  {
+    "path": "client/assets/bundles/module/common/prefabs/FriendCell.prefab",
+    "classes": [
+      "FriendCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 532,
+        "height": 116
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "f0972be9d1c33c04b521463e3d8aa9c3686b9242b352d82a5c9cbeeb886f81ba"
+  },
+  {
+    "path": "client/assets/bundles/module/common/prefabs/FriendSearchView.prefab",
+    "classes": [
+      "FriendSearchView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "InputText",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "Placeholder",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "fa8a265ae14f8f591e14af7f6fa348d6f439fa5d112d0cced83394e22c513758"
+  },
+  {
+    "path": "client/assets/bundles/module/common/prefabs/FriendView.prefab",
+    "classes": [
+      "FriendView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "de4d042f460ff1aca3ef3a054f5edf35cd2ecf0f571c36dff9a54ac6db00b57d"
   },
   {
     "path": "client/assets/bundles/module/common/prefabs/HeroRewardView.prefab",
@@ -2265,6 +2730,171 @@
       "scope": "Creator以15关真实回执获得唯一10105007五星实例；保存后的两路原Spine PMA修复已用同一回执只读重放确认，无黑三角或过亮白片，未再次发奖。技能子窗打开、关父窗联动清理及3个专属runtimePack释放已验。仅该五星样本，4星/低星保留专项，不代签发布/真机。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
       "inspector": "未操作Creator原生Inspector；仅上述限定实际预览。"
     }
+  },
+  {
+    "path": "client/assets/bundles/module/common/prefabs/MailCell.prefab",
+    "classes": [
+      "MailCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 540,
+        "height": 96
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "4285d63d54ea6ce41d85afe8d7e05d8c4c342d4c24cfb1204bfeb210e9121329"
+  },
+  {
+    "path": "client/assets/bundles/module/common/prefabs/MailDetailView.prefab",
+    "classes": [
+      "MailDetailView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 2,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "LetterContent",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "LetterScroll",
+        "content": {
+          "__id__": 67
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "b3574b136dcf4eea099a6bc0b3cfecf722aa109dc892af33fa8dd7ae11c0eacc"
+  },
+  {
+    "path": "client/assets/bundles/module/common/prefabs/MailView.prefab",
+    "classes": [
+      "MailView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "6a5cc2415adec2035bf05a7241ceb24313f4682023314896d146cd378ee8dc07"
   },
   {
     "path": "client/assets/bundles/module/common/prefabs/QuestCompletionView.prefab",
@@ -2446,6 +3076,216 @@
     }
   },
   {
+    "path": "client/assets/bundles/module/common/prefabs/RankingBoardCell.prefab",
+    "classes": [
+      "RankingBoardCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 520,
+        "height": 162
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "bd8c688986094bd896eed8307ad89a39e88aad38fffc7c8512a997eca136cd9c"
+  },
+  {
+    "path": "client/assets/bundles/module/common/prefabs/RankingDetailView.prefab",
+    "classes": [
+      "RankingDetailView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "由本服剧情进度卡进入详情，核对前三、进度分和本人第 2 名，退回后切换跨服。",
+    "sha256": "06f86b18ebe82e18fcdc849382e4d97da469edbdec843dfefeab272733e02da2",
+    "acceptance": {
+      "sha256": "06f86b18ebe82e18fcdc849382e4d97da469edbdec843dfefeab272733e02da2",
+      "date": "2026-11-25",
+      "status": "实际预览通过",
+      "scope": "由本服剧情进度卡进入详情，核对前三、进度分和本人第 2 名，退回后切换跨服。",
+      "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/common/prefabs/RankingEntryCell.prefab",
+    "classes": [
+      "RankingEntryCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 558,
+        "height": 108
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "72f41bdb74d8140d54a9ff370c6c68741472a43f7addeeb7b376c29374484087"
+  },
+  {
+    "path": "client/assets/bundles/module/common/prefabs/RankingView.prefab",
+    "classes": [
+      "RankingView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "实际点击主城入口，核对本服三榜和跨服两榜、39 级跨服准入、点赞状态及 30000 金币到账。",
+    "sha256": "b586f489faa65f9718ade1090adba8c8643b28441bde5e773c0dbf1998776a84",
+    "acceptance": {
+      "sha256": "b586f489faa65f9718ade1090adba8c8643b28441bde5e773c0dbf1998776a84",
+      "date": "2026-11-25",
+      "status": "实际预览通过",
+      "scope": "实际点击主城入口，核对本服三榜和跨服两榜、39 级跨服准入、点赞状态及 30000 金币到账。",
+      "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
+    }
+  },
+  {
     "path": "client/assets/bundles/module/common/prefabs/RedDot.prefab",
     "classes": [],
     "root": {
@@ -2486,7 +3326,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "公共模板沿用原底栏红点图片、尺寸及相对位置，实际挂载画面待复验。",
-    "sha256": "c7353f7603f283f1cd07b19f9021a9ecc39db01f1a74a6f405aff504c3f5873e",
+    "sha256": "979d068249f5e6420d68bff1d23c803adce7bff509f514a3dbbf8840f894d911",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "c7353f7603f283f1cd07b19f9021a9ecc39db01f1a74a6f405aff504c3f5873e",
+      "normalizedLfSha256": "979d068249f5e6420d68bff1d23c803adce7bff509f514a3dbbf8840f894d911"
+    },
     "acceptance": {
       "sha256": "c7353f7603f283f1cd07b19f9021a9ecc39db01f1a74a6f405aff504c3f5873e",
       "date": "2026-11-23",
@@ -2553,7 +3398,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "Creator 独立测试服实测三秒开场和点击跳过、高星揭示、三行十格和再次召唤。全部头像在三行中显示，连续点不同英雄只开一窗，关窗后可继续点击。新手赠礼仍通过通用获得窗。",
-    "sha256": "b754406613abb438e56cb2b97e4919705f9c3c700fc84e50bea83e4bec7daf53",
+    "sha256": "999470cea1bd3f232140691cba1c266337c96127b71552caa00f22542453c5ad",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "b754406613abb438e56cb2b97e4919705f9c3c700fc84e50bea83e4bec7daf53",
+      "normalizedLfSha256": "999470cea1bd3f232140691cba1c266337c96127b71552caa00f22542453c5ad"
+    },
     "acceptance": {
       "sha256": "b754406613abb438e56cb2b97e4919705f9c3c700fc84e50bea83e4bec7daf53",
       "date": "2026-11-19",
@@ -2762,7 +3612,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
-    "sha256": "0847ba9dcd9a39f537656d9e5450ca0796205b0f18047581c730d4420fd852b7",
+    "sha256": "cee8d28bbfec2b0251ea2483354480b2755cd2ddab7e814f793a880f9c8fc4b5",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "0847ba9dcd9a39f537656d9e5450ca0796205b0f18047581c730d4420fd852b7",
+      "normalizedLfSha256": "cee8d28bbfec2b0251ea2483354480b2755cd2ddab7e814f793a880f9c8fc4b5"
+    },
     "acceptance": {
       "sha256": "0847ba9dcd9a39f537656d9e5450ca0796205b0f18047581c730d4420fd852b7",
       "date": "2026-11-23",
@@ -2987,12 +3842,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。三关按钮显示、第一关真实阵容只读试战至胜利并返回。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
-    "sha256": "16e7cc59b0053d6a1e310b9e87e479836eef9a38d7a77033e1d75e34b310261a",
-    "acceptanceFingerprintDifference": {
-      "difference": "仅CRLF/LF差异",
-      "recordedSha256": "6a8cc9f5242539ca2b5e2bd9560bbd91f9b1fa33a1ef505d619b89c845b2f616",
-      "normalizedLfSha256": "6a8cc9f5242539ca2b5e2bd9560bbd91f9b1fa33a1ef505d619b89c845b2f616"
-    },
+    "sha256": "6a8cc9f5242539ca2b5e2bd9560bbd91f9b1fa33a1ef505d619b89c845b2f616",
     "acceptance": {
       "sha256": "6a8cc9f5242539ca2b5e2bd9560bbd91f9b1fa33a1ef505d619b89c845b2f616",
       "date": "2026-11-14",
@@ -3095,7 +3945,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "Creator 浏览器独立 H2 角色预览。道具窗选中金币、输入八位数量、发放 1000 万并看到飘字及顶栏到账。见 docs/gm-development.md。",
-    "sha256": "8ffb329bf5119a9c15333d6e86f5b92e434df30ca53a5b63665b13649f46be8f",
+    "sha256": "408d5d027967fdbbee71f032942ac4c79bd88d0f9c7dec4065b764e5a8c0e509",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "8ffb329bf5119a9c15333d6e86f5b92e434df30ca53a5b63665b13649f46be8f",
+      "normalizedLfSha256": "408d5d027967fdbbee71f032942ac4c79bd88d0f9c7dec4065b764e5a8c0e509"
+    },
     "acceptance": {
       "sha256": "8ffb329bf5119a9c15333d6e86f5b92e434df30ca53a5b63665b13649f46be8f",
       "date": "2026-11-19",
@@ -3236,12 +4091,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "Creator 浏览器独立 H2 角色预览。等级设为 15 后顶栏更新，主线下一挑战设为第 10 关。北京时间可输入设置、查询飘字和恢复，关闭返回 GM 菜单。见 docs/gm-development.md。",
-    "sha256": "21578c0225c979a62f48ed6a41d15a9b1d2c3c1fc6688b3e36ef2d2ccc8f6aa7",
-    "acceptanceFingerprintDifference": {
-      "difference": "仅CRLF/LF差异",
-      "recordedSha256": "61cc10075b428709447d3e549f0ae55173cadb0cfa943f312b9e12938b14ff32",
-      "normalizedLfSha256": "61cc10075b428709447d3e549f0ae55173cadb0cfa943f312b9e12938b14ff32"
-    },
+    "sha256": "61cc10075b428709447d3e549f0ae55173cadb0cfa943f312b9e12938b14ff32",
     "acceptance": {
       "sha256": "61cc10075b428709447d3e549f0ae55173cadb0cfa943f312b9e12938b14ff32",
       "date": "2026-11-19",
@@ -3294,12 +4144,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "Creator 浏览器独立 H2 角色预览。F9 显示五项入口，角色与时间、道具可打开，关闭子窗返回总菜单，F9 正常关闭菜单和子窗。见 docs/gm-development.md。",
-    "sha256": "48650f382719493ce072f59da1ae01d93a5259d8a82e5ebb3b4f2ef5042dddd4",
-    "acceptanceFingerprintDifference": {
-      "difference": "仅CRLF/LF差异",
-      "recordedSha256": "d248fb264b250a0884888c3bb1857702a2716d91851afc57b8832f27d8cef3f8",
-      "normalizedLfSha256": "d248fb264b250a0884888c3bb1857702a2716d91851afc57b8832f27d8cef3f8"
-    },
+    "sha256": "d248fb264b250a0884888c3bb1857702a2716d91851afc57b8832f27d8cef3f8",
     "acceptance": {
       "sha256": "d248fb264b250a0884888c3bb1857702a2716d91851afc57b8832f27d8cef3f8",
       "date": "2026-11-19",
@@ -4242,7 +5087,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
-    "sha256": "e5b072de61972569fe9c6d050198e54f2b4fa62b8a4340121a83c3be9e026313",
+    "sha256": "cf8b57246d7057167e85a8b8c513c4955d455d80ba7d55f39bc1625c995c9231",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "e5b072de61972569fe9c6d050198e54f2b4fa62b8a4340121a83c3be9e026313",
+      "normalizedLfSha256": "cf8b57246d7057167e85a8b8c513c4955d455d80ba7d55f39bc1625c995c9231"
+    },
     "acceptance": {
       "sha256": "e5b072de61972569fe9c6d050198e54f2b4fa62b8a4340121a83c3be9e026313",
       "date": "2026-11-23",
@@ -4330,7 +5180,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "依赖所属页面检查的组合资源",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "17217ac9d6db48310ebc9aeaaf4e1fa544da4b4a2e767f3ac73cf57a9c778a4c"
+    "sha256": "cf27dcbf991ae0ebf65255c70270a52e26320079ae66f1f957aa5ee916d14e1f"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/FormationElementView.prefab",
@@ -4383,7 +5233,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "7130c48a00ed07631f19a8210f922d0ce0e6db2126c3540c4e248287833c28b7"
+    "sha256": "b80a6ab2d7cd2263249d1c4e0f0fc4d469277521a5bcc0cc2d319477343c9c63"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/FormationHeroCellView.prefab",
@@ -4885,7 +5735,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "c45d187f542811d932dbb93103adb752503810a68abf222573e603324bf075d7"
+    "sha256": "d994129d34a2a850d742d11ecb9cf79876fe1a74f6db03688977cc9f8d97edf9"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroAttributeRow.prefab",
@@ -4928,12 +5778,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "随英雄属性明细复验攻击、生命、防御、速度官方资源图标及数值。",
-    "sha256": "bb42b1be0f34f864468d7636a386bf44a094205755585853c200cd7b370703a9",
-    "acceptanceFingerprintDifference": {
-      "difference": "仅CRLF/LF差异",
-      "recordedSha256": "e70f1740881c32df1ef28d83dea85e3ab15bb115bacda8532ee9b7b47b45fa59",
-      "normalizedLfSha256": "e70f1740881c32df1ef28d83dea85e3ab15bb115bacda8532ee9b7b47b45fa59"
-    },
+    "sha256": "e70f1740881c32df1ef28d83dea85e3ab15bb115bacda8532ee9b7b47b45fa59",
     "acceptance": {
       "sha256": "e70f1740881c32df1ef28d83dea85e3ab15bb115bacda8532ee9b7b47b45fa59",
       "date": "2026-11-19",
@@ -4993,12 +5838,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "Creator 竖屏实测打开并关闭，列表显示当前服务器的四项已同步数值，攻击与详情一致。",
-    "sha256": "b46630220b1a170e5527b2e83f146c269ea2fdc9384a8961a5cbf06a938b1742",
-    "acceptanceFingerprintDifference": {
-      "difference": "仅CRLF/LF差异",
-      "recordedSha256": "a15a853440405b596504999e370a1b8324dce09658b63cf36ad57b1780318dff",
-      "normalizedLfSha256": "a15a853440405b596504999e370a1b8324dce09658b63cf36ad57b1780318dff"
-    },
+    "sha256": "a15a853440405b596504999e370a1b8324dce09658b63cf36ad57b1780318dff",
     "acceptance": {
       "sha256": "a15a853440405b596504999e370a1b8324dce09658b63cf36ad57b1780318dff",
       "date": "2026-11-19",
@@ -5050,7 +5890,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
-    "sha256": "40032b2254c95fde0aebdd34b5342453c875396f190513fb6c6f4a0e495a79a7",
+    "sha256": "0dcbd5db7367a8f8d858c7950a37b5036766a7540ad8207cef760fca30cc9d40",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "40032b2254c95fde0aebdd34b5342453c875396f190513fb6c6f4a0e495a79a7",
+      "normalizedLfSha256": "0dcbd5db7367a8f8d858c7950a37b5036766a7540ad8207cef760fca30cc9d40"
+    },
     "acceptance": {
       "sha256": "40032b2254c95fde0aebdd34b5342453c875396f190513fb6c6f4a0e495a79a7",
       "date": "2026-11-23",
@@ -5110,7 +5955,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "共用红点预制体，专用位置由原尺寸和偏移的布局锚点承载。",
-    "sha256": "f25b733c9822123bd577d09ed9623ed176d26651af35a9efb34d969a26d76995",
+    "sha256": "77b2560400e2627fafe9fd05e63a3936972ad48254397a55a18837e86becf2bf",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "f25b733c9822123bd577d09ed9623ed176d26651af35a9efb34d969a26d76995",
+      "normalizedLfSha256": "77b2560400e2627fafe9fd05e63a3936972ad48254397a55a18837e86becf2bf"
+    },
     "acceptance": {
       "sha256": "f25b733c9822123bd577d09ed9623ed176d26651af35a9efb34d969a26d76995",
       "date": "2026-11-23",
@@ -5160,12 +6010,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "随装备选择实际显示黄铜之刺、银制利剑的图标、星级、评分、属性和穿戴按钮。",
-    "sha256": "d89e19d9c430f4c10a7aa8d4189ad89a0a27df305212b69f5fa89a1f4d455e06",
-    "acceptanceFingerprintDifference": {
-      "difference": "仅CRLF/LF差异",
-      "recordedSha256": "4003f2e922d79462e783bae578afad4aca103d1c49a19f011c507ad7af4649ea",
-      "normalizedLfSha256": "4003f2e922d79462e783bae578afad4aca103d1c49a19f011c507ad7af4649ea"
-    },
+    "sha256": "4003f2e922d79462e783bae578afad4aca103d1c49a19f011c507ad7af4649ea",
     "acceptance": {
       "sha256": "4003f2e922d79462e783bae578afad4aca103d1c49a19f011c507ad7af4649ea",
       "date": "2026-11-19",
@@ -5225,12 +6070,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "Creator 竖屏实测两个同部位武器降序且可穿，已穿行独立高亮、重复模板隐藏、替换后自动返回英雄。",
-    "sha256": "1a0a54571851ceea18259d709c7dc04da69881c05349f0cdf3cee70586219f4f",
-    "acceptanceFingerprintDifference": {
-      "difference": "仅CRLF/LF差异",
-      "recordedSha256": "5fc6cfa26d41962dee2d52f70fc4ad37dc8d7955f076507409496cd6b07c9750",
-      "normalizedLfSha256": "5fc6cfa26d41962dee2d52f70fc4ad37dc8d7955f076507409496cd6b07c9750"
-    },
+    "sha256": "5fc6cfa26d41962dee2d52f70fc4ad37dc8d7955f076507409496cd6b07c9750",
     "acceptance": {
       "sha256": "5fc6cfa26d41962dee2d52f70fc4ad37dc8d7955f076507409496cd6b07c9750",
       "date": "2026-11-19",
@@ -5282,7 +6122,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "依赖所属页面检查的组合资源",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "f87d92b640d2ae89a9c723eb446f8a61136557d8b0361d3ee9412f402f91d717"
+    "sha256": "d319f47377788e8072e229af0dc5b7d7a4b2d1c8efedabc33924d53df0d81e40"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroGodEquipmentCatalogView.prefab",
@@ -5342,7 +6182,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "723d3559c6e0269ffcf70aae179579f9d3de772a51fca9f5edd9721ce14d1f3b"
+    "sha256": "5770112d81642285dd9dadb512776808a7667414f34a7bed06771b1fa203d17f"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroGodEquipmentShopCell.prefab",
@@ -5387,7 +6227,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "依赖所属页面检查的组合资源",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "9033dff451701c78d43f49954275d2035143c1ad165bccb1fe26eb06e90bee2e"
+    "sha256": "e7605ae25f1590dbf0663acb6d9ac27ec71087b6b3d5b5f38c78834046c45ffc"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroGodEquipmentShopView.prefab",
@@ -5447,7 +6287,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "99f67aac23011870ce92f26e84d0328af3d056d03db9e9af761827961fdc90b2"
+    "sha256": "a165ee7f82b015dbffbdbef9751f5af7a48cef808c53ddb3902e4e4b27918fb7"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroGodEquipmentTabCell.prefab",
@@ -5492,7 +6332,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "依赖所属页面检查的组合资源",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "e975ada3f6eec686e4b18cf79353acd5e8a9571354f9c7318fc5ffeb1ae0d986"
+    "sha256": "beaf6ffc38f2aa5cda262aaf63dbff81c420692fecd04ca351d15768b84b1154"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroGrowthPickerView.prefab",
@@ -6032,12 +6872,7 @@
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "实际预览通过",
     "visual": "Creator 浏览器的两种竖屏尺寸实测日服看板 act 循环，原对白与橙色高亮、去兑换反馈，筛选不重复装配，进详情清理并可返回重开。",
-    "sha256": "7b356293a63e305029af5374b3c8cb8b051c5e352afe82743d84feb2bbfa43c7",
-    "acceptanceFingerprintDifference": {
-      "difference": "仅CRLF/LF差异",
-      "recordedSha256": "6550d31d86d0689ef5b957ec0938bfb79c9d82faab6eb761e27d070525558064",
-      "normalizedLfSha256": "6550d31d86d0689ef5b957ec0938bfb79c9d82faab6eb761e27d070525558064"
-    },
+    "sha256": "6550d31d86d0689ef5b957ec0938bfb79c9d82faab6eb761e27d070525558064",
     "acceptance": {
       "sha256": "6550d31d86d0689ef5b957ec0938bfb79c9d82faab6eb761e27d070525558064",
       "date": "2026-11-19",
@@ -6139,7 +6974,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "随召唤公示复验当前数值、中文正文和头像均可见，切换页签后列表重新定位。",
-    "sha256": "78b8a246c46272c0603fe454d914e2b72a4cb0e6a3092f072d3cc4327ecb47a8",
+    "sha256": "333ed8fddea940f8cd2d45399a8fdb5e3e8404e443448767096d6c992df3223f",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "78b8a246c46272c0603fe454d914e2b72a4cb0e6a3092f072d3cc4327ecb47a8",
+      "normalizedLfSha256": "333ed8fddea940f8cd2d45399a8fdb5e3e8404e443448767096d6c992df3223f"
+    },
     "acceptance": {
       "sha256": "78b8a246c46272c0603fe454d914e2b72a4cb0e6a3092f072d3cc4327ecb47a8",
       "date": "2026-11-19",
@@ -6199,7 +7039,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "Creator 本机竖屏实测高级与基础公示、推荐阵容、祈愿条件及关闭返回。验收限召唤说明入口及现有五类公示页签结构。",
-    "sha256": "2f3e4c559e23f6c39c224cb6d5f5d75236a3ab1e2ab628f0451dc4f39da3418b",
+    "sha256": "278b2c366d18c8c64881d2ee68890c73fd5f2c70806fb3c18c7080075bba5f8d",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "2f3e4c559e23f6c39c224cb6d5f5d75236a3ab1e2ab628f0451dc4f39da3418b",
+      "normalizedLfSha256": "278b2c366d18c8c64881d2ee68890c73fd5f2c70806fb3c18c7080075bba5f8d"
+    },
     "acceptance": {
       "sha256": "2f3e4c559e23f6c39c224cb6d5f5d75236a3ab1e2ab628f0451dc4f39da3418b",
       "date": "2026-11-19",
@@ -6290,14 +7135,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "Creator 393×852 竖屏独立会话，验证主城原任务快捷入口点亮红点，能点击进入每日与成就窗口。",
-    "sha256": "e7d7ad665ac5f3b1272f074cf9bfba6cdd580497451d9d08942b12c55cbe3c51",
+    "visual": "Creator 393×852 竖屏实际点击加号，五个快捷入口同步收放。核对榜单及每日按钮的中间帧，展开后从加号左邻再次打开排行榜。",
+    "sha256": "b5657ada0049647c0fea9ba185ad3f8b22f9c91b2831fb498f26160bb9ce4570",
     "acceptance": {
-      "sha256": "e7d7ad665ac5f3b1272f074cf9bfba6cdd580497451d9d08942b12c55cbe3c51",
+      "sha256": "b5657ada0049647c0fea9ba185ad3f8b22f9c91b2831fb498f26160bb9ce4570",
       "date": "2026-11-25",
       "status": "实际预览通过",
-      "scope": "Creator 393×852 竖屏独立会话，验证主城原任务快捷入口点亮红点，能点击进入每日与成就窗口。",
-      "inspector": "本机 Creator 浏览器预览，限新增任务入口绑定。"
+      "scope": "Creator 393×852 竖屏实际点击加号，五个快捷入口同步收放。核对榜单及每日按钮的中间帧，展开后从加号左邻再次打开排行榜。",
+      "inspector": "本机 Creator 浏览器预览，限工具按钮和排行榜入口。"
     }
   },
   {
@@ -6393,7 +7238,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "隐藏挡在左下英雄推荐上方的重复主线图标；主线入口仍由底栏战斗按钮提供，地图、特效和其他建筑位置不变。",
-    "sha256": "c0ec7d6d876592f6ad11c22a4a01b57d02e9ff813fdc27e7a67077168bd75883",
+    "sha256": "b591212d8a3cbb669e573fdf7f3247b8e63889bb0ad13e40f621fc036ba43fc6",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "c0ec7d6d876592f6ad11c22a4a01b57d02e9ff813fdc27e7a67077168bd75883",
+      "normalizedLfSha256": "b591212d8a3cbb669e573fdf7f3247b8e63889bb0ad13e40f621fc036ba43fc6"
+    },
     "acceptance": {
       "sha256": "c0ec7d6d876592f6ad11c22a4a01b57d02e9ff813fdc27e7a67077168bd75883",
       "date": "2026-11-24",
@@ -6445,12 +7295,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。移除旧Notice，导航与全局反馈正常，资料页与GM打开不依赖旧主城提示层。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
-    "sha256": "3151f6ccb506ee2fcd80376771055bcce80f4cbd69789a63f4688c02dd2a6dd3",
-    "acceptanceFingerprintDifference": {
-      "difference": "仅CRLF/LF差异",
-      "recordedSha256": "a519a0b81a21c0ccdd0c7a0f0a2366dacef2316f34326726abcc24f9d4be978f",
-      "normalizedLfSha256": "a519a0b81a21c0ccdd0c7a0f0a2366dacef2316f34326726abcc24f9d4be978f"
-    },
+    "sha256": "a519a0b81a21c0ccdd0c7a0f0a2366dacef2316f34326726abcc24f9d4be978f",
     "acceptance": {
       "sha256": "a519a0b81a21c0ccdd0c7a0f0a2366dacef2316f34326726abcc24f9d4be978f",
       "date": "2026-11-14",
@@ -6668,7 +7513,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "701561d2bbe64957b0f1cc802ef76288d8ef1846a8555fca662592c4bb2569fa"
+    "sha256": "5df549458e1f145455fc7a66c73d58d1c85b82aba599c7c039f6f014fa7b76c3"
   },
   {
     "path": "client/assets/bundles/module/login/prefabs/RolePersonalChoiceView.prefab",
@@ -7331,7 +8176,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-    "sha256": "add1a68a395546d8f0c224c16753c4e2b8491e6061d4de941c19e0da850fed70",
+    "sha256": "9c02da778f60ffb997b27d72a45d821535daea2a1c05c6b14980c2427662ccb7",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "add1a68a395546d8f0c224c16753c4e2b8491e6061d4de941c19e0da850fed70",
+      "normalizedLfSha256": "9c02da778f60ffb997b27d72a45d821535daea2a1c05c6b14980c2427662ccb7"
+    },
     "acceptance": {
       "sha256": "add1a68a395546d8f0c224c16753c4e2b8491e6061d4de941c19e0da850fed70",
       "date": "2026-11-02",
@@ -7391,7 +8241,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "8b92e7f50ea54330a3d0e000e23a9e826663cf39556cf8ca1044cfea98d50fa8"
+    "sha256": "0b6e4dd06e4649d6bbccc9192a1b205b14b13e71d7c4bbb1ff624521be745b5b"
   },
   {
     "path": "client/assets/bundles/module/market/prefabs/MarketBuyView.prefab",
@@ -7436,7 +8286,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "Creator 独立 H2 预览检查每份 100000 英雄经验、选择购买 1 份、总价 100 钻和禁止超过限购；确认购买后开通用奖励窗。截图 client/temp/project-checks/market-purchase.png。",
-    "sha256": "b45ee8892f2162a78084e149d9c441f6cbfe3d9df0e11906601e30127577045c",
+    "sha256": "6b18233e954f735f54be47baf80f095932d04c8b32979aec69ca2e4b437be956",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "b45ee8892f2162a78084e149d9c441f6cbfe3d9df0e11906601e30127577045c",
+      "normalizedLfSha256": "6b18233e954f735f54be47baf80f095932d04c8b32979aec69ca2e4b437be956"
+    },
     "acceptance": {
       "sha256": "b45ee8892f2162a78084e149d9c441f6cbfe3d9df0e11906601e30127577045c",
       "date": "2026-11-19",
@@ -7488,7 +8343,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "Creator 本机检查货架物品图标、10万与25万的原报价、原折扣和售罄灰态；物品说明、购买及到账由独立 H2 验证。",
-    "sha256": "01ca9439cfd8a8b35584cf54eef17b90b4ce5f7bbc2b6dbf40ea4462a56c92ce",
+    "sha256": "41f20e8346177a3685f8966e18329367e14c0784886cdaf64525293502b87e11",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "01ca9439cfd8a8b35584cf54eef17b90b4ce5f7bbc2b6dbf40ea4462a56c92ce",
+      "normalizedLfSha256": "41f20e8346177a3685f8966e18329367e14c0784886cdaf64525293502b87e11"
+    },
     "acceptance": {
       "sha256": "01ca9439cfd8a8b35584cf54eef17b90b4ce5f7bbc2b6dbf40ea4462a56c92ce",
       "date": "2026-11-19",
@@ -7548,7 +8408,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "Creator 独立 H2 本机预览，角色 1 级从主城进入市场，旧看板、六件货架、金币万位缩写、免费和付费刷新、冷重登与返回均通过。截图 client/temp/project-checks/market-shelf.png。",
-    "sha256": "c70771c8b32a1e64c9ab43415e08036f9451d927c33619dbab7bb488ab6f910e",
+    "sha256": "2b09f43cd9c4b794e57226d99c43dd446bc5d7be7db2f80a4dbbfd35ab6f3072",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "c70771c8b32a1e64c9ab43415e08036f9451d927c33619dbab7bb488ab6f910e",
+      "normalizedLfSha256": "2b09f43cd9c4b794e57226d99c43dd446bc5d7be7db2f80a4dbbfd35ab6f3072"
+    },
     "acceptance": {
       "sha256": "c70771c8b32a1e64c9ab43415e08036f9451d927c33619dbab7bb488ab6f910e",
       "date": "2026-11-19",

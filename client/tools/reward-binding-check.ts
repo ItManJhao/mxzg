@@ -573,10 +573,14 @@ class RewardBindingChecks {
             try {
                 test.ready();
                 test.deliver({ ...test.upgrade(78), mode: "SILENT" });
-                test.deliver({ ...test.upgrade(79), mode: "TIPS" });
+                const firstTip = { ...test.upgrade(79), mode: "TIPS" } as const;
+                test.deliver(firstTip);
+                test.deliver(firstTip);
+                test.deliver({ ...test.upgrade(179), mode: "TIPS" });
                 await this.settle();
                 assert.equal(test.rewards.length, 0);
-                assert.deepEqual(test.toasts, ["角色等级 1 → 3"], "静默保持不显示，TIPS升级复用全局飘字");
+                assert.deepEqual(test.toasts, ["角色等级 1 → 3", "角色等级 1 → 3"],
+                    "同文案的两笔奖励均交付全局飘字，同一回执重播和静默奖励不增加提示");
                 assert.deepEqual(test.presented, [], "TIPS不伪造升级窗口已显示通知");
             } finally { test.dispose(); }
             checks++;

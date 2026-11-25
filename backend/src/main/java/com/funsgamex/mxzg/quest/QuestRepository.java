@@ -61,6 +61,26 @@ class QuestRepository {
         }
     }
 
+    /** 用现有永久进度保存本服竞技场实际到过的最小正名次，调用方已持有角色锁。 */
+    boolean observeArenaRank(String roleId, long rank) {
+        Long previous = jdbc.query("""
+                SELECT amount FROM game_quest_counter WHERE role_id=? AND period_end_seconds=0
+                    AND metric='ARENA_MAX_RANK' AND condition_value=0
+                """, rows -> rows.next() ? rows.getLong(1) : null, roleId);
+        if (previous == null) {
+            increase(roleId, 0, QuestMetric.ARENA_MAX_RANK, 0, rank);
+            return true;
+        }
+        if (previous <= rank) {
+            return false;
+        }
+        jdbc.update("""
+                UPDATE game_quest_counter SET amount=? WHERE role_id=? AND period_end_seconds=0
+                    AND metric='ARENA_MAX_RANK' AND condition_value=0
+                """, rank, roleId);
+        return true;
+    }
+
     /** 批量读取当前持有英雄的等级分布，每个等级仅一条，用于多档门槛。 */
     Map<Integer, Long> heroLevels(String roleId) {
         return jdbc.query("""

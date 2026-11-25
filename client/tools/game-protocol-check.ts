@@ -13,6 +13,73 @@ import { GameProtocolLogUtils } from "../assets/scripts/platform/GameProtocolLog
 import {mxzg} from "../assets/scripts/platform/GameProtocol.generated";
 const state={revision:2,role:{id:"role",nickname:"测试😀",level:1,gold:0,diamonds:0,serverId:"local-1"},heroes:[],heroRoster:{capacity:325,buySpaceTimes:1},inventory:[{itemId:900101,quantity:4}]};
 
+/** 排行协议保留五种榜类、真实名次及已结算的点赞奖励。 */
+function checkRankingWire(): void {
+    const requestId = "aad15d1b-be88-4b9e-8c84-075cbb9a52df";
+    const id = "5f1b01d5-16e4-4dad-9d51-6f7b65a223a3";
+    const leader = { rank: 1, id, serverId: "local-2", name: "排行验收", score: 123456,
+        level: 45, headId: 1, borderId: 0, badgeId: 0, leaderName: "" };
+    const overview = { crossLevel: 40, resetAt: 1795622400, crossUnlocked: true,
+        boards: [{ kind: "CROSS_POWER", leader, liked: true }] };
+    const request = { version: 1, kind: "request" };
+    const response = { version: 1, kind: "response", id: "rank", ok: true };
+    const likeBody = { requestId, targetId: id, kind: "CROSS_POWER", resetAt: overview.resetAt };
+    const notice = { schemaVersion: 1, receiptId: "20000000-2222-4222-8222-222222222222",
+        requestId, roleId: id, assetRevision: 3, mode: "TIPS", items: [{ itemId: 900001, credited: 30000 }], heroes: [] };
+    roundTrip({ ...request, name: Protocol.RANKING_OVERVIEW, body: {} });
+    roundTrip({ ...request, name: Protocol.RANKING_LIST, body: { kind: "CHAPTER" } });
+    roundTrip({ ...request, name: Protocol.RANKING_LIKE, body: likeBody });
+    roundTrip({ ...response, name: Protocol.RANKING_OVERVIEW, body: overview });
+    roundTrip({ ...response, name: Protocol.RANKING_LIST,
+        body: { kind: "CROSS_POWER", entries: [leader], own: { ...leader, rank: 55 } } });
+    roundTrip({ ...response, name: Protocol.RANKING_LIKE, body: { requestId, overview, notice } });
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, name: Protocol.RANKING_LIKE,
+        body: { ...likeBody, serverId: "other" } }), /排行榜操作参数无效/);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...response, name: Protocol.RANKING_OVERVIEW,
+        body: { ...overview, crossUnlocked: false } }), /排行总览无效/);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...response, name: Protocol.RANKING_LIST,
+        body: { kind: "CROSS_POWER", entries: [{ ...leader, rank: 2 }] } }), /榜单名次或条目无效/);
+}
+
+/** 邮件附件和好友礼物随认证信封往返，回执须绑定当前命令。 */
+function checkSocialWire(): void {
+    const requestId = "aad15d1b-be88-4b9e-8c84-075cbb9a52df";
+    const id = "5f1b01d5-16e4-4dad-9d51-6f7b65a223a3";
+    const request = { version: 1, kind: "request" };
+    const response = { version: 1, kind: "response", id: "social", ok: true };
+    const event = { version: 1, kind: "event", connectionId: "c", body: {} };
+    const attachment = { itemId: 900001, quantity: 80 };
+    const mailbox = { entries: [{ id, title: "远征纪念", createdAt: 1795622400,
+        read: true, claimed: false, hasAttachments: true }] };
+    const detail = { id, content: "公会远征附件", attachments: [attachment] };
+    roundTrip({ ...request, name: Protocol.MAIL_LIST, body: {} });
+    roundTrip({ ...request, name: Protocol.MAIL_CHANGE, body: { requestId, action: "OPEN", mailId: id } });
+    roundTrip({ ...response, name: Protocol.MAIL_LIST, body: mailbox });
+    roundTrip({ ...response, name: Protocol.MAIL_CHANGE, body: { requestId, state: mailbox, detail } });
+    roundTrip({ ...event, name: Protocol.MAIL_CHANGED });
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, name: Protocol.MAIL_CHANGE,
+        body: { requestId, action: "CLAIM_ALL", mailId: id } }), /邮件操作参数无效/);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...response, name: Protocol.MAIL_CHANGE,
+        body: { requestId, state: { entries: [] }, detail } }), /邮件详情无效/);
+
+    const friend = { roleId: id, serverId: "local-1", name: "好友验收", level: 18, headId: 0, borderId: 0,
+        power: 1200, lastLoginAt: 1795622400, giftState: 0, sentToday: false, requested: false };
+    const friendState = { resetAt: 1795708800, friendLimit: 100, blockLimit: 50, sendLimit: 100, sentToday: 1,
+        friendship: 10, friends: [friend], gifts: [], applications: [], blocked: [] };
+    const notice = { schemaVersion: 1, receiptId: "20000000-2222-4222-8222-222222222222", requestId,
+        roleId: id, assetRevision: 3, mode: "TIPS", items: [{ itemId: 900001, credited: 3000 }], heroes: [] };
+    roundTrip({ ...request, name: Protocol.FRIEND_STATE, body: {} });
+    roundTrip({ ...request, name: Protocol.FRIEND_SEARCH, body: { query: "" } });
+    roundTrip({ ...request, name: Protocol.FRIEND_CHANGE,
+        body: { requestId, action: "SEND", targetId: id, resetAt: friendState.resetAt } });
+    roundTrip({ ...response, name: Protocol.FRIEND_STATE, body: friendState });
+    roundTrip({ ...response, name: Protocol.FRIEND_SEARCH, body: { query: "", entries: [friend] } });
+    roundTrip({ ...response, name: Protocol.FRIEND_CHANGE, body: { requestId, state: friendState, notice } });
+    roundTrip({ ...event, name: Protocol.FRIEND_CHANGED });
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...response, name: Protocol.FRIEND_CHANGE,
+        body: { requestId, state: friendState, notice: { ...notice, requestId: id } } }), /奖励与社交操作回执不符/);
+}
+
 /** 已有账号的超额成就、领取期次与提交后通知均能二进制往返。 */
 function checkQuestWire(): void {
     const request = { version: 1, kind: "request", name: Protocol.QUEST_CLAIM };
@@ -172,6 +239,9 @@ function roundTrip(frame:any){const bytes=GameProtocolCodecUtils.encodeGameFrame
 function main(){
  checkGuildWire();
  checkQuestWire();
+ checkRankingWire();
+ checkSocialWire();
+ checkArenaSeasonWire();
  checkFormationPowerWire();
  checkVipWire();
  checkQuickBattleWire();
@@ -653,6 +723,59 @@ function checkProgressionBattleWire(): void {
         assert.equal(parsed.maxRounds, name.startsWith("tower") ? 15 : 20);
     }
     console.log("PASS Java/TS Fantasy Tower and Arena settlements and replay parsing");
+}
+
+/** 竞技场真人目标与机器人互斥，赛季周箱、防守与商店的新二进制载荷完整往返。 */
+function checkArenaSeasonWire(): void {
+    const requestId = "10000000-1111-4111-8111-111111111111";
+    const self = "20000000-2222-4222-8222-222222222222";
+    const target = "30000000-3333-4333-8333-333333333333";
+    const request = { version: 1, kind: "request", id: "arena-request" };
+    const response = { version: 1, kind: "response", id: "arena-request", ok: true };
+    const ends = 1795708800;
+    const reward = { itemId: 900901, quantity: 500 };
+    const notice = { schemaVersion: 1, receiptId: target, requestId, roleId: self, assetRevision: 3,
+        mode: "POPUP", items: [{ itemId: reward.itemId, credited: reward.quantity }], heroes: [] };
+    const row = { rank: 1, roleId: target, name: "竞技测试", level: 20, score: 1200, power: 2200,
+        headId: 1, borderId: 0, receivedLikes: 2, liked: true };
+    const ranking = { entries: [row], own: { ...row, roleId: self, rank: 0, liked: false }, likesRemaining: 9, dailyEndsAt: ends };
+    const tier = { minRank: 1, maxRank: 1, rewards: [reward] };
+    const season = { seasonEndsAt: ends, dailyEndsAt: ends, seasonChallenges: 10,
+        dailyTiers: [tier], seasonTiers: [tier], chests: [{ id: 1, requiredChallenges: 10, boxPic: 1, rewards: [reward], claimed: true }] };
+    const defense = { formationId: 1, version: 1, slots: [{ position: 2, heroId: target }], fallback: false };
+    const shop = { currencyBalance: 0, refreshAt: ends,
+        offers: [{ id: 8, requiredLevel: 1, purchaseLimit: 0, purchased: 1, price: 250, rewards: [reward] }] };
+    roundTrip({ ...request, name: Protocol.ARENA_CHALLENGE, body: { requestId, opponentId: 0, opponentRoleId: target } });
+    roundTrip({ ...request, name: Protocol.ARENA_CHEST_CLAIM, body: { requestId, chestId: 1, seasonEndsAt: ends } });
+    roundTrip({ ...request, name: Protocol.ARENA_LIKE, body: { requestId, targetRoleId: target, dailyEndsAt: ends } });
+    roundTrip({ ...request, name: Protocol.ARENA_DEFENSE_SAVE,
+        body: { requestId, expectedVersion: 0, formationId: defense.formationId, slots: defense.slots } });
+    roundTrip({ ...request, name: Protocol.ARENA_SHOP_BUY, body: { requestId, offerId: 8, quantity: 1, refreshAt: ends } });
+    roundTrip({ ...response, name: Protocol.ARENA_RANKING, body: ranking });
+    roundTrip({ ...response, name: Protocol.ARENA_SEASON, body: season });
+    roundTrip({ ...response, name: Protocol.ARENA_CHEST_CLAIM, body: { requestId, state: season, notice } });
+    roundTrip({ ...response, name: Protocol.ARENA_LIKE, body: { requestId, ranking, notice } });
+    roundTrip({ ...response, name: Protocol.ARENA_DEFENSE_SAVE, body: { requestId, defense } });
+    roundTrip({ ...response, name: Protocol.ARENA_SHOP_BUY, body: { requestId, state: shop, notice } });
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, name: Protocol.ARENA_CHALLENGE,
+        body: { requestId, opponentId: 1, opponentRoleId: target } }), /对手编号无效/);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...response, name: Protocol.ARENA_DEFENSE,
+        body: { ...defense, slots: [{ position: 9, heroId: target }] } }), /防守阵容无效/);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...response, name: Protocol.ARENA_SHOP_BUY,
+        body: { requestId, state: shop, notice: { ...notice, requestId: target } } }), /操作回执不符/);
+    if (process.argv.includes("--arena-java")) {
+        const bytes = readFileSync("backend/target/arena-pvp-settlement.pb");
+        const frame = GameProtocolCodecUtils.decodeGameFrame(bytes);
+        assert.equal(frame.name, Protocol.ARENA_CHALLENGE);
+        const receipt = frame.body as { replay: object; record: { opponentRoleId: string } };
+        assert(receipt.record.opponentRoleId);
+        const parsed = BattleReplayUtils.parse(BattleReplayUtils.encodeVerified(receipt.replay));
+        assert.equal(parsed.maxRounds, 20);
+        assert(parsed.units.some(unit => unit.faction === 1));
+        assert(parsed.units.some(unit => unit.faction === 2));
+        assert(parsed.steps.length > 0);
+        console.log("PASS Java/TS authoritative player arena settlement and replay");
+    }
 }
 
 /** 四种装备操作保留字符串实例和来源配置，回执版本与实际变更状态自洽。 */

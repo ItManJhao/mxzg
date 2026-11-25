@@ -3,6 +3,8 @@ package com.funsgamex.mxzg.guild;
 
 import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -12,18 +14,21 @@ class GuildRankingRepository {
                        long power, boolean own) {}
 
     /** 共用数据源，仅执行公会成员和角色峰值的只读查询。 */
-    private final JdbcTemplate jdbc;
+    private final NamedParameterJdbcTemplate jdbc;
 
     /** 装配当前项目的 JDBC 数据源。 */
     GuildRankingRepository(JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
+        this.jdbc = new NamedParameterJdbcTemplate(jdbc);
     }
 
     /**
-     * 以旧服的全体成员历史最高战力求和。零战力不上榜，成员未上榜时仍返回其真实公会资料。
+     * 以旧服的全体成员历史最高战力求和。按已解析的区服范围读榜，零战力不上榜，
+     * 成员未上榜时仍返回其真实公会资料。
      * 新版尚无公会达到该战力的时间，平分使用持久的创建时间与公会 ID 稳定排序。
      */
-    List<RankedGuild> list(String serverId, String roleId, int limit) {
+    List<RankedGuild> list(List<String> serverIds, String roleId, int limit) {
+        var parameters = new MapSqlParameterSource().addValue("serverIds", serverIds)
+                .addValue("limit", limit).addValue("roleId", roleId);
         return jdbc.query("""
             WITH totals AS (
                 SELECT g.id, g.server_id, g.name, g.badge_id, g.created_at_seconds, leader.nickname AS leader_name,
@@ -32,7 +37,7 @@ class GuildRankingRepository {
                 JOIN game_role leader ON leader.id=g.leader_role_id
                 LEFT JOIN game_guild_member m ON m.guild_id=g.id
                 LEFT JOIN game_role r ON r.id=m.role_id AND r.server_id=g.server_id
-                WHERE g.server_id=?
+                WHERE g.server_id IN (:serverIds)
                 GROUP BY g.id, g.server_id, g.name, g.badge_id, g.created_at_seconds, leader.nickname
             ), placements AS (
                 SELECT totals.*,
@@ -42,14 +47,14 @@ class GuildRankingRepository {
                 FROM totals
             )
             SELECT p.id, p.server_id, p.name, p.badge_id, p.leader_name, p.total_power,
-                CASE WHEN p.placement<=? THEN p.placement ELSE 0 END AS rank_number,
+                CASE WHEN p.placement<=:limit THEN p.placement ELSE 0 END AS rank_number,
                 CASE WHEN mine.role_id IS NULL THEN 0 ELSE 1 END AS is_own_guild
             FROM placements p
-            LEFT JOIN game_guild_member mine ON mine.guild_id=p.id AND mine.role_id=?
-            WHERE p.placement BETWEEN 1 AND ? OR mine.role_id IS NOT NULL
+            LEFT JOIN game_guild_member mine ON mine.guild_id=p.id AND mine.role_id=:roleId
+            WHERE p.placement BETWEEN 1 AND :limit OR mine.role_id IS NOT NULL
             ORDER BY p.placement, p.id
-            """, (row, index) -> new RankedGuild(row.getInt("rank_number"), row.getString("id"),
+            """, parameters, (row, index) -> new RankedGuild(row.getInt("rank_number"), row.getString("id"),
                 row.getString("server_id"), row.getString("name"), row.getInt("badge_id"), row.getString("leader_name"),
-                row.getLong("total_power"), row.getBoolean("is_own_guild")), serverId, limit, roleId, limit);
+                row.getLong("total_power"), row.getBoolean("is_own_guild")));
     }
 }

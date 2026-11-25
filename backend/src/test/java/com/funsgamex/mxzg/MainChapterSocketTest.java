@@ -443,7 +443,7 @@ class MainChapterSocketTest {
         }
     }
 
-    /** 一个隔离角色经真实协议推进主线、塔和竞技场，领取四项奖励并冷登录恢复。 */
+    /** 一个隔离角色经真实协议推进主线、塔和竞技场，核对提交后的任务进度、四项奖励及冷登录恢复。 */
     @Test void advancesVipAfterRealMainTowerAndArenaSettlements() throws Exception {
         String account = "contract_" + UUID.randomUUID().toString().substring(0, 12);
         var player = login.login(account, "local-1");
@@ -478,6 +478,8 @@ class MainChapterSocketTest {
             assertFalse(losingReceipt.path("record").path("won").asBoolean());
             assertEquals(1, losingReceipt.path("state").path("settledChallenges").asInt());
             assertEquals(0, losingReceipt.path("state").path("robotWins").asInt());
+            // 同连接的下一次响应会将挑战回包之后抵达的提交通知收进事件队列。
+            success(peer, "session.heartbeat", Map.of());
             assertTrue(peer.events.stream().anyMatch(event -> vipProgress(event.path("body"), 100700) == 1));
             write("vip-arena-loss", losingReceiptFrame(peer, losingCommand, losingReceipt));
 
@@ -559,6 +561,7 @@ class MainChapterSocketTest {
                 assertEquals(participation - 1, result.path("state").path("robotWins").asInt());
                 write("vip-arena-win-" + participation, response);
             }
+            success(peer, "session.heartbeat", Map.of());
             assertTrue(peer.events.stream().anyMatch(event -> vipProgress(event.path("body"), 100700) == 3));
             beforeClaim = roles.findById(role).orElseThrow().diamonds();
             for (int task : List.of(100500, 100600, 100700, 100800)) {

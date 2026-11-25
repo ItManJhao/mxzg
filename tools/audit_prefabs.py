@@ -16,31 +16,38 @@ def read(path):
     return json.loads(path.read_text(encoding='utf-8-sig'))
 
 
-def acceptance_fingerprint(source, recorded_sha256, resource):
-    """只允许人工原指纹与当前字节完全相同或仅CRLF/LF转换；其他文本变化仍拒绝。
+def report_fingerprints(source, recorded_sha256, resource):
+    """报告按 Git 的 LF 文本记录指纹，另行核对并原样保留人工签收的 SHA。
 
-    返回None表示原始字节相同；换行等价时返回明确证据，报告仍保留当前原始sha256，
-    不改写人工验收指纹、不移除BOM、不按JSON重排或忽略缩进等文本变化。
+    未签收的资源只生成来源指纹。有签收时仅接受原始字节或 CRLF/LF 等价，
+    保留 BOM、缩进、结尾空行及独立 CR 的区别。
     """
-    current_sha256 = hashlib.sha256(source).hexdigest()
-    if current_sha256 == recorded_sha256:
-        return None
     normalized = source.replace(b'\r\n', b'\n')
     normalized_sha256 = hashlib.sha256(normalized).hexdigest()
-    crlf_sha256 = hashlib.sha256(normalized.replace(b'\n', b'\r\n')).hexdigest()
-    assert recorded_sha256 in (normalized_sha256, crlf_sha256), (
-        resource, '人工验收记录对应旧 Prefab，须重新核对')
-    return {
-        'difference': '仅CRLF/LF差异',
-        'recordedSha256': recorded_sha256,
-        'normalizedLfSha256': normalized_sha256,
-    }
+    fields = {'sha256': normalized_sha256}
+    if recorded_sha256 is None:
+        return fields
+    matches = hashlib.sha256(source).hexdigest() == recorded_sha256
+    # 含独立 CR 时，额外插入的 CR 可能和下一个 LF 拼成 CRLF，必须逐字节核对。
+    if not matches and b'\r' not in normalized:
+        matches = recorded_sha256 in (
+            normalized_sha256,
+            hashlib.sha256(normalized.replace(b'\n', b'\r\n')).hexdigest(),
+        )
+    assert matches, (resource, '人工验收记录对应旧 Prefab，须重新核对')
+    if recorded_sha256 != normalized_sha256:
+        fields['acceptanceFingerprintDifference'] = {
+            'difference': '仅CRLF/LF差异',
+            'recordedSha256': recorded_sha256,
+            'normalizedLfSha256': normalized_sha256,
+        }
+    return fields
 
 
 def check_repaired_panels(data, name):
     """检查已修复窗口的内容包含与文字分栏，阻止父坐标错位、自动扩宽再次造成遮挡。"""
     if name not in ('BattleEditLayer', 'HeroInfoUpgradeLayer', 'UpgradeSuccessLayer',
-                    'MailInfoLayer', 'ItemSelectLayer'):
+                    'MailInfoLayer', 'ItemSelectLayer', 'FriendSearchView'):
         return
     root_id = data[0]['data']['__id__']
 
@@ -61,6 +68,20 @@ def check_repaired_panels(data, name):
         return a[2] <= b[0] or b[2] <= a[0] or a[3] <= b[1] or b[3] <= a[1]
 
     nodes = [n for n in data if n.get('__type__') == 'cc.Node']
+    if name == 'FriendSearchView':
+        frame = next(n for n in nodes if n['_name'] == 'SearchField')
+        editor = next(c for c in data if c.get('__type__') == 'cc.EditBox')
+        left, bottom, right, top = bounds(frame)
+        for label_field in ('_textLabel', '_placeholderLabel'):
+            node = data[data[editor[label_field]['__id__']]['node']['__id__']]
+            transform = next(data[c['__id__']] for c in node['_components']
+                             if data[c['__id__']]['__type__'] == 'cc.UITransform')
+            anchor = transform['_anchorPoint']
+            # EditBox 按左上角重算布局，文本还需给底图左侧的放大镜留出空间。
+            assert (anchor['x'], anchor['y']) == (0, 1), (name, label_field, '输入文字必须使用左上锚点')
+            x1, y1, x2, y2 = bounds(node)
+            assert left + 40 <= x1 and bottom <= y1 and x2 <= right and y2 <= top, (name, label_field, '输入文字超出底板')
+        return
     if name == 'MailInfoLayer':
         box = bounds(next(n for n in nodes if n['_name'] == 'spr_bg'))
         root = data[root_id]
@@ -131,7 +152,7 @@ def audit():
     changes = {row['path']: row for row in read(ROOT / 'config/prefab-layout-changes.json')}
     renames = {row['to']: row for row in read(ROOT / 'config/prefab-renames.json')}
     report = []
-    for file in sorted(assets.rglob('*.prefab')):
+    for file in sorted(assets.rglob('*.prefab'), key=lambda path: path.relative_to(assets).as_posix()):
         data = read(file)
         check_repaired_panels(data, file.stem)
         root_id = data[0]['data']['__id__']
@@ -234,18 +255,15 @@ def audit():
             assert content['_parent'] == view['heroPort'], (rel, '内容必须静态挂在视口下')
             assert not any(data[c['__id__']]['__type__'] == 'cc.Mask' for c in host['_components'])
             assert any(data[c['__id__']]['__type__'] == 'cc.Mask' for c in port['_components'])
-        fingerprint_source = file.read_bytes()
+        evidence = acceptance.get(rel)
+        fingerprints = report_fingerprints(file.read_bytes(), evidence['sha256'] if evidence else None, rel)
         report.append({'path': rel, 'classes': classes, 'root': {'position': root['_lpos'], 'scale': root['_lscale'], 'size': ui['_contentSize'], 'anchor': ui['_anchorPoint']},
                        'components': counts, 'specialAnchors': anchors, 'scrolls': scrolls, 'warnings': warnings,
                        'decision': '已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留' if rel in changes else '保留：组件/组合局部坐标与布局关系不机械转换',
                        'reviewStatus': '依赖所属页面检查的组合资源' if re.search(r'(?:Cell(?:View)?|ItemView|TabView|BoardView|SlotView|Shell|Chip(?:View)?)$', file.stem) else '结构检查通过但视觉待验收',
-                       'visual': '未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md', 'sha256': hashlib.sha256(fingerprint_source).hexdigest()})
-        evidence = acceptance.get(rel)
+                       'visual': '未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md', **fingerprints})
         if evidence:
             accepted_paths.add(rel)
-            fingerprint_difference = acceptance_fingerprint(fingerprint_source, evidence['sha256'], rel)
-            if fingerprint_difference:
-                report[-1]['acceptanceFingerprintDifference'] = fingerprint_difference
             assert evidence['status'] in ('实际预览通过', '结构检查通过但视觉待验收',
                                           '发现问题待修复', '依赖所属页面检查的组合资源'), rel
             report[-1]['reviewStatus'] = evidence['status']
@@ -257,7 +275,7 @@ def audit():
     if '--check' in sys.argv:
         assert target.read_text(encoding='utf-8') == text, 'Prefab 审查报告已过期'
     else:
-        target.write_text(text, encoding='utf-8')
+        target.write_bytes(text.encode('utf-8'))
     print(f'Prefab 结构审查通过：{len(report)} 份；不据结构结果签署完整视觉验收')
 
 

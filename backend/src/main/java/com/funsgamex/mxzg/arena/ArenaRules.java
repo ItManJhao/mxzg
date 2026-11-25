@@ -1,9 +1,10 @@
 /**
- * 新手竞技场的原策划配置及计算规则。
- * 提供真实机器人、攻击倍率、积分和奖励规则；匹配、扣费和持久结果由竞技场服务处理。
+ * 普通竞技场的原策划配置及计算规则。
+ * 提供新手机器人、真人候选配比、攻击倍率、积分与奖励，扣费及持久结果由竞技场服务处理。
  */
 package com.funsgamex.mxzg.arena;
 
+import com.funsgamex.mxzg.arena.ArenaRepository.MatchPlayer;
 import com.funsgamex.mxzg.hero.HeroBattleChapterScenario.ConfiguredEnemy;
 import com.funsgamex.mxzg.hero.HeroBattleRoundUtils;
 import com.funsgamex.mxzg.reward.RewardGrantService.Reward;
@@ -116,12 +117,49 @@ final class ArenaRules {
         return List.copyOf(selected);
     }
 
+    /** 旧版最多从本人积分附近十名找候选，靠前角色匹配更多高战力对手。 */
+    static final int MATCH_POOL_SIZE = 10;
+    /** 旧版前 32 名使用一弱二强，其余使用二弱一强，找不到时以余下列表补齐。 */
+    private static final int STRONG_MATCH_RANK = 32;
+
+    /** 从真实近邻随机取出低战力、高战力和补位角色，每个目标只出现一次。 */
+    List<MatchPlayer> drawPlayers(ArenaRepository.MatchPool match, long ownPower, RandomGenerator random) {
+        var pool = new ArrayList<>(match.players());
+        for (int index = pool.size() - 1; index > 0; index--) {
+            java.util.Collections.swap(pool, index, random.nextInt(index + 1));
+        }
+        var result = new ArrayList<MatchPlayer>(config.opponentCount());
+        int lowCount = config.opponentCount() - (match.viewerRank() <= STRONG_MATCH_RANK ? 2 : 1);
+        if (lowCount > 0) {
+            var lower = pool.stream().filter(player -> player.power() < ownPower).limit(lowCount).toList();
+            result.addAll(lower);
+            pool.removeAll(lower);
+        }
+        var higher = pool.stream().filter(player -> player.power() > ownPower)
+                .limit(config.opponentCount() - result.size()).toList();
+        result.addAll(higher);
+        pool.removeAll(higher);
+        result.addAll(pool.stream().limit(config.opponentCount() - result.size()).toList());
+        return List.copyOf(result);
+    }
+
     /** 原杯数规则按分差计算赢家增量并限制在 1～24；新手战败保持原分。 */
     int scoreGain(int attackerScore, int defenderScore) {
+        return Math.clamp(unclampedGain(attackerScore, defenderScore), 1, 24);
+    }
+
+    /** 真人守方失败按原服以守方为第一参数取公式的第二项，实际杯数最低为零。 */
+    int scoreLoss(int defenderScore, int attackerScore) {
+        int spread = 20 + Math.abs(attackerScore - defenderScore) % 10;
+        return Math.min(defenderScore, Math.clamp(spread - unclampedGain(defenderScore, attackerScore), 1, 24));
+    }
+
+    /** 原 Elo 变体的未限制增量；守方扣分先用该值计算互补项，再各自限制。 */
+    private static int unclampedGain(int attackerScore, int defenderScore) {
         int gap = defenderScore - attackerScore;
         double expected = 1.0 / (1.0 + Math.pow(10, gap / 170.0));
         int spread = 20 + Math.abs(gap) % 10;
-        return Math.clamp((int) Math.ceil(spread * (1.0 - expected)), 1, 24);
+        return (int) Math.ceil(spread * (1.0 - expected));
     }
 
     /** 胜负都产生一次权重奖励，命中神职配置时追加实际基础奖励的比例。 */

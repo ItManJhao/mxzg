@@ -140,27 +140,186 @@ class GameSocketTest {
             throw new AssertionError("没有收到 " + name);
         }
 
+        /** 在同一超时内读取资产操作的下一帧。任务进度可以交错，其他事件仍由调用方严格核对。 */
+        JsonNode pollAssetOperation(long timeout, TimeUnit unit) throws InterruptedException {
+            long deadline = System.nanoTime() + unit.toNanos(timeout);
+            while (System.nanoTime() < deadline) {
+                var frame = events.poll();
+                if (frame == null) {
+                    frame = messages.poll(Math.max(1, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
+                }
+                if (frame == null) {
+                    return null;
+                }
+                assertEquals("event", frame.path("kind").asString());
+                assertEquals(connectionId, frame.path("connectionId").asString());
+                if (!"quest.changed".equals(frame.path("name").asString())) {
+                    return frame;
+                }
+                assertTrue(frame.path("body").path("completed").isArray());
+            }
+            return null;
+        }
+
         /** 释放测试 socket 与 HTTP 线程，不在测试间残留连接。 */
         @Override public void close() { socket.abort(); client.close(); }
     }
 
-    /** 未鉴权禁止读背包；正常鉴权后仍须先同步，登录首包同时包含角色与背包，不再提供重复查询。 */
-    /** 真实Protobuf长连接保存、重试和重连恢复，不用HTTP写入阵容。 */
-    @Test void formationSaveSynchronizesAndRecovers() throws Exception {
-        var player=player();String hero=UUID.randomUUID().toString();
-        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10105008,1,5)",hero,player.role().id());
-        long expected=jdbc.queryForObject("SELECT lineup_version FROM game_role WHERE id=?",Long.class,player.role().id());
-        var body=Map.of("requestId",UUID.randomUUID().toString(),"expectedVersion",expected,"formationId",1,"slots",List.of(Map.of("position",2,"heroId",hero)));
-        try(var peer=new Peer()) {
-            peer.authenticate(player.session().accessToken());
-            var result=peer.request("formation.save",body);assertTrue(result.path("ok").asBoolean(), () -> "保存错误码：" + result.path("error").path("code").asString());assertEquals(expected+1,result.path("body").path("version").asLong());
-            var changed=peer.events.poll(5,TimeUnit.SECONDS);assertNotNull(changed);assertEquals("state.changed",changed.path("name").asString());
-            assertEquals(hero,changed.path("body").path("mainFormation").path("slots").get(0).path("heroId").asString());
-            assertTrue(peer.request("formation.save",body).path("ok").asBoolean());
+    /** 两个真实连接接收好友关系和赠礼通知，再通过统一背包资产实际领取。 */
+    @Test
+    void friendsSynchronizeAcrossAuthenticatedConnections() throws Exception {
+        var first = player();
+        var second = player();
+        String firstId = first.role().id();
+        String secondId = second.role().id();
+        String targetName = "联机好友" + secondId.substring(0, 6);
+        jdbc.update("UPDATE game_role SET nickname=?,first_named=TRUE WHERE id=?", targetName, secondId);
+
+        try (var requester = new Peer(); var recipient = new Peer()) {
+            assertTrue(requester.authenticate(first.session().accessToken()).path("ok").asBoolean());
+            assertTrue(recipient.authenticate(second.session().accessToken()).path("ok").asBoolean());
+            var search = requester.request("friend.search", Map.of("query", " " + targetName + " "));
+            assertTrue(search.path("ok").asBoolean());
+            assertEquals(targetName, search.path("body").path("query").asString());
+            assertEquals(secondId, search.path("body").path("entries").path(0).path("roleId").asString());
+
+            friendAction(requester, "APPLY", secondId, 0);
+            recipient.event("friend.changed");
+            requester.event("friend.changed");
+            var pending = recipient.request("friend.state", Map.of()).path("body");
+            assertEquals(firstId, pending.path("applications").path(0).path("roleId").asString());
+            var accepted = friendAction(recipient, "ACCEPT", firstId, 0);
+            assertEquals(firstId, accepted.path("state").path("friends").path(0).path("roleId").asString());
+            requester.event("friend.changed");
+            recipient.event("friend.changed");
+
+            long resetAt = accepted.path("state").path("resetAt").asLong();
+            var sent = friendAction(requester, "SEND", secondId, resetAt);
+            assertEquals("TIPS", sent.path("notice").path("mode").asString());
+            recipient.event("friend.changed");
+            var gift = recipient.request("friend.state", Map.of()).path("body").path("gifts").path(0);
+            assertEquals(firstId, gift.path("roleId").asString());
+            var claim = friendAction(recipient, "CLAIM", firstId, resetAt);
+            assertEquals(10, claim.path("state").path("friendship").asLong());
+            assertEquals("TIPS", claim.path("notice").path("mode").asString());
+            assertTrue(claim.path("state").path("gifts").isEmpty());
         }
-        try(var peer=new Peer()) {
-            var restored=peer.authenticate(player.session().accessToken()).path("body").path("initial");
-            assertEquals(expected+1,restored.path("mainFormation").path("version").asLong());
+    }
+
+    /** 发起单目标好友动作，核对业务请求编号随真实二进制响应原样返回。 */
+    private JsonNode friendAction(Peer peer, String action, String targetId, long resetAt) throws Exception {
+        String requestId = UUID.randomUUID().toString();
+        var response = peer.request("friend.change", Map.of("requestId", requestId, "action", action,
+                "targetId", targetId, "resetAt", resetAt));
+        assertTrue(response.path("ok").asBoolean(), () -> response.path("error").path("code").asString());
+        assertEquals(requestId, response.path("body").path("requestId").asString());
+        return response.path("body");
+    }
+
+    /** 两个隔离账号通过真实二进制连接保存防守、匹配挑战并核对双方记录和排行。 */
+    @Test
+    void arenaPlayersUseDefenseAndShareCommittedReplay() throws Exception {
+        String server = "arena-test-" + UUID.randomUUID().toString().substring(0, 8);
+        jdbc.update("INSERT INTO game_server(id,region_id,region_name,server_name,enabled) VALUES (?,?,?,?,TRUE)",
+                server, "local", "测试区", "竞技场隔离服");
+        jdbc.update("INSERT INTO game_role_public_sequence(server_id) VALUES (?)", server);
+        var attacker = arenaPlayer(server);
+        var defender = arenaPlayer(server);
+        String attackerId = attacker.role().id();
+        String defenderId = defender.role().id();
+        arenaFormation(attacker, 10104004, 100, 4);
+        String defendingHero = arenaFormation(defender, 10101001, 1, 1);
+        try (var first = new Peer(); var second = new Peer()) {
+            assertTrue(first.authenticate(attacker.session().accessToken()).path("ok").asBoolean());
+            assertTrue(second.authenticate(defender.session().accessToken()).path("ok").asBoolean());
+            assertTrue(arenaBody(first, "arena.state", Map.of()).path("newcomerActive").asBoolean());
+            assertTrue(arenaBody(second, "arena.defense", Map.of()).path("fallback").asBoolean());
+            String editId = UUID.randomUUID().toString();
+            var defense = arenaBody(second, "arena.defense.save", Map.of("requestId", editId, "expectedVersion", 0,
+                    "formationId", 1, "slots", List.of(Map.of("position", 5, "heroId", defendingHero))));
+            assertEquals(editId, defense.path("requestId").asString());
+            assertEquals(1, defense.path("defense").path("version").asLong());
+            assertFalse(defense.path("defense").path("fallback").asBoolean());
+
+            jdbc.update("UPDATE game_arena_progress SET robot_wins=5,settled_challenges=5,opponents='' WHERE role_id=?",
+                    attackerId);
+            var renewed = arenaBody(first, "arena.refresh", Map.of());
+            assertFalse(renewed.path("newcomerActive").asBoolean());
+            assertTrue(renewed.path("opponents").valueStream().anyMatch(row -> defenderId.equals(row.path("roleId").asString())));
+            String requestId = UUID.randomUUID().toString();
+            var challenge = Map.of("requestId", requestId, "opponentId", 0, "opponentRoleId", defenderId);
+            var result = arenaBody(first, "arena.challenge", challenge);
+            var summary = result.path("record");
+            assertTrue(summary.path("won").asBoolean());
+            assertEquals(defenderId, summary.path("opponentRoleId").asString());
+            assertEquals("arena:pvp:" + defenderId, result.path("replay").path("scenario").asString());
+            second.event("state.changed");
+            var defenseHistory = arenaBody(second, "arena.state", Map.of()).path("history").path(0);
+            assertEquals(attackerId, defenseHistory.path("opponentRoleId").asString());
+            assertTrue(defenseHistory.path("defense").asBoolean());
+            assertFalse(defenseHistory.path("won").asBoolean());
+            assertEquals(-10, defenseHistory.path("scoreDelta").asInt());
+            assertEquals(summary.path("battleId"), defenseHistory.path("battleId"));
+            assertEquals(result.path("replay"), arenaBody(second, "arena.replay",
+                    Map.of("battleId", summary.path("battleId").asString())));
+            assertEquals(result, arenaBody(first, "arena.challenge", challenge));
+            assertEquals(1010, arenaBody(first, "arena.ranking", Map.of()).path("own").path("score").asInt());
+            assertFalse(arenaBody(first, "arena.season", Map.of()).path("chests").isEmpty());
+        }
+    }
+
+    /** 建立隔离区服的角色，复用登录及主线初始化来生成同真实连接一致的持久状态。 */
+    private DevelopmentLoginService.LoginResult arenaPlayer(String server) {
+        var result = login.login("arena_" + UUID.randomUUID().toString().substring(0, 12), server);
+        campaign.initialize("Bearer " + result.session().accessToken());
+        return result;
+    }
+
+    /** 给隔离测试账号保存真实主阵，场内数据仍由竞技场服务读取持久记录。 */
+    private String arenaFormation(DevelopmentLoginService.LoginResult player, int template, int level, int star) {
+        String role = player.role().id();
+        String hero = UUID.randomUUID().toString();
+        jdbc.update("UPDATE game_role SET role_level=18 WHERE id=?", role);
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,?,?,?,0)",
+                hero, role, template, level, star);
+        long version = jdbc.queryForObject("SELECT lineup_version FROM game_role WHERE id=?", Long.class, role);
+        formations.save("Bearer " + player.session().accessToken(), new com.funsgamex.mxzg.lineup.MainFormationCommandService.Save(
+                UUID.randomUUID().toString(), version, 1, List.of(new com.funsgamex.mxzg.lineup.Lineup.Slot(2, hero))));
+        return hero;
+    }
+
+    /** 核对业务成功并返回 Protobuf 解码后的类型化载荷，不在断言日志打印凭证。 */
+    private JsonNode arenaBody(Peer peer, String name, Map<String, ?> body) throws Exception {
+        var response = peer.request(name, body);
+        assertTrue(response.path("ok").asBoolean(), () -> response.path("error").path("code").asString());
+        return response.path("body");
+    }
+
+    /** 真实长连接保存、重试和重连，资产快照可与独立任务进度事件交错。 */
+    @Test
+    void formationSaveSynchronizesAndRecovers() throws Exception {
+        var player = player();
+        String hero = UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10105008,1,5)",
+                hero, player.role().id());
+        long expected = jdbc.queryForObject("SELECT lineup_version FROM game_role WHERE id=?",
+                Long.class, player.role().id());
+        var body = Map.of("requestId", UUID.randomUUID().toString(), "expectedVersion", expected,
+                "formationId", 1, "slots", List.of(Map.of("position", 2, "heroId", hero)));
+        try (var peer = new Peer()) {
+            peer.authenticate(player.session().accessToken());
+            var result = peer.request("formation.save", body);
+            assertTrue(result.path("ok").asBoolean(), () -> result.path("error").path("code").asString());
+            assertEquals(expected + 1, result.path("body").path("version").asLong());
+            var changed = peer.pollAssetOperation(5, TimeUnit.SECONDS);
+            assertNotNull(changed);
+            assertEquals("state.changed", changed.path("name").asString());
+            assertEquals(hero, changed.path("body").path("mainFormation").path("slots").get(0).path("heroId").asString());
+            assertTrue(peer.request("formation.save", body).path("ok").asBoolean());
+        }
+        try (var peer = new Peer()) {
+            var restored = peer.authenticate(player.session().accessToken()).path("body").path("initial");
+            assertEquals(expected + 1, restored.path("mainFormation").path("version").asLong());
             assertFalse(restored.path("mainFormation").path("options").isEmpty());
         }
     }
@@ -227,7 +386,7 @@ class GameSocketTest {
         }
     }
 
-    /** 真实 WS 持券先免费再扣一张，用统一推送、相同请求重试和重登首包核实英雄与余额。 */
+    /** 真实连接先免费再扣券，使用与任务推送交错的资产快照及重登首包核验英雄和余额。 */
     @Test
     void normalSummonWithTicketPublishesAndReconnects() throws Exception {
         var player = login.login("draw_" + UUID.randomUUID().toString().substring(0, 15), "local-1");
@@ -241,14 +400,15 @@ class GameSocketTest {
             assertEquals(1, stackQuantity(initial, 900201));
             var free = peer.request("hero.summon.normal", Map.of("requestId", UUID.randomUUID().toString()));
             assertTrue(free.path("ok").asBoolean());
-            var freeState = peer.events.poll(5, TimeUnit.SECONDS);
+            var freeState = peer.pollAssetOperation(5, TimeUnit.SECONDS);
             assertNotNull(freeState);
+            assertEquals("state.changed", freeState.path("name").asString());
             assertEquals(1, stackQuantity(freeState.path("body"), 900201));
 
             var paid = peer.request("hero.summon.normal", paidKey);
             assertTrue(paid.path("ok").asBoolean());
             receipt = paid.path("body");
-            var push = peer.events.poll(5, TimeUnit.SECONDS);
+            var push = peer.pollAssetOperation(5, TimeUnit.SECONDS);
             assertNotNull(push);
             assertEquals("state.changed", push.path("name").asString());
             paidState = push.path("body");
@@ -277,7 +437,7 @@ class GameSocketTest {
                 .mapToLong(item -> item.path("quantity").asLong()).sum();
     }
 
-    /** 实际二进制进阶扣费、同步一次，重连后按原编号读取相同收据。 */
+    /** 实际二进制进阶扣费、同步一次，重试后核对资产或奖励没有重复，重连按原编号恢复。 */
     @Test
     void heroStageAdvanceSynchronizesAndRecoversReceipt() throws Exception {
         var player = player();
@@ -303,7 +463,7 @@ class GameSocketTest {
             assertEquals(0, receipt.path("fromStage").asInt(-1));
             assertEquals(1, receipt.path("toStage").asInt());
             assertEquals(role, receipt.path("roleId").asString());
-            var change = peer.events.poll(5, TimeUnit.SECONDS);
+            var change = peer.pollAssetOperation(5, TimeUnit.SECONDS);
             assertNotNull(change);
             assertEquals("state.changed", change.path("name").asString());
             var state = change.path("body");
@@ -316,7 +476,7 @@ class GameSocketTest {
             assertEquals(receipt, peer.request("hero.stage.advance", request).path("body"));
             assertEquals("IDEMPOTENCY_CONFLICT", peer.request("hero.stage.advance",
                     Map.of("requestId", key, "heroId", hero, "expectedStage", 1)).path("error").path("code").asString());
-            assertNull(peer.events.poll(250, TimeUnit.MILLISECONDS));
+            assertNull(peer.pollAssetOperation(250, TimeUnit.MILLISECONDS));
         }
 
         try (var peer = new Peer()) {
@@ -441,12 +601,12 @@ class GameSocketTest {
         return id;
     }
 
-    /** 略过单独的奖励反馈，取真实写操作对应的已提交快照并核对回执版本。 */
+    /** 在任务通知、奖励反馈交错时取得实际养成事务快照，核对回执版本。 */
     private JsonNode committedGrowth(Peer peer, JsonNode response) throws InterruptedException {
         assertTrue(response.path("ok").asBoolean(), response.path("error").toString());
-        var event = peer.events.poll(5, TimeUnit.SECONDS);
+        var event = peer.pollAssetOperation(5, TimeUnit.SECONDS);
         while (event != null && event.path("name").asString().equals("reward.granted")) {
-            event = peer.events.poll(5, TimeUnit.SECONDS);
+            event = peer.pollAssetOperation(5, TimeUnit.SECONDS);
         }
         assertNotNull(event);
         assertEquals("state.changed", event.path("name").asString());

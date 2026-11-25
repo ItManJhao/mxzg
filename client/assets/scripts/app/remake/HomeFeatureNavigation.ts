@@ -36,6 +36,8 @@ interface FeatureHost {
 
     /** 将加载与失败提示交给现有主城显示。 */
     notice(text: string): void;
+    /** 竞技场关闭时恢复原内容页持有的音乐。 */
+    resumeMusic?(): void;
 }
 
 /** 功能页占用主城的内容区域；地图进入的玩法仍点亮主城导航。 */
@@ -69,6 +71,7 @@ const questDestinations: Readonly<Record<string, string | undefined>> = {
     main_clan: "clan",
     main_shop: "main_shop",
     main_mission: "gold-dungeon",
+    main_friend: "main_friend",
 };
 
 /** 管理最新功能打开意图，加载失败时保留已显示的主城或功能页。 */
@@ -101,10 +104,16 @@ export class HomeFeatureNavigation {
         return Object.values(routes).find(route => route.page === page)?.tab ?? null;
     }
 
-    /** 转交已接通的功能入口和页内跳转，日常副本跳转按玩法自身门槛检查。 */
+    /** 转交功能入口和页内跳转，竞技场按玩法门槛在当前内容上方弹出。 */
     open(id: string): boolean {
         if (id === "quest") {
             return this.openQuest("daily");
+        }
+        if (id === "main_rank") {
+            return this.openRanking();
+        }
+        if (id === "main_friend" || id === "mail" || id === "main_mail") {
+            return this.openSocial(id === "main_friend" ? "friend" : "mail");
         }
         if (id === "mainline") {
             id = "battle";
@@ -130,6 +139,9 @@ export class HomeFeatureNavigation {
         }
         if ((id === "gold-dungeon" || id === "arena" || id === "tower") && !this.canOpenPlay(id)) {
             return true;
+        }
+        if (id === "arena") {
+            return this.openArena();
         }
         if (!route) {
             this.reset();
@@ -187,6 +199,52 @@ export class HomeFeatureNavigation {
                 this.host.notice(title + "界面加载失败，请再次点击重试");
             }
         });
+        return true;
+    }
+
+    /** 竞技场覆盖主城和其他任务来源，关闭后恢复原内容页音乐。 */
+    private openArena(): boolean {
+        void this.ui.openById("arena", {
+            account: this.host.account,
+            resumeHomeMusic: () => this.host.resumeMusic?.(),
+        }).catch(error => {
+            if (!UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
+                this.host.notice("竞技场加载失败，请再次点击重试");
+            }
+        });
+        return true;
+    }
+
+    /** 从主城快捷入口或任务跳转打开社会功能窗口。 */
+    private openSocial(page: "friend" | "mail"): boolean {
+        if (!this.disposed && this.host.authorized()) {
+            void this.ui.openById(page).catch(error => {
+                if (!UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
+                    this.host.notice(page === "mail" ? "邮件加载失败，请重试" : "好友加载失败，请重试");
+                }
+            });
+        }
+        return true;
+    }
+
+    /** 按原入口门槛从主城打开排行榜，弹窗独立于底栏页面堆栈。 */
+    private openRanking(): boolean {
+        const role = this.host.account?.snapshot.role;
+        if (this.disposed || !this.host.authorized() || !role) {
+            return true;
+        }
+        const gate = GameConfig.instance.getConfig(GConfig.OpenCondition, "main_rank");
+        if (!gate) {
+            this.host.notice("排行榜开放条件尚未同步");
+        } else if (!EntryGateUtils.isEntryOpen(gate, role.level, 0)) {
+            this.host.notice(`角色达到 ${gate.level} 级开启排行榜`);
+        } else {
+            void this.ui.openById("ranking").catch(error => {
+                if (!UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
+                    this.host.notice("排行榜加载失败，请再次点击重试");
+                }
+            });
+        }
         return true;
     }
 

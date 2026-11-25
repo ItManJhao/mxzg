@@ -42,6 +42,8 @@ export class RemakeApp extends Component {
     @property(Node) noticePanel: Node | null = null;
     /** 独立提示的文字节点，与提示面板静态绑定。 */
     @property(Label) noticeLabel: Label | null = null;
+    /** 场景绑定的附加飘字槽，和首槽共用同一套动画排布。 */
+    @property([Label]) noticeStackLabels: Label[] = [];
     /** 本次启动持有的账号与连接，退出场景时释放并保留持久凭证。 */
     private account: ApplicationAccount | null = null;
     /** 本场景装配的模块，共用账号状态，随场景卸载。 */
@@ -71,7 +73,7 @@ export class RemakeApp extends Component {
 
     /** 编辑器启动应用时装配唯一会话服务和页面注册，并执行新链路启动流程。 */
     async start(): Promise<void> {
-        this.notices = new ToastManager(this.noticePanel, this.noticeLabel);
+        this.notices = new ToastManager(this.noticePanel, this.noticeLabel, this.noticeStackLabels);
         this.offNotice = UIManager.instance.bindNotice((text, duration) => this.notices?.show(text, duration));
         try {
             await this.initialize();

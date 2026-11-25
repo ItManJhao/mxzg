@@ -74,9 +74,14 @@ const payloads = [
     "towerState", "towerFormationSave", "towerRequest", "towerSettlement",
     "arenaState", "arenaChallengeRequest", "arenaReplayRequest", "arenaReplay", "arenaSettlement",
     "arenaTicketBuyRequest", "arenaTicketPurchase",
+    "arenaRanking", "arenaSeason", "arenaChestRequest", "arenaChestReceipt", "arenaLikeRequest", "arenaLikeReceipt",
+    "arenaDefense", "arenaDefenseSave", "arenaDefenseSaved", "arenaShopState", "arenaShopBuy", "arenaShopReceipt",
     "guildListRequest", "guildChangeRequest", "guildState", "vipClaimRequest", "vipClaimReceipt",
     "guildShopBuyRequest", "guildShopState", "guildDonationRequest", "guildDonationState", "guildRankingState",
     "questClaimRequest", "questSnapshot", "questClaimReceipt", "questChanged",
+    "rankingListRequest", "rankingLikeRequest", "rankingOverview", "rankingDetail", "rankingLikeReceipt",
+    "mailCommand", "mailboxState", "mailboxReceipt", "friendSearchRequest", "friendChangeRequest", "friendState",
+    "friendSearchResult", "friendChangeResult",
     "chapterQuickBattleState", "chapterQuickBattleClaim", "chapterQuickBattleReceipt",
 ];
 /** 无状态协议转换工具；不会持有会话、角色或网络连接。 */
@@ -113,6 +118,22 @@ export class GameProtocolCodecUtils {
                     return request ? "arenaReplayRequest" : "arenaReplay";
                 case Protocol.ARENA_TICKET_BUY:
                     return request ? "arenaTicketBuyRequest" : "arenaTicketPurchase";
+                case Protocol.ARENA_RANKING:
+                    return request ? "empty" : "arenaRanking";
+                case Protocol.ARENA_SEASON:
+                    return request ? "empty" : "arenaSeason";
+                case Protocol.ARENA_CHEST_CLAIM:
+                    return request ? "arenaChestRequest" : "arenaChestReceipt";
+                case Protocol.ARENA_LIKE:
+                    return request ? "arenaLikeRequest" : "arenaLikeReceipt";
+                case Protocol.ARENA_DEFENSE:
+                    return request ? "empty" : "arenaDefense";
+                case Protocol.ARENA_DEFENSE_SAVE:
+                    return request ? "arenaDefenseSave" : "arenaDefenseSaved";
+                case Protocol.ARENA_SHOP:
+                    return request ? "empty" : "arenaShopState";
+                case Protocol.ARENA_SHOP_BUY:
+                    return request ? "arenaShopBuy" : "arenaShopReceipt";
             }
         }
         const dungeonRoute = Protocol.dailyDungeonRoute(frame.name);
@@ -231,6 +252,11 @@ export class GameProtocolCodecUtils {
                 case Protocol.GUILD_DONATION_DONATE:
                 case Protocol.GUILD_DONATION_CLAIM: return "guildDonationRequest";
                 case Protocol.QUEST_CLAIM: return "questClaimRequest";
+                case Protocol.RANKING_LIST: return "rankingListRequest";
+                case Protocol.RANKING_LIKE: return "rankingLikeRequest";
+                case Protocol.MAIL_CHANGE: return "mailCommand";
+                case Protocol.FRIEND_SEARCH: return "friendSearchRequest";
+                case Protocol.FRIEND_CHANGE: return "friendChangeRequest";
                 case Protocol.VIP_CLAIM: return "vipClaimRequest";
                 case Protocol.GM_LEVEL_SET: return "gmSetRoleLevel";
                 case Protocol.GM_CHAPTER_SET: return "gmSetChapter";
@@ -250,6 +276,9 @@ export class GameProtocolCodecUtils {
             return "kicked";
         }
         if (frame.kind === "event" && frame.name === Protocol.GUILD_UPDATED) {
+            return "empty";
+        }
+        if (frame.kind === "event" && (frame.name === Protocol.MAIL_CHANGED || frame.name === Protocol.FRIEND_CHANGED)) {
             return "empty";
         }
         if (frame.kind === "event" && frame.name === Protocol.QUEST_CHANGED) {
@@ -302,6 +331,14 @@ export class GameProtocolCodecUtils {
                 case Protocol.GUILD_DONATION_CLAIM: return "guildDonationState";
                 case Protocol.QUEST_LIST: return "questSnapshot";
                 case Protocol.QUEST_CLAIM: return "questClaimReceipt";
+                case Protocol.RANKING_OVERVIEW: return "rankingOverview";
+                case Protocol.RANKING_LIST: return "rankingDetail";
+                case Protocol.RANKING_LIKE: return "rankingLikeReceipt";
+                case Protocol.MAIL_LIST: return "mailboxState";
+                case Protocol.MAIL_CHANGE: return "mailboxReceipt";
+                case Protocol.FRIEND_STATE: return "friendState";
+                case Protocol.FRIEND_SEARCH: return "friendSearchResult";
+                case Protocol.FRIEND_CHANGE: return "friendChangeResult";
                 case Protocol.GUILD_RANKING: return "guildRankingState";
                 case Protocol.VIP_CLAIM: return "vipClaimReceipt";
                 case Protocol.ROLE_NAME_RANDOM: return "roleName";
@@ -609,13 +646,16 @@ export class GameProtocolCodecUtils {
                     break;
                 }
                 case Protocol.ARENA_CHALLENGE:
-                case Protocol.ARENA_TICKET_BUY: {
-                    const field = frame.name === Protocol.ARENA_CHALLENGE ? "opponentId" : "quantity";
-                    if (!this.isUuid(body.requestId) || !integer(body[field], 1, 0x7fffffff)) {
+                    if (!this.isUuid(body.requestId) || !this.validArenaTarget(body.opponentId, body.opponentRoleId)
+                            || Object.keys(body).some(key => !["requestId", "opponentId", "opponentRoleId"].includes(key))) {
+                        throw new Error("竞技场对手编号无效");
+                    }
+                    break;
+                case Protocol.ARENA_TICKET_BUY:
+                    if (!this.isUuid(body.requestId) || !integer(body.quantity, 1, 0x7fffffff)) {
                         throw new Error("竞技场请求无效");
                     }
                     break;
-                }
                 case Protocol.ARENA_REPLAY:
                     if (!this.isUuid(body.battleId)) {
                         throw new Error("竞技场战报编号无效");
@@ -646,18 +686,28 @@ export class GameProtocolCodecUtils {
             case Protocol.ARENA_CHALLENGE: {
                 this.validateBattleSettlement(body);
                 const entry = this.messageObject(body.record);
-                if (!this.isUuid(entry.battleId) || !integer(entry.opponentId, 1, 0x7fffffff)
-                        || typeof entry.won !== "boolean") {
+                if (!this.validArenaHistory(entry) || entry.defense === true) {
                     throw new Error("竞技场结算记录无效");
                 }
-                this.validateProgressionReplay(body.replay, `arena:${entry.opponentId}`, entry.won);
+                const scenario = entry.opponentRoleId ? `arena:pvp:${entry.opponentRoleId}` : `arena:${entry.opponentId}`;
+                this.validateProgressionReplay(body.replay, scenario, entry.won === true);
+                const replay = this.messageObject(body.replay);
+                if (replay.defenderName !== entry.opponentName) {
+                    throw new Error("竞技场结算对手不符");
+                }
+                this.validateArenaState(body.state);
                 break;
             }
             case Protocol.ARENA_REPLAY:
                 if (body.schemaVersion !== 1 || typeof body.scenario !== "string"
-                        || !/^arena:[1-9][0-9]*$/.test(body.scenario)) {
+                        || !(/^arena:[1-9][0-9]*$/.test(body.scenario)
+                            || (body.scenario.startsWith("arena:pvp:") && this.isUuid(body.scenario.slice(10))))) {
                     throw new Error("竞技场历史战报来源无效");
                 }
+                break;
+            case Protocol.ARENA_STATE:
+            case Protocol.ARENA_REFRESH:
+                this.validateArenaState(body);
                 break;
             case Protocol.ARENA_TICKET_BUY:
                 this.validateBattleSettlement(body);
@@ -667,6 +717,186 @@ export class GameProtocolCodecUtils {
                 break;
             default:
                 break;
+        }
+    }
+
+    /** 机器人配置号与真人角色号使用同一个协议的两个互斥表示。 */
+    private static validArenaTarget(id: unknown, roleId: unknown): boolean {
+        return roleId === undefined ? this.isIntegerInRange(id, 1, 0x7fffffff) : id === 0 && this.isUuid(roleId);
+    }
+
+    /** 只接受服务端参与者历史和有效战报标识。 */
+    private static validArenaHistory(row: Record<string, unknown>): boolean {
+        return this.isUuid(row.battleId) && this.validArenaTarget(row.opponentId, row.opponentRoleId)
+            && typeof row.opponentName === "string" && row.opponentName.length <= 128
+            && typeof row.won === "boolean" && this.isIntegerInRange(row.settledAtSeconds, 1)
+            && this.isIntegerInRange(row.scoreDelta, -0x80000000, 0x7fffffff)
+            && (row.defense === undefined || typeof row.defense === "boolean");
+    }
+
+    /** 校验候选、真实场次和历史，保持已保存机器人回执的旧字段兼容。 */
+    private static validateArenaState(source: unknown): void {
+        const state = this.messageObject(source);
+        const integer = this.isIntegerInRange;
+        const validOpponent = (value: unknown): boolean => {
+            const row = this.messageObject(value);
+            return this.validArenaTarget(row.id, row.roleId) && typeof row.name === "string" && row.name.length <= 128
+                && integer(row.level, 1) && integer(row.score, 0) && integer(row.power, 0)
+                && integer(row.avatarId, 0) && (row.borderId === undefined || integer(row.borderId, 0));
+        };
+        if (![state.score, state.freeRemaining, state.robotWins, state.settledChallenges, state.ticketBalance]
+                .every(value => integer(value, 0))
+                || !integer(state.resetAtSeconds, 1) || !integer(state.ticketPriceDiamonds, 1)
+                || typeof state.newcomerActive !== "boolean"
+                || !Array.isArray(state.opponents) || state.opponents.length > 3 || !state.opponents.every(validOpponent)
+                || !Array.isArray(state.history) || state.history.length > 100
+                || !state.history.every(row => this.validArenaHistory(this.messageObject(row)))) {
+            throw new Error("竞技场状态无效");
+        }
+    }
+
+    /** 核对防守格位，拒绝重复站位和不属于战斗区域的助战格。 */
+    private static validArenaSlots(source: unknown): boolean {
+        if (!Array.isArray(source) || source.length > 8) {
+            return false;
+        }
+        const slots = source.map(value => this.messageObject(value));
+        return new Set(slots.map(slot => slot.position)).size === slots.length
+            && new Set(slots.map(slot => slot.heroId)).size === slots.length
+            && slots.every(slot => this.isIntegerInRange(slot.position, 1, 8) && this.isUuid(slot.heroId));
+    }
+
+    /** 原策划表的奖品必须为正数量和有效配置编号。 */
+    private static validArenaRewards(value: unknown): boolean {
+        return Array.isArray(value) && value.length > 0 && value.length <= 30 && value.every(item => {
+            const reward = this.messageObject(item);
+            return this.isIntegerInRange(reward.itemId, 1, 0x7fffffff) && this.isIntegerInRange(reward.quantity, 1);
+        });
+    }
+
+    /** 校验赛季、宝箱、商店及防守的独立请求和嵌套回执。 */
+    private static validateArenaPanels(frame: GameFrame): void {
+        const names = [
+            Protocol.ARENA_RANKING, Protocol.ARENA_SEASON, Protocol.ARENA_CHEST_CLAIM, Protocol.ARENA_LIKE,
+            Protocol.ARENA_DEFENSE, Protocol.ARENA_DEFENSE_SAVE, Protocol.ARENA_SHOP, Protocol.ARENA_SHOP_BUY,
+        ];
+        if (frame.ok === false || !(names as readonly string[]).includes(frame.name)) {
+            return;
+        }
+        const body = this.messageObject(frame.body);
+        const integer = this.isIntegerInRange;
+        if (frame.kind === "request") {
+            let valid: boolean;
+            switch (frame.name) {
+                case Protocol.ARENA_CHEST_CLAIM:
+                    valid = Object.keys(body).length === 3 && this.isUuid(body.requestId)
+                        && integer(body.chestId, 1) && integer(body.seasonEndsAt, 1);
+                    break;
+                case Protocol.ARENA_LIKE:
+                    valid = Object.keys(body).length === 3 && this.isUuid(body.requestId)
+                        && this.isUuid(body.targetRoleId) && integer(body.dailyEndsAt, 1);
+                    break;
+                case Protocol.ARENA_DEFENSE_SAVE:
+                    valid = Object.keys(body).length === 4 && this.isUuid(body.requestId)
+                        && integer(body.expectedVersion, 0) && integer(body.formationId, 1) && this.validArenaSlots(body.slots);
+                    break;
+                case Protocol.ARENA_SHOP_BUY:
+                    valid = Object.keys(body).length === 4 && this.isUuid(body.requestId)
+                        && integer(body.offerId, 1) && integer(body.quantity, 1) && integer(body.refreshAt, 1);
+                    break;
+                default:
+                    valid = Object.keys(body).length === 0;
+                    break;
+            }
+            if (!valid) {
+                throw new Error("竞技场页面操作无效");
+            }
+            return;
+        }
+        const hasReward = frame.name === Protocol.ARENA_CHEST_CLAIM || frame.name === Protocol.ARENA_LIKE
+            || frame.name === Protocol.ARENA_SHOP_BUY;
+        const savesDefense = frame.name === Protocol.ARENA_DEFENSE_SAVE;
+        if ((hasReward || savesDefense) && !this.isUuid(body.requestId)) {
+            throw new Error("竞技场操作回执无效");
+        }
+        if (hasReward && this.validateRewardNotice(body.notice).requestId !== body.requestId) {
+            throw new Error("竞技场奖励与操作回执不符");
+        }
+        switch (frame.name) {
+            case Protocol.ARENA_RANKING:
+            case Protocol.ARENA_LIKE:
+                this.validateArenaRanking(frame.name === Protocol.ARENA_LIKE ? this.messageObject(body.ranking) : body);
+                break;
+            case Protocol.ARENA_SEASON:
+            case Protocol.ARENA_CHEST_CLAIM:
+                this.validateArenaSeason(hasReward ? this.messageObject(body.state) : body);
+                break;
+            case Protocol.ARENA_SHOP:
+            case Protocol.ARENA_SHOP_BUY:
+                this.validateArenaShop(hasReward ? this.messageObject(body.state) : body);
+                break;
+            default: {
+                const defense = savesDefense ? this.messageObject(body.defense) : body;
+                if (!integer(defense.version, savesDefense ? 1 : 0) || !integer(defense.formationId, 1)
+                        || !this.validArenaSlots(defense.slots) || typeof defense.fallback !== "boolean") {
+                    throw new Error("竞技场防守阵容无效");
+                }
+                break;
+            }
+        }
+    }
+
+    /** 榜单行唯一且按真实名次排列，未上榜的本人名次为 0。 */
+    private static validateArenaRanking(body: Record<string, unknown>): void {
+        const integer = this.isIntegerInRange;
+        const validEntry = (row: Record<string, unknown>): boolean =>
+            this.isUuid(row.roleId) && typeof row.name === "string" && row.name.length <= 128
+            && [row.rank, row.score, row.power, row.headId, row.borderId, row.receivedLikes].every(value => integer(value, 0))
+            && integer(row.level, 1) && typeof row.liked === "boolean";
+        if (!integer(body.likesRemaining, 0) || !integer(body.dailyEndsAt, 1)
+                || !Array.isArray(body.entries) || body.entries.length > 50 || !validEntry(this.messageObject(body.own))) {
+            throw new Error("竞技场榜单无效");
+        }
+        const rows = body.entries.map(row => this.messageObject(row));
+        if (new Set(rows.map(row => row.roleId)).size !== rows.length
+                || !rows.every((row, index) => validEntry(row) && row.rank === index + 1)) {
+            throw new Error("竞技场榜单名次无效");
+        }
+    }
+
+    /** 匹配服务端赛季和自然日时间，奖励档位及宝箱必须可显示。 */
+    private static validateArenaSeason(body: Record<string, unknown>): void {
+        const integer = this.isIntegerInRange;
+        const validTiers = (value: unknown): boolean => Array.isArray(value) && value.length <= 50
+            && value.every(item => {
+                const tier = this.messageObject(item);
+                return integer(tier.minRank, 1) && integer(tier.maxRank, Number(tier.minRank))
+                    && this.validArenaRewards(tier.rewards);
+            });
+        if (!integer(body.seasonEndsAt, 0) || !integer(body.dailyEndsAt, 1) || !integer(body.seasonChallenges, 0)
+                || (body.challengeEndsAt !== undefined && !integer(body.challengeEndsAt, 0, Number(body.seasonEndsAt)))
+                || !validTiers(body.dailyTiers) || !validTiers(body.seasonTiers)
+                || !Array.isArray(body.chests) || body.chests.length > 6 || !body.chests.every(value => {
+                    const chest = this.messageObject(value);
+                    return integer(chest.id, 1) && integer(chest.requiredChallenges, 1) && integer(chest.boxPic, 1)
+                        && typeof chest.claimed === "boolean" && this.validArenaRewards(chest.rewards);
+                })) {
+            throw new Error("竞技场赛季状态无效");
+        }
+    }
+
+    /** 核对固定商品的周限购次数、价格和实际奖品。 */
+    private static validateArenaShop(body: Record<string, unknown>): void {
+        const integer = this.isIntegerInRange;
+        if (!integer(body.refreshAt, 1) || !integer(body.currencyBalance, 0) || !Array.isArray(body.offers)
+                || body.offers.length > 50 || !body.offers.every(value => {
+                    const offer = this.messageObject(value);
+                    return integer(offer.id, 1) && integer(offer.requiredLevel, 0) && integer(offer.price, 1)
+                        && integer(offer.purchaseLimit, 0)
+                        && integer(offer.purchased, 0, offer.purchaseLimit || Number.MAX_SAFE_INTEGER)
+                        && Array.isArray(offer.rewards) && offer.rewards.length === 1 && this.validArenaRewards(offer.rewards);
+                })) {
+            throw new Error("竞技商店状态无效");
         }
     }
 
@@ -1511,6 +1741,174 @@ export class GameProtocolCodecUtils {
         }
     }
 
+    /** 校验邮件命令和完整摘要，邮件详情只在打开回执中出现。 */
+    private static validateMail(frame: GameFrame): void {
+        if (frame.ok === false || (frame.name !== Protocol.MAIL_LIST && frame.name !== Protocol.MAIL_CHANGE)) {
+            return;
+        }
+        const body = this.messageObject(frame.body);
+        if (frame.kind === "request") {
+            if (frame.name === Protocol.MAIL_LIST && !Object.keys(body).length) {
+                return;
+            }
+            const single = ["OPEN", "CLAIM", "DELETE"].includes(String(body.action));
+            const bulk = ["CLAIM_ALL", "DELETE_READ"].includes(String(body.action));
+            if (frame.name !== Protocol.MAIL_CHANGE || !this.isUuid(body.requestId)
+                || (!single && !bulk) || Object.keys(body).length !== (single ? 3 : 2)
+                || (single ? !this.isUuid(body.mailId) : body.mailId !== undefined)) {
+                throw new Error("邮件操作参数无效");
+            }
+            return;
+        }
+        const receipt = frame.name === Protocol.MAIL_CHANGE;
+        const state = receipt ? this.messageObject(body.state) : body;
+        if ((receipt && !this.isUuid(body.requestId)) || !Array.isArray(state.entries) || state.entries.length > 500) {
+            throw new Error("邮件回包无效");
+        }
+        const entries = state.entries.map(row => this.messageObject(row));
+        if (new Set(entries.map(row => row.id)).size !== entries.length || entries.some(row =>
+            !this.isUuid(row.id) || typeof row.title !== "string" || row.title.length > 160
+            || !this.isIntegerInRange(row.createdAt, 1) || typeof row.read !== "boolean"
+            || typeof row.claimed !== "boolean" || typeof row.hasAttachments !== "boolean")) {
+            throw new Error("邮件摘要无效");
+        }
+        if (body.detail !== undefined) {
+            const detail = this.messageObject(body.detail);
+            if (!this.isUuid(detail.id) || !entries.some(row => row.id === detail.id && row.read)
+                || typeof detail.content !== "string" || detail.content.length > 10000
+                || !Array.isArray(detail.attachments) || detail.attachments.length > 100 || detail.attachments.some(value => {
+                    const reward = this.messageObject(value);
+                    return !this.isIntegerInRange(reward.itemId, 1, 0x7fffffff) || !this.isIntegerInRange(reward.quantity, 1);
+                })) {
+                throw new Error("邮件详情无效");
+            }
+        }
+        this.validateSocialReward(body);
+    }
+
+    /** 校验好友公开资料、四类列表及与原操作关联的礼物奖励。 */
+    private static validateFriend(frame: GameFrame): void {
+        if (frame.ok === false || (frame.name !== Protocol.FRIEND_STATE && frame.name !== Protocol.FRIEND_SEARCH
+            && frame.name !== Protocol.FRIEND_CHANGE)) {
+            return;
+        }
+        const body = this.messageObject(frame.body);
+        const search = frame.name === Protocol.FRIEND_SEARCH;
+        const change = frame.name === Protocol.FRIEND_CHANGE;
+        if (frame.kind === "request") {
+            if (search && Object.keys(body).length === 1 && typeof body.query === "string" && body.query.length <= 80) {
+                return;
+            }
+            if (!search && !change && !Object.keys(body).length) {
+                return;
+            }
+            const batch = body.action === "SEND_ALL" || body.action === "CLAIM_ALL";
+            const single = ["APPLY", "ACCEPT", "REJECT", "REMOVE", "BLOCK", "UNBLOCK", "SEND", "CLAIM"].includes(String(body.action));
+            if (!change || (!batch && !single) || !this.isUuid(body.requestId)
+                || !this.isIntegerInRange(body.resetAt, 0) || Object.keys(body).length !== (batch ? 3 : 4)
+                || (batch ? body.targetId !== undefined : !this.isUuid(body.targetId))) {
+                throw new Error("好友操作参数无效");
+            }
+            return;
+        }
+        if (search) {
+            if (typeof body.query !== "string" || body.query.length > 80 || !this.validFriendList(body.entries)) {
+                throw new Error("好友搜索结果无效");
+            }
+            return;
+        }
+        const state = change ? this.messageObject(body.state) : body;
+        if ((change && !this.isUuid(body.requestId)) || [state.friendLimit, state.blockLimit, state.sendLimit, state.resetAt]
+                .some(value => !this.isIntegerInRange(value, 1))
+            || !this.isIntegerInRange(state.sentToday, 0, Number(state.sendLimit)) || !this.isIntegerInRange(state.friendship, 0)
+            || [state.friends, state.gifts, state.applications, state.blocked].some(list => !this.validFriendList(list))) {
+            throw new Error("好友状态无效");
+        }
+        this.validateSocialReward(body);
+    }
+
+    /** 每种关系列表只允许同一角色出现一次；通过在线连接读取的角色信息仅用于显示。 */
+    private static validFriendList(value: unknown): boolean {
+        if (!Array.isArray(value) || value.length > 500) {
+            return false;
+        }
+        const rows = value.map(entry => this.messageObject(entry));
+        return new Set(rows.map(row => row.roleId)).size === rows.length && rows.every(row => this.isUuid(row.roleId)
+            && typeof row.serverId === "string" && /^[a-z0-9_-]{1,32}$/i.test(row.serverId)
+            && typeof row.name === "string" && row.name.length > 0 && row.name.length <= 128
+            && this.isIntegerInRange(row.level, 1, 0x7fffffff) && this.isIntegerInRange(row.giftState, 0, 2)
+            && [row.headId, row.borderId, row.power, row.lastLoginAt].every(field => this.isIntegerInRange(field, 0))
+            && typeof row.sentToday === "boolean" && typeof row.requested === "boolean");
+    }
+
+    /** 有奖励时要求它与本次社交命令的业务请求编号一致。 */
+    private static validateSocialReward(body: Record<string, unknown>): void {
+        if (body.notice !== undefined && this.validateRewardNotice(body.notice).requestId !== body.requestId) {
+            throw new Error("奖励与社交操作回执不符");
+        }
+    }
+
+    /** 排行榜只接受现有的五种榜单和完整的展示行，点赞回执必须携带原金币反馈。 */
+    private static validateRanking(frame: GameFrame): void {
+        const { name, kind } = frame;
+        if (frame.ok === false || (name !== Protocol.RANKING_OVERVIEW && name !== Protocol.RANKING_LIST && name !== Protocol.RANKING_LIKE)) {
+            return;
+        }
+        const body = this.messageObject(frame.body);
+        const boardKinds = ["CHAPTER", "GUILD", "POWER", "CROSS_GUILD", "CROSS_POWER"];
+        const validKind = (value: unknown): boolean => typeof value === "string" && boardKinds.includes(value);
+        const positive = (value: unknown): boolean => this.isIntegerInRange(value, 1, Number.MAX_SAFE_INTEGER);
+        if (kind === "request") {
+            const fields = name === Protocol.RANKING_OVERVIEW ? [] : name === Protocol.RANKING_LIST ? ["kind"]
+                : ["kind", "requestId", "targetId", "resetAt"];
+            if (Object.keys(body).length !== fields.length || Object.keys(body).some(key => !fields.includes(key))
+                || (fields.length > 0 && !validKind(body.kind))
+                || (name === Protocol.RANKING_LIKE && (!this.isUuid(body.requestId) || !this.isUuid(body.targetId) || !positive(body.resetAt)))) {
+                throw new Error("排行榜操作参数无效");
+            }
+            return;
+        }
+        if (name === Protocol.RANKING_LIST) {
+            if (!validKind(body.kind) || !Array.isArray(body.entries) || body.entries.length > 50
+                || new Set(body.entries.map(entry => this.messageObject(entry).id)).size !== body.entries.length
+                || body.entries.some((entry, index) => !this.validRankingEntry(entry, index + 1))
+                || (body.own !== undefined && !this.validRankingEntry(body.own))) {
+                throw new Error("榜单名次或条目无效");
+            }
+            return;
+        }
+        const overview = name === Protocol.RANKING_OVERVIEW ? body : this.messageObject(body.overview);
+        if (!positive(overview.crossLevel) || !positive(overview.resetAt) || typeof overview.crossUnlocked !== "boolean"
+            || !Array.isArray(overview.boards) || overview.boards.length > 5
+            || new Set(overview.boards.map(board => this.messageObject(board).kind)).size !== overview.boards.length
+            || overview.boards.some(value => {
+                const row = this.messageObject(value);
+                return !validKind(row.kind) || typeof row.liked !== "boolean"
+                    || (!overview.crossUnlocked && String(row.kind).startsWith("CROSS_"))
+                    || (row.leader !== undefined && !this.validRankingEntry(row.leader, 1));
+            })) {
+            throw new Error("排行总览无效");
+        }
+        if (name === Protocol.RANKING_LIKE) {
+            const notice = this.validateRewardNotice(body.notice);
+            if (!this.isUuid(body.requestId) || notice.requestId !== body.requestId || notice.mode !== "TIPS") {
+                throw new Error("排行点赞回执无效");
+            }
+        }
+    }
+
+    /** 校验角色或公会的公开显示资料；自己未上榜时允许名次为零。 */
+    private static validRankingEntry(value: unknown, expectedRank?: number): boolean {
+        const entry = this.messageObject(value);
+        return this.isUuid(entry.id) && typeof entry.serverId === "string" && /^[a-z0-9_-]{1,32}$/i.test(entry.serverId)
+            && typeof entry.name === "string" && entry.name.trim().length > 0 && entry.name.length <= 128
+            && typeof entry.leaderName === "string" && entry.leaderName.length <= 128
+            && this.isIntegerInRange(entry.score, 0, Number.MAX_SAFE_INTEGER)
+            && [entry.rank, entry.level, entry.headId, entry.borderId, entry.badgeId]
+                .every(field => this.isIntegerInRange(field, 0, 0x7fffffff))
+            && (expectedRank === undefined || entry.rank === expectedRank);
+    }
+
     /** 各类任务编号必须为正整数，同一列表只允许一个条目使用该编号。 */
     private static validQuestRows(value: unknown, maximum: number,
         validate: (row: Record<string, unknown>) => boolean): boolean {
@@ -1664,6 +2062,10 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateGuildProgress(frame);
         GameProtocolCodecUtils.validateGuildFeature(frame);
         GameProtocolCodecUtils.validateQuest(frame);
+        GameProtocolCodecUtils.validateRanking(frame);
+        GameProtocolCodecUtils.validateMail(frame);
+        GameProtocolCodecUtils.validateFriend(frame);
+        GameProtocolCodecUtils.validateArenaPanels(frame);
         HeroLevelData.validateFrame(frame);
         HeroLevelData.validateStageFrame(frame);
         const { body, ...envelope } = frame;
@@ -1731,6 +2133,10 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateGuildProgress(frame);
         GameProtocolCodecUtils.validateGuildFeature(frame);
         GameProtocolCodecUtils.validateQuest(frame);
+        GameProtocolCodecUtils.validateRanking(frame);
+        GameProtocolCodecUtils.validateMail(frame);
+        GameProtocolCodecUtils.validateFriend(frame);
+        GameProtocolCodecUtils.validateArenaPanels(frame);
         HeroLevelData.validateFrame(frame);
         HeroLevelData.validateStageFrame(frame);
         GameProtocolCodecUtils.validateRoleName(frame, expected);

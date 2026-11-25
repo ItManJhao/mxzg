@@ -45,10 +45,15 @@ public final class GameProtocolCodec {
         "towerState", "towerFormationSave", "towerRequest", "towerSettlement",
         "arenaState", "arenaChallengeRequest", "arenaReplayRequest", "arenaReplay", "arenaSettlement",
         "arenaTicketBuyRequest", "arenaTicketPurchase",
+        "arenaRanking", "arenaSeason", "arenaChestRequest", "arenaChestReceipt", "arenaLikeRequest", "arenaLikeReceipt",
+        "arenaDefense", "arenaDefenseSave", "arenaDefenseSaved", "arenaShopState", "arenaShopBuy", "arenaShopReceipt",
         "guildListRequest", "guildChangeRequest", "guildState", "vipClaimRequest", "vipClaimReceipt",
         "guildShopBuyRequest", "guildShopState", "guildDonationRequest", "guildDonationState", "guildRankingState",
         "chapterQuickBattleState", "chapterQuickBattleClaim", "chapterQuickBattleReceipt",
-        "questClaimRequest", "questSnapshot", "questClaimReceipt", "questChanged");
+        "questClaimRequest", "questSnapshot", "questClaimReceipt", "questChanged",
+        "rankingListRequest", "rankingLikeRequest", "rankingOverview", "rankingDetail", "rankingLikeReceipt",
+        "mailCommand", "mailboxState", "mailboxReceipt", "friendSearchRequest", "friendChangeRequest", "friendState",
+        "friendSearchResult", "friendChangeResult");
     /** 工具类不持有实例状态。 */
     private GameProtocolCodec() {}
 
@@ -132,12 +137,21 @@ public final class GameProtocolCodec {
                 case "guild.shop.buy" -> "guildShopBuyRequest";
                 case "guild.donation.donate", "guild.donation.claim" -> "guildDonationRequest";
                 case "quest.claim" -> "questClaimRequest";
+                case "ranking.list" -> "rankingListRequest";
+                case "ranking.like" -> "rankingLikeRequest";
+                case "mail.change" -> "mailCommand";
+                case "friend.search" -> "friendSearchRequest";
+                case "friend.change" -> "friendChangeRequest";
                 case "vip.claim" -> "vipClaimRequest";
                 case "tower.formation.save" -> "towerFormationSave";
                 case "tower.challenge", "tower.sweep", "tower.milestone.claim" -> "towerRequest";
                 case "arena.challenge" -> "arenaChallengeRequest";
                 case "arena.replay" -> "arenaReplayRequest";
                 case "arena.ticket.buy" -> "arenaTicketBuyRequest";
+                case "arena.chest.claim" -> "arenaChestRequest";
+                case "arena.like" -> "arenaLikeRequest";
+                case "arena.defense.save" -> "arenaDefenseSave";
+                case "arena.shop.buy" -> "arenaShopBuy";
                 case "dungeon.gold.challenge", "dungeon.experience.challenge", "dungeon.hero.challenge",
                         "dungeon.fetter.challenge", "dungeon.spirit.challenge" -> "dailyDungeonChallengeRequest";
                 case "role.name.set" -> "roleName";
@@ -153,6 +167,7 @@ public final class GameProtocolCodec {
         if (kind.equals("event") && name.equals("reward.granted")) return "rewardNotice";
         if (kind.equals("event") && name.equals("guild.updated")) return "empty";
         if (kind.equals("event") && name.equals("quest.changed")) return "questChanged";
+        if (kind.equals("event") && (name.equals("mail.changed") || name.equals("friend.changed"))) return "empty";
         if (kind.equals("response")) return switch (name) {
             case "session.login", "session.authenticate" -> "accepted"; case "servers.list" -> "servers";
             case "chapter.idle.claim" -> "chapterIdleClaimReceipt";
@@ -187,6 +202,14 @@ public final class GameProtocolCodec {
             case "guild.donation.info", "guild.donation.donate", "guild.donation.claim" -> "guildDonationState";
             case "quest.list" -> "questSnapshot";
             case "quest.claim" -> "questClaimReceipt";
+            case "ranking.overview" -> "rankingOverview";
+            case "ranking.list" -> "rankingDetail";
+            case "ranking.like" -> "rankingLikeReceipt";
+            case "mail.list" -> "mailboxState";
+            case "mail.change" -> "mailboxReceipt";
+            case "friend.state" -> "friendState";
+            case "friend.search" -> "friendSearchResult";
+            case "friend.change" -> "friendChangeResult";
             case "guild.ranking" -> "guildRankingState";
             case "vip.claim" -> "vipClaimReceipt";
             case "tower.state", "tower.formation.save" -> "towerState";
@@ -195,6 +218,14 @@ public final class GameProtocolCodec {
             case "arena.challenge" -> "arenaSettlement";
             case "arena.replay" -> "arenaReplay";
             case "arena.ticket.buy" -> "arenaTicketPurchase";
+            case "arena.ranking" -> "arenaRanking";
+            case "arena.season" -> "arenaSeason";
+            case "arena.chest.claim" -> "arenaChestReceipt";
+            case "arena.like" -> "arenaLikeReceipt";
+            case "arena.defense" -> "arenaDefense";
+            case "arena.defense.save" -> "arenaDefenseSaved";
+            case "arena.shop" -> "arenaShopState";
+            case "arena.shop.buy" -> "arenaShopReceipt";
             case "dungeon.gold.list", "dungeon.experience.list", "dungeon.hero.list",
                     "dungeon.fetter.list", "dungeon.spirit.list" -> "dailyDungeonState";
             case "dungeon.gold.challenge", "dungeon.experience.challenge", "dungeon.hero.challenge",

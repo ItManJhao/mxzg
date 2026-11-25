@@ -131,6 +131,31 @@ message Frame {
     QuestSnapshot quest_snapshot = 121;
     QuestClaimReceipt quest_claim_receipt = 122;
     QuestChanged quest_changed = 123;
+    RankingListRequest ranking_list_request = 124;
+    RankingLikeRequest ranking_like_request = 125;
+    RankingOverview ranking_overview = 126;
+    RankingDetail ranking_detail = 127;
+    RankingLikeReceipt ranking_like_receipt = 128;
+    MailCommand mail_command = 129;
+    MailboxState mailbox_state = 130;
+    MailboxReceipt mailbox_receipt = 131;
+    FriendSearchRequest friend_search_request = 132;
+    FriendChangeRequest friend_change_request = 133;
+    FriendState friend_state = 134;
+    FriendSearchResult friend_search_result = 135;
+    FriendChangeResult friend_change_result = 136;
+    ArenaRanking arena_ranking = 137;
+    ArenaSeason arena_season = 138;
+    ArenaChestRequest arena_chest_request = 139;
+    ArenaChestReceipt arena_chest_receipt = 140;
+    ArenaLikeRequest arena_like_request = 141;
+    ArenaLikeReceipt arena_like_receipt = 142;
+    ArenaDefense arena_defense = 143;
+    ArenaDefenseSave arena_defense_save = 144;
+    ArenaDefenseSaved arena_defense_saved = 145;
+    ArenaShopState arena_shop_state = 146;
+    ArenaShopBuy arena_shop_buy = 147;
+    ArenaShopReceipt arena_shop_receipt = 148;
   }
 }
 
@@ -179,6 +204,133 @@ message QuestCompletion {
 }
 
 message QuestChanged { repeated QuestCompletion completed = 1; }
+
+// 排行榜仅公开榜单展示所需的角色与公会资料。
+message RankingListRequest { required string kind = 1; }
+
+message RankingLikeRequest {
+  required string request_id = 1;
+  required string kind = 2;
+  required string target_id = 3;
+  required int64 reset_at = 4;
+}
+
+message RankingEntry {
+  required uint32 rank = 1;
+  required string id = 2;
+  required string server_id = 3;
+  required string name = 4;
+  required int64 score = 5;
+  required uint32 level = 6;
+  required uint32 head_id = 7;
+  required uint32 border_id = 8;
+  required uint32 badge_id = 9;
+  required string leader_name = 10;
+}
+
+message RankingBoard {
+  required string kind = 1;
+  optional RankingEntry leader = 2;
+  required bool liked = 3;
+}
+
+message RankingOverview {
+  required uint32 cross_level = 1;
+  required int64 reset_at = 2;
+  repeated RankingBoard boards = 3;
+  required bool cross_unlocked = 4;
+}
+
+message RankingDetail {
+  required string kind = 1;
+  repeated RankingEntry entries = 2;
+  optional RankingEntry own = 3;
+}
+
+message RankingLikeReceipt {
+  required string request_id = 1;
+  required RankingOverview overview = 2;
+  required RewardNotice notice = 3;
+}
+
+// 邮件列表只给摘要，正文和附件由打开邮件回执交付。
+message MailEntry {
+  required string id = 1;
+  required string title = 2;
+  required int64 created_at = 3;
+  required bool read = 4;
+  required bool claimed = 5;
+  required bool has_attachments = 6;
+}
+
+message MailDetail {
+  required string id = 1;
+  required string content = 2;
+  repeated ChapterReward attachments = 3;
+}
+
+message MailCommand {
+  required string request_id = 1;
+  required string action = 2;
+  optional string mail_id = 3;
+}
+
+message MailboxState { repeated MailEntry entries = 1; }
+
+message MailboxReceipt {
+  required string request_id = 1;
+  required MailboxState state = 2;
+  optional MailDetail detail = 3;
+  optional RewardNotice notice = 4;
+}
+
+// 好友四页签共用公开的角色显示资料，关系与赠领状态按请求角色计算。
+message FriendEntry {
+  required string role_id = 1;
+  required string server_id = 2;
+  required string name = 3;
+  required uint32 level = 4;
+  required uint32 head_id = 5;
+  required uint32 border_id = 6;
+  required int64 power = 7;
+  required int64 last_login_at = 8;
+  required uint32 gift_state = 9;
+  required bool sent_today = 10;
+  required bool requested = 11;
+}
+
+message FriendState {
+  required int64 reset_at = 1;
+  required uint32 friend_limit = 2;
+  required uint32 block_limit = 3;
+  required uint32 sent_today = 4;
+  required uint32 send_limit = 5;
+  required int64 friendship = 6;
+  repeated FriendEntry friends = 7;
+  repeated FriendEntry gifts = 8;
+  repeated FriendEntry applications = 9;
+  repeated FriendEntry blocked = 10;
+}
+
+message FriendSearchRequest { required string query = 1; }
+
+message FriendSearchResult {
+  required string query = 1;
+  repeated FriendEntry entries = 2;
+}
+
+message FriendChangeRequest {
+  required string request_id = 1;
+  required string action = 2;
+  optional string target_id = 3;
+  required int64 reset_at = 4;
+}
+
+message FriendChangeResult {
+  required string request_id = 1;
+  required FriendState state = 2;
+  optional RewardNotice notice = 3;
+}
 message Empty {}
 // 普通市场中的单个货架商品。最终售价、限购及已购数量均由服务端返回。
 message MarketOffer {
@@ -474,7 +626,7 @@ message TowerSettlement {
   optional RewardGrantResult actual = 9;
 }
 
-// 新手竞技场的累计胜场与真实已结算场次分开保存；历史战报只按原战斗编号查询。
+// 新手胜场决定匹配阶段；历史战报只按已结算的原战斗编号查询。
 message ArenaState {
   required uint32 score = 1;
   required uint32 free_remaining = 2;
@@ -494,6 +646,8 @@ message ArenaOpponent {
   required uint32 score = 4;
   required int64 power = 5;
   required uint32 avatar_id = 6;
+  optional string role_id = 7;
+  optional uint32 border_id = 8;
 }
 message ArenaHistoryEntry {
   required string battle_id = 1;
@@ -502,10 +656,14 @@ message ArenaHistoryEntry {
   required bool won = 4;
   required int32 score_delta = 5;
   required int64 settled_at_seconds = 6;
+  optional string opponent_role_id = 7;
+  optional bool defense = 8;
 }
 message ArenaChallengeRequest {
   required string request_id = 1;
   required uint32 opponent_id = 2;
+  // 真人的持久角色编号与机器人配置编号互斥。
+  optional string opponent_role_id = 3;
 }
 message ArenaReplayRequest {
   required string battle_id = 1;
@@ -530,6 +688,106 @@ message ArenaTicketPurchase {
   required uint32 quantity = 4;
   required int64 spent_diamonds = 5;
   required RewardGrantResult actual = 6;
+}
+
+message ArenaRanking {
+  repeated ArenaRankEntry entries = 1;
+  required ArenaRankEntry own = 2;
+  required uint32 likes_remaining = 3;
+  required int64 daily_ends_at = 4;
+}
+message ArenaRankEntry {
+  required uint32 rank = 1;
+  required string role_id = 2;
+  required string name = 3;
+  required uint32 score = 4;
+  required int64 power = 5;
+  required uint32 level = 6;
+  required uint32 head_id = 7;
+  required uint32 border_id = 8;
+  required uint32 received_likes = 9;
+  required bool liked = 10;
+}
+message ArenaSeason {
+  required int64 season_ends_at = 1;
+  required int64 daily_ends_at = 2;
+  required uint32 season_challenges = 3;
+  repeated ArenaChest chests = 4;
+  repeated ArenaRewardTier daily_tiers = 5;
+  repeated ArenaRewardTier season_tiers = 6;
+  optional int64 challenge_ends_at = 7;
+}
+message ArenaChest {
+  required uint32 id = 1;
+  required uint32 required_challenges = 2;
+  required uint32 box_pic = 3;
+  repeated ChapterReward rewards = 4;
+  required bool claimed = 5;
+}
+message ArenaRewardTier {
+  required uint32 min_rank = 1;
+  required uint32 max_rank = 2;
+  repeated ChapterReward rewards = 3;
+}
+message ArenaChestRequest {
+  required string request_id = 1;
+  required uint32 chest_id = 2;
+  required int64 season_ends_at = 3;
+}
+message ArenaChestReceipt {
+  required string request_id = 1;
+  required ArenaSeason state = 2;
+  required RewardNotice notice = 3;
+}
+message ArenaLikeRequest {
+  required string request_id = 1;
+  required string target_role_id = 2;
+  required int64 daily_ends_at = 3;
+}
+message ArenaLikeReceipt {
+  required string request_id = 1;
+  required ArenaRanking ranking = 2;
+  required RewardNotice notice = 3;
+}
+message ArenaDefense {
+  required int64 version = 1;
+  required uint32 formation_id = 2;
+  repeated FormationSlot slots = 3;
+  required bool fallback = 4;
+}
+message ArenaDefenseSave {
+  required string request_id = 1;
+  required int64 expected_version = 2;
+  required uint32 formation_id = 3;
+  repeated FormationSlot slots = 4;
+}
+message ArenaDefenseSaved {
+  required string request_id = 1;
+  required ArenaDefense defense = 2;
+}
+message ArenaShopState {
+  required int64 currency_balance = 1;
+  required int64 refresh_at = 2;
+  repeated ArenaShopOffer offers = 3;
+}
+message ArenaShopOffer {
+  required uint32 id = 1;
+  required uint32 required_level = 2;
+  required uint32 purchase_limit = 3;
+  required uint32 purchased = 4;
+  required int64 price = 5;
+  repeated ChapterReward rewards = 6;
+}
+message ArenaShopBuy {
+  required string request_id = 1;
+  required uint32 offer_id = 2;
+  required uint32 quantity = 3;
+  required int64 refresh_at = 4;
+}
+message ArenaShopReceipt {
+  required string request_id = 1;
+  required ArenaShopState state = 2;
+  required RewardNotice notice = 3;
 }
 
 // 通用发奖反馈仅描述已提交的实际到账，不更新客户端资产；资产仍走Snapshot。

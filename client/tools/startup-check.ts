@@ -109,116 +109,126 @@ async function main() {
   oldNotice(); ui.toast("无导航也能提示");
   assert.equal(delivered, "无导航也能提示"); newNotice();
   const timerBaseline = TrackedTimers.snapshot();
-  const noticeNode = new Node("ApplicationNotice");
-  noticeNode.setPosition(0, 0, 0);
-  const noticeBox = noticeNode.addComponent(UITransform);
-  noticeBox.setContentSize(300, 36);
-  const textNode = new Node("Notice");
-  textNode.parent = noticeNode;
-  const textBox = textNode.addComponent(UITransform);
-  textBox.setContentSize(350, 22);
-  const noticeLabel = textNode.addComponent(Label);
-  // 用明确的引擎测量结果夹具验证背景撑高，不用字符估算冒充实际字体换行。
-  noticeLabel.updateRenderData = (force = false) => {
-    assert.equal(force, true);
-    if (noticeLabel.overflow === Overflow.RESIZE_HEIGHT) {
-      assert.equal(textBox.contentSize.width, 350, "换行使用场景设定宽度");
-      textBox.setContentSize(350, 75);
-    } else {
-      const wide = noticeLabel.string.includes("\n");
-      textBox.setContentSize(wide ? 500 : 150, wide ? 50 : 25);
-    }
+/** 用明确的引擎测量结果夹具验证背景撑高，不用字符估算冒充实际换行。 */
+  const makeToastSlot = (name: string) => {
+    const node = new Node(name);
+    const box = node.addComponent(UITransform);
+    box.setContentSize(300, 36);
+    const textNode = new Node("Notice");
+    textNode.parent = node;
+    const textBox = textNode.addComponent(UITransform);
+    textBox.setContentSize(350, 22);
+    const label = textNode.addComponent(Label);
+    label.updateRenderData = (force = false) => {
+      assert.equal(force, true);
+      if (label.overflow === Overflow.RESIZE_HEIGHT) {
+        assert.equal(textBox.contentSize.width, 350, "换行使用场景设定宽度");
+        textBox.setContentSize(350, 75);
+      } else {
+        const wide = label.string.includes("\n");
+        textBox.setContentSize(wide ? 500 : 150, wide ? 50 : 25);
+      }
+    };
+    return { node, box, label };
   };
+  const primary = makeToastSlot("ApplicationNotice");
+  const slots = [primary, makeToastSlot("ApplicationNoticeSlot2"), makeToastSlot("ApplicationNoticeSlot3")];
+  const { node: noticeNode, box: noticeBox, label: noticeLabel } = primary;
   const nodesBeforeToast = createdNodes.length;
-  const notices = new ToastManager(noticeNode, noticeLabel);
+  const notices = new ToastManager(noticeNode, noticeLabel, slots.slice(1).map(slot => slot.label));
   const opacity = noticeNode.getComponent(UIOpacity)!;
+  const visible = () => slots.filter(slot => slot.node.active).sort((a, b) => b.node.position.y - a.node.position.y);
+
   for (let cycle = 0; cycle < 20; cycle++) {
-    notices.show("登录前可见", 1000);
-    assert.equal(noticeNode.active, true);
-    assert.equal(noticeLabel.string, "登录前可见");
+    notices.show("获得金币", 1000);
+    notices.show("获得金币", 1000);
+    notices.show("获得金币", 1000);
+    assert.deepEqual(visible().map(slot => slot.label.string), ["获得金币", "获得金币", "获得金币"],
+      "同文案的三次独立操作同时显示");
     assert.equal(opacity.opacity, 0, "首帧从透明开始淡入");
-    assert.equal(noticeNode.position.y, 0, "新提示从画面中央出现");
-    notices.show("登录前可见", 1000);
-    notices.show("后续提示", 1000);
-    notices.show("后续提示", 1000);
+    assert.equal(visible()[2].node.position.y, 0, "最新反馈从画面中央出现");
+
+    notices.show("跟随提示", 1000);
     notices.update(0.18);
     assert.equal(opacity.opacity, 255);
-    assert(noticeNode.position.y > 0, "淡入结束后才向上浮动");
+    const active = visible();
+    assert(active[2].node.position.y > 0, "淡入结束后才向上浮动");
+    assert(active[0].node.position.y - active[1].node.position.y > active[1].box.contentSize.height,
+      "同时显示时旧提示向上排列，背景不重叠");
     notices.update(0.72);
     assert(opacity.opacity > 0 && opacity.opacity < 255, "结束前逐步淡出");
     notices.update(0.11);
-    assert.equal(noticeLabel.string, "后续提示", "当前和待播重复文字均不延长或重复播放");
+    assert.deepEqual(visible().map(slot => slot.label.string), ["跟随提示"], "第四条等待第一批空位");
     notices.update(2);
-    assert.equal(noticeNode.active, false);
+    assert.equal(visible().length, 0);
     assert.equal(noticeNode.position.y, 0);
-    assert.equal(TrackedTimers.snapshot(), timerBaseline, "飘字仅由update推进，不创建计时器");
+    assert.equal(TrackedTimers.snapshot(), timerBaseline, "只由 update 推进，无计时器");
   }
   notices.show("默认时长");
   notices.update(0.05);
   assert.equal(noticeNode.position.y, 0, "淡入期间位置保持在中央");
-  assert(opacity.opacity >= 240 && opacity.opacity < 255, "指数淡入很快接近全亮");
+  assert(opacity.opacity >= 240 && opacity.opacity < 255, "指数淡入接近全亮");
   notices.update(2.55);
-  assert.equal(opacity.opacity, 255, "0.1秒淡入后再保持2.5秒");
+  assert.equal(opacity.opacity, 255, "0.1 秒淡入后保持 2.5 秒");
   assert(Math.abs(noticeNode.position.y - 25) < 0.01);
   notices.update(0.25);
   assert(Math.abs(opacity.opacity - 128) <= 1, "最后半秒内同步淡出");
   assert(Math.abs(noticeNode.position.y - 27.5) < 0.01);
   notices.update(0.26);
-  assert.equal(noticeNode.active, false, "默认总长约3.1秒");
-  notices.show("当前提示", 1000);
-  for (let index = 1; index <= 10; index++) {
-    notices.show("排队" + index, 1000);
+  assert.equal(visible().length, 0, "默认总长约 3.1 秒");
+
+  for (let index = 0; index < 12; index++) {
+    notices.show("连续结果" + index, 1000);
   }
-  notices.update(1.01);
-  assert.equal(noticeLabel.string, "排队4", "队列总上限八条，满时保留当前及最近七条");
-  for (let index = 5; index <= 10; index++) {
+  for (let index = 0; index < 12; index += 3) {
+    assert.deepEqual(visible().map(slot => slot.label.string),
+      [index, index + 1, index + 2].map(number => "连续结果" + number), "满槽按到达顺序播放所有反馈");
     notices.update(1);
-    assert.equal(noticeLabel.string, "排队" + index);
   }
-  notices.update(1);
-  assert.equal(noticeNode.active, false);
-  notices.show("先前有限提示", 1000);
-  notices.show("排队中的常驻错误", 0);
-  notices.show("已进入队列的新结果", 1000);
-  notices.update(1.01);
-  assert.equal(noticeLabel.string, "已进入队列的新结果", "入队的常驻项也不能堵住更新结果");
-  notices.update(1);
+
   const fullReason = "发放失败：精灵单次最多1000件。\n请减少数量后重试，原请求未写入任何实例。";
-  notices.show(fullReason, 1000);
-  assert.equal(noticeLabel.string, fullReason, "完整原因不截断、不被统一失败文案替换");
+  notices.show(fullReason, 2000);
+  notices.show("后到的短文案", 1000);
+  assert.equal(noticeLabel.string, fullReason, "完整原因保留");
   assert.equal(noticeLabel.enableWrapText, true);
   assert.equal(noticeLabel.overflow, Overflow.RESIZE_HEIGHT);
   assert.equal(noticeBox.contentSize.width, 380, "背景宽度随文字宽度增加30");
   assert.equal(noticeBox.contentSize.height, 91, "多行背景高度随文字高度增加16");
+  assert(visible()[0].node.position.y >= (91 + 41) / 2, "多行底板按实测尺寸避开其他提示");
   notices.update(1.01);
+  assert.deepEqual(visible().map(slot => slot.label.string), [fullReason], "较晚出现的短提示可独立结束");
+  notices.update(1);
+
   notices.show("常驻错误", 0);
   notices.update(100);
   assert.equal(noticeNode.active, true);
   assert.equal(noticeNode.position.y, 0, "常驻错误留在中央");
   notices.show("恢复成功", 1000);
-  assert.equal(noticeLabel.string, "恢复成功", "新结果可替换常驻错误，不堵塞队列");
+  assert.equal(noticeLabel.string, "恢复成功", "新结果替换常驻错误");
   assert.equal(noticeBox.contentSize.width, 300, "短文字恢复场景最小宽度");
   assert.equal(noticeBox.contentSize.height, 41, "短文字仍有上下内边距");
-  notices.show("旧角色待播结果", 1000);
+  for (let index = 0; index < 4; index++) {
+    notices.show("旧角色结果", 1000);
+  }
   notices.clear();
   notices.update(10);
-  assert.equal(noticeNode.active, false, "换号清空旧角色当前和待播文字");
+  assert.equal(visible().length, 0, "换号清空所有播放及等待内容");
   assert.equal(noticeLabel.string, "");
   assert.equal(noticeNode.position.y, 0);
   assert.equal(opacity.opacity, 255);
   notices.show("新角色提示", 1000);
-  assert.equal(noticeLabel.string, "新角色提示", "clear后下一角色仍可使用同一场景提示");
-  notices.show("销毁前待播", 1000);
+  assert.equal(noticeLabel.string, "新角色提示", "clear 后下一角色仍可使用同一提示槽");
+  notices.show("销毁前反馈", 1000);
   notices.dispose();
   notices.dispose();
   notices.update(100);
   notices.show("销毁后迟到结果");
-  assert.equal(noticeNode.active, false);
+  assert.equal(visible().length, 0);
   assert.equal(noticeLabel.string, "");
   assert.equal(noticeBox.contentSize.height, 36);
   assert.equal(TrackedTimers.snapshot(), timerBaseline);
-  assert.equal(createdNodes.length, nodesBeforeToast, "所有提示复用唯一场景节点，不能另造面板");
-  noticeNode.destroy();
+  assert.equal(createdNodes.length, nodesBeforeToast, "全部提示仅用已有场景槽");
+  slots.forEach(slot => slot.node.destroy());
   const destroyedNotice = new Node("DestroyedNotice");
   const destroyedToast = new ToastManager(destroyedNotice, destroyedNotice.addComponent(Label));
   destroyedToast.show("宿主销毁前提示");
@@ -283,6 +293,18 @@ async function main() {
   assert.deepEqual([noticeSceneNode._lpos.x, noticeSceneNode._lpos.y], [0, 0], "面板原点位于 Canvas 中央");
   assert.equal(noticeSprite._type, 1, "长提示使用九宫格背景");
   assert.equal(noticeSprite._spriteFrame.__uuid__, noticeAsset.subMetas.f9941.uuid, "登录前从本地资源取得原提示底板");
+  assert.equal(binding.noticeStackLabels.length, 2, "共三个预置飘字槽");
+  const host = scene[noticeSceneNode._parent.__id__];
+  for (const ref of binding.noticeStackLabels) {
+    const label = scene[ref.__id__];
+    assert.equal(label.__type__, "cc.Label");
+    const panel = scene[scene[label.node.__id__]._parent.__id__];
+    assert.equal(panel._parent.__id__, noticeSceneNode._parent.__id__, "附加槽与首槽同层");
+    assert(host._children.some((child: { __id__: number }) => scene[child.__id__] === panel));
+    assert.equal(panel._active, false);
+    assert(panel._components.some((component: { __id__: number }) =>
+      scene[component.__id__]._spriteFrame?.__uuid__ === noticeSprite._spriteFrame.__uuid__));
+  }
   const accountMeta = JSON.parse(readFileSync("client/assets/bundles/module/login/prefabs/AccountLoginView.prefab.meta", "utf8"));
   const cleanup = JSON.parse(readFileSync("docs/validation/current-resource-scope-cleanup-20261111.json", "utf8"));
   assert.equal(binding.loginPrefab, undefined, "启动场景不直接依赖远程登录页");

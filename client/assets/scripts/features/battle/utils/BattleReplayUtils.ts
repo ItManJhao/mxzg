@@ -176,7 +176,7 @@ export class BattleReplayUtils {
     }
 
     /**
-     * 解码并校验各玩法战报及旧具名样本，一次返回步骤、名册、冻结名称及上限。
+     * 解码并校验各玩法战报、真人竞技场阵容及旧具名样本，一次返回步骤、名册、冻结名称及上限。
      * 死亡到可行动的血量变化只给有技能上下文的同阵营复活事件。
      * 同阶段保留权威反击顺序，回合伤害先于过期时按死亡移除已登记实例。
      * 校验失败保留原错误，不交付部分结果。成功仅确认战报数据有效，技能表现资源另行核对。
@@ -199,8 +199,9 @@ export class BattleReplayUtils {
         const chapter = this.chapterScenario(report.scenario);
         const idleMission = chapter?.idle ? chapter.index : 0;
         const configuredRoster = this.configuredRoster(report.scenario);
-        const indexedRoster = !!chapter || !!configuredRoster;
-        const maxRounds = configuredRoster && report.scenario.startsWith("arena:") ? 20 : 15;
+        const playerArena = /^arena:pvp:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(report.scenario);
+        const indexedRoster = !!chapter || !!configuredRoster || playerArena;
+        const maxRounds = playerArena || (configuredRoster && report.scenario.startsWith("arena:")) ? 20 : 15;
         if (report.schemaVersion !== 1 || (!indexedRoster && ["main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:charm", "audit:charm-death", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed"].indexOf(report.scenario) < 0)
             || (!indexedRoster && report.units.length !== ((["audit:control-teams", "audit:charm", "audit:charm-death"].includes(report.scenario)) ? 4 : (report.scenario === "main:1:1:3" || report.scenario === "audit:frozen") ? 3 : 2)) || report.rounds < 1 || report.rounds > maxRounds) {
             throw new Error("战报版本或场景不支持");

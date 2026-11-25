@@ -14,6 +14,7 @@ import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
 import { CityTabUtils } from "../utils/CityTabUtils";
 import { CityChatDrag } from "./CityChatDrag";
+import { CityUtilityFold } from "./CityUtilityFold";
 
 const { ccclass, property } = _decorator;
 
@@ -42,13 +43,17 @@ export interface TabState {
 export interface CityChromeOpenArgs {
     /** 把实际按钮选择交给主城宿主。 */
     readonly onTab: (id: string) => void;
-    /** 把活动、更多和邮件意图交给主城宿主，不在顶栏开业务窗口。 */
+    /** 把活动、邮件、排行等意图交给主城宿主，不在顶栏开业务窗口。 */
     readonly actions: {
         readonly openActivity: () => void;
         readonly openMore: () => void;
         readonly openMail: () => void;
+        /** 打开好友、礼物、申请和黑名单。 */
+        readonly openFriend?: () => void;
         /** 打开每日和成就的共用窗口。 */
         readonly openQuest?: () => void;
+        /** 打开主城的本服和跨服排行榜。 */
+        readonly openRanking?: () => void;
     };
 }
 
@@ -141,9 +146,12 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> {
     /** 两侧活动栏的收起版，保留首个入口和展开按钮。 */
     @property([Node])
     collapsedActivityRails: Node[] = [];
-    /** 加号收起时隐藏的工具组；推荐入口和加号本身保持可见。 */
+    /** 加号收起时移入锚点并隐藏的工具组，推荐入口和加号本身保持可见。 */
     @property(Node)
     utilityEntries: Node | null = null;
+    /** 和加号重合的收拢位置，放在工具组内以便直接使用局部坐标。 */
+    @property(Node)
+    utilityFoldAnchor: Node | null = null;
     /** 已还原图案但尚未接入业务的快捷按钮，只给出统一未开放提示。 */
     @property([Node])
     shortcutButtons: Node[] = [];
@@ -162,10 +170,10 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> {
     /** 主城右侧的每日任务按钮，进入已接通的任务窗口。 */
     @property(Node)
     btnDailyTask: Node | null = null;
-    /** 预制体绑定的排行工具按钮，当前统一转交更多入口。 */
+    /** 预制体绑定的排行工具按钮，点击转交主城注入的排行榜操作。 */
     @property(Node)
     btnRank: Node | null = null;
-    /** 预制体绑定的更多工具按钮，点击转交统一更多入口。 */
+    /** 预制体绑定的加号按钮，点击播放工具栏展开或收拢动画。 */
     @property(Node)
     btnMore: Node | null = null;
     /** 旧主城经验条的横向填充组件，只展示服务器同步的等级内经验。 */
@@ -342,7 +350,7 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> {
         this.tabBindings.set(id, { normal, selected, lock, lockLevel, redDots });
     }
 
-    /** 活动和工具入口交给宿主；加号只显隐预制体中的快捷项。 */
+    /** 绑定活动、排行和其他工具；加号切换工具组的移动动画。 */
     private bindShortcuts(actions: CityChromeOpenArgs["actions"]): void {
         for (const [index, node] of this.activityButtons.entries()) {
             this.bindClick(this.requireNode(node, `活动入口 ${index + 1}`), actions.openActivity);
@@ -351,25 +359,41 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> {
             this.bindClick(this.requireNode(node, `快捷入口 ${index + 1}`),
                 () => UIManager.instance.toast("功能暂未开放"));
         }
-        const more: Array<[Node | null, string]> = [
-            [this.btnReplay, "BtnReplay"], [this.btnFriend, "BtnFriend"],
-            [this.btnRank, "BtnRank"],
-        ];
-        for (const [node, name] of more) {
-            this.bindClick(this.requireNode(node, name), actions.openMore);
+        this.bindClick(this.requireNode(this.btnReplay, "BtnReplay"), actions.openMore);
+        const friend = this.requireNode(this.btnFriend, "BtnFriend");
+        this.bindClick(friend, actions.openFriend ?? actions.openMore);
+        if (actions.openFriend) {
+            const dot = new RedDotBinding(friend, GameRedDotKey.FRIEND);
+            this.ownListener(() => dot.dispose());
         }
-        this.bindClick(this.requireNode(this.btnMore, "BtnMore"), () => {
-            if (this.utilityEntries) {
-                this.utilityEntries.active = !this.utilityEntries.active;
-            } else {
-                actions.openMore();
-            }
-        });
-        this.bindClick(this.requireNode(this.btnMail, "BtnMail"), actions.openMail);
+        const rank = this.requireNode(this.btnRank, "BtnRank");
+        if (actions.openRanking) {
+            this.bindClick(rank, actions.openRanking);
+            const dot = new RedDotBinding(rank, GameRedDotKey.RANKING);
+            this.ownListener(() => dot.dispose());
+        }
+        this.bindUtilityFold(actions.openMore);
+        const mail = this.requireNode(this.btnMail, "BtnMail");
+        this.bindClick(mail, actions.openMail);
+        const mailDot = new RedDotBinding(mail, GameRedDotKey.MAIL);
+        this.ownListener(() => mailDot.dispose());
         if (this.btnDailyTask && actions.openQuest) {
             this.bindClick(this.btnDailyTask, actions.openQuest);
             const binding = new RedDotBinding(this.btnDailyTask, GameRedDotKey.QUEST);
             this.ownListener(() => binding.dispose());
+        }
+    }
+
+    /** 使用预制体的工具组和收拢锚点创建本次显示期的动画绑定。 */
+    private bindUtilityFold(openMore: () => void): void {
+        const plus = this.requireNode(this.btnMore, "BtnMore");
+        if (this.utilityEntries) {
+            const anchor = this.requireNode(this.utilityFoldAnchor, "UtilityFoldAnchor");
+            const fold = new CityUtilityFold(this.utilityEntries, anchor);
+            this.bindClick(plus, () => fold.toggle());
+            this.ownListener(() => fold.dispose());
+        } else {
+            this.bindClick(plus, openMore);
         }
     }
 

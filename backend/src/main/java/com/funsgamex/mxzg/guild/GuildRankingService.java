@@ -1,4 +1,4 @@
-/** 本服公会战力排行，沿公会访问门槛读取真实名次和本人所属公会，不写入玩家资产或公会资料。 */
+/** 公会战力排行的共用读模型。公会和主城按各自门槛及区服范围读取真实战力和本人公会。 */
 package com.funsgamex.mxzg.guild;
 
 import com.funsgamex.mxzg.role.RoleRepository;
@@ -54,9 +54,17 @@ public class GuildRankingService {
                 && world.current(role.serverId()).level() < rules.gate.worldLevelRequired())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "GUILD_LOCKED");
         }
+        return listWithinServers(roleId, List.of(role.serverId()), RANK_SIZE);
+    }
+
+    /** 在调用方只读快照中投影已授权区服范围内的前 N 名与本人公会。 */
+    public State listWithinServers(String roleId, List<String> serverIds, int limit) {
+        if (serverIds.isEmpty()) {
+            return new State(List.of(), null);
+        }
         var entries = new ArrayList<Entry>();
         Entry own = null;
-        for (var row : ranking.list(role.serverId(), roleId, RANK_SIZE)) {
+        for (var row : ranking.list(serverIds, roleId, limit)) {
             var entry = new Entry(row.rank(), row.guildId(), row.serverId(), row.name(), row.badgeId(), row.leaderName(), row.power());
             if (entry.rank() > 0) {
                 entries.add(entry);

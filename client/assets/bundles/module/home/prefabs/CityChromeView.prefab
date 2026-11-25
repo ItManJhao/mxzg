@@ -13116,13 +13116,13 @@
     },
     "_children": [
       {
-        "__id__": 540
-      },
-      {
         "__id__": 548
       },
       {
         "__id__": 556
+      },
+      {
+        "__id__": 540
       }
     ],
     "_active": false,
@@ -13604,6 +13604,9 @@
       },
       {
         "__id__": 589
+      },
+      {
+        "__id__": 989
       }
     ],
     "_active": true,
@@ -24219,6 +24222,9 @@
     "utilityEntries": {
       "__id__": 556
     },
+    "utilityFoldAnchor": {
+      "__id__": 989
+    },
     "shortcutButtons": [
       {
         "__id__": 548
@@ -24465,5 +24471,61 @@
   {
     "__type__": "cc.CompPrefabInfo",
     "fileId": "1d25d754-1311-4f5d-96c6-a42fc545753e"
+  },
+  {
+    "__type__": "cc.Node",
+    "_name": "UtilityFoldAnchor",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "_parent": {
+      "__id__": 556
+    },
+    "_children": [],
+    "_active": true,
+    "_components": [],
+    "_prefab": {
+      "__id__": 990
+    },
+    "_lpos": {
+      "__type__": "cc.Vec3",
+      "x": 274,
+      "y": 0,
+      "z": 0
+    },
+    "_lrot": {
+      "__type__": "cc.Quat",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "_lscale": {
+      "__type__": "cc.Vec3",
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "_mobility": 0,
+    "_layer": 33554432,
+    "_euler": {
+      "__type__": "cc.Vec3",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "_id": ""
+  },
+  {
+    "__type__": "cc.PrefabInfo",
+    "root": {
+      "__id__": 1
+    },
+    "asset": {
+      "__id__": 0
+    },
+    "fileId": "46204ab8-cc53-471f-911b-001c92b0e801",
+    "instance": null,
+    "targetOverrides": null,
+    "nestedPrefabInstanceRoots": null
   }
 ]

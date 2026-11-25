@@ -341,6 +341,20 @@ function checkChromePrefab(): void {
   assert(Array.isArray(comp.shortcutButtons)
     && !comp.shortcutButtons.some(ref => nodeName(data, ref) === "BtnChat"), "聊天点击不重复走快捷入口");
   one("utilityEntries", "ShortcutArtwork");
+  one("utilityFoldAnchor", "UtilityFoldAnchor");
+  const utilityRow = nodeAt(data, comp.utilityRow as { __id__: number });
+  const foldItems = childOf(utilityRow, "ShortcutArtwork");
+  const plus = childOf(utilityRow, "BtnMore");
+  const foldAnchor = childOf(foldItems, "UtilityFoldAnchor");
+  assert(foldAnchor._lpos!.x + foldItems._lpos!.x === plus._lpos!.x
+    && foldAnchor._lpos!.y + foldItems._lpos!.y === plus._lpos!.y, "工具收拢位置与加号中心重合");
+  assert(nodeName(data, utilityRow._children![utilityRow._children!.length - 1]) === "BtnMore", "加号绘制在移动工具上方");
+  one("btnRank", "BtnRank");
+  assert(childOf(foldItems, "BtnRank")._lpos!.x < plus._lpos!.x
+    && childOf(foldItems, "BtnRank")._lpos!.x > childOf(foldItems, "BtnMail")._lpos!.x,
+  "排行位于加号左边第一个");
+  childOf(foldItems, "BtnDailyTask");
+  childOf(utilityRow, "BtnHeroRecommend");
   const shell = "c4e8aHSe2NOkI8Vai2cC0fj";
   const text = read("client/assets/bundles/module/home/prefabs/CityChromeView.prefab");
   assert(text.split(shell).length === 2, "CityChromeShell class id stays once");

@@ -50,6 +50,8 @@ export class GameSocketClient {
   onGuildUpdated: ((frame: GameFrame) => void) | null = null;
   /** 当前认证连接的任务状态变化或新达成成就。 */
   onQuestChanged: ((frame: GameFrame) => void) | null = null;
+  /** 邮箱或好友关系提交后的失效通知，应用定向交付相应模块。 */
+  onSocialChanged: ((frame: GameFrame) => void) | null = null;
   /** 当前连接最近的完整帧，供本次登录交付，不另建资产 Model。 */
   latestState: GameFrame | null = null;
   onDisconnected: ((message: string) => void) | null = null;
@@ -299,14 +301,18 @@ export class GameSocketClient {
         return;
       case Protocol.GUILD_UPDATED:
       case Protocol.QUEST_CHANGED:
+      case Protocol.MAIL_CHANGED:
+      case Protocol.FRIEND_CHANGED:
         if (frame.id !== undefined || frame.ok !== undefined || frame.error !== undefined) {
           throw new SocketFailure("INVALID_MESSAGE");
         }
         if (this.traceReceived(frame)) {
           if (frame.name === Protocol.QUEST_CHANGED) {
             this.onQuestChanged?.(frame);
-          } else {
+          } else if (frame.name === Protocol.GUILD_UPDATED) {
             this.onGuildUpdated?.(frame);
+          } else {
+            this.onSocialChanged?.(frame);
           }
         }
         return;
@@ -397,7 +403,7 @@ export class GameSocketClient {
 
   /**
    * 解码器已验证协议的必填字段、查询状态和结构。直接回执与查询内回执均在交付前核对角色，
-   * 实际发奖明细也须归属本连接。旧战斗记录可没有明细，查无记录的响应可没有回执。
+   * 实际发奖明细及竞技场本人行也须归属本连接。旧战斗记录可没有明细，查无记录可没有回执。
    */
   private checkReceiptOwner(frame: GameFrame): void {
     const body = this.object(frame.body);
@@ -408,8 +414,18 @@ export class GameSocketClient {
     if (receipt.actual !== undefined && this.object(receipt.actual).roleId !== this.roleId) {
       throw new SocketFailure("INVALID_MESSAGE", "奖励明细不属于当前角色");
     }
-    if (frame.name === Protocol.QUEST_CLAIM && body.notice !== undefined && this.object(body.notice).roleId !== this.roleId) {
-      throw new SocketFailure("INVALID_MESSAGE", "任务奖励不属于当前角色");
+    if ((frame.name === Protocol.QUEST_CLAIM || frame.name === Protocol.RANKING_LIKE
+      || frame.name === Protocol.MAIL_CHANGE || frame.name === Protocol.FRIEND_CHANGE
+      || frame.name === Protocol.ARENA_CHEST_CLAIM || frame.name === Protocol.ARENA_LIKE
+      || frame.name === Protocol.ARENA_SHOP_BUY)
+      && body.notice !== undefined && this.object(body.notice).roleId !== this.roleId) {
+      throw new SocketFailure("INVALID_MESSAGE", "奖励不属于当前角色");
+    }
+    if (frame.name === Protocol.ARENA_RANKING || frame.name === Protocol.ARENA_LIKE) {
+      const ranking = frame.name === Protocol.ARENA_LIKE ? this.object(body.ranking) : body;
+      if (this.object(ranking.own).roleId !== this.roleId) {
+        throw new SocketFailure("INVALID_MESSAGE", "竞技场个人名次不属于当前角色");
+      }
     }
   }
 
@@ -572,6 +588,35 @@ export class GameSocketClient {
       case "QUEST_ALREADY_CLAIMED": return "该奖励已领取";
       case "QUEST_REQUEST_INVALID":
       case "QUEST_REQUEST_CONFLICT": return "任务操作已变化，请重试";
+      case "RANK_LOCKED": return "排行榜尚未开放";
+      case "RANK_CROSS_LOCKED": return "跨服排行榜尚未开放";
+      case "RANK_LIKE_RESET": return "排行榜已刷新，请重新点赞";
+      case "RANK_ALREADY_LIKED": return "今天已为该榜点赞";
+      case "RANK_LEADER_CHANGED": return "榜首已变化，请查看最新排行榜";
+      case "RANK_REQUEST_CONFLICT":
+      case "RANK_INVALID": return "排行榜操作已变化，请重试";
+      case "MAIL_NOT_FOUND": return "该邮件已删除或过期";
+      case "MAIL_ALREADY_CLAIMED": return "该邮件附件已领取";
+      case "MAIL_DELETE_BLOCKED": return "请先阅读邮件并领取附件";
+      case "MAIL_FULL": return "邮件箱已满";
+      case "MAIL_INVALID":
+      case "MAIL_REQUEST_CONFLICT": return "邮件操作已变化，请重试";
+      case "FRIEND_NOT_FOUND": return "找不到该玩家";
+      case "FRIEND_ALREADY": return "对方已是好友";
+      case "FRIEND_BLOCKED": return "当前无法向对方发起好友操作";
+      case "FRIEND_LIMIT": return "你的好友数量已达上限";
+      case "FRIEND_TARGET_LIMIT": return "对方好友数量已达上限";
+      case "FRIEND_APPLICATION_MISSING": return "该好友申请已处理";
+      case "FRIEND_RELATION_MISSING": return "该好友关系已变化";
+      case "FRIEND_BLOCK_LIMIT": return "黑名单数量已达上限";
+      case "FRIEND_ALREADY_BLOCKED": return "对方已在黑名单中";
+      case "FRIEND_NOT_BLOCKED": return "对方已解除拉黑";
+      case "FRIEND_SEND_LIMIT": return "今日赠送次数已用完";
+      case "FRIEND_ALREADY_SENT": return "今天已向对方赠送";
+      case "FRIEND_NO_GIFTS": return "暂无可领取的礼物";
+      case "FRIEND_DAY_CHANGED": return "友情礼物已跨日刷新，请重试";
+      case "FRIEND_INVALID":
+      case "FRIEND_REQUEST_CONFLICT": return "好友操作已变化，请重试";
       case "VIP_REQUEST_INVALID": return "VIP 任务参数无效";
       case "VIP_REQUEST_CONFLICT": return "VIP 任务操作已变化，请重新选择";
       case "VIP_TASK_TIER": return "当前档位无法领取该任务";
@@ -611,7 +656,21 @@ export class GameSocketClient {
       case "ARENA_DIAMONDS": return "购买竞技场门票所需的钻石不足";
       case "ARENA_BATTLE_UNAVAILABLE": return "请保存可出战的主线阵容后再挑战";
       case "ARENA_REPORT": return "该竞技场战报不可用";
-      case "ARENA_NEWCOMER_COMPLETE": return "新手竞技场已完成，真人匹配暂未开放";
+      case "ARENA_FORMATION_INVALID": return "防守阵容包含无效格位或不可用英雄";
+      case "ARENA_FORMATION_CHANGED": return "防守阵容已变化，请关闭并重新编辑";
+      case "ARENA_SEASON_CHANGED": return "赛季已变更，请刷新后再领取";
+      case "ARENA_CHEST": return "该竞技场宝箱不可用";
+      case "ARENA_CHEST_CLAIMED": return "该宝箱已领取";
+      case "ARENA_CHEST_COUNT": return "本赛季挑战次数不足";
+      case "ARENA_LIKE_DAY": return "点赞日期已变化，请刷新榜单";
+      case "ARENA_LIKE_TARGET": return "该玩家当前不可点赞";
+      case "ARENA_LIKED": return "今天已经为该玩家点过赞";
+      case "ARENA_LIKE_COUNT": return "今天的点赞次数已用完";
+      case "ARENA_SHOP_REQUEST": return "竞技商店兑换参数无效";
+      case "ARENA_SHOP_REFRESH": return "商店已刷新，请重新确认商品";
+      case "ARENA_SHOP_OFFER": return "该商品当前不可兑换";
+      case "ARENA_SHOP_LIMIT": return "已超过本周兑换数量";
+      case "ARENA_SHOP_CURRENCY": return "竞技币不足";
       case "ARENA_REQUEST_INVALID": return "竞技场操作参数无效，请重新选择";
       case "ARENA_REQUEST_CONFLICT": return "竞技场操作与原请求不一致，请重新确认";
       case "IDEMPOTENCY_CONFLICT": return "操作与原请求不一致，请重新确认";

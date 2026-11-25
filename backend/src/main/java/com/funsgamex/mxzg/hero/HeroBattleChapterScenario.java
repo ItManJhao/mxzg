@@ -325,7 +325,7 @@ public final class HeroBattleChapterScenario {
      * 直接复用原始属性和完整技能排期，不替换为固定英雄，不重复添加阵型属性；助战暂不支持。
      */
     public Result runSavedFormation(int stageIndex, HeroBattleInputService.Input input, DoublePredicate decision) {
-        var units = savedFormationUnits(input);
+        var units = savedFormationUnits(input, 1);
         // 本场ID与持久英雄ID分离：攻方使用1至8，守方使用9至16，避免双方同站位碰撞。
         units.addAll(enemies(stageIndex));
         return runBattle("audit:lineup:" + stageIndex, applyElementHalo(units), decision);
@@ -344,6 +344,15 @@ public final class HeroBattleChapterScenario {
                 HeroBattleRoundUtils.ARENA_MAX_ROUNDS, attackRates);
     }
 
+    /** 真人竞技场分别使用两名角色已保存的阵容，保留双方战斗属性、技能和元素光环。 */
+    Result runArenaFormation(String scenario, HeroBattleInputService.Input attacker, HeroBattleInputService.Input defender,
+                             Map<Integer, Long> attackRates, DoublePredicate decision) {
+        var units = savedFormationUnits(attacker, 1);
+        units.addAll(savedFormationUnits(defender, 2));
+        return runBattle(scenario, applyElementHalo(units), decision, new Random(),
+                HeroBattleRoundUtils.ARENA_MAX_ROUNDS, attackRates);
+    }
+
     /** 原机器人战力先加队伍元素光环，再使用同源评分权重逐人取整。 */
     int configuredPower(List<ConfiguredEnemy> enemies, HeroPowerRules powers) {
         int total = 0;
@@ -358,17 +367,17 @@ public final class HeroBattleChapterScenario {
     private Result runConfiguredFormation(String scenario, HeroBattleInputService.Input input,
                                           List<ConfiguredEnemy> enemyRows, DoublePredicate decision, int maxRounds,
                                           Map<Integer, Long> attackRates) {
-        var units = savedFormationUnits(input);
+        var units = savedFormationUnits(input, 1);
         for (var enemy : enemyRows) {
             units.add(configuredEnemy(enemy));
         }
         return runBattle(scenario, applyElementHalo(units), decision, new Random(), maxRounds, attackRates);
     }
 
-    /** 将已鉴权的真实主阵容转为开场单位，完整保留属性、技能和显示身份。 */
-    private ArrayList<Unit> savedFormationUnits(HeroBattleInputService.Input input) {
+    /** 将权限已验证的持久阵容转为开场单位，守方使用 9 至 16 的本场编号。 */
+    private ArrayList<Unit> savedFormationUnits(HeroBattleInputService.Input input, int faction) {
         if (input.units().isEmpty()) {
-            throw new IllegalArgumentException("请先保存非空主线阵容");
+            throw new IllegalArgumentException("请先保存非空战斗阵容");
         }
         var units = new ArrayList<Unit>();
         var heroIds = new HashSet<String>();
@@ -377,7 +386,8 @@ public final class HeroBattleChapterScenario {
             if (!heroIds.add(hero.id()) || source.position() < 1 || source.position() > 8) {
                 throw new IllegalArgumentException("阵容英雄重复或包含尚未接入的助战位");
             }
-            units.add(new Unit(source.position(), 1, hero.templateId(), hero.level(), hero.star(), hero.stage(),
+            int unitId = (faction - 1) * 8 + source.position();
+            units.add(new Unit(unitId, faction, hero.templateId(), hero.level(), hero.star(), hero.stage(),
                 source.position(), source.attributes(), HeroBattleAttributeUtils.opening(source.attributes()),
                 source.skillSchedule(), appearance.icon(hero.templateId(), hero.star(),
                     hero.evolution().type(), hero.evolution().level())));

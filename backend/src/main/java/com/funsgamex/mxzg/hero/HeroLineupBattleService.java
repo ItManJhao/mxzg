@@ -64,6 +64,13 @@ public class HeroLineupBattleService {
         return validate(input, report);
     }
 
+    /** 竞技场事务已锁定双方角色，使用当时的攻防持久阵容生成一份双方共用的战报。 */
+    public Preview arena(String scenario, HeroBattleInputService.Input attacker, HeroBattleInputService.Input defender,
+                         Map<Integer, Long> attackRates, DoublePredicate decision) {
+        var report = battles.runArenaFormation(scenario, attacker, defender, attackRates, decision);
+        return validate(attacker, report);
+    }
+
     /** 配置机器人列表使用真实守军的开战属性计算战力，禁止根据角色等级伪造战力。 */
     public int configuredPower(List<HeroBattleChapterScenario.ConfiguredEnemy> enemies, HeroPowerRules powers) {
         return battles.configuredPower(enemies, powers);

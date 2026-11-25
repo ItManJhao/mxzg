@@ -1,6 +1,6 @@
 /**
  * 新主线挂机领取的真实WS二进制回归：独立H2、回环随机端口，验证回执、统一事件和重连恢复。
- * 仅本测试显式启用服务端领取，活动控制经真实维护入口配置；玩家按钮仍未接入。
+ * 本测试显式启用服务端领取，活动控制经真实维护入口配置，独立断言资产、奖励与任务事件。
  * 数据准备只作用于独立测试库，不连接日常服务器、不调用GM、不以历史回执覆盖当前资产。
  */
 package com.funsgamex.mxzg;
@@ -167,27 +167,33 @@ class MainChapterIdleClaimSocketTest {
             return received;
         }
 
-        /** 领取提交事件允许先到或后到，调用方取得同一条实际统一快照。 */
-        private Received stateChanged() throws Exception {
+        /** 对照同连接的提交帧，验证交错的任务更新，并严格保留资产与奖励的先后顺序。 */
+        private Received claimEvent(String expectedName) throws Exception {
             var received = events.poll();
-            if (received == null) {
-                received = receive();
+            while (true) {
+                if (received == null) {
+                    received = receive();
+                }
+                var frame = received.frame();
+                assertEquals("event", frame.path("kind").asString());
+                assertEquals(connectionId, frame.path("connectionId").asString());
+                if (!"quest.changed".equals(frame.path("name").asString())) {
+                    assertEquals(expectedName, frame.path("name").asString());
+                    return received;
+                }
+                assertTrue(frame.path("body").path("completed").isArray());
+                received = events.poll();
             }
-            assertEquals("event", received.frame().path("kind").asString());
-            assertEquals("state.changed", received.frame().path("name").asString());
-            return received;
         }
 
-        /** 首领还会发送通用实际到账反馈，独立于统一状态，不用它修改资产。 */
+        /** 读取真实统一资产快照并保留原始二进制供客户端互通验证。 */
+        private Received stateChanged() throws Exception {
+            return claimEvent("state.changed");
+        }
+
+        /** 读取首次领取对应的独立到账反馈。 */
         private Received rewardGranted() throws Exception {
-            var received = events.poll();
-            if (received == null) {
-                received = receive();
-            }
-            assertEquals("event", received.frame().path("kind").asString());
-            assertEquals("reward.granted", received.frame().path("name").asString());
-            assertEquals(connectionId, received.frame().path("connectionId").asString());
-            return received;
+            return claimEvent("reward.granted");
         }
 
         /** 同连接保活作为串行屏障后，确认只读/重放/拒绝没有登记资产或奖励展示通知。 */

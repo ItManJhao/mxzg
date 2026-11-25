@@ -29,30 +29,69 @@ class RoleBasicsTest {
     @Autowired AssetSyncService sync;
     /** 构造提交及回滚边界。 */
     @Autowired PlatformTransactionManager manager;
-    /** 新角色采用原表初始值，已有角色不被重复初始化；重连快照不改登录时间。 */
-    @Test void initializeAndRestore() {
-        String account="role_"+UUID.randomUUID().toString().substring(0,12);
-        var player=login.login(account);var role=player.role();var basics=role.basics();
-        assertEquals(1,role.level());assertEquals(0,basics.experience());assertEquals(1000,basics.cup());
-        assertEquals(410304012,basics.imageId());assertEquals(0,basics.headId());assertEquals(0,basics.borderId());
-        assertEquals(120,basics.experienceToNextLevel());assertEquals(360,rules.threshold(2));assertEquals(0,rules.threshold(300));
-        assertTrue(basics.createdAtSeconds()>0);assertTrue(basics.lastLoginAtSeconds()>=basics.createdAtSeconds());
-        var restored=snapshots.snapshot("Bearer "+player.session().accessToken());assertEquals(role,restored.role());
-        assertEquals(role.id(),login.login(account).role().id());
-        assertThrows(IllegalArgumentException.class,()->rules.threshold(301));
+    /** 新角色采用原表初始值，首个统一快照补齐空公会和主阵战力，重连保留全部角色字段。 */
+    @Test
+    void initializeAndRestore() {
+        String account = "role_" + UUID.randomUUID().toString().substring(0, 12);
+        var player = login.login(account);
+        var role = player.role();
+        var basics = role.basics();
+        assertEquals(1, role.level());
+        assertEquals(0, basics.experience());
+        assertEquals(1000, basics.cup());
+        assertEquals(410304012, basics.imageId());
+        assertEquals(0, basics.headId());
+        assertEquals(0, basics.borderId());
+        assertEquals(120, basics.experienceToNextLevel());
+        assertEquals(360, rules.threshold(2));
+        assertEquals(0, rules.threshold(300));
+        assertTrue(basics.createdAtSeconds() > 0);
+        assertTrue(basics.lastLoginAtSeconds() >= basics.createdAtSeconds());
+        assertNull(role.guildName());
+        assertNull(role.power());
+        String token = "Bearer " + player.session().accessToken();
+        var restored = snapshots.snapshot(token);
+        assertEquals("", restored.role().guildName());
+        assertEquals(0, restored.role().power());
+        assertEquals(basics, restored.role().basics());
+        var persisted = roles.findById(role.id()).orElseThrow();
+        assertEquals(restored.role(), persisted.withGuildName(""));
+        assertEquals(restored.role(), snapshots.snapshot(token).role());
+        assertEquals(role.id(), login.login(account).role().id());
+        assertThrows(IllegalArgumentException.class, () -> rules.threshold(301));
     }
-    /** 角色字段与版本一起提交；回滚同时撤销字段、登录时间和版本，其他角色不受影响。 */
-    @Test void atomicPersistenceAndIsolation() {
-        var player=login.login("role_"+UUID.randomUUID().toString().substring(0,12));String id=player.role().id();
-        var other=login.login("role_"+UUID.randomUUID().toString().substring(0,12));
-        var tx=new TransactionTemplate(manager);
+
+    /** 角色资料与版本同时提交，回滚后分别核对持久记录、完整快照以及其他角色的隔离。 */
+    @Test
+    void atomicPersistenceAndIsolation() {
+        var player = login.login("role_" + UUID.randomUUID().toString().substring(0, 12));
+        String id = player.role().id();
+        var other = login.login("role_" + UUID.randomUUID().toString().substring(0, 12));
+        var tx = new TransactionTemplate(manager);
         // 首次完整初始化包含独立冒险点懒建；后续资料事务以已同步版本为基线。
-        long before=snapshots.snapshot("Bearer "+player.session().accessToken()).revision();
-        tx.executeWithoutResult(status->{roles.lock(id);jdbc.update("UPDATE game_role SET role_experience=66,cup=1400 WHERE id=?",id);sync.changed(id);});
-        var state=snapshots.snapshot("Bearer "+player.session().accessToken());assertEquals(66,state.role().basics().experience());assertEquals(1400,state.role().basics().cup());assertEquals(before+1,state.revision());
-        tx.executeWithoutResult(status->{roles.lock(id);jdbc.update("UPDATE game_role SET role_experience=99 WHERE id=?",id);roles.recordLogin(id,state.role().basics().lastLoginAtSeconds()+100);status.setRollbackOnly();});
-        assertEquals(state.role(),roles.findById(id).orElseThrow());assertEquals(before+1,roles.revision(id));
-        assertEquals(other.role(),roles.findById(other.role().id()).orElseThrow());
-        assertThrows(IllegalStateException.class,()->roles.recordLogin(id,100));
+        String token = "Bearer " + player.session().accessToken();
+        long before = snapshots.snapshot(token).revision();
+        tx.executeWithoutResult(status -> {
+            roles.lock(id);
+            jdbc.update("UPDATE game_role SET role_experience=66,cup=1400 WHERE id=?", id);
+            sync.changed(id);
+        });
+        var state = snapshots.snapshot(token);
+        assertEquals(66, state.role().basics().experience());
+        assertEquals(1400, state.role().basics().cup());
+        assertEquals(before + 1, state.revision());
+        var committedRole = roles.findById(id).orElseThrow();
+        assertEquals(state.role(), committedRole.withGuildName(""));
+        tx.executeWithoutResult(status -> {
+            roles.lock(id);
+            jdbc.update("UPDATE game_role SET role_experience=99 WHERE id=?", id);
+            roles.recordLogin(id, state.role().basics().lastLoginAtSeconds() + 100);
+            status.setRollbackOnly();
+        });
+        assertEquals(committedRole, roles.findById(id).orElseThrow());
+        assertEquals(state.role(), snapshots.snapshot(token).role());
+        assertEquals(before + 1, roles.revision(id));
+        assertEquals(other.role(), roles.findById(other.role().id()).orElseThrow());
+        assertThrows(IllegalStateException.class, () -> roles.recordLogin(id, 100));
     }
 }

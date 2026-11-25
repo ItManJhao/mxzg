@@ -339,11 +339,11 @@
       "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
     },
     "client/assets/bundles/module/home/prefabs/CityChromeView.prefab": {
-      "sha256": "e7d7ad665ac5f3b1272f074cf9bfba6cdd580497451d9d08942b12c55cbe3c51",
+      "sha256": "b5657ada0049647c0fea9ba185ad3f8b22f9c91b2831fb498f26160bb9ce4570",
       "date": "2026-11-25",
       "status": "实际预览通过",
-      "scope": "Creator 393×852 竖屏独立会话，验证主城原任务快捷入口点亮红点，能点击进入每日与成就窗口。",
-      "inspector": "本机 Creator 浏览器预览，限新增任务入口绑定。"
+      "scope": "Creator 393×852 竖屏实际点击加号，五个快捷入口同步收放。核对榜单及每日按钮的中间帧，展开后从加号左邻再次打开排行榜。",
+      "inspector": "本机 Creator 浏览器预览，限工具按钮和排行榜入口。"
     },
     "client/assets/bundles/module/home/prefabs/CityHubView.prefab": {
       "sha256": "c0ec7d6d876592f6ad11c22a4a01b57d02e9ff813fdc27e7a67077168bd75883",
@@ -478,6 +478,20 @@
       "scope": "核对每日与成就两页、真实进度、五档图标与红点，实领登录、召唤、捐献日常及 20 点活跃奖励。",
       "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
     },
+    "client/assets/bundles/module/common/prefabs/RankingView.prefab": {
+      "sha256": "b586f489faa65f9718ade1090adba8c8643b28441bde5e773c0dbf1998776a84",
+      "date": "2026-11-25",
+      "status": "实际预览通过",
+      "scope": "实际点击主城入口，核对本服三榜和跨服两榜、39 级跨服准入、点赞状态及 30000 金币到账。",
+      "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
+    },
+    "client/assets/bundles/module/common/prefabs/RankingDetailView.prefab": {
+      "sha256": "06f86b18ebe82e18fcdc849382e4d97da469edbdec843dfefeab272733e02da2",
+      "date": "2026-11-25",
+      "status": "实际预览通过",
+      "scope": "由本服剧情进度卡进入详情，核对前三、进度分和本人第 2 名，退回后切换跨服。",
+      "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
+    },
     "client/assets/bundles/module/common/prefabs/QuestCompletionView.prefab": {
       "sha256": "97cbb910861e8b09f34d245f5bd8ed97d74a2e139ead3cadae16241887b96826",
       "date": "2026-11-25",
@@ -487,6 +501,7 @@
     }
   },
   "evidenceDirectories": [
+    "backend/target/ranking-browser",
     "backend/target/quest-browser",
     "client/temp/guild-features-preview",
     "client/temp/battle-reward-ui-preview",
@@ -496,6 +511,18 @@
     "client/temp/project-checks"
   ],
   "supersededEntries": [
+    {
+      "path": "client/assets/bundles/module/home/prefabs/CityChromeView.prefab",
+      "supersededOn": "2026-11-25",
+      "reason": "工具栏增加收放动画及排行榜入口，任务接入的实测保留原指纹。",
+      "record": {
+        "sha256": "e7d7ad665ac5f3b1272f074cf9bfba6cdd580497451d9d08942b12c55cbe3c51",
+        "date": "2026-11-25",
+        "status": "实际预览通过",
+        "scope": "Creator 393×852 竖屏独立会话，验证主城原任务快捷入口点亮红点，能点击进入每日与成就窗口。",
+        "inspector": "本机 Creator 浏览器预览，限新增任务入口绑定。"
+      }
+    },
     {
       "path": "client/assets/bundles/module/battle/prefabs/MainChapterView.prefab",
       "supersededOn": "2026-11-25",

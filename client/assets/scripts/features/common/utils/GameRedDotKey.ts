@@ -20,6 +20,12 @@ export class GameRedDotKey {
     public static readonly CHAPTER_MILESTONE = "battle.milestone";
     /** 两处任务入口汇总可领取的每日、活跃或成就奖励。 */
     public static readonly QUEST = "quest";
+    /** 主城快捷入口至少有一个仍可点赞的榜首。 */
+    public static readonly RANKING = "ranking";
+    /** 收到未读邮件或尚未领取的附件。 */
+    public static readonly MAIL = "mail";
+    /** 收到好友申请或可领取的友情礼物。 */
+    public static readonly FRIEND = "friend";
     /** 召唤法阵入口。 */
     public static readonly SUMMON = "city.summon";
     /** 创造法阵至少有一项配方的本体、素材和费用准备齐全。 */

@@ -3,6 +3,9 @@
  * 场景向这里交付主城就绪状态。业务请求、恢复规则及页面交互由各模块实现。
  */
 import { AccountOperations } from "../../features/account/AccountOperations";
+import { EntryGateUtils } from "../../config/EntryGateUtils";
+import { GameConfig } from "../../config/GameConfig";
+import { GConfig } from "../../config/GConfig";
 import type { AccountModel } from "../../features/account/AccountModel";
 import { RoleController } from "../../features/account/RoleController";
 import { ArenaController } from "../../features/arena/ArenaController";
@@ -10,6 +13,8 @@ import { BagController } from "../../features/bag/BagController";
 import { MainChapterSession } from "../../features/battle/MainChapterSession";
 import { DailyDungeonController } from "../../features/dungeon/DailyDungeonController";
 import { GuildController } from "../../features/guild/GuildController";
+import { FriendController } from "../../features/friend/FriendController";
+import { MailController } from "../../features/mail/MailController";
 import { FormationController } from "../../features/hero/FormationController";
 import { HeroArtifactController } from "../../features/hero/HeroArtifactController";
 import { HeroEquipmentController } from "../../features/hero/HeroEquipmentController";
@@ -21,6 +26,7 @@ import { HeroJewelController } from "../../features/hero/HeroJewelController";
 import { HeroGodEquipmentController } from "../../features/hero/HeroGodEquipmentController";
 import { MarketController } from "../../features/market/MarketController";
 import { QuestController } from "../../features/quest/QuestController";
+import { RankingController } from "../../features/ranking/RankingController";
 import { RewardBinding } from "../../features/reward/RewardBinding";
 import { TowerController } from "../../features/tower/TowerController";
 import { VipController } from "../../features/vip/VipController";
@@ -130,9 +136,18 @@ export class ApplicationModules {
         const quests = QuestController.instance;
         quests.configure(operations, notice => this.rewards.restore(notice));
         quests.initialize();
+        const rankings = RankingController.instance;
+        rankings.configure(operations, notice => this.rewards.restore(notice));
+        rankings.initialize();
+        const friends = FriendController.instance;
+        friends.configure(operations, notice => this.rewards.restore(notice));
+        friends.initialize();
+        const mail = MailController.instance;
+        mail.configure(operations, notice => this.rewards.restore(notice));
+        mail.initialize();
         const chapter = new MainChapterSession(controller, operations, this.rewards);
         this.sessions = [chapter, heroLevel, heroEquipment, heroStar, heroJewel, godEquipment,
-            heroArtifacts, market, dailyDungeon, tower, arena, guild, vip, quests];
+            heroArtifacts, market, dailyDungeon, tower, arena, guild, vip, quests, rankings, friends, mail];
         this.assets = new AssetStateBinding(model, bag, this.role,
             heroes, formation, () => {
                 clearRolePages();
@@ -143,7 +158,8 @@ export class ApplicationModules {
         this.unbind = AccountComposition.bind(account, frame => this.acceptState(frame),
             frame => this.rewards.controller.receive(frame), showConnectionNotice,
             frame => ProtocolRouter.instance.dispatch(guild, frame),
-            frame => ProtocolRouter.instance.dispatch(quests, frame));
+            frame => ProtocolRouter.instance.dispatch(quests, frame),
+            frame => ProtocolRouter.instance.dispatch(frame.name === Protocol.MAIL_CHANGED ? mail : friends, frame));
     }
 
     /** 整包提交后在同一通知批次更新红点，重连时重新校准独立状态。 */
@@ -167,9 +183,13 @@ export class ApplicationModules {
         }
         this.rewards.controller.observeRevision(this.assets.acceptedRevision);
         GuildController.instance.refreshRoleState(authenticated, previousGuild !== this.accountModel.snapshot.role?.guildName);
+        this.refreshRankingAccess();
         if (authenticated) {
             MarketController.instance.reloadVisible();
             QuestController.instance.refresh();
+            RankingController.instance.refreshVisible();
+            FriendController.instance.refreshVisible();
+            MailController.instance.refreshVisible();
         }
     }
 
@@ -179,7 +199,19 @@ export class ApplicationModules {
         this.redDots.setReady(ready);
         GuildController.instance.setHomeReady(ready);
         QuestController.instance.setHomeReady(ready);
+        this.refreshRankingAccess();
+        RankingController.instance.setHomeReady(ready);
+        FriendController.instance.setHomeReady(ready);
+        MailController.instance.setHomeReady(ready);
         this.questCompletion.setReady(ready);
+    }
+
+    /** 使用当前配置和真实角色等级决定是否预读排行榜红点。 */
+    private refreshRankingAccess(): void {
+        const role = this.accountModel.snapshot.role;
+        const config = GameConfig.instance;
+        const gate = config.getPackageVersion() ? config.getConfig(GConfig.OpenCondition, "main_rank") : undefined;
+        RankingController.instance.setUnlocked(!!role && !!gate && EntryGateUtils.isEntryOpen(gate, role.level, 0));
     }
 
     /** 撤销回调、停止操作，释放模块及其对协议和界面的订阅。 */

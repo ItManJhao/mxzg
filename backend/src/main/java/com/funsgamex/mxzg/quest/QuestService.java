@@ -47,6 +47,8 @@ public class QuestService {
     /** 旧端先展示可领，再展示进行中，已领取移到最后；同组按原配置编号顺排。 */
     private static final Comparator<QuestTask> DISPLAY_ORDER = Comparator
             .comparingInt(QuestService::displayPriority).thenComparingInt(QuestTask::id);
+    /** 竞技场最优名次只存一笔，所有成就档共用同一个实际记录。 */
+    private static final MetricKey ARENA_BEST_RANK = new MetricKey(QuestMetric.ARENA_MAX_RANK, 0);
     /** 角色锁和领取后的权威资产版本。 */
     private final RoleRepository roles;
     /** 已有的五星实际发放和升星回执账本。 */
@@ -177,6 +179,10 @@ public class QuestService {
                 || event.roleId() == null || event.roleId().isBlank()) {
             throw new IllegalArgumentException("任务来源事件无效");
         }
+        if (event.metric() == ARENA_BEST_RANK.metric()) {
+            recordArenaRank(event);
+            return;
+        }
         var key = new MetricKey(event.metric(), event.condition());
         boolean daily = dailyKeys.contains(key);
         boolean achievement = event.amount() == 0
@@ -204,6 +210,18 @@ public class QuestService {
             registerChange(roleId, recordCompleted(loadProgress(roleId, period), metric, now, true));
         } else {
             registerChange(roleId, List.of());
+        }
+    }
+
+    /** 只有正式榜的正名次能改善历史；离榜、掉名次和重试保留已经达到的档位。 */
+    private void recordArenaRank(QuestProgressEvent event) {
+        if (event.condition() != ARENA_BEST_RANK.condition() || event.amount() <= 0) {
+            throw new IllegalArgumentException("竞技场历史名次来源无效");
+        }
+        if (repository.observeArenaRank(event.roleId(), event.amount())) {
+            long now = clock.epochSeconds();
+            var progress = loadProgress(event.roleId(), resetAt(now));
+            registerChange(event.roleId(), recordCompleted(progress, event.metric(), now, true));
         }
     }
 
@@ -313,8 +331,8 @@ public class QuestService {
     /** 保留可用玩法的原前往入口；仅入口相同但对应玩法尚未开放时不跳转。 */
     private static String destination(QuestRules.Task task) {
         return switch (task.metric()) {
-            case LOGIN, FRIEND_GIFT, FRIEND_NUM, CHALLENGE_CLAN_DUNGEON, BEAT_CLAN_DUNGEON, ACCEPT_TAVERN_TASK,
-                    PASS_ADVEN, ADVEN_LEVEL, INFINITE_CHALLENGE, COMBINE_RUNE, PROPHECY, SACRIFICE, ARENA_MAX_RANK -> "";
+            case LOGIN, CHALLENGE_CLAN_DUNGEON, BEAT_CLAN_DUNGEON, ACCEPT_TAVERN_TASK,
+                    PASS_ADVEN, ADVEN_LEVEL, INFINITE_CHALLENGE, COMBINE_RUNE, PROPHECY, SACRIFICE -> "";
             case SHOP_BUY -> task.condition() == 100100 ? task.destination() : "";
             default -> task.destination();
         };
@@ -334,12 +352,14 @@ public class QuestService {
         });
     }
 
-    /** 实时核对英雄数量、竞技场积分等条件，首次提示历史不替代原领奖门槛。 */
+    /** 核对原任务条件；竞技场名次使用持久最优记录，积分仍读取当前角色值。 */
     private long achievementProgress(Progress progress, QuestRules.Task task) {
         var key = new MetricKey(task.metric(), task.condition());
         return progress.lifetime().computeIfAbsent(key, ignored -> switch (task.metric()) {
             case ADVENTURE_LEVEL -> (long) progress.actor().level();
             case ARENA_SCORE -> (long) progress.actor().arenaScore();
+            case ARENA_MAX_RANK -> progress.lifetime().getOrDefault(ARENA_BEST_RANK, Long.MAX_VALUE)
+                    <= task.condition() ? 1L : 0L;
             case ROLE_MAX_FIGHTING -> (long) progress.actor().maxPower();
             case JOIN_CLAN -> repository.hasJoinedGuild(progress.roleId()) ? 1L : 0L;
             case DAILY_DUNGEON_CHALLENGE -> repository.dungeonChallenges(progress.roleId());
