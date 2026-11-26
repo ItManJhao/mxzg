@@ -78,12 +78,15 @@ const payloads = [
     "dreamlandState", "dreamlandCommand", "dreamlandSettlement", "dreamlandAssistance", "dreamlandRanking",
     "dreamlandFormationPowerRequest", "dreamlandFormationPower",
     "trialState", "trialCommand", "trialSettlement", "trialAssistance", "trialShopState", "trialShopBuy", "trialShopReceipt",
+    "rainbowState", "rainbowChallengeRequest", "rainbowChallengeResponse", "rainbowHistoryRequest",
+    "rainbowHistory", "rainbowReplayRequest", "rainbowLineupSaved",
     "arenaState", "arenaChallengeRequest", "arenaReplayRequest", "arenaReplay", "arenaSettlement",
     "arenaTicketBuyRequest", "arenaTicketPurchase",
     "arenaRanking", "arenaSeason", "arenaChestRequest", "arenaChestReceipt", "arenaLikeRequest", "arenaLikeReceipt",
     "arenaDefense", "arenaDefenseSave", "arenaDefenseSaved", "arenaShopState", "arenaShopBuy", "arenaShopReceipt",
     "guildListRequest", "guildChangeRequest", "guildState", "vipClaimRequest", "vipClaimReceipt",
     "guildShopBuyRequest", "guildShopState", "guildDonationRequest", "guildDonationState", "guildRankingState",
+    "guildTechnologyState", "guildTechnologyCommand", "guildTechnologyReceipt",
     "questClaimRequest", "questSnapshot", "questClaimReceipt", "questChanged",
     "rankingListRequest", "rankingLikeRequest", "rankingOverview", "rankingDetail", "rankingLikeReceipt",
     "mailCommand", "mailboxState", "mailboxReceipt", "friendSearchRequest", "friendChangeRequest", "friendState",
@@ -140,6 +143,16 @@ export class GameProtocolCodecUtils {
                     return request ? "empty" : "trialShopState";
                 case Protocol.TRIAL_SHOP_BUY:
                     return request ? "trialShopBuy" : "trialShopReceipt";
+                case Protocol.RAINBOW_STATE:
+                    return request ? "empty" : "rainbowState";
+                case Protocol.RAINBOW_LINEUP_SAVE:
+                    return request ? "formationSave" : "rainbowLineupSaved";
+                case Protocol.RAINBOW_CHALLENGE:
+                    return request ? "rainbowChallengeRequest" : "rainbowChallengeResponse";
+                case Protocol.RAINBOW_HISTORY:
+                    return request ? "rainbowHistoryRequest" : "rainbowHistory";
+                case Protocol.RAINBOW_REPLAY:
+                    return request ? "rainbowReplayRequest" : "arenaReplay";
                 case Protocol.TOWER_FORMATION_SAVE:
                     return request ? "towerFormationSave" : "towerState";
                 case Protocol.TOWER_CHALLENGE:
@@ -288,6 +301,8 @@ export class GameProtocolCodecUtils {
                 case Protocol.GUILD_SHOP_BUY: return "guildShopBuyRequest";
                 case Protocol.GUILD_DONATION_DONATE:
                 case Protocol.GUILD_DONATION_CLAIM: return "guildDonationRequest";
+                case Protocol.GUILD_TECHNOLOGY_UPGRADE:
+                case Protocol.GUILD_TECHNOLOGY_RESET: return "guildTechnologyCommand";
                 case Protocol.QUEST_CLAIM: return "questClaimRequest";
                 case Protocol.RANKING_LIST: return "rankingListRequest";
                 case Protocol.RANKING_LIKE: return "rankingLikeRequest";
@@ -385,6 +400,9 @@ export class GameProtocolCodecUtils {
                 case Protocol.CHAT_SEND: return "chatSendResult";
                 case Protocol.CHAT_OVERVIEW: return "chatOverview";
                 case Protocol.GUILD_RANKING: return "guildRankingState";
+                case Protocol.GUILD_TECHNOLOGY_INFO: return "guildTechnologyState";
+                case Protocol.GUILD_TECHNOLOGY_UPGRADE:
+                case Protocol.GUILD_TECHNOLOGY_RESET: return "guildTechnologyReceipt";
                 case Protocol.VIP_CLAIM: return "vipClaimReceipt";
                 case Protocol.ROLE_NAME_RANDOM: return "roleName";
                 case Protocol.ROLE_NAME_SET:

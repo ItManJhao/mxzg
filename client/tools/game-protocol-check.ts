@@ -6,16 +6,122 @@ import {createRequire} from "node:module";
 import {runInNewContext} from "node:vm";
 import {readFileSync} from "node:fs";
 import { GameProtocolCodecUtils, GAME_FRAME_LIMIT } from "../assets/scripts/platform/GameProtocolCodecUtils";
-import { Protocol } from "../assets/scripts/platform/Protocol";
+import { Protocol, type RainbowHistory, type RainbowSettlement, type RainbowState,
+    type GuildTechnologyReceipt, type GuildTechnologyState, type TrialSettlement, type TrialShopReceipt }
+    from "../assets/scripts/platform/Protocol";
 import { CHAT_CHANNEL_IDS } from "../assets/scripts/features/chat/data/ChatData";
 import { BLACK_MARKET_STALL, type BlackMarketReceipt } from "../assets/scripts/features/blackmarket/data/BlackMarketData";
 import { BattleReplayUtils } from "../assets/scripts/features/battle/utils/BattleReplayUtils";
+import { RewardUtils } from "../assets/scripts/features/reward/utils/RewardUtils";
 import {ProtocolRouter} from "../assets/scripts/platform/ProtocolRouter";
 import { GameProtocolLogUtils } from "../assets/scripts/platform/GameProtocolLogUtils";
 import {mxzg} from "../assets/scripts/platform/GameProtocol.generated";
 const state={revision:2,role:{id:"role",nickname:"测试😀",level:1,gold:0,diamonds:0,serverId:"local-1"},heroes:[],heroRoster:{capacity:325,buySpaceTimes:1},inventory:[{itemId:900101,quantity:4}]};
 
-/** 验证试炼实际节点和换周报价需要的字段，可同时交叉解析隔离服务端导出的二进制战报。 */
+/** 核对公会科技双向载荷以及隔离服真正的点亮、重置和补读原回执。 */
+function checkGuildTechnologyWire(): void {
+    const requestId = "d2775714-1086-4271-aa41-2178d5b2e14e";
+    const request = { version: 1, kind: "request", id: requestId } as const;
+    roundTrip({ ...request, name: Protocol.GUILD_TECHNOLOGY_INFO, body: {} });
+    roundTrip({ ...request, name: Protocol.GUILD_TECHNOLOGY_UPGRADE,
+        body: { requestId, profession: 1, expectedVersion: 0 } });
+    roundTrip({ ...request, name: Protocol.GUILD_TECHNOLOGY_RESET,
+        body: { requestId, profession: 1, expectedVersion: 1 } });
+
+    for (const argument of process.argv.filter(value => value.startsWith("--guild-technology-java="))) {
+        const path = argument.slice("--guild-technology-java=".length);
+        const frame = GameProtocolCodecUtils.decodeGameFrame(readFileSync(path));
+        assert.equal(frame.kind, "response");
+        assert.equal(frame.ok, true);
+        let snapshot: GuildTechnologyState;
+        if (frame.name === Protocol.GUILD_TECHNOLOGY_INFO) {
+            snapshot = frame.body as GuildTechnologyState;
+            const next = snapshot.branches[0]?.next;
+            assert.equal(next?.gold, 18_000);
+            assert.equal(next?.medals, 30);
+        } else {
+            assert.ok(frame.name === Protocol.GUILD_TECHNOLOGY_UPGRADE || frame.name === Protocol.GUILD_TECHNOLOGY_RESET);
+            const receipt = frame.body as GuildTechnologyReceipt;
+            snapshot = receipt.state;
+            assert.equal(receipt.action, frame.name === Protocol.GUILD_TECHNOLOGY_UPGRADE ? "upgrade" : "reset");
+            assert.ok(receipt.assetRevision > 0);
+            assert.ok(receipt.version > 0 && receipt.version <= snapshot.version);
+        }
+        assert.deepEqual(snapshot.branches.map(branch => branch.profession), [1, 2, 3, 4]);
+        assert.deepEqual(snapshot.branches.map(branch => branch.nodes.length), [6, 6, 6, 6]);
+        assert.equal(snapshot.maxStage, 60);
+        assert.equal(snapshot.stageGap, 15);
+        console.log(`PASS Java/TS Guild technology ${path}`);
+    }
+}
+
+/** 核对彩虹圣殿新协议路由和真实 Java 帧中的阵容、冷却及守军回放。 */
+function checkRainbowWire(): void {
+    const requestId = "d2775714-1086-4271-aa41-2178d5b2e14e";
+    const heroId = "12d69bcd-16c2-418d-986e-f27764156e68";
+    const request = { version: 1, kind: "request", id: requestId } as const;
+    roundTrip({ ...request, name: Protocol.RAINBOW_STATE, body: {} });
+    roundTrip({ ...request, name: Protocol.RAINBOW_LINEUP_SAVE, body: {
+        requestId, expectedVersion: 0, formationId: 1, slots: [{ position: 2, heroId }],
+    } });
+    roundTrip({ ...request, name: Protocol.RAINBOW_CHALLENGE, body: {
+        requestId, seatId: 4, evolution: 5, expectedLineupVersion: 1,
+    } });
+    roundTrip({ ...request, name: Protocol.RAINBOW_HISTORY, body: { seatId: 4 } });
+    roundTrip({ ...request, name: Protocol.RAINBOW_REPLAY, body: { seatId: 4, battleId: requestId } });
+
+    for (const argument of process.argv.filter(value => value.startsWith("--rainbow-java="))) {
+        const path = argument.slice("--rainbow-java=".length);
+        const frame = GameProtocolCodecUtils.decodeGameFrame(readFileSync(path));
+        assert.equal(frame.kind, "response");
+        assert.equal(frame.ok, true);
+        switch (frame.name) {
+            case Protocol.RAINBOW_STATE: {
+                const snapshot = frame.body as RainbowState;
+                assert.deepEqual(snapshot.seats.map(seat => seat.requiredRank), [10, 20, 20, 50, 50, 50]);
+                assert.equal(snapshot.seats.find(seat => seat.id === 4)?.owner, undefined);
+                assert.equal(snapshot.seats.find(seat => seat.id === 4)?.evolution, 6);
+                assert.equal(snapshot.lineup.slots.length, 6);
+                break;
+            }
+            case Protocol.RAINBOW_CHALLENGE: {
+                const result = frame.body as RainbowSettlement;
+                const seat = result.state.seats.find(row => row.id === result.seatId);
+                assert(seat);
+                const replay = BattleReplayUtils.parse(BattleReplayUtils.encodeVerified(result.replay));
+                assert.equal(replay.units.filter(unit => unit.faction === 2).length, 6);
+                assert.equal(replay.maxRounds, 15);
+                if (result.won) {
+                    assert(seat.owner);
+                    assert.equal(seat.evolution, result.evolution);
+                    assert.equal((seat.occupiedUntil ?? 0) - result.state.serverTime, 259_200_000);
+                } else {
+                    assert.equal(seat.owner, undefined);
+                    assert.equal(result.state.cooldownUntil - result.state.serverTime, 1_200_000);
+                }
+                break;
+            }
+            case Protocol.RAINBOW_HISTORY: {
+                const history = frame.body as RainbowHistory;
+                assert.equal(history.seatId, 4);
+                assert.deepEqual(history.records.map(record => record.evolution), [5, 1]);
+                assert(history.records.every(record => record.heroes.length === 6));
+                break;
+            }
+            case Protocol.RAINBOW_REPLAY: {
+                const replay = BattleReplayUtils.parse(BattleReplayUtils.encodeVerified(frame.body));
+                assert.equal(replay.units.filter(unit => unit.faction === 2).length, 6);
+                assert.equal(replay.maxRounds, 15);
+                break;
+            }
+            default:
+                assert.fail(`彩虹圣殿真实回包出现未知协议：${frame.name}`);
+        }
+        console.log(`PASS Java/TS Rainbow ${path}`);
+    }
+}
+
+/** 验证试炼协议、真实回执和按需导出的全量原守军战报。 */
 function checkTrialWire(): void {
     const requestId = "d2775714-1086-4271-aa41-2178d5b2e14e";
     const roleId = "12d69bcd-16c2-418d-986e-f27764156e68";
@@ -55,7 +161,7 @@ function checkTrialWire(): void {
         const path = argument.slice("--trial-java=".length);
         const frame = GameProtocolCodecUtils.decodeGameFrame(readFileSync(path));
         if (frame.name === Protocol.TRIAL_SHOP_BUY) {
-            const receipt = frame.body as import("../assets/scripts/platform/Protocol").TrialShopReceipt;
+            const receipt = frame.body as TrialShopReceipt;
             assert.equal(receipt.state.offers[0].price, 1250);
             const result = receipt.actual as { items: readonly { itemId: number; credited: number }[] };
             assert(result.items.some(item => item.itemId === 901503 && item.credited === 5));
@@ -63,16 +169,60 @@ function checkTrialWire(): void {
             continue;
         }
         assert.equal(frame.name, Protocol.TRIAL_ACT);
-        const actual = frame.body as import("../assets/scripts/platform/Protocol").TrialSettlement;
-        const replay = actual.state.battle?.replay;
-        assert(replay, "真实试炼回执应包含战报");
-        assert.equal(replay.scenario, `trial:${actual.state.difficulty}:${actual.state.battle?.node}`);
-        assert.doesNotThrow(() => BattleReplayUtils.encodeVerified(replay));
-        console.log(`PASS Java/TS Trial replay ${path}`);
+        checkTrialSettlementFixture(frame.body as TrialSettlement);
+        console.log(`PASS Java/TS Trial settlement ${path}`);
+    }
+    const guardFixtureArgument = process.argv.find(arg => arg.startsWith("--trial-guards="));
+    if (guardFixtureArgument) {
+        const directory = guardFixtureArgument.substring("--trial-guards=".length);
+        for (let id = 1; id <= 1000; id++) {
+            const replay = BattleReplayUtils.parse(readFileSync(`${directory}/team-${id}.pb`));
+            assert.equal(replay.units.filter(unit => unit.faction === 2).length, 6);
+            assert(replay.steps.some(step => step.kind === "skill.begin" && step.sourceId > 8),
+                `试炼原守军第 ${id} 队必须真实出手`);
+        }
+        console.log("PASS Java/TS Trial guard replays 1–1000");
     }
 }
 
-/** 校验梦境命令字段，并可读取指定范围内 Java 实际连战的战报验证客户端解析。 */
+/** 用实际客户端解码与奖励展示核对首战、最终宝箱和次日回退补奖。 */
+function checkTrialSettlementFixture(receipt: TrialSettlement): void {
+    const { state, action } = receipt;
+    const battle = state.battle;
+    if (battle) {
+        assert.equal(battle.replay.scenario, `trial:${state.difficulty}:${battle.node}`);
+        assert.doesNotThrow(() => BattleReplayUtils.encodeVerified(battle.replay));
+    }
+    if (action === "fight") {
+        assert(battle, "试炼挑战回执应包含战报");
+        return;
+    }
+    const notice = RewardUtils.fromActual(receipt.requestId, receipt.assetRevision, receipt.actual);
+    assert(notice);
+    const credited = new Map(notice.items.map(item => [item.itemId, item.credited]));
+    if (action === "claim") {
+        assert.equal(state.currentNode, 0);
+        assert.equal(state.completedDifficulty, state.difficulty);
+        assert.equal(state.nodes.filter(node => node.status === "cleared").length, 20);
+        const finalChest = state.nodes[19];
+        assert.equal(finalChest.type, "chest");
+        assert.equal(finalChest.status, "cleared");
+        assert.deepEqual(credited, new Map(finalChest.rewards.map(item => [item.itemId, item.quantity])));
+        return;
+    }
+    assert.equal(action, "selectDifficulty");
+    assert([2, 3].includes(state.difficulty));
+    assert.equal(battle, undefined);
+    assert.equal(state.currentNode, 5);
+    assert.deepEqual(state.nodes.filter(node => node.status === "cleared").map(node => node.node), [1, 2, 3, 4]);
+    assert.equal(state.nodes[3].type, "chest");
+    assert(state.nodes[4].opponent, "回退落点应含可验证的六人守军");
+    assert.deepEqual(credited, new Map(state.todayRewards.map(item => [item.itemId, item.quantity])));
+    assert.deepEqual(credited, new Map(state.difficulty === 2
+        ? [[900001, 480000], [901201, 710]] : [[900001, 820000], [901201, 1185]]));
+}
+
+/** 校验梦境命令字段，并从同一测试目录验证 Java 连战和守军战报的客户端解析。 */
 function checkDreamlandWire(): void {
     const requestId = "d2775714-1086-4271-aa41-2178d5b2e14e";
     const request = { version: 1, kind: "request", name: Protocol.DREAMLAND_ACT, id: requestId } as const;
@@ -81,8 +231,8 @@ function checkDreamlandWire(): void {
     assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, body: { ...body, choice: 1 } }));
     assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, body: { ...body, action: "SELECT_BUFF" } }));
     const javaFixtureArgument = process.argv.find(arg => arg === "--dreamland-java" || arg.startsWith("--dreamland-java="));
+    const fixtureFolder = javaFixtureArgument?.split("=", 2)[1] ?? "backend/target";
     if (javaFixtureArgument) {
-        const fixtureFolder = javaFixtureArgument.split("=", 2)[1] ?? "backend/target";
         const limitArgument = process.argv.find(arg => arg.startsWith("--dreamland-floors="));
         const lastFloor = limitArgument ? Number(limitArgument.split("=", 2)[1]) : 35;
         assert(Number.isSafeInteger(lastFloor) && lastFloor > 0 && lastFloor <= 1500, "梦境校验楼层必须在配置范围内");
@@ -108,7 +258,7 @@ function checkDreamlandWire(): void {
         assert(Number.isSafeInteger(firstFloor) && Number.isSafeInteger(lastFloor)
             && firstFloor >= 1 && firstFloor <= lastFloor && lastFloor <= 1500);
         for (let floor = firstFloor; floor <= lastFloor; floor++) {
-            const bytes = readFileSync(`backend/target/dreamland-guard-replays/floor-${floor}.pb`);
+            const bytes = readFileSync(`${fixtureFolder}/dreamland-guard-replays/floor-${floor}.pb`);
             const replay = BattleReplayUtils.parse(bytes);
             assert(replay.steps.some(step => step.kind === "skill.begin" && step.sourceId > 8),
                 `第 ${floor} 层的守军必须真实出手`);
@@ -1226,5 +1376,7 @@ function checkSpiritWire(): void {
 checkDreamlandWire();
 checkDreamlandSocialWire();
 checkTrialWire();
+checkRainbowWire();
+checkGuildTechnologyWire();
 checkDreamlandFormationPowerWire();
 main();

@@ -9,12 +9,14 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TrialRobotRulesTest {
-    /** 全量构建原守军，另以真实试炼执行器验证首批新增队伍或启用全量实战复验。 */
+    /** 全量构建原守军，按需导出实战战报供客户端复验。 */
     @Test
     void reportsSupportForEveryLegacyTeamWithoutReplacingAnySkills() throws Exception {
         var mapper = new ObjectMapper();
@@ -22,6 +24,10 @@ class TrialRobotRulesTest {
         var executor = new HeroLineupBattleService(null, mapper);
         var observer = observerFormation(mapper);
         boolean verifyAllReplays = Boolean.getBoolean("mxzg.test.trial.all-robot-replays");
+        var exportDirectory = Path.of("target", "trial-guard-replays");
+        if (verifyAllReplays) {
+            Files.createDirectories(exportDirectory);
+        }
         try (var source = getClass().getResourceAsStream("/gameplay/trial-rules.json")) {
             assertNotNull(source);
             var config = mapper.readTree(source);
@@ -50,14 +56,14 @@ class TrialRobotRulesTest {
                 if (missing.isEmpty()) {
                     supported.add(id);
                     if (verifyAllReplays || id == 15) {
-                        verifyGuardReplay(executor, observer, units, rounds, id, replayed, replayFailures);
+                        verifyGuardReplay(executor, observer, units, rounds, id, replayed, replayFailures,
+                                verifyAllReplays ? exportDirectory : null);
                     }
                 } else {
                     blocked.add(Map.of("id", id, "power", robot.path("power").asLong(), "gaps", missing));
                     missing.forEach(gap -> groups.merge(gap, 1, Integer::sum));
                 }
             }
-            assertTrue(supported.containsAll(List.of(1, 2, 3, 4, 15)));
             var summarized = groups.entrySet().stream().sorted(Map.Entry.<HeroBattleChapterScenario.TrialSkillGap,
                     Integer>comparingByValue().reversed()).map(entry -> Map.of("gap", entry.getKey(),
                             "teams", entry.getValue())).toList();
@@ -66,18 +72,23 @@ class TrialRobotRulesTest {
                     Map.of("supportedTeams", supported, "blockedTeams", blocked, "groups", summarized,
                             "replayedTeams", replayed, "replayFailures", replayFailures));
             assertTrue(replayFailures.isEmpty(), "守军技能预检通过后仍无法生成战报：" + replayFailures);
+            assertTrue(blocked.isEmpty(), "原守军仍有技能缺口：" + summarized);
         }
     }
 
-    /** 使用真实试炼回合数与原守军技能运行战斗，逐队记录报告以便定位运行期缺口。 */
+    /** 使用真实试炼回合数和原守军技能执行战斗，可选将成功战报写入指定目录。 */
     private static void verifyGuardReplay(HeroLineupBattleService executor, HeroBattleInputService.Input observer,
             List<HeroBattleChapterScenario.Unit> units, int rounds, int id,
-            List<Integer> replayed, Map<Integer, String> failures) {
+            List<Integer> replayed, Map<Integer, String> failures, Path exportDirectory) throws java.io.IOException {
         try {
             var replay = executor.trial("trial:1:1", observer, units, Map.of(), rounds, chance -> chance > 0D);
             if (replay.turns().stream().noneMatch(turn -> turn.sourceId() > 8)) {
                 failures.put(id, "守军没有出手");
                 return;
+            }
+            if (exportDirectory != null) {
+                Files.write(exportDirectory.resolve("team-" + id + ".pb"),
+                        HeroBattleReplayProtocolUtils.encode(replay).toByteArray());
             }
             replayed.add(id);
         } catch (RuntimeException failure) {

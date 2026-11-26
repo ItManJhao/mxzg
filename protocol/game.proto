@@ -185,6 +185,16 @@ message Frame {
     TrialShopState trial_shop_state = 175;
     TrialShopBuy trial_shop_buy = 176;
     TrialShopReceipt trial_shop_receipt = 177;
+    RainbowState rainbow_state = 178;
+    RainbowChallengeRequest rainbow_challenge_request = 179;
+    RainbowChallengeResponse rainbow_challenge_response = 180;
+    RainbowHistoryRequest rainbow_history_request = 181;
+    RainbowHistory rainbow_history = 182;
+    RainbowReplayRequest rainbow_replay_request = 183;
+    RainbowLineupSaved rainbow_lineup_saved = 184;
+    GuildTechnologyState guild_technology_state = 185;
+    GuildTechnologyCommand guild_technology_command = 186;
+    GuildTechnologyReceipt guild_technology_receipt = 187;
   }
 }
 
@@ -674,6 +684,52 @@ message GuildDonationState {
 }
 
 // 榜单只包含当前区服，own 缺失代表未入会，rank 为零代表本公会未上榜。
+// 公会科技为角色个人进度。已学属性在离会期间暂停，钱包与贡献来自统一资产快照。
+message GuildTechnologyState {
+  required int64 version = 1;
+  required bool member = 2;
+  required uint32 max_stage = 3;
+  required uint32 stage_gap = 4;
+  required int64 reset_diamonds = 5;
+  repeated GuildTechnologyBranch branches = 6;
+}
+message GuildTechnologyBranch {
+  required uint32 profession = 1;
+  required uint32 stage = 2;
+  required uint32 step = 3;
+  repeated GuildTechnologyNode nodes = 4;
+  optional GuildTechnologyNext next = 5;
+  required int64 refund_gold = 6;
+  required int64 refund_medals = 7;
+}
+message GuildTechnologyNode {
+  required uint32 slot = 1;
+  required uint32 attribute_id = 2;
+  required uint32 level = 3;
+  required uint32 increment = 4;
+  required int64 total = 5;
+}
+message GuildTechnologyNext {
+  required uint32 stage = 1;
+  required uint32 slot = 2;
+  required int64 gold = 3;
+  required int64 medals = 4;
+  required bool blocked = 5;
+}
+message GuildTechnologyCommand {
+  required string request_id = 1;
+  required uint32 profession = 2;
+  required int64 expected_version = 3;
+}
+message GuildTechnologyReceipt {
+  required string request_id = 1;
+  required string action = 2;
+  required uint32 profession = 3;
+  required int64 version = 4;
+  required int64 asset_revision = 5;
+  required GuildTechnologyState state = 6;
+}
+
 message GuildRankEntry {
   required uint32 rank = 1;
   required string guild_id = 2;
@@ -1194,6 +1250,90 @@ message ArenaLikeReceipt {
   required ArenaRanking ranking = 2;
   required RewardNotice notice = 3;
 }
+// 彩虹圣殿由同服真实神位、实时竞技场排名和独立阵容组成。时间为 Unix 毫秒。
+message RainbowState {
+  repeated RainbowSeat seats = 1;
+  required uint32 arena_rank = 2;
+  required int64 cooldown_until = 3;
+  required RainbowLineup lineup = 4;
+  required int64 server_time = 5;
+}
+message RainbowSeat {
+  required uint32 id = 1;
+  required uint32 type = 2;
+  required uint32 evolution = 3;
+  required uint32 required_rank = 4;
+  optional RainbowOwner owner = 5;
+  optional int64 occupied_until = 6;
+  required uint32 hero_type_id = 7;
+  required uint32 hero_star = 8;
+  repeated RainbowSkill active_skills = 9;
+  repeated RainbowSkill passive_skills = 10;
+  required uint32 attack_bonus = 11;
+  required uint32 health_bonus = 12;
+}
+message RainbowOwner {
+  required string role_id = 1;
+  required string name = 2;
+  required uint32 level = 3;
+  required uint32 head_id = 4;
+  required uint32 border_id = 5;
+  required uint32 image_id = 6;
+}
+message RainbowSkill {
+  required uint32 id = 1;
+  required uint32 level = 2;
+}
+message RainbowLineup {
+  required int64 version = 1;
+  required uint32 formation_id = 2;
+  repeated FormationSlot slots = 3;
+}
+message RainbowLineupSaved {
+  required string request_id = 1;
+  required RainbowLineup formation = 2;
+}
+message RainbowChallengeRequest {
+  required string request_id = 1;
+  required uint32 seat_id = 2;
+  required uint32 evolution = 3;
+  required int64 expected_lineup_version = 4;
+}
+message RainbowChallengeResponse {
+  required string request_id = 1;
+  required RainbowState state = 2;
+  required string battle_id = 3;
+  required BattleReplay replay = 4;
+  required bool won = 5;
+  required uint32 seat_id = 6;
+  required uint32 evolution = 7;
+}
+message RainbowHistoryRequest {
+  required uint32 seat_id = 1;
+}
+message RainbowHistory {
+  required uint32 seat_id = 1;
+  repeated RainbowHistoryEntry records = 2;
+}
+message RainbowHistoryEntry {
+  required string battle_id = 1;
+  required string name = 2;
+  required uint32 evolution = 3;
+  required int64 fought_at = 4;
+  required uint32 power = 5;
+  repeated RainbowHistoryHero heroes = 6;
+}
+message RainbowHistoryHero {
+  required uint32 hero_type_id = 1;
+  required uint32 level = 2;
+  required uint32 star = 3;
+  required uint32 icon_id = 4;
+}
+message RainbowReplayRequest {
+  required uint32 seat_id = 1;
+  required string battle_id = 2;
+}
+
 message ArenaDefense {
   required int64 version = 1;
   required uint32 formation_id = 2;

@@ -294,7 +294,7 @@ async function failures(clock: ReturnType<typeof controlledClock>): Promise<void
     }
 }
 
-/** 复验地图入口、玩法门槛、铁匠铺返回及每日任务直达黑市。 */
+/** 复验地图与副本入口、彩虹圣殿到竞技场、铁匠铺返回及任务直达黑市。 */
 async function cityPlays(): Promise<void> {
     await ConfigFixtureUtils.installReal();
     const account = new AccountModel();
@@ -363,6 +363,29 @@ async function cityPlays(): Promise<void> {
         assert.equal(city.state.opens[9].id, "black-market");
         smithArgs.backToCity();
         assert.equal(city.state.current, "remake-home");
+
+        account.replace({ busy: false, error: "", role: { ...role, level: 34 } });
+        assert.equal(city.flow.open("main_chsd"), true);
+        await settle();
+        assert.equal(city.state.opens.length, 10);
+        assert.equal(city.messages().at(-1), "角色达到 35 级开启彩虹圣殿");
+        account.replace({ busy: false, error: "", role: { ...role, level: 35 } });
+        city.flow.open("dungeon");
+        await settle();
+        const hall = city.state.opens[10];
+        assert.equal(hall.id, "dungeon-hall");
+        (hall.args as { openRainbow: () => void }).openRainbow();
+        await settle();
+        const rainbow = city.state.opens[11];
+        assert.equal(rainbow.id, "rainbow");
+        assert.equal(HomeFeatureNavigation.tabForPage("rainbow"), "dungeon");
+        const rainbowArgs = rainbow.args as { openArena: () => void; backToHall: () => void };
+        rainbowArgs.openArena();
+        await settle();
+        assert.equal(city.state.opens[12].id, "arena");
+        rainbowArgs.backToHall();
+        await settle();
+        assert.equal(city.state.opens[13].id, "dungeon-hall");
     } finally {
         city.flow.dispose();
     }

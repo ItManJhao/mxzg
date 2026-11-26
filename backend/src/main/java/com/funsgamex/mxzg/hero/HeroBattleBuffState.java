@@ -21,8 +21,9 @@ public final class HeroBattleBuffState {
         }
     }
 
-    /** 本场编号、原施加者、绝对到期回合与效果值；重置护盾数值不改变其他字段。 */
-    public record Entry(long instanceId, int sourceId, int expiresAt, Spec spec, long value) {}
+    /** 绝对到期保留原施加者；偷取的增益标记用于回放时区分挂载实例和实际属性变化。 */
+    public record Entry(long instanceId, int sourceId, int expiresAt, Spec spec, long value,
+                        boolean copiedFromEnemy) {}
     /** 安装结果与需要触发移除回调的旧实例；列表去重避免冲突/层数命中同一实例两次。 */
     public record Change(Entry current, List<Entry> removed) {}
 
@@ -35,25 +36,36 @@ public final class HeroBattleBuffState {
             for (int i = 0; i < entries.size(); i++) {
                 var old = entries.get(i);
                 if (old.spec().type() == 1008) {
-                    var updated = new Entry(old.instanceId(), old.sourceId(), old.expiresAt(), old.spec(), value);
+                    var updated = new Entry(old.instanceId(), old.sourceId(), old.expiresAt(), old.spec(), value,
+                            old.copiedFromEnemy());
                     entries.set(i, updated);
                     return new Change(updated, List.of());
                 }
             }
         }
-        if (entries.stream().anyMatch(entry -> entry.instanceId() == instanceId)) {
+        return addResolved(new Entry(instanceId, sourceId, Math.addExact(round, spec.duration()), spec, value, false));
+    }
+
+    /** 旧偷取动作创建新实例，保留增益的原来源与绝对期限，并把触发次数等实例值归零。 */
+    Change addStolenGain(long instanceId, Entry donor) {
+        return addResolved(new Entry(instanceId, donor.sourceId(), donor.expiresAt(), donor.spec(), 0, true));
+    }
+
+    /** 按原配置处理冲突与叠层；调用方负责已移除项的回调及战报。 */
+    private Change addResolved(Entry current) {
+        if (entries.stream().anyMatch(entry -> entry.instanceId() == current.instanceId())) {
             throw new IllegalArgumentException("Buff实例编号重复");
         }
+        var spec = current.spec();
         var removed = new LinkedHashSet<Entry>();
         if (spec.conflict() != 0) {
             entries.stream().filter(entry -> entry.spec().conflict() == spec.conflict()).forEach(removed::add);
         }
-        var layers = entries.stream().filter(entry -> entry.sourceId() == sourceId
+        var layers = entries.stream().filter(entry -> entry.sourceId() == current.sourceId()
             && (spec.attribute() ? entry.spec().id() == spec.id() : entry.spec().type() == spec.type())).toList();
         if (layers.size() >= spec.stacking()) {
             removed.add(layers.stream().min(Comparator.comparingInt(Entry::expiresAt)).orElseThrow());
         }
-        var current = new Entry(instanceId, sourceId, Math.addExact(round, spec.duration()), spec, value);
         entries.removeAll(removed);
         entries.add(current);
         return new Change(current, List.copyOf(removed));
@@ -64,7 +76,8 @@ public final class HeroBattleBuffState {
         for (int index = 0; index < entries.size(); index++) {
             var previous = entries.get(index);
             if (previous.instanceId() == instanceId) {
-                var updated = new Entry(instanceId, previous.sourceId(), previous.expiresAt(), previous.spec(), value);
+                var updated = new Entry(instanceId, previous.sourceId(), previous.expiresAt(), previous.spec(), value,
+                        previous.copiedFromEnemy());
                 entries.set(index, updated);
                 return updated;
             }
@@ -78,7 +91,8 @@ public final class HeroBattleBuffState {
             var entry = entries.get(i);
             if (entry.instanceId() == instanceId) {
                 long next = Math.subtractExact(entry.value(), 1);
-                entries.set(i, new Entry(instanceId, entry.sourceId(), entry.expiresAt(), entry.spec(), next));
+                entries.set(i, new Entry(instanceId, entry.sourceId(), entry.expiresAt(), entry.spec(), next,
+                        entry.copiedFromEnemy()));
                 return next;
             }
         }
@@ -91,7 +105,8 @@ public final class HeroBattleBuffState {
             var entry = entries.get(i);
             if (entry.instanceId() == instanceId) {
                 long next = Math.addExact(entry.value(), 1);
-                entries.set(i, new Entry(instanceId, entry.sourceId(), entry.expiresAt(), entry.spec(), next));
+                entries.set(i, new Entry(instanceId, entry.sourceId(), entry.expiresAt(), entry.spec(), next,
+                        entry.copiedFromEnemy()));
                 return next;
             }
         }
@@ -135,6 +150,11 @@ public final class HeroBattleBuffState {
             .limit(count == 0 ? Long.MAX_VALUE : count).toList());
     }
 
+    /** 旧 type1101 按安装顺序移除允许驱散的控制，不清除其余的负面效果。 */
+    public List<Entry> removeControls() {
+        return remove(entries.stream().filter(entry -> entry.spec().dispelled() && entry.spec().effect() == 3).toList());
+    }
+
     /** 返回可驱散项而不提前删除，清心据此选择英雄，再统一调用移除入口。 */
     public List<Entry> dispellable(int effect) {
         return entries.stream().filter(entry -> entry.expiresAt() < 999
@@ -168,7 +188,8 @@ public final class HeroBattleBuffState {
                 entries.remove(index);
                 depleted.add(old);
             } else {
-                entries.set(index, new Entry(old.instanceId(), old.sourceId(), old.expiresAt(), old.spec(), next));
+                entries.set(index, new Entry(old.instanceId(), old.sourceId(), old.expiresAt(), old.spec(), next,
+                        old.copiedFromEnemy()));
             }
             remaining -= used;
             if (remaining == 0) {

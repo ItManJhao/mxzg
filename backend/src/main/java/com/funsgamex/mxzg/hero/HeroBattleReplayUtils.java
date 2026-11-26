@@ -1,22 +1,24 @@
-/** 逐单位阶段回放校验：核对全体行动顺序、生命连续性和整队胜负，不重算伤害或开放业务入口。 */
+/** 逐单位阶段回放校验：核对普通及先手行动顺序、生命连续性和整队胜负，不重算伤害。 */
 package com.funsgamex.mxzg.hero;
 
 import java.util.*;
+import java.util.function.ToLongFunction;
 
 public final class HeroBattleReplayUtils {
     /** 工具类不保存跨场状态。 */
     private HeroBattleReplayUtils() {}
 
-    /** 按原顺序核对阵容生命和胜负，续战根据玩法核对已阵亡的开场单位。 */
+    /** 核对阵容、逐回合先手和普通顺序及全队胜负；续战允许对应玩法携带阵亡单位。 */
     public static void validate(HeroBattleChapterScenario.Result report) {
         boolean dailyDungeon = report.scenario().matches("dungeon:(gold|experience|hero|fetter|spirit):[1-9][0-9]{0,9}");
         boolean tower = report.scenario().matches("tower:[1-9][0-9]{0,9}");
         boolean dreamland = report.scenario().matches("dreamland:[1-9][0-9]{0,9}");
         boolean trial = report.scenario().matches("trial:[1-3]:(?:[1235679]|1[01345789])");
+        boolean rainbow = report.scenario().matches("rainbow:[1-3]:(?:[1-9][0-9]{0,2}|1000)");
         boolean robotArena = report.scenario().matches("arena:(?:[1-9]|1[0-9]|2[0-4])");
         boolean playerArena = report.scenario().matches("arena:pvp:[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}");
         boolean indexed = indexedScenario(report.scenario()) || dailyDungeon || tower || robotArena || playerArena
-                || dreamland || trial;
+                || dreamland || trial || rainbow;
         int maxRounds = robotArena || playerArena ? HeroBattleRoundUtils.ARENA_MAX_ROUNDS
                 : dreamland ? HeroBattleRoundUtils.DREAMLAND_MAX_ROUNDS : HeroBattleRoundUtils.MAX_ROUNDS;
         if ((!indexed && !Set.of("main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:duel", "audit:charm", "audit:charm-death", "audit:teams", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed", "audit:round-limit").contains(report.scenario()))
@@ -27,7 +29,7 @@ public final class HeroBattleReplayUtils {
                 : dreamland ? HeroBattleChapterScenario.EntryHealth.DREAMLAND
                 : HeroBattleChapterScenario.EntryHealth.FRESH;
         var units = HeroBattleChapterScenario.roster(report.initial(), health);
-        if (dailyDungeon || tower || robotArena || dreamland) {
+        if (dailyDungeon || tower || robotArena || dreamland || rainbow) {
             long defenders = units.stream().filter(unit -> unit.faction() == 2).count();
             if (defenders != (robotArena ? 4 : 6)) {
                 throw new IllegalArgumentException("配置化战报缺少原守军");
@@ -60,8 +62,9 @@ public final class HeroBattleReplayUtils {
         units.forEach(unit -> initialSpeeds.put(unit.id(), unit.opening().speed()));
         var speedBuffs = new HashMap<Long, SpeedBuff>();
         var remaining = new ArrayList<Integer>();
-        var order = Comparator.comparingLong((Integer id) -> speeds.containsKey(id)
-            ? speeds.get(id).get(101) : initialSpeeds.get(id)).reversed();
+        ToLongFunction<Integer> speed = id -> speeds.containsKey(id)
+                ? speeds.get(id).get(101) : initialSpeeds.get(id);
+        var order = Comparator.comparingLong(speed).reversed();
         int lastRound = 0;
         var turns = new ArrayList<HeroBattleChapterScenario.Turn>();
         var all = new ArrayList<HeroBattleHealingExecutor.Damage>();
@@ -73,7 +76,8 @@ public final class HeroBattleReplayUtils {
             if (!hp.equals(frame.before()) || frame.round() < 1 || frame.round() < lastRound || frame.round() > lastRound + 1) {
                 throw new IllegalArgumentException("战斗阶段或前置生命不连续");
             }
-            if (frame.round() != lastRound) {
+            boolean roundStart = frame.round() != lastRound;
+            if (roundStart) {
                 skipDead(remaining, hp);
                 if (frame.sourceId() != 0 || !remaining.isEmpty()) {
                     throw new IllegalArgumentException("战斗缺少回合开始或单位出手");
@@ -132,6 +136,9 @@ public final class HeroBattleReplayUtils {
                 turns.add(new HeroBattleChapterScenario.Turn(frame.round(), frame.sourceId(),
                     HeroBattleRoundUtils.NORMAL_SKILL_ENERGY, hp));
             }
+            if (roundStart) {
+                order = HeroBattleSkillUtils.turnOrder(units, lastRound, speed);
+            }
             remaining.sort(order);
         }
         skipDead(remaining, hp);
@@ -150,7 +157,7 @@ public final class HeroBattleReplayUtils {
     /** 回放内部速度实例的原目标、属性编号及增量，供移除时精确撤回。 */
     private record SpeedBuff(int targetId, int attribute, long amount) {}
 
-    /** 分别重放固定速度和霜寒的速度百分比，按同一属性池计算混合效果及回合顺序。 */
+    /** 重放真实速度变化，偷取的增益只登记原应撤回的值，直到移除时才改变速度。 */
     private static void updateSpeed(HeroBattleHealingExecutor.Trace event, List<HeroBattleChapterScenario.Unit> units,
                                     Map<Integer, HeroBattleAttributeState> speeds, Map<Long, SpeedBuff> buffs) {
         var entry = event.buff();
@@ -168,6 +175,9 @@ public final class HeroBattleReplayUtils {
         }
         if (event.kind().equals("buff.upsert") && delta != 0 && applied == null) {
             buffs.put(entry.instanceId(), new SpeedBuff(event.targetId(), attribute, delta));
+            if (entry.copiedFromEnemy()) {
+                return;
+            }
         } else if (event.kind().equals("buff.remove") && applied != null
                 && applied.targetId() == event.targetId() && applied.attribute() == attribute
                 && Math.negateExact(applied.amount()) == delta) {

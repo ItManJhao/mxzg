@@ -5011,6 +5011,110 @@
     }
   },
   {
+    "path": "client/assets/bundles/module/guild/prefabs/GuildTechnologyResetView.prefab",
+    "classes": [
+      "GuildTechnologyResetView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "核对第 2 阶重置报价，实际扣除 500 钻石并返还 186000 金币、310 公会贡献；确认返回科技盘后节点恢复灰态，方向箭头继续循环。",
+    "sha256": "f018e9fa9616acc74b81f35a577ecfc001f3f5bf1e4a84154dcbc51ff138eff8",
+    "acceptance": {
+      "sha256": "f018e9fa9616acc74b81f35a577ecfc001f3f5bf1e4a84154dcbc51ff138eff8",
+      "date": "2026-11-26",
+      "status": "实际预览通过",
+      "scope": "核对第 2 阶重置报价，实际扣除 500 钻石并返还 186000 金币、310 公会贡献；确认返回科技盘后节点恢复灰态，方向箭头继续循环。",
+      "inspector": "Creator 默认 iPhone 14 Pro 竖屏预设和隔离服务端，实测浏览器可见画面为 393×679。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/guild/prefabs/GuildTechnologyView.prefab",
+    "classes": [
+      "GuildTechnologyView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "参照正式服核对四职业科技盘，实测战士与坦克切页、下一节点显示生命:0.3%、点亮两节点战力从 11142 升至 11157，并从第 1 阶升至第 2 阶，确认节点亮光及盘心升阶演出。",
+    "sha256": "6b061929d897aef79f7b642aec9237caafba59441dd33d511c1aea89a8e41f10",
+    "acceptance": {
+      "sha256": "6b061929d897aef79f7b642aec9237caafba59441dd33d511c1aea89a8e41f10",
+      "date": "2026-11-26",
+      "status": "实际预览通过",
+      "scope": "参照正式服核对四职业科技盘，实测战士与坦克切页、下一节点显示生命:0.3%、点亮两节点战力从 11142 升至 11157，并从第 1 阶升至第 2 阶，确认节点亮光及盘心升阶演出。",
+      "inspector": "Creator 默认 iPhone 14 Pro 竖屏预设和隔离服务端，实测浏览器可见画面为 393×679。"
+    }
+  },
+  {
     "path": "client/assets/bundles/module/guild/prefabs/GuildView.prefab",
     "classes": [
       "GuildView"
@@ -5080,16 +5184,9 @@
     ],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "大厅新增商店、捐献和排行入口，捐献后大厅经验从 250/1600 更新至 300/1600。",
-    "sha256": "a33c761b14ff37c8628531e29a2c0e464537276f8d404a61b433499f98675e95",
-    "acceptance": {
-      "sha256": "a33c761b14ff37c8628531e29a2c0e464537276f8d404a61b433499f98675e95",
-      "date": "2026-11-25",
-      "status": "实际预览通过",
-      "scope": "大厅新增商店、捐献和排行入口，捐献后大厅经验从 250/1600 更新至 300/1600。",
-      "inspector": "Creator 393×852 浏览器预览与真实隔离服务端。"
-    }
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "a13e7ab9a1769951f037463cb278dae5185d60c67295b2b1aed47baaac12ef85"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/FirstSummonView.prefab",
@@ -8461,6 +8558,239 @@
     }
   },
   {
+    "path": "client/assets/bundles/module/rainbow/prefabs/RainbowChallengeView.prefab",
+    "classes": [
+      "RainbowChallengeView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "51d7d2204bdccd622980646ea27839bc09639958935ecdc8cad58807e3bf9881"
+  },
+  {
+    "path": "client/assets/bundles/module/rainbow/prefabs/RainbowHistoryCell.prefab",
+    "classes": [
+      "RainbowHistoryCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 542,
+        "height": 182
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 6
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "46eb5f657a8f793e344d0290ce0cf94a8afb7368e97e61d8aa73832f207f5b64"
+  },
+  {
+    "path": "client/assets/bundles/module/rainbow/prefabs/RainbowHistoryView.prefab",
+    "classes": [
+      "RainbowHistoryView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "0188532a8bd31c93efa99270d8a94d388aa6b3d6b6fa40cd5c832b9aa15ad29a"
+  },
+  {
+    "path": "client/assets/bundles/module/rainbow/prefabs/RainbowResultView.prefab",
+    "classes": [
+      "RainbowResultView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "a99c8ef8090dd09ed894f3f81d4d32bd13822a1ac9b22243bbaccc512c33fe02"
+  },
+  {
+    "path": "client/assets/bundles/module/rainbow/prefabs/RainbowView.prefab",
+    "classes": [
+      "RainbowView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "73a48a953e1057c01971b0196c363fc38a2af73ad82a3d3e7d3403bc64fe18e5"
+  },
+  {
     "path": "client/assets/bundles/module/ranking/prefabs/RankingBoardCell.prefab",
     "classes": [
       "RankingBoardCell"
@@ -10205,7 +10535,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "ad4bee00b72171d70fa81bdd5b0a4b02758e8508ef5b66f78aff07815d20000a"
+    "sha256": "e2afad983924ae7f8b511b0b9ca81bddaa1ebcd13805146ed259ee2eb8c20c73"
   },
   {
     "path": "client/assets/bundles/module/trial/prefabs/TrialShopCell.prefab",
@@ -10348,7 +10678,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "4a994736e78f03eb6387bad2855cd8f119ebe01c8f8b9a9f4f0fe1a83788a481"
+    "sha256": "8515229b7cb96b2890401d245d860d010a4da47ac718cd6ef9f0f67437841fbe"
   },
   {
     "path": "client/assets/bundles/module/trial/prefabs/TrialSupportCell.prefab",

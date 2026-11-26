@@ -108,7 +108,7 @@ export class TrialStageView extends BaseView<TrialStageArgs> {
         TrialViewUtils.fit(this.node, panel!);
     }
 
-    /** 保持奖励、阵型和动作以最新状态同步，未开放的守军只可查看资料。 */
+    /** 同步奖励、阵型和可用操作；宝箱只有可领时显示领取，其余状态只作预览。 */
     private paint(): void {
         const stage = this.stage;
         if (!stage || (this.claiming && stage.status === "cleared")) {
@@ -121,7 +121,7 @@ export class TrialStageView extends BaseView<TrialStageArgs> {
         const controller = TrialController.instance;
         const blocked = controller.busy || controller.awaitingResult;
         if (chest) {
-            this.chestActionLabel!.string = stage.status === "available" ? "领取" : stage.status === "cleared" ? "已领取" : "确定";
+            this.chestActionLabel!.string = stage.status === "available" ? "领取" : "确定";
             this.chestAction!.interactable = !blocked;
             TrialViewUtils.rewards(this.chestRewards, stage.rewards);
             return;

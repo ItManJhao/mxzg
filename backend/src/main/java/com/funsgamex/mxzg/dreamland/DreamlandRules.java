@@ -18,8 +18,8 @@ import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class DreamlandRules {
-    /** 已通过守军实战、连续挑战和领奖的最高层，区服未配置上限时默认开放至此。 */
-    private static final int MAX_OPEN_FLOOR = 600;
+    /** 原表完整的 1,500 层均接入连续挑战，部署仍可选较低的连续开放上限。 */
+    private static final int MAX_OPEN_FLOOR = 1_500;
     /** 原规则包含完整配置；开放范围由本次已验证的连续楼层决定。 */
     private final Config config;
     /** 当前区服可战斗的最后一层，必须落在同一份完整规则内。 */

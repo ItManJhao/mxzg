@@ -11,6 +11,8 @@ import { RoleController } from "../../features/account/RoleController";
 import { ArenaController } from "../../features/arena/ArenaController";
 import { DreamlandController } from "../../features/dreamland/DreamlandController";
 import { TrialController } from "../../features/trial/TrialController";
+import { RainbowController } from "../../features/rainbow/RainbowController";
+import { GuildTechnologyController } from "../../features/guild/GuildTechnologyController";
 import { TrialShopController } from "../../features/trial/TrialShopController";
 import { BagController } from "../../features/bag/BagController";
 import { BlackMarketController } from "../../features/blackmarket/BlackMarketController";
@@ -142,6 +144,9 @@ export class ApplicationModules {
         const trialShop = TrialShopController.instance;
         trialShop.configure(operations, this.rewards);
         trialShop.initialize();
+        const rainbow = RainbowController.instance;
+        rainbow.configure(operations);
+        rainbow.initialize();
         const tower = TowerController.instance;
         tower.configure(operations, this.rewards);
         tower.initialize();
@@ -151,6 +156,9 @@ export class ApplicationModules {
         const guild = GuildController.instance;
         guild.configure(operations, model);
         guild.initialize();
+        const guildTechnology = GuildTechnologyController.instance;
+        guildTechnology.configure(operations);
+        guildTechnology.initialize();
         const vip = VipController.instance;
         vip.configure(operations, this.rewards);
         vip.initialize();
@@ -172,7 +180,7 @@ export class ApplicationModules {
         const chapter = new MainChapterSession(controller, operations, this.rewards);
         this.sessions = [chapter, heroLevel, heroEquipment, heroStar, heroJewel, godEquipment,
             heroArtifacts, market, blackMarket, smith, dailyDungeon, dreamland, trial, trialShop,
-            tower, arena, guild, vip, quests, rankings, friends, mail, chat];
+            rainbow, tower, arena, guild, guildTechnology, vip, quests, rankings, friends, mail, chat];
         this.assets = new AssetStateBinding(model, bag, this.role,
             heroes, formation, () => {
                 clearRolePages();
@@ -214,6 +222,7 @@ export class ApplicationModules {
                 DreamlandController.instance.refreshVisible();
                 TrialController.instance.refreshVisible();
                 TrialShopController.instance.refreshVisible();
+                RainbowController.instance.refreshVisible();
                 TowerController.instance.refreshVisible();
                 ArenaController.instance.refreshVisible();
             }
@@ -224,8 +233,12 @@ export class ApplicationModules {
             return;
         }
         this.rewards.controller.observeRevision(this.assets.acceptedRevision);
+        GuildTechnologyController.instance.observeAssets(this.assets.acceptedRevision);
         const guildChanged = previousGuild !== this.accountModel.snapshot.role?.guildName;
         GuildController.instance.refreshRoleState(authenticated, guildChanged);
+        if (authenticated || guildChanged) {
+            GuildTechnologyController.instance.refreshVisible();
+        }
         this.refreshRankingAccess();
         if (guildChanged) {
             ChatController.instance.refreshGuildVisibility();

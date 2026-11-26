@@ -18,6 +18,7 @@ import com.funsgamex.mxzg.guild.GuildDonationService;
 import com.funsgamex.mxzg.guild.GuildRankingService;
 import com.funsgamex.mxzg.guild.GuildService;
 import com.funsgamex.mxzg.guild.GuildShopService;
+import com.funsgamex.mxzg.guild.GuildTechnologyService;
 import com.funsgamex.mxzg.vip.VipService;
 import com.funsgamex.mxzg.quest.QuestChanged;
 import com.funsgamex.mxzg.quest.QuestService;
@@ -52,6 +53,8 @@ import com.funsgamex.mxzg.dreamland.DreamlandService;
 import com.funsgamex.mxzg.dreamland.DreamlandRankService;
 import com.funsgamex.mxzg.trial.TrialService;
 import com.funsgamex.mxzg.trial.TrialShopService;
+import com.funsgamex.mxzg.rainbow.RainbowCombat;
+import com.funsgamex.mxzg.rainbow.RainbowService;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -130,6 +133,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final GuildDonationService guildDonations;
     /** 当前区服战力榜投影。 */
     private final GuildRankingService guildRanking;
+    /** 公会科技的个人状态、升级与重置事务。 */
+    private final GuildTechnologyService guildTechnology;
     /** 契约任务领取和 VIP 升档由同一个角色事务处理。 */
     private final VipService vip;
     /** 当前角色任务及成就的权威读取和领取服务。 */
@@ -152,6 +157,10 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final TrialService trial;
     /** 试炼固定货架购买使用认证角色、统一资产和独立持久回执。 */
     private final TrialShopService trialShop;
+    /** 彩虹圣殿神位、挑战与本服战报事务入口。 */
+    private final RainbowService rainbow;
+    /** 彩虹圣殿独立阵容的读写入口。 */
+    private final RainbowCombat rainbowCombat;
     /** 同服梦境通关排行与当日结算规则。 */
     private final DreamlandRankService dreamlandRank;
     /** 竞技场的对手、防守、门票、积分及历史战报。 */
@@ -216,10 +225,12 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             HeroArtifactService heroArtifacts, HeroGodEquipmentShopService godEquipmentShop,
             MarketService market, BlackMarketService blackMarket, SmithService smith, GuildService guilds,
             GuildShopService guildShop,
-            GuildDonationService guildDonations, GuildRankingService guildRanking, VipService vip, QuestService quests,
+            GuildDonationService guildDonations, GuildRankingService guildRanking, GuildTechnologyService guildTechnology,
+            VipService vip, QuestService quests,
             RankService rankings, MailService mail, FriendService friends, ChatService chat,
             DailyDungeonService dailyDungeon, TowerService tower, DreamlandService dreamland, DreamlandRankService dreamlandRank,
             TrialService trial, TrialShopService trialShop, ArenaService arena, ArenaSeasonService arenaSeason,
+            RainbowService rainbow, RainbowCombat rainbowCombat,
             RoleService roles, RoleProfileService profiles, WelcomeGiftService welcomeGifts, GameClock clock,
             HeroMainPowerService formationPower) {
         this.firstRewards = firstRewards;
@@ -239,6 +250,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         this.guildShop = guildShop;
         this.guildDonations = guildDonations;
         this.guildRanking = guildRanking;
+        this.guildTechnology = guildTechnology;
         this.vip = vip;
         this.quests = quests;
         this.rankings = rankings;
@@ -251,6 +263,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         this.dreamlandRank = dreamlandRank;
         this.trial = trial;
         this.trialShop = trialShop;
+        this.rainbow = rainbow;
+        this.rainbowCombat = rainbowCombat;
         this.arena = arena;
         this.arenaSeason = arenaSeason;
         this.roles = roles;
@@ -318,7 +332,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                 if (!awaitLock(roleLock)) throw rejected("BUSY");
                 var notifications = name.equals("guild.change") || name.equals("guild.donation.donate")
                     || name.equals("friend.change") || name.startsWith("arena.") || name.startsWith("dreamland.")
-                    || name.startsWith("trial.")
+                    || name.startsWith("trial.") || name.startsWith("rainbow.")
                     ? new RoleNotifications(new LinkedHashSet<>(), new LinkedHashSet<>(), new ArrayList<>(),
                         new LinkedHashSet<>(), new LinkedHashSet<>()) : null;
                 if (notifications != null) {
@@ -496,7 +510,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         }
         switch (name) {
             case "guild.shop.list", "guild.shop.buy", "guild.donation.info", "guild.donation.donate",
-                    "guild.donation.claim", "guild.ranking" -> {
+                    "guild.donation.claim", "guild.ranking", "guild.technology.info", "guild.technology.upgrade",
+                    "guild.technology.reset" -> {
                 guildFeature(connection, request, name);
                 return;
             }
@@ -550,6 +565,10 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             }
             case "trial.shop", "trial.shop.buy" -> {
                 trialShopRequest(connection, request, name);
+                return;
+            }
+            case "rainbow.state", "rainbow.lineup.save", "rainbow.challenge", "rainbow.history", "rainbow.replay" -> {
+                rainbowRequest(connection, request, name);
                 return;
             }
             case "chapter.quick-battle.info", "chapter.quick-battle.claim" -> {
@@ -1542,6 +1561,58 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         return result;
     }
 
+    /** 校验彩虹圣殿协议字段并调用已鉴权事务；战报以现有 Protobuf 结构编码。 */
+    private void rainbowRequest(Connection connection, JsonNode request, String name) throws IOException {
+        String invalid = "RAINBOW_REQUEST_INVALID";
+        var body = request.path("body");
+        try {
+            switch (name) {
+                case "rainbow.state" -> {
+                    fields(body, Set.of());
+                    respond(connection, request, rainbow.state(connection.token));
+                }
+                case "rainbow.lineup.save" -> {
+                    fields(body, Set.of("requestId", "expectedVersion", "formationId", "slots"));
+                    var slots = body.path("slots");
+                    if (!slots.isArray() || slots.size() > 9) {
+                        throw rejected(invalid);
+                    }
+                    var lineup = new ArrayList<Lineup.Slot>();
+                    for (JsonNode slot : slots) {
+                        fields(slot, Set.of("position", "heroId"));
+                        lineup.add(new Lineup.Slot(operationIndex(slot, "position", invalid),
+                                text(slot, "heroId", UUID_PATTERN)));
+                    }
+                    respond(connection, request, rainbowCombat.saveFormation(connection.token,
+                            text(body, "requestId", UUID_PATTERN), operationAmount(body, "expectedVersion", invalid),
+                            operationIndex(body, "formationId", invalid), lineup));
+                }
+                case "rainbow.challenge" -> {
+                    fields(body, Set.of("requestId", "seatId", "evolution", "expectedLineupVersion"));
+                    var outcome = rainbow.challenge(connection.token, text(body, "requestId", UUID_PATTERN),
+                            operationIndex(body, "seatId", invalid), operationIndex(body, "evolution", invalid),
+                            operationAmount(body, "expectedLineupVersion", invalid));
+                    respond(connection, request, Map.of("requestId", outcome.requestId(), "state", outcome.state(),
+                            "battleId", outcome.battleId(), "replay", GameProtocolCodec.tree(outcome.replay()),
+                            "won", outcome.won(), "seatId", outcome.seatId(), "evolution", outcome.evolution()));
+                }
+                case "rainbow.history" -> {
+                    fields(body, Set.of("seatId"));
+                    respond(connection, request, rainbow.history(connection.token, operationIndex(body, "seatId", invalid)));
+                }
+                case "rainbow.replay" -> {
+                    fields(body, Set.of("seatId", "battleId"));
+                    respond(connection, request, GameProtocolCodec.tree(rainbow.replay(connection.token,
+                            operationIndex(body, "seatId", invalid), text(body, "battleId", UUID_PATTERN))));
+                }
+                default -> throw rejected(invalid);
+            }
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException error) {
+            fail(connection, request, "BUSY", "神位争夺进行中，请稍后重试", true);
+        }
+    }
+
     /** 竞技场路由校验参数并使用现行会话，攻防、赛季结算和回执由对应事务处理。 */
     private void arenaRequest(Connection connection, JsonNode request, String name) throws IOException {
         var body = request.path("body");
@@ -1688,7 +1759,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         }
     }
 
-    /** 公会功能请求只使用连接身份，兑换和捐献另校验所打开的公会及报价周期。 */
+    /** 公会功能使用当前连接身份，兑换、捐献和科技各自校验其报价与操作版本。 */
     private void guildFeature(Connection connection, JsonNode request, String name) throws IOException {
         var body = request.path("body");
         try {
@@ -1721,6 +1792,18 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                 case "guild.ranking" -> {
                     fields(body, Set.of());
                     respond(connection, request, guildRanking.list(connection.role));
+                }
+                case "guild.technology.info" -> {
+                    fields(body, Set.of());
+                    respond(connection, request, guildTechnology.info(connection.role));
+                }
+                case "guild.technology.upgrade", "guild.technology.reset" -> {
+                    fields(body, Set.of("requestId", "profession", "expectedVersion"));
+                    var code = "GUILD_TECHNOLOGY_REQUEST_INVALID";
+                    var command = new GuildTechnologyService.Command(text(body, "requestId", UUID_PATTERN),
+                            operationIndex(body, "profession", code), operationAmount(body, "expectedVersion", code));
+                    respond(connection, request, name.equals("guild.technology.upgrade")
+                            ? guildTechnology.upgrade(connection.role, command) : guildTechnology.reset(connection.role, command));
                 }
                 default -> throw rejected("GUILD_REQUEST_INVALID");
             }

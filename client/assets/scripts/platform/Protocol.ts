@@ -124,6 +124,12 @@ export class Protocol {
     public static readonly GUILD_DONATION_CLAIM = "guild.donation.claim";
     /** 读取本服公会榜和所属公会的名次。 */
     public static readonly GUILD_RANKING = "guild.ranking";
+    /** 读取本人四职业科技树和下一格的服务端报价。 */
+    public static readonly GUILD_TECHNOLOGY_INFO = "guild.technology.info";
+    /** 确认本人科技树版本，点亮指定职业的下一格。 */
+    public static readonly GUILD_TECHNOLOGY_UPGRADE = "guild.technology.upgrade";
+    /** 按同一确认版本消耗钻石、重置职业并实际返还材料。 */
+    public static readonly GUILD_TECHNOLOGY_RESET = "guild.technology.reset";
     /** 读取当前角色的每日任务、活跃奖励和成就。 */
     public static readonly QUEST_LIST = "quest.list";
     /** 领取指定分类和编号的任务或活跃奖励。 */
@@ -212,6 +218,16 @@ export class Protocol {
     public static readonly TRIAL_SHOP = "trial.shop";
     /** 使用试炼之血按本周报价兑换。 */
     public static readonly TRIAL_SHOP_BUY = "trial.shop.buy";
+    /** 读取彩虹圣殿的本服神位、排名与独立阵容。 */
+    public static readonly RAINBOW_STATE = "rainbow.state";
+    /** 按独立阵容版本保存站位。 */
+    public static readonly RAINBOW_LINEUP_SAVE = "rainbow.lineup.save";
+    /** 挑战指定神位与进化次数，重试按原请求号取回。 */
+    public static readonly RAINBOW_CHALLENGE = "rainbow.challenge";
+    /** 读取本服指定神位最近的胜利记录。 */
+    public static readonly RAINBOW_HISTORY = "rainbow.history";
+    /** 读取神位公开记录中的对应战报。 */
+    public static readonly RAINBOW_REPLAY = "rainbow.replay";
     /** 查询新手竞技场的对手、次数、积分与历史。 */
     public static readonly ARENA_STATE = "arena.state";
     /** 请求重新匹配一组配置对手。 */
@@ -312,9 +328,11 @@ export type ReadProtocol = typeof Protocol.SESSION_HEARTBEAT | typeof Protocol.G
     | typeof Protocol.TOWER_STATE | typeof Protocol.DREAMLAND_STATE | typeof Protocol.ARENA_STATE | typeof Protocol.ARENA_REPLAY
     | typeof Protocol.DREAMLAND_ASSISTANCE | typeof Protocol.DREAMLAND_RANKING | typeof Protocol.DREAMLAND_FORMATION_POWER
     | typeof Protocol.TRIAL_STATE | typeof Protocol.TRIAL_ASSISTANCE | typeof Protocol.TRIAL_SHOP
+    | typeof Protocol.RAINBOW_STATE | typeof Protocol.RAINBOW_HISTORY | typeof Protocol.RAINBOW_REPLAY
     | typeof Protocol.ARENA_RANKING | typeof Protocol.ARENA_SEASON | typeof Protocol.ARENA_DEFENSE
     | typeof Protocol.ARENA_SHOP
     | typeof Protocol.GUILD_LIST | typeof Protocol.GUILD_SHOP_LIST | typeof Protocol.GUILD_DONATION_INFO
+    | typeof Protocol.GUILD_TECHNOLOGY_INFO
     | typeof Protocol.GUILD_RANKING | typeof Protocol.CHAPTER_QUICK_BATTLE_INFO | typeof Protocol.FORMATION_POWER
     | typeof Protocol.QUEST_LIST | typeof Protocol.RANKING_OVERVIEW | typeof Protocol.RANKING_LIST
     | typeof Protocol.MAIL_LIST | typeof Protocol.FRIEND_STATE | typeof Protocol.FRIEND_SEARCH
@@ -337,10 +355,12 @@ export type RoleOperationProtocol = typeof Protocol.HERO_SUMMON | typeof Protoco
     | typeof Protocol.CHAPTER_FIRST_REWARD_CLAIM | typeof Protocol.CHAPTER_FIRST_REWARD_STATUS
     | typeof Protocol.ROLE_WELCOME_CLAIM | DailyDungeonRoutes["challenge"] | typeof Protocol.GUILD_CHANGE
     | typeof Protocol.GUILD_SHOP_BUY | typeof Protocol.GUILD_DONATION_DONATE | typeof Protocol.GUILD_DONATION_CLAIM
+    | typeof Protocol.GUILD_TECHNOLOGY_UPGRADE | typeof Protocol.GUILD_TECHNOLOGY_RESET
     | typeof Protocol.VIP_CLAIM | typeof Protocol.QUEST_CLAIM | typeof Protocol.RANKING_LIKE
     | typeof Protocol.CHAPTER_QUICK_BATTLE_CLAIM | typeof Protocol.MAIL_CHANGE | typeof Protocol.FRIEND_CHANGE
     | typeof Protocol.TOWER_CHALLENGE | typeof Protocol.TOWER_SWEEP | typeof Protocol.DREAMLAND_ACT
     | typeof Protocol.TRIAL_ACT | typeof Protocol.TRIAL_SHOP_BUY
+    | typeof Protocol.RAINBOW_LINEUP_SAVE | typeof Protocol.RAINBOW_CHALLENGE
     | typeof Protocol.TOWER_MILESTONE_CLAIM | typeof Protocol.ARENA_CHALLENGE | typeof Protocol.ARENA_TICKET_BUY
     | typeof Protocol.ARENA_CHEST_CLAIM | typeof Protocol.ARENA_LIKE | typeof Protocol.ARENA_DEFENSE_SAVE
     | typeof Protocol.ARENA_SHOP_BUY | typeof Protocol.CHAT_SEND | typeof Protocol.CHAT_READ;
@@ -361,6 +381,126 @@ export type AuthenticatedGameProtocol = ReadProtocol | RoleOperationProtocol | C
 export type DreamlandAction = "START" | "SELECT_BUFF" | "NEXT" | "END" | "CLAIM" | "SAVE_FORMATION"
     | "DISPATCH_ASSIST" | "SELECT_ASSIST" | "CLEAR_ASSIST";
 export type DreamlandPhase = "READY" | "SELECT_BUFF" | "NEXT_BATTLE" | "RESULT";
+
+/** 彩虹圣殿独立进攻阵容，版本和英雄实例由服务器确认。 */
+export interface RainbowLineup {
+    readonly version: number;
+    readonly formationId: number;
+    readonly slots: readonly { position: number; heroId: string }[];
+}
+
+/** 神位当前守军预览、占位资料及属性万分数。 */
+export interface RainbowSeat {
+    readonly id: number;
+    readonly type: number;
+    readonly evolution: number;
+    readonly requiredRank: number;
+    readonly owner?: {
+        readonly roleId: string;
+        readonly name: string;
+        readonly level: number;
+        readonly headId: number;
+        readonly borderId: number;
+        readonly imageId: number;
+    };
+    readonly occupiedUntil?: number;
+    readonly heroTypeId: number;
+    readonly heroStar: number;
+    readonly activeSkills: readonly { id: number; level: number }[];
+    readonly passiveSkills: readonly { id: number; level: number }[];
+    readonly attackBonus: number;
+    readonly healthBonus: number;
+}
+
+/** 彩虹圣殿的本服状态，冷却和占位截止均为 Unix 毫秒。 */
+export interface RainbowState {
+    readonly seats: readonly RainbowSeat[];
+    readonly arenaRank: number;
+    readonly cooldownUntil: number;
+    readonly lineup: RainbowLineup;
+    readonly serverTime: number;
+}
+
+/** 进化次数只允许 1、5、10，开战前校验玩家已确认阵容版本。 */
+export interface RainbowChallengeRequest {
+    readonly requestId: string;
+    readonly seatId: number;
+    readonly evolution: number;
+    readonly expectedLineupVersion: number;
+}
+
+/** 原挑战回执附带当前神位快照及同一份战报。 */
+export interface RainbowSettlement {
+    readonly requestId: string;
+    readonly state: RainbowState;
+    readonly battleId: string;
+    readonly replay: object;
+    readonly won: boolean;
+    readonly seatId: number;
+    readonly evolution: number;
+}
+
+/** 冻结胜场结算时的阵容与战力，客户端按战斗编号请求回放。 */
+export interface RainbowHistoryEntry {
+    readonly battleId: string;
+    readonly name: string;
+    readonly evolution: number;
+    readonly foughtAt: number;
+    readonly power: number;
+    readonly heroes: readonly { heroTypeId: number; level: number; star: number; iconId: number }[];
+}
+
+/** 单神位最近胜利记录。 */
+export interface RainbowHistory {
+    readonly seatId: number;
+    readonly records: readonly RainbowHistoryEntry[];
+}
+
+/** 公会科技单格。百分比增量和累计量为万分数，速度为原始整数。 */
+export interface GuildTechnologyNode {
+    readonly slot: number;
+    readonly attributeId: number;
+    readonly level: number;
+    readonly increment: number;
+    readonly total: number;
+}
+
+/** 公会科技一个职业当前阶、点亮进度、下一格报价及重置返还。 */
+export interface GuildTechnologyBranch {
+    readonly profession: number;
+    readonly stage: number;
+    readonly step: number;
+    readonly nodes: readonly GuildTechnologyNode[];
+    readonly next?: {
+        readonly stage: number;
+        readonly slot: number;
+        readonly gold: number;
+        readonly medals: number;
+        readonly blocked: boolean;
+    };
+    readonly refundGold: number;
+    readonly refundMedals: number;
+}
+
+/** 个人科技独立版本及四职业快照，权限状态和报价从服务器取得。 */
+export interface GuildTechnologyState {
+    readonly version: number;
+    readonly member: boolean;
+    readonly maxStage: number;
+    readonly stageGap: number;
+    readonly resetDiamonds: number;
+    readonly branches: readonly GuildTechnologyBranch[];
+}
+
+/** 冻结原回执的版本与资产确认号，附带最新整树。 */
+export interface GuildTechnologyReceipt {
+    readonly requestId: string;
+    readonly action: "upgrade" | "reset";
+    readonly profession: number;
+    readonly version: number;
+    readonly assetRevision: number;
+    readonly state: GuildTechnologyState;
+}
 
 /** 试炼模块接受的状态变更操作，由服务端校验当前难度、节点与请求版本。 */
 export type TrialAction = "selectDifficulty" | "saveFormation" | "fight" | "claim" | "revive"
@@ -723,6 +863,9 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.GUILD_DONATION_DONATE, module: "公会", description: "提交每日公会捐献" },
     { name: Protocol.GUILD_DONATION_CLAIM, module: "公会", description: "领取公会捐献宝箱" },
     { name: Protocol.GUILD_RANKING, module: "公会", description: "读取本服公会战力榜" },
+    { name: Protocol.GUILD_TECHNOLOGY_INFO, module: "公会", description: "读取个人科技与下一格报价" },
+    { name: Protocol.GUILD_TECHNOLOGY_UPGRADE, module: "公会", description: "按原价点亮下一格科技" },
+    { name: Protocol.GUILD_TECHNOLOGY_RESET, module: "公会", description: "重置一项职业并退回累计材料" },
     { name: Protocol.QUEST_LIST, module: "任务", description: "读取每日任务和成就" },
     { name: Protocol.QUEST_CLAIM, module: "任务", description: "领取任务、成就或活跃奖励" },
     { name: Protocol.QUEST_CHANGED, module: "任务", description: "任务进度更新和新成就" },
@@ -769,6 +912,11 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.TRIAL_ASSISTANCE, module: "勇者试炼", description: "读取当天派遣和好友支援" },
     { name: Protocol.TRIAL_SHOP, module: "勇者试炼", description: "读取试炼之血兑换货架" },
     { name: Protocol.TRIAL_SHOP_BUY, module: "勇者试炼", description: "兑换试炼商品" },
+    { name: Protocol.RAINBOW_STATE, module: "彩虹圣殿", description: "读取本服神位、竞技场资格与独立阵容" },
+    { name: Protocol.RAINBOW_LINEUP_SAVE, module: "彩虹圣殿", description: "保存圣殿独立进攻阵容" },
+    { name: Protocol.RAINBOW_CHALLENGE, module: "彩虹圣殿", description: "挑战配置守军并结算所选神位" },
+    { name: Protocol.RAINBOW_HISTORY, module: "彩虹圣殿", description: "读取神位挑战胜场历史" },
+    { name: Protocol.RAINBOW_REPLAY, module: "彩虹圣殿", description: "查看神位历史战报" },
     { name: Protocol.ARENA_STATE, module: "竞技场", description: "读取当前对手、积分、次数与战报列表" },
     { name: Protocol.ARENA_REFRESH, module: "竞技场", description: "刷新当前对手" },
     { name: Protocol.ARENA_CHALLENGE, module: "竞技场", description: "发起挑战并结算积分与奖励" },

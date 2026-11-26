@@ -111,10 +111,10 @@ public class HeroBattleInputService {
         return assemble(role, formation, version, formationId, formationId, slots, borrowed);
     }
 
-    /** 从派遣时冻结的数据重建个人评分面板，不读取派遣人的当前名册、装备或成长。 */
+    /** 使用派遣时已冻结的属性重建评分，保留当时科技和神位，不重复叠加当前拥有者的状态。 */
     public HeroProfile dreamlandAssistPanel(HeroProfile frozen) {
-        return frozen.withLoadout(frozen.equipment(), null, frozen.growthAttributes(), panels, skills, evolution,
-                frozen.loadoutSkills());
+        return frozen.withLoadout(frozen.equipment(), null, frozen.growthAttributes(), Map.of(), Map.of(),
+                panels, skills, evolution, frozen.loadoutSkills());
     }
 
     /** 主线使用所选阵型，挂机使用起源阵型的站位属性。 */

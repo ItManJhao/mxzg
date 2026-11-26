@@ -62,6 +62,7 @@ const routes: Readonly<Record<string, { page: string; title: string; tab: Featur
     "gold-dungeon": {page: "gold-dungeon", title: "日常副本", tab: "dungeon"},
     dreamland: {page: "dreamland", title: "永恒梦境", tab: "dungeon"},
     trial: {page: "trial", title: "勇者试炼", tab: "dungeon"},
+    rainbow: {page: "rainbow", title: "彩虹圣殿", tab: "dungeon"},
     arena: {page: "arena", title: "竞技场", tab: "arena"},
     tower: {page: "tower", title: "幻境之塔", tab: "tower"},
     clan: {page: "guild", title: "公会", tab: "clan"},
@@ -83,6 +84,7 @@ const questDestinations: Readonly<Record<string, string | undefined>> = {
     main_mission: "gold-dungeon",
     main_infinite: "dreamland",
     main_proving_lang: "trial",
+    main_chsd: "rainbow",
     main_friend: "main_friend",
 };
 
@@ -116,7 +118,7 @@ export class HomeFeatureNavigation {
         return Object.values(routes).find(route => route.page === page)?.tab ?? null;
     }
 
-    /** 转交主城建筑、底栏和任务跳转，地图玩法通过同一入口保留返回路径。 */
+    /** 转交主城建筑、底栏和任务跳转，副本地图通过同一入口保留返回路径和跨页操作。 */
     open(id: string): boolean {
         if (id === "quest") {
             return this.openQuest("daily");
@@ -145,6 +147,9 @@ export class HomeFeatureNavigation {
         if (id === "main_smith_shop") {
             id = "smith";
         }
+        if (id === "main_chsd") {
+            id = "rainbow";
+        }
         const route = Object.prototype.hasOwnProperty.call(routes, id) ? routes[id] : undefined;
         if (id !== "city" && !route) {
             return false;
@@ -155,7 +160,7 @@ export class HomeFeatureNavigation {
         if ((id === "dungeon" || id === "clan") && !this.canOpenGatedTab(id)) {
             return true;
         }
-        if ((id === "gold-dungeon" || id === "dreamland" || id === "trial" || id === "arena" || id === "tower"
+        if ((id === "gold-dungeon" || id === "dreamland" || id === "trial" || id === "rainbow" || id === "arena" || id === "tower"
             || id === "main_black_market" || id === "smith")
             && !this.canOpenPlay(id)) {
             return true;
@@ -189,13 +194,17 @@ export class HomeFeatureNavigation {
         let args: unknown;
         if (id === "dungeon") {
             args = { account: this.host.account, openDailyDungeon: () => this.open("gold-dungeon"),
-                openDreamland: () => this.open("dreamland"), openTrial: () => this.open("trial") };
+                openDreamland: () => this.open("dreamland"), openTrial: () => this.open("trial"),
+                openRainbow: () => this.open("rainbow") };
         } else if (id === "gold-dungeon") {
             args = { account: this.host.account, backToHall: () => this.open("dungeon") };
         } else if (id === "dreamland") {
             args = { backToHall: () => this.open("dungeon") };
         } else if (id === "trial") {
             args = { backToHall: () => this.open("dungeon"), openShop: () => this.openTrialShop() };
+        } else if (id === "rainbow") {
+            args = { account: this.host.account, backToHall: () => this.open("dungeon"),
+                openArena: () => this.open("arena") };
         } else if (id === "main_black_market") {
             args = { account: this.host.account, backToCity: () => this.open("city") };
         } else if (id === "smith") {
@@ -325,11 +334,11 @@ export class HomeFeatureNavigation {
     }
 
     /** 玩法与任务入口共用等级读取，梦境和试炼按副本策划的功能编号准入。 */
-    private canOpenPlay(id: "gold-dungeon" | "dreamland" | "trial" | "arena" | "tower" | "main_black_market" | "smith"): boolean {
+    private canOpenPlay(id: "gold-dungeon" | "dreamland" | "trial" | "rainbow" | "arena" | "tower" | "main_black_market" | "smith"): boolean {
         const entry = CityNavigationUtils.findNavEntry(id === "gold-dungeon" ? "daily" : id);
         const role = this.host.account?.snapshot.role;
         const dungeonGates: Readonly<Record<string, string | undefined>> = {
-            dreamland: "main_infinite", trial: "main_proving_lang",
+            dreamland: "main_infinite", trial: "main_proving_lang", rainbow: "main_chsd",
         };
         const gateId = dungeonGates[id] ?? entry?.gateId;
         const gate = gateId && GameConfig.instance.getConfig(GConfig.OpenCondition, gateId);

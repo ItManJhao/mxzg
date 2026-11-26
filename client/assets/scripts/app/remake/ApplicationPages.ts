@@ -27,6 +27,7 @@ import "../../features/dungeon/ui/DungeonHallView";
 import "../../features/dreamland/ui/DreamlandView";
 import "../../features/trial/ui/TrialView";
 import "../../features/trial/ui/TrialShopView";
+import "../../features/rainbow/ui/RainbowView";
 import "../../features/dungeon/ui/GoldDungeonView";
 import "../../features/arena/ui/ArenaView";
 import "../../features/tower/ui/TowerView";

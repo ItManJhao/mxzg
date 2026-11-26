@@ -92,6 +92,20 @@
       ]
     },
     {
+      "directory": "bundles/module/rainbow/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "彩虹圣殿神位地图、独立挑战、记录及胜利属性弹层",
+      "names": [
+        "RainbowView",
+        "RainbowChallengeView",
+        "RainbowHistoryView",
+        "RainbowHistoryCell",
+        "RainbowResultView"
+      ]
+    },
+    {
       "directory": "bundles/module/trial/prefabs",
       "phases": [
         "当前已实现"
@@ -125,7 +139,7 @@
       "phases": [
         "当前已实现"
       ],
-      "reason": "公会目录与大厅、创建页签、徽章选择、成员与审批窗口及其列表格",
+      "reason": "公会目录与大厅，以及创建、成员、审批、捐献、排行、商店、科技窗口及各自列表格",
       "names": [
         "GuildApprovalCell",
         "GuildApprovalView",
@@ -140,6 +154,8 @@
         "GuildRankingView",
         "GuildShopCell",
         "GuildShopView",
+        "GuildTechnologyResetView",
+        "GuildTechnologyView",
         "GuildView"
       ]
     },

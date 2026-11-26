@@ -34,13 +34,13 @@
 
 ## 副本大厅玩法
 
-15 级进入大厅，金币、经验、英雄、羁绊和精灵五类日常副本已各接通 9 关。永恒梦境连续开放第 1～600 层，勇者试炼普通档已接入。彩虹圣殿按大厅顺序推进。主城的幻境之塔单独计算进度。[大厅点击逻辑](../client/assets/scripts/features/dungeon/ui/DungeonHallView.ts) · [开放配置](../client/assets/bundles/resources/config/opencondition.json) · [日常副本](network-contract.md#日常副本)
+15 级进入大厅，金币、经验、英雄、羁绊和精灵五类日常副本已各接通 9 关。永恒梦境连续开放第 1～1500 层，勇者试炼已接入三档，彩虹圣殿已接入神位挑战。主城的幻境之塔单独计算进度。[大厅点击逻辑](../client/assets/scripts/features/dungeon/ui/DungeonHallView.ts) · [开放配置](../client/assets/bundles/resources/config/opencondition.json) · [日常副本](network-contract.md#日常副本)
 
 | 入口 | 原版规则依据与实现范围 | 验收场景 |
 |---|---|---|
-| 永恒梦境 · 25 级 | 第 1～600 层已接通独立阵容、连战、增益和奖励，支持好友派遣、借将、战力预估与本服排行。已实领 120 档首通 | 第 601 层起重新盘点守军技能和演出，优先合并处理试炼共用缺口。每一批验证实际守军、连战和领奖后再提高上限。[批量复验](validation/dreamland-301-600-dependency-audit-20261126.md#第-466-层起的战斗机制复验) |
-| 勇者试炼 · 30 级 | `TrialData.lua`、`Adven.proto`。已接每日选难度、专用布阵、助战、双方剩余生命、关卡与宝箱、任务和试炼商店。[通信契约](network-contract.md#勇者试炼) | 普通路线已实测。继续用原 1,000 个机器人队伍回查梦境共用技能的恢复范围，完成对应路线的实战与结算后再开精英、噩梦。复活和跳过入口仍待核对 |
-| 彩虹圣殿 · 35 级 | `RainbowHandler.java`、`Rainbow.proto`。接竞技场名次资格、神位、进化次数、挑战冷却与记录 | 准备符合条件的两个角色先后挑战同一神位，核对冷却、胜负、原占位释放、双方重登状态及战报 |
+| 永恒梦境 · 25 级 | 原表第 1～1500 层已接通独立阵容、连战、增益和奖励，支持好友派遣、借将、战力预估与本服排行。180 档首通奖励止于第 900 层 | 原表楼层已全部接入。继续复验女神参战时的能量继承及旧表一次性治疗行为。[第 601～1500 层复验](validation/dreamland-601-1500-dependency-audit-20261126.md) |
+| 勇者试炼 · 30 级 | 三档支持每日选难度、专用布阵、助战、双方剩余生命、关卡与宝箱、任务和商店。原 1,000 支守军通过实战及战报解码。[通信契约](network-contract.md#勇者试炼) | 隔离服逐档完成 45 场挑战、15 个宝箱以及两档次日回退补奖。复活和跳过入口仍待核对 |
+| 彩虹圣殿 · 35 级 | 本服竞技场资格、独立出阵、六个神位、进化与冷却、占位加成、胜场记录与回放。[通信契约](network-contract.md#彩虹圣殿) | 隔离服双角色争夺同一神位，验证冷却、失位及到期通知、重登恢复和战报。[复验记录](development-progress.md#11-月-26-日彩虹圣殿) |
 
 ### 永恒梦境批量恢复
 
@@ -51,7 +51,7 @@
 客户端以旧动作表核对帧、时序、坐标与图标。未找到源文件的 13 段音效继续记录待复验。首批止于第 300 层，因为第 36～300 层守军均为一星，后续区间出现更高星级和新的技能组合。[战斗待复验问题](battle-known-issues.md#当前未解决)
 
 1. 用生产战斗规则批量生成战报，验证连续战斗的剩余生命、触发次数和增益。守军实战测试使用低输出高生命的观察阵容，让守军实际出招并校验战报和出手顺序。[守军实战测试](../backend/src/test/java/com/funsgamex/mxzg/dreamland/DreamlandGuardReplayTest.java)
-2. 真实 WebSocket 连战测试按生产限速跑到目标层。两项后端测试都支持 `-Dmxzg.test.dreamland.floor-limit=600` 指定范围。连战覆盖重连、上海零点续战、累计发奖、首通、任务、排行和原回执重试。守军测试用 `-Dmxzg.test.dreamland.guard-replays.from=466` 导出实际守军回放。客户端协议检查用 `--dreamland-floors=600 --dreamland-guards-from=466` 核对同批战报。[梦境连战测试](../backend/src/test/java/com/funsgamex/mxzg/MainChapterSocketTest.java) · [协议检查](../client/tools/game-protocol-check.ts)
+2. 真实 WebSocket 连战测试按生产限速跑到目标层。两项后端测试都支持 `-Dmxzg.test.dreamland.floor-limit=1500` 指定范围。连战覆盖重连、上海零点续战、累计发奖、首通、任务、排行和原回执重试。守军测试用 `-Dmxzg.test.dreamland.guard-replays.from=601` 导出实际守军回放。客户端协议检查用 `--dreamland-floors=1500 --dreamland-guards-from=601` 核对同批战报。[梦境连战测试](../backend/src/test/java/com/funsgamex/mxzg/MainChapterSocketTest.java) · [协议检查](../client/tools/game-protocol-check.ts)
 3. Creator 只抽验首次出现的动作、关键领奖和边界楼层，需刷新或启动时通知负责人操作。通过连续验收后统一提高服务端开放上限。[主线百关批量验收记录](development-progress.md#当前验证与边界)
 
 ## 公会扩展
@@ -60,7 +60,7 @@
 
 | 顺序 | 交付内容 | 验收场景 |
 |---|---|---|
-| 科技 | 对照 `ClanSkillHandler.java` 及 `Clan.proto` 的职业技能列表、点亮与重置。核对消耗、技能等级差、属性生效位置及离会规则 | 同职业与其他职业各用一名英雄，记录升级前后的余额、面板和真实战斗输入。重置、离会重入及请求重试按原规则核账 |
+| 科技 | 四职业科技树、点亮消耗、职业阶数差与单职业重置已接入。退会暂停、换会恢复按正式服规则执行。[通信契约](network-contract.md#公会科技) | 隔离服对照余额、同职业属性和实际战斗、旧回执重试、重置及换会。[复验记录](development-progress.md#11-月-26-日公会科技) |
 | 公会副本 | 依据 `ClanDungeon.proto` 恢复共享首领血量、个人挑战与购买次数、扫荡、集结号、增益、伤害和奖励 | 两名成员挑战同一首领；临界击杀只推进一次，重复请求不重复计伤或发奖。核对每日公会副本任务、退会后的挑战资格和下次登录的进度 |
 | 世界 Boss | 依据 `ClanWorldBoss.proto` 及游戏服、跨服同名处理器，核对活动分组与时间，接挑战、个人与公会伤害榜、掠夺记录、排名奖励 | 组内两个公会实打排名与掠夺，组外角色验证可见范围，跨结算时点和服务重启核对奖品与战绩 |
 | 公会战 | 对照 `ClanGvgLayer.lua` 与 `ClanGvg.proto`，按上报、匹配、准备、对战、领奖恢复据点、防守阵容、进攻日志、战绩与宝箱 | 两个公会走一轮完整赛程，另验轮空、资格不足、并发攻同一据点、跨阶段重连和重复领奖 |

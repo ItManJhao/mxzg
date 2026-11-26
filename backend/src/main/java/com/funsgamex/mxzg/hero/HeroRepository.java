@@ -1,9 +1,11 @@
 /**
  * 按角色读取持久英雄、图鉴和历史获得进度。
- * 名册和详情共用属性映射，VIP 任务读取原发放记录和升星回执。
+ * 名册和详情共用穿戴、神位和生效科技属性，VIP 任务读取原发放记录和升星回执。
  */
 package com.funsgamex.mxzg.hero;
 
+import com.funsgamex.mxzg.guild.GuildTechnologyAttributes;
+import com.funsgamex.mxzg.rainbow.RainbowAttributes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,13 +60,18 @@ public class HeroRepository {
     private final HeroArtifactRepository artifacts;
     /** 圣器基础、特殊和套装属性的真实配置。 */
     private final HeroArtifactRules artifactRules;
+    /** 读取角色当前有效神位属性，在同一批名册只读取一次。 */
+    private final RainbowAttributes rainbowAttributes;
+    /** 在同一批名册中一次读取角色当前生效的各职业科技。 */
+    private final GuildTechnologyAttributes guildTechnologyAttributes;
 
-    /** 注入持久名册和穿戴来源，列表与详情共用同一属性构造。 */
+    /** 注入持久名册和属性来源，列表与详情共用同一属性构造。 */
     public HeroRepository(JdbcTemplate jdbc, HeroGrowthRules rules, HeroEquipmentRepository equipment,
                           HeroPanelRules panelRules, HeroSkillPanelRules skillRules, HeroEvolutionRules evolutionRules,
                           HeroJewelRepository jewels, HeroJewelRules jewelRules,
                           GodEquipmentRepository godEquipment, GodEquipmentRules godEquipmentRules,
-                          HeroArtifactRepository artifacts, HeroArtifactRules artifactRules) {
+                          HeroArtifactRepository artifacts, HeroArtifactRules artifactRules,
+                          RainbowAttributes rainbowAttributes, GuildTechnologyAttributes guildTechnologyAttributes) {
         this.jdbc = jdbc;
         this.rules = rules;
         this.equipment = equipment;
@@ -77,40 +84,50 @@ public class HeroRepository {
         this.godEquipmentRules = godEquipmentRules;
         this.artifacts = artifacts;
         this.artifactRules = artifactRules;
+        this.rainbowAttributes = rainbowAttributes;
+        this.guildTechnologyAttributes = guildTechnologyAttributes;
     }
 
-    /** 读取本角色全部实例及主线阵容占用，界面排序由旧版展示规则决定。 */
+    /** 批量读取本角色全部实例和生效角色属性，界面排序由旧版展示规则决定。 */
     public List<HeroProfile> list(String roleId) {
         var equipped = equipment.equipped(roleId);
         var gems = jewels.byRole(roleId);
         var divine = godEquipment.equipped(roleId);
         var reiki = artifacts.equipped(roleId);
+        var shrine = rainbowAttributes.current(roleId);
+        var technology = guildTechnologyAttributes.current(roleId);
         return jdbc.query("SELECT h.*, EXISTS (SELECT 1 FROM game_lineup_slot s WHERE s.role_id=h.role_id AND s.hero_id=h.id) AS deployed FROM game_hero h WHERE h.role_id = ? ORDER BY id", this::map, roleId)
             .stream().map(hero -> withLoadout(hero, equipped.get(hero.id()), gems.getOrDefault(hero.id(), List.of()),
-                    divine.getOrDefault(hero.id(), List.of()), reiki.getOrDefault(hero.id(), List.of()))).toList();
+                    divine.getOrDefault(hero.id(), List.of()), reiki.getOrDefault(hero.id(), List.of()), shrine,
+                    technology)).toList();
     }
-    /** 以角色和英雄实例限定详情查询，装配该英雄的宝石与穿戴关系。 */
+    /** 以角色和英雄实例限定详情查询，与名册共用相同的生效属性构造。 */
     public Optional<HeroProfile> find(String roleId, String heroId) {
         return jdbc.query("SELECT h.*, EXISTS (SELECT 1 FROM game_lineup_slot s WHERE s.role_id=h.role_id AND s.hero_id=h.id) AS deployed FROM game_hero h WHERE h.role_id = ? AND h.id = ?", this::map, roleId, heroId)
             .stream().findFirst().map(hero -> withLoadout(hero, equipment.equipped(roleId).get(heroId),
                     List.copyOf(jewels.forHero(roleId, heroId)),
                     godEquipment.equipped(roleId).getOrDefault(heroId, List.of()),
-                    artifacts.equipped(roleId).getOrDefault(heroId, List.of())));
+                    artifacts.equipped(roleId).getOrDefault(heroId, List.of()), rainbowAttributes.current(roleId),
+                    guildTechnologyAttributes.current(roleId)));
     }
 
-    /** 合并宝石、神装和圣器属性，将同次穿戴判定授予的套装技能交给战斗。 */
+    /** 按模板原职业匹配科技属性，并将同次穿戴授予的套装技能交给战斗。 */
     private HeroProfile withLoadout(HeroProfile hero, HeroEquipmentRepository.State equipmentState,
                                    List<HeroJewelRepository.Item> gemSlots,
                                    List<GodEquipmentRepository.Item> divineSlots,
-                                   List<HeroArtifactRepository.Item> artifactSlots) {
+                                   List<HeroArtifactRepository.Item> artifactSlots,
+                                   Map<Integer, Long> shrine,
+                                   Map<Integer, Map<Integer, Long>> technologyByProfession) {
         var attributes = new HashMap<Integer, Long>();
         BiConsumer<Integer, Long> add = (type, value) -> attributes.merge(type, value, Math::addExact);
         jewelRules.addAttributes(gemSlots, add);
         var loadoutSkills = new ArrayList<>(godEquipmentRules.contribute(divineSlots, add));
         loadoutSkills.addAll(artifactRules.contribute(artifactSlots, add));
         var ordinary = equipmentState == null ? new HeroEquipmentRepository.State(List.of()) : equipmentState;
-        return hero.withLoadout(ordinary, new HeroProfile.Gems(gemSlots), attributes, panelRules, skillRules,
-                evolutionRules, loadoutSkills);
+        var technology = technologyByProfession.isEmpty() ? Map.<Integer, Long>of()
+                : technologyByProfession.getOrDefault(skillRules.battleIdentity(hero.templateId()).job(), Map.of());
+        return hero.withLoadout(ordinary, new HeroProfile.Gems(gemSlots), attributes, shrine, technology,
+                panelRules, skillRules, evolutionRules, loadoutSkills);
     }
 
     /** 读取本角色持久图鉴，供个人空间生成已解锁形象。 */

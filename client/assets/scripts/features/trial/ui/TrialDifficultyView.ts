@@ -3,6 +3,8 @@
  * 开窗时读取试炼 Model；选定请求由控制器一次提交。
  */
 import { _decorator, Button, Label, Node, UITransform } from "cc";
+import { GameConfig } from "../../../config/GameConfig";
+import { GConfig } from "../../../config/GConfig";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { UILayer } from "../../../framework/ui/UILayer";
@@ -71,7 +73,7 @@ export class TrialDifficultyView extends BaseView<TrialDifficultyArgs> {
         this.paint();
     }
 
-    /** 同时检查解锁和实战是否开放，服务端确认后自动回到地图。 */
+    /** 以服务端资格显示选择或解锁条件，服务端确认后自动回到地图。 */
     private paint(): void {
         const state = TrialModel.instance.snapshot?.state;
         const controller = TrialController.instance;
@@ -83,16 +85,31 @@ export class TrialDifficultyView extends BaseView<TrialDifficultyArgs> {
         this.retryButton!.node.active = controller.awaitingResult && !controller.busy;
         this.choices.forEach((button, index) => {
             const tier = state?.difficulties.find(row => row.id === index + 1);
-            const combatReady = tier?.combatReady !== false;
-            const unlocked = !!tier && combatReady && tier.id <= (state?.maxDifficulty ?? 0);
+            const unlocked = !!tier?.combatReady && tier.id <= (state?.maxDifficulty ?? 0);
             button.node.active = unlocked;
             button.interactable = !controller.busy && !controller.awaitingResult;
             const requirement = this.requirements[index];
             requirement.node.parent!.active = !unlocked && !!tier;
-            requirement.string = !combatReady ? "战斗规则待接入"
-                : `通关${index === 1 ? "普通" : "精英"}后开启\n推荐战力 ${tier?.minimumPower ?? 0}`;
+            if (tier && !unlocked) {
+                requirement.string = this.unlockHint(tier, state?.completedDifficulty ?? 0);
+            }
             TrialViewUtils.rewards(this.rewardSlots.slice(index * 2, index * 2 + 2), this.displayRewards(tier));
         });
+    }
+
+    /** 显示尚未满足的原版解锁条件，保留服务端给出的实际战力门槛。 */
+    private unlockHint(tier: TrialDifficulty, completedDifficulty: number): string {
+        if (!tier.combatReady) {
+            return "战斗规则待接入";
+        }
+        const config = GameConfig.instance;
+        const powerText = (config.requireConfig(GConfig.Language, 41245).value ?? "战力%s开启")
+            .replace("%s", String(tier.minimumPower));
+        if (tier.id <= completedDifficulty + 1) {
+            return powerText;
+        }
+        const clearText = config.requireConfig(GConfig.Language, 41246 + tier.id).value ?? "通关上一难度后开启";
+        return `${clearText}\n${powerText}`;
     }
 
     /** 打开服务器下发的奖励物品说明，背包余额仍由统一状态提供。 */

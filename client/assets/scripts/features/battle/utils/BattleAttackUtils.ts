@@ -338,16 +338,33 @@ export class BattleAttackUtils {
             case 3143102:
             case 3143103: // 旧客户端只播放原地骨骼动作。
                 return [{ type: 3, delay: 0, dimly: 0, base: { action: "skill2" }, files: [], sounds: [] }];
+            case 3150200:
             case 3155201:
             case 3155202:
-            case 3155203: // 提米的替换普攻按原顺序并行播放目标帧和普通攻击骨骼。
+            case 3155203: {
+                // 普攻与替换普攻沿用同一目标特效，各自保留原暗屏、骨骼时长。
+                const replaced = id !== 3150200;
                 return [
-                    { type: 7, delay: 0, dimly: 1, base: {
+                    { type: 7, delay: 0, dimly: replaced ? 1 : 0, base: {
                         format: "skill-103050150/%d.png", anchor_x: 0.5, anchor_y: 0.13,
                         duration: 0.08, scale_x: 3, scale_y: 3 },
                         files: ["skill-103050150"], sounds: ["skill-103050150"] },
-                    { type: 3, delay: 0, dimly: 1, base: { attack_time: 0.6, action_time: 1.8 },
+                    { type: 3, delay: 0, dimly: replaced ? 1 : 0, base: { attack_time: 0.6, action_time: replaced ? 1.8 : 1 },
                         files: [], sounds: [] },
+                ];
+            }
+            case 3151201:
+            case 3151202:
+            case 3151203: // 提米一技能按旧顺序并行启动三段，保留目标特效的翻转。
+                return [
+                    { type: 7, delay: 50, dimly: 1, base: { format: "skill-103050151/%d.png", anchor_y: 0.35,
+                        anchor_x: 0.2, duration: 0.05, scale_x: 3.4, scale_y: 3.4, flipped: 1 },
+                        files: ["skill-103050151"], sounds: ["skill-103050151"] },
+                    { type: 3, delay: 0, dimly: 1, base: { action: "skill", attack_time: 0.6, action_time: 1.8 },
+                        files: [], sounds: [] },
+                    { type: 6, delay: 10, dimly: 0, base: { format: "skill-103050151-1/%d.png", anchor_y: 0.2,
+                        anchor_x: 0.5, duration: 0.03, scale_x: 2, scale_y: 2 },
+                        files: ["skill-103050151-1"], sounds: [] },
                 ];
             // 永恒梦境第 1～300 层中，旧动作表与 Buff 基表实际不同的可达覆盖。
             case 1121101:
@@ -503,6 +520,7 @@ export class BattleAttackUtils {
                         files: ["skill-102050223"], sounds: ["skill-102050223"] },
                 ];
             case 3130200:
+            case 3135203:
             case 3135202:
             case 3135201:
                 return [
@@ -1238,6 +1256,7 @@ export class BattleAttackUtils {
                         anchor_y: 0.5, duration: 0.05, scale_x: 4, scale_y: 4 },
                         files: ["skill-103050210-2"], sounds: [] },
                 ];
+            case 3211103:
             case 3211102:
             case 3211101:
                 // 空 format 的旧投掷段只播骨骼，附身和场地帧各按自己的延迟出现。
@@ -1266,7 +1285,17 @@ export class BattleAttackUtils {
                         files: [form], sounds: [form] },
                 ];
             }
+            case 4070200: // 圣殿骑士普攻的目标音效及特效独立于近身位移。
+                return [
+                    { type: 7, delay: 10, dimly: 0, base: { format: "skill-104050070/%d.png", anchor_y: 0.45,
+                        anchor_x: 0.35, duration: 0.07, scale_x: 1.2, scale_y: 1.2 },
+                        files: ["skill-104050070"], sounds: ["skill-104050070"] },
+                    { type: 11, delay: 0, dimly: 0, base: { move_time: 0.1, move_back: 2, attack_delay: 0.2,
+                        offset_x: 0.6, offset_y: 0.3 }, files: [], sounds: [] },
+                ];
             case 4071201:
+            case 4071202:
+            case 4071203: // 三个等级都在第 85 帧播放施法者特效。
                 return [
                     { type: 3, delay: 0, dimly: 1, base: { action: "skill", attack_time: 1.5, action_time: 1.6,
                         format: "skill-104050071/%d.png", duration: 0.06, scale_x: 1.5, scale_y: 1.5, anchor_x: 0.5,
@@ -1274,6 +1303,37 @@ export class BattleAttackUtils {
                     { type: 6, delay: 85, dimly: 0, base: { format: "skill-104050071-1/%d.png",
                         anchor_x: 0.3, anchor_y: 0.2, duration: 0.02, scale_x: 1, scale_y: 1 },
                         files: ["skill-104050071-1"], sounds: [] },
+                ];
+            case 4073101:
+            case 4073102:
+            case 4073103: // 圣殿骑士三技能先施法，再由目标位置各自播放特效。
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: { action: "skill2", action_time: 2 }, files: [], sounds: [] },
+                    { type: 7, delay: 30, dimly: 0, base: { format: "skill-104050073/%d.png", anchor_y: 0.3,
+                        anchor_x: 0.5, duration: 0.05, scale_x: 1, scale_y: 1 },
+                        files: ["skill-104050073"], sounds: ["skill-104050073"] },
+                ];
+            case 5101101:
+            case 5101102:
+            case 5101103: // 缚魂者一技能的附身图集还在，原动作引用的同名附声音频在源资源中缺失。
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: { action: "skill", attack_time: 0.6, action_time: 1.8 },
+                        files: [], sounds: [] },
+                    { type: 9, delay: 120, dimly: 1, base: { format: "skill-105050101/%d.png", anchor_y: 0.55,
+                        anchor_x: 0.5, duration: 0.06, scale_x: 2, scale_y: 2, offset_x: 0.75, offset_y: 0.5 },
+                        files: ["skill-105050101"], sounds: ["skill-105050101"] },
+                    { type: 6, delay: 0, dimly: 0, base: { format: "skill-105050101-1/%d.png", anchor_x: 0.5,
+                        anchor_y: 0.15, duration: 0.03, scale_x: 2, scale_y: 2 },
+                        files: ["skill-105050101-1"], sounds: [] },
+                ];
+            case 5103101:
+            case 5103102:
+            case 5103103: // 缚魂者三技能的延迟和目标特效沿用原覆盖。
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: { action: "skill2", action_time: 2.5 }, files: [], sounds: [] },
+                    { type: 7, delay: 120, dimly: 0, base: { format: "skill-105050103/%d.png", anchor_x: 0.55,
+                        anchor_y: 0.35, duration: 0.05, scale_x: 2, scale_y: 2 },
+                        files: ["skill-105050103"], sounds: ["skill-105050103"] },
                 ];
             case 5090100:
                 // 两段特效均沿原帧顺序，两份同名旧音频在现存源资源中缺失。
@@ -2577,6 +2637,11 @@ export class BattleAttackUtils {
                 "skill-103050201": 21, "skill-103050201-1": 18, "skill-103050203": 10,
                 "skill-104050103": 18, "skill-104050140": 11, "skill-104050141": 23,
                 "skill-104050141-1": 45, "skill-104050143": 10,
+                // 提米、圣殿骑士和缚魂者的守军动作逐项核对原图集连续编号。
+                "skill-103050151": 23, "skill-103050151-1": 36,
+                "skill-104050070": 11, "skill-104050073": 12,
+                "skill-105050100": 10, "skill-105050101": 26,
+                "skill-105050101-1": 63, "skill-105050103": 17,
             };
             const knownArrow = row.type === 10 && format === "skill-102040041/arrow-%d.png";
             const file = knownArrow ? "skill-102040041" : directFrames ? format.slice(0, -frameSuffix.length) : files[0];

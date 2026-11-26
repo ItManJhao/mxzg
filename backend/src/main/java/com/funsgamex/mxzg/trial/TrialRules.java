@@ -15,8 +15,8 @@ import tools.jackson.databind.ObjectMapper;
 
 @Component
 class TrialRules {
-    /** 限定当前已经打通整条路线的难度；其余档保留原展示与战力要求。 */
-    private static final int MAX_OPEN_DIFFICULTY = 1;
+    /** 普通、精英和噩梦共用战斗执行器，逐档资格由角色通关记录与历史战力决定。 */
+    private static final int MAX_OPEN_DIFFICULTY = 3;
 
     /** 难度入口的战力门槛及原界面奖励预览。 */
     record Difficulty(int id, long minimumPower, List<Reward> previewRewards) {}

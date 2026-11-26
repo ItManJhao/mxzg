@@ -1,7 +1,10 @@
-/** 旧服技能分类与回合排期规则；只选择候选技能，不执行Buff触发、禁止行动或伤害结算。 */
+/** 旧服技能分类、候选排期与回合先手排序；供战场和战报校验共用，不执行技能、Buff或伤害。 */
 package com.funsgamex.mxzg.hero;
 
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.function.ToLongFunction;
 
 public final class HeroBattleSkillUtils {
     /** activeType沿旧枚举：0被动、1主动、2普攻、3光环；initialRound/coolRound来自精确技能等级配置，first由动作内260号先手Buff推导。 */
@@ -45,5 +48,29 @@ public final class HeroBattleSkillUtils {
             }
         }
         return ordinary;
+    }
+
+    /**
+     * 回合开始效果结算后冻结先手顺序。旧服将守方、攻方依序汇总并按速度降序，再逐个插到队首。
+     * 普通候选仍按当下速度稳定重排；沉默等控制在真正选技时处理，不改变已定的先手位置。
+     */
+    static Comparator<Integer> turnOrder(List<HeroBattleChapterScenario.Unit> roster, int round,
+                                         ToLongFunction<Integer> speed) {
+        var bySpeed = Comparator.comparingLong(speed).reversed();
+        var firsts = roster.stream()
+                .filter(unit -> {
+                    var skill = choose(unit.skills(), round, null, false);
+                    return skill != null && skill.first();
+                })
+                .sorted(Comparator.comparingLong((HeroBattleChapterScenario.Unit unit) -> speed.applyAsLong(unit.id()))
+                        .reversed().thenComparing(Comparator.comparingInt(HeroBattleChapterScenario.Unit::faction)
+                                .reversed()))
+                .toList().reversed();
+        var firstPosition = new HashMap<Integer, Integer>();
+        for (int index = 0; index < firsts.size(); index++) {
+            firstPosition.put(firsts.get(index).id(), index);
+        }
+        return Comparator.<Integer>comparingInt(id -> firstPosition.getOrDefault(id, Integer.MAX_VALUE))
+                .thenComparing(bySpeed);
     }
 }

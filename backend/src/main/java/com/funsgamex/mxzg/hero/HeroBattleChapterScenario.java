@@ -323,10 +323,11 @@ public final class HeroBattleChapterScenario {
         return runBattle("audit:dark-cutter-bleed", applyElementHalo(input), decision);
     }
 
-    /** 只读预检一个完整技能，供战场及逐技能依赖审计共用；未知效果或先手明确拒绝。 */
+    /** 只读预检完整技能；先手标志须与原配置一致，未知技能效果和演出仍明确拒绝。 */
     public void requireSupportedSkill(HeroBattleSkillUtils.Skill skill) {
-        if (skill.first()) {
-            throw new IllegalArgumentException("独立战场尚未接入先手技能");
+        if (skill.first() && !skills.battleSchedule(List.of(new HeroEvolutionRules.Skill(skill.skillId(), skill.level())))
+                .getFirst().equals(skill)) {
+            throw new IllegalArgumentException("先手技能与原排期配置不符：" + skill.skillId());
         }
         if (skill.activeType() == 1 || skill.activeType() == 2) {
             skills.damageSkillArts(skill);
@@ -495,7 +496,7 @@ public final class HeroBattleChapterScenario {
 
     /**
      * 按全局索引构建原顺序敌方输入，保留成长、初始属性和完整技能预检；不在此重复添加元素光环。
-     * 源定位待确认、装备、符文、先手或未支持技能明确拒绝，不伪造无装备或删技能战场。
+     * 源定位待确认的关卡及尚未支持的敌方配置明确拒绝，不跳过其依赖。
      */
     public List<Unit> enemies(int stageIndex) {
         if (chapters.enemyMappingPending(stageIndex)) {
@@ -634,7 +635,7 @@ public final class HeroBattleChapterScenario {
                 new HashMap<>());
     }
 
-    /** 续战恢复死亡状态；只有梦境继续携带前层累计触发次数。 */
+    /** 续战恢复死亡和梦境的触发次数，逐回合冻结原先手顺序并执行普通动态排序。 */
     private Result runBattle(String scenario, List<Unit> input, DoublePredicate decision, Random random,
                              int maxRounds, Map<Integer, Long> attackRates, EntryHealth mode,
                              Map<Integer, Map<Integer, Integer>> effectUses) {
@@ -687,8 +688,10 @@ public final class HeroBattleChapterScenario {
             frames.add(frame(engine, initial, round, 0, before, damageStart, traceStart));
             outcome = outcome(initial, snapshot(engine, initial), 0);
             if (outcome == HeroBattleRoundUtils.Outcome.ONGOING) {
-                // 原回合Buff结算后按当前速度排序，之后只稳定重排本回合尚未行动的单位。
-                var remaining = new ArrayList<>(currentOrder(engine, initial));
+                // 先手按回合开始后冻结的顺序优先，之后速度增减只会重排普通候选。
+                var order = HeroBattleSkillUtils.turnOrder(initial, round, engine::currentSpeed);
+                var remaining = new ArrayList<>(initial.stream().map(Unit::id).toList());
+                remaining.sort(order);
                 while (!remaining.isEmpty()) {
                     int id = remaining.removeFirst();
                     if (engine.state(id).hp() <= 0) continue;
@@ -705,7 +708,7 @@ public final class HeroBattleChapterScenario {
                     turns.add(new Turn(round, id, HeroBattleRoundUtils.NORMAL_SKILL_ENERGY, after));
                     outcome = outcome(initial, after, 0);
                     if (outcome != HeroBattleRoundUtils.Outcome.ONGOING) break;
-                    remaining.sort(Comparator.comparingLong(engine::currentSpeed).reversed());
+                    remaining.sort(order);
                 }
             }
             completed = round;

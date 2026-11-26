@@ -40,6 +40,8 @@ export interface DungeonHallArgs {
     readonly openDreamland: () => void;
     /** 勇者试炼入口请求本日试炼进度，并按服务器状态打开难度窗或地图。 */
     readonly openTrial: () => void;
+    /** 彩虹圣殿入口打开当前区服实时神位。 */
+    readonly openRainbow: () => void;
 }
 
 const { ccclass, property } = _decorator;
@@ -129,7 +131,7 @@ export class DungeonHallView extends BaseView<DungeonHallArgs> {
         node.getComponent(DungeonHallCardView)!.render(card, (id, quantity) => this.openReward(id, quantity));
     }
 
-    /** 打开日常副本、永恒梦境和勇者试炼，其他入口反馈当前实现状态。 */
+    /** 从大厅打开四条已接通的玩法，最后一张预告横幅没有玩法入口。 */
     private selectCard(card: DungeonHallCard, index: number): void {
         if (index === 0) {
             this.args?.openDailyDungeon();
@@ -143,7 +145,9 @@ export class DungeonHallView extends BaseView<DungeonHallArgs> {
             this.args?.openTrial();
             return;
         }
-        UIManager.instance.toast(`${card.title}玩法尚未接入`);
+        if (index === 3) {
+            this.args?.openRainbow();
+        }
     }
 
     /** 打开配置产物说明；旧表填 0 表示只预览种类，不能当作实际发放数量。 */

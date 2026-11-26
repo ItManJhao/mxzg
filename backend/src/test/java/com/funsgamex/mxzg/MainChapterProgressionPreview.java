@@ -199,13 +199,18 @@ public final class MainChapterProgressionPreview {
         return List.copyOf(lineup);
     }
 
-    /** 600 层隔离结算验收用强队。只加强测试攻方，原守军、回放、胜负和奖品由实际逻辑计算。 */
-    static List<Unit> dreamlandAcceptanceTeam(List<Unit> frozenTeam) {
+    /** 按目标层数加强隔离验收的攻方，原守军、回放、胜负和奖品由实际逻辑计算。 */
+    static List<Unit> dreamlandAcceptanceTeam(List<Unit> frozenTeam, int floorLimit) {
+        // 后段守军生命超过一亿。结算测试需让攻方先出手并在回合上限内获胜，守军技能另由观察阵容覆盖。
+        long attackMultiplier = floorLimit > 600 ? 1_024L : 8L;
+        long healthMultiplier = floorLimit > 600 ? 512L : 4L;
+        long speedMultiplier = floorLimit > 600 ? 4L : 1L;
         var result = new ArrayList<Unit>();
         for (var unit : frozenTeam) {
             var attributes = new HashMap<>(unit.attributes());
-            attributes.computeIfPresent(220, (key, amount) -> Math.multiplyExact(amount, 8L));
-            attributes.computeIfPresent(223, (key, amount) -> Math.multiplyExact(amount, 4L));
+            attributes.computeIfPresent(220, (key, amount) -> Math.multiplyExact(amount, attackMultiplier));
+            attributes.computeIfPresent(223, (key, amount) -> Math.multiplyExact(amount, healthMultiplier));
+            attributes.computeIfPresent(101, (key, amount) -> Math.multiplyExact(amount, speedMultiplier));
             result.add(new Unit(unit.id(), unit.faction(), unit.template(), unit.level(), unit.star(), unit.stage(),
                 unit.position(), attributes, HeroBattleAttributeUtils.opening(attributes), unit.skills(), unit.portraitIconId()));
         }

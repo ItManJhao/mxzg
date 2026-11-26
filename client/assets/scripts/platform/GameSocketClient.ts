@@ -603,6 +603,14 @@ export class GameSocketClient {
       case "GUILD_DONATION_INSUFFICIENT": return "今天所选档位的捐献材料不足";
       case "GUILD_DONATION_CHEST_LOCKED": return "公会今日贡献尚未达到该宝箱要求";
       case "GUILD_DONATION_CHEST_CLAIMED": return "今天已领取该公会宝箱";
+      case "GUILD_TECHNOLOGY_MAX": return "该职业科技已全部点亮";
+      case "GUILD_TECHNOLOGY_STAGE_GAP": return "请先提升其他职业科技等级";
+      case "GUILD_TECHNOLOGY_COST_INSUFFICIENT": return "公会贡献或金币不足";
+      case "GUILD_TECHNOLOGY_DIAMONDS_INSUFFICIENT": return "钻石不足";
+      case "GUILD_TECHNOLOGY_NOT_TRAINED": return "该职业还没有点亮的科技";
+      case "GUILD_TECHNOLOGY_CHANGED": return "科技进度已更新，请重新确认";
+      case "GUILD_TECHNOLOGY_REQUEST_INVALID":
+      case "GUILD_TECHNOLOGY_REQUEST_CONFLICT": return "科技操作已失效，请重新确认";
       case "QUEST_RESET": return "每日任务已刷新，请重新确认";
       case "QUEST_NOT_FOUND": return "该任务奖励已刷新";
       case "QUEST_NOT_COMPLETE": return "尚未达到领取条件";
@@ -697,6 +705,18 @@ export class GameSocketClient {
       case "DREAMLAND_REQUEST_INVALID": return "梦境操作参数无效，请重新选择";
       case "DREAMLAND_REQUEST_CONFLICT": return "梦境操作与原请求不一致，请重新确认";
       case "TRIAL_LEVEL": return "角色达到30级后开放勇者试炼";
+      case "RAINBOW_LEVEL": return "角色达到35级后开放彩虹圣殿";
+      case "RAINBOW_RANK": return "竞技场排名未达到挑战条件";
+      case "RAINBOW_HOLDING": return "你已占据该神位";
+      case "RAINBOW_COOLDOWN": return "挑战正在冷却中";
+      case "RAINBOW_FORMATION_EMPTY": return "请先保存彩虹圣殿出战阵容";
+      case "RAINBOW_FORMATION_CHANGED": return "圣殿阵容已更新，请重新确认";
+      case "RAINBOW_FORMATION_INVALID": return "请选择可出战的圣殿英雄";
+      case "RAINBOW_BATTLE_UNAVAILABLE": return "该神位守军目前无法挑战";
+      case "RAINBOW_REPLAY_MISSING": return "该挑战记录已过期";
+      case "RAINBOW_SEAT": return "该神位已失效，请重新打开彩虹圣殿";
+      case "RAINBOW_REQUEST_INVALID":
+      case "RAINBOW_REQUEST_CONFLICT": return "圣殿操作已失效，请重新确认";
       case "TRIAL_DIFFICULTY_ALREADY_SELECTED": return "今日已选择难度";
       case "TRIAL_DIFFICULTY_LOCKED": return "需要通关上一难度并达到对应战力";
       case "TRIAL_DIFFICULTY_UNAVAILABLE": return "该难度的守军规则尚未开放";

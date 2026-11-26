@@ -187,6 +187,18 @@ public class ArenaSeasonService {
         return ranking(role, likeEnd(prepare(role.serverId())));
     }
 
+    /** 在调用方已准备好的区服事务内读取实时竞技场名次，0 表示不在前五十名。 */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public int rankForRole(String serverId, String roleId) {
+        var ranking = arena.ranks(serverId, minimumLevel, ArenaSeasonRules.RANK_LIMIT);
+        for (int index = 0; index < ranking.size(); index++) {
+            if (ranking.get(index).roleId().equals(roleId)) {
+                return index + 1;
+            }
+        }
+        return 0;
+    }
+
     /** 在固定期次核对真实挑战次数，每个宝箱一赛季只发一次，重试找原回执。 */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Claim claimChest(String token, String requestId, int chestId, long seasonEndsAt) {

@@ -49,12 +49,15 @@ public final class GameProtocolCodec {
         "dreamlandFormationPowerRequest", "dreamlandFormationPower",
         "trialState", "trialCommand", "trialSettlement", "trialAssistance",
         "trialShopState", "trialShopBuy", "trialShopReceipt",
+        "rainbowState", "rainbowChallengeRequest", "rainbowChallengeResponse", "rainbowHistoryRequest",
+        "rainbowHistory", "rainbowReplayRequest", "rainbowLineupSaved",
         "arenaState", "arenaChallengeRequest", "arenaReplayRequest", "arenaReplay", "arenaSettlement",
         "arenaTicketBuyRequest", "arenaTicketPurchase",
         "arenaRanking", "arenaSeason", "arenaChestRequest", "arenaChestReceipt", "arenaLikeRequest", "arenaLikeReceipt",
         "arenaDefense", "arenaDefenseSave", "arenaDefenseSaved", "arenaShopState", "arenaShopBuy", "arenaShopReceipt",
         "guildListRequest", "guildChangeRequest", "guildState", "vipClaimRequest", "vipClaimReceipt",
         "guildShopBuyRequest", "guildShopState", "guildDonationRequest", "guildDonationState", "guildRankingState",
+        "guildTechnologyState", "guildTechnologyCommand", "guildTechnologyReceipt",
         "chapterQuickBattleState", "chapterQuickBattleClaim", "chapterQuickBattleReceipt",
         "questClaimRequest", "questSnapshot", "questClaimReceipt", "questChanged",
         "rankingListRequest", "rankingLikeRequest", "rankingOverview", "rankingDetail", "rankingLikeReceipt",
@@ -148,6 +151,7 @@ public final class GameProtocolCodec {
                 case "guild.change" -> "guildChangeRequest";
                 case "guild.shop.buy" -> "guildShopBuyRequest";
                 case "guild.donation.donate", "guild.donation.claim" -> "guildDonationRequest";
+                case "guild.technology.upgrade", "guild.technology.reset" -> "guildTechnologyCommand";
                 case "quest.claim" -> "questClaimRequest";
                 case "ranking.list" -> "rankingListRequest";
                 case "ranking.like" -> "rankingLikeRequest";
@@ -164,6 +168,10 @@ public final class GameProtocolCodec {
                 case "dreamland.formation.power" -> "dreamlandFormationPowerRequest";
                 case "trial.act" -> "trialCommand";
                 case "trial.shop.buy" -> "trialShopBuy";
+                case "rainbow.lineup.save" -> "formationSave";
+                case "rainbow.challenge" -> "rainbowChallengeRequest";
+                case "rainbow.history" -> "rainbowHistoryRequest";
+                case "rainbow.replay" -> "rainbowReplayRequest";
                 case "arena.challenge" -> "arenaChallengeRequest";
                 case "arena.replay" -> "arenaReplayRequest";
                 case "arena.ticket.buy" -> "arenaTicketBuyRequest";
@@ -238,6 +246,8 @@ public final class GameProtocolCodec {
             case "chat.send" -> "chatSendResult";
             case "chat.overview" -> "chatOverview";
             case "guild.ranking" -> "guildRankingState";
+            case "guild.technology.info" -> "guildTechnologyState";
+            case "guild.technology.upgrade", "guild.technology.reset" -> "guildTechnologyReceipt";
             case "vip.claim" -> "vipClaimReceipt";
             case "tower.state", "tower.formation.save" -> "towerState";
             case "tower.challenge", "tower.sweep", "tower.milestone.claim" -> "towerSettlement";
@@ -251,6 +261,11 @@ public final class GameProtocolCodec {
             case "trial.assistance" -> "trialAssistance";
             case "trial.shop" -> "trialShopState";
             case "trial.shop.buy" -> "trialShopReceipt";
+            case "rainbow.state" -> "rainbowState";
+            case "rainbow.lineup.save" -> "rainbowLineupSaved";
+            case "rainbow.challenge" -> "rainbowChallengeResponse";
+            case "rainbow.history" -> "rainbowHistory";
+            case "rainbow.replay" -> "arenaReplay";
             case "arena.state", "arena.refresh" -> "arenaState";
             case "arena.challenge" -> "arenaSettlement";
             case "arena.replay" -> "arenaReplay";

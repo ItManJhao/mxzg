@@ -26,9 +26,16 @@
 | 准入、扣费及成员事务 | [GuildService](../backend/src/main/java/com/funsgamex/mxzg/guild/GuildService.java)、[V51 成员迁移](../backend/src/main/resources/db/migration/V51__guild_membership.sql)、[V52 徽章迁移](../backend/src/main/resources/db/migration/V52__guild_badge.sql) |
 | 公会商店 | [GuildShopService](../backend/src/main/java/com/funsgamex/mxzg/guild/GuildShopService.java) 扣除勋章、校验个人周限购并发放物品 |
 | 捐献与贡献宝箱 | [GuildDonationService](../backend/src/main/java/com/funsgamex/mxzg/guild/GuildDonationService.java) 结算个人捐献、公会经验和每日贡献 |
+| 公会科技 | [GuildTechnologyView](../client/assets/scripts/features/guild/ui/GuildTechnologyView.ts)、[GuildTechnologyService](../backend/src/main/java/com/funsgamex/mxzg/guild/GuildTechnologyService.java)、[V82 科技迁移](../backend/src/main/resources/db/migration/V82__guild_technology.sql) |
 | 本服公会排行 | [GuildRankingService](../backend/src/main/java/com/funsgamex/mxzg/guild/GuildRankingService.java) 汇总成员历史战力并返回本会名次 |
 
-公会科技、公会副本、世界 Boss 与公会战的旧版入口、先后顺序和多人验收见[项目总计划](restructuring-plan.md)。
+公会副本、世界 Boss 与公会战的旧版入口、先后顺序和多人验收见[项目总计划](restructuring-plan.md)。
+
+## 公会科技
+
+成员从大厅右上方的科技卡片进入，可切换战士、法师、牧师和坦克。依序点亮六边形科技树的六格，保留各职业累计属性，重置只清除所选职业。逐格成本、末格属性和重置档位来自旧 `clanskillbase`、`clanskillability`、`clanskillresetgem` 和 `system`，其中战士、法师第六格为增伤，牧师为减伤，坦克为免控。[规则导出器](../tools/export_guild_technology_rules.py) · [通信契约](network-contract.md#公会科技)
+
+正式服的科技说明写明退会暂停加成并保留进度，早期 `ClanReceivers` 直接读取个人科技。11 月 26 日按负责人确认使用正式服规则。升级和重置时按职业重新计算实际英雄属性，主阵战力投影、统一资产快照与新开战斗使用相同属性输入。建会、审批入会和退出也立即更新当前战力。[在线状态与战斗验证](development-progress.md#11-月-26-日公会科技)
 
 ## 日服布局对照
 
@@ -36,7 +43,7 @@
 
 名称、宣言和查找名参考日服 `web-jpn/build/jp_input.js` 的共用输入浮层：点击字段时打开独立输入窗，取消不改值，确认只回填目录页的草稿。查找仍需另点「查找」，建会仍在原按钮发起并由服务端扣费。默认宣言仅用于展示和首次编辑预填，未确认编辑时不作为公告写入。新版沿用已确认的公会名上限 64 和稳定分页，不照抄旧 Lua 的 25 或旧推荐列表的随机排序。
 
-大厅按旧版放置左侧等级、经验、人数和右侧宣言卡，成员可打开公会商店、捐献和排行。科技、任务、首领、公会战和历史仍为灰态。公告编辑复用现有单行浮层。成员窗显示人数、头像、等级、职务和当前主阵容战力，黄底标本人。在线状态、成员贡献列、自动接任与成员职务菜单待接入。申请名单由会长查看。
+大厅按旧版放置左侧等级、经验、人数和右侧宣言卡，成员可打开公会科技、商店、捐献和排行。任务、首领、公会战和历史仍为灰态。公告编辑复用现有单行浮层。成员窗显示人数、头像、等级、职务和当前主阵容战力，黄底标本人。在线状态、成员贡献列、自动接任与成员职务菜单待接入。申请名单由会长查看。
 
 商店复用原有三列卡片和周限购。原 `shopclan` 的 17 个货位中，16 个可兑换。精灵 `2000003` 的实例规则尚未接入，原货位显示「暂未开放」。捐献每天选一个档位，`20,000` 金币、`100` 钻石或 `300` 钻石分别获得 `100/250/800` 公会勋章和 `50/100/200` 公会经验及每日贡献。日贡献积满 `1000/2000/3000` 开放三个可个人领取的宝箱。公会排行显示本服前三、前百名单和本公会名次。旧服务按战力更新时间打破同分，新版使用已有的公会创建时间及 ID 作为稳定顺序。
 

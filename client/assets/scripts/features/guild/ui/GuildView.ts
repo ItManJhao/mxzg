@@ -26,6 +26,7 @@ import { GuildListCell, type GuildCellRow } from "./GuildListCell";
 import { GuildMemberView } from "./GuildMemberView";
 import { GuildRankingView } from "./GuildRankingView";
 import { GuildShopView } from "./GuildShopView";
+import { GuildTechnologyView } from "./GuildTechnologyView";
 import { TextInputView } from "../../common/ui/TextInputView";
 
 /** 主城导航提供当前角色，用于大厅的会长入口和建会余额。 */
@@ -104,6 +105,8 @@ export class GuildView extends BaseView<GuildViewArgs> {
     @property(Button) private _donation: Button | null = null;
     /** 入会后可打开本服公会战力排行榜。 */
     @property(Button) private _ranking: Button | null = null;
+    /** 入会后打开当前角色的四系科技。 */
+    @property(Button) private _technology: Button | null = null;
     /** 大厅捐献图块右上角的公会提醒定位。 */
     @property(Node) private _donationDotAnchor: Node | null = null;
     /** 审批提醒的可选定位节点，跟随原审批按钮层级。 */
@@ -125,7 +128,7 @@ export class GuildView extends BaseView<GuildViewArgs> {
         super.onOpen(args);
         if (!args?.account.snapshot.role || !this._createPanel || !this._createHost || !this._editQuery || !this._query
             || !this._guildLevel || !this._experience || !this._editNotice
-            || !this._shop || !this._donation || !this._ranking || !this._donationDotAnchor
+            || !this._shop || !this._donation || !this._ranking || !this._technology || !this._donationDotAnchor
             || this._tabButtons.length !== 3 || this._tabHighlights.length !== 3) {
             throw new Error("公会资料或页面挂点缺失");
         }
@@ -146,6 +149,7 @@ export class GuildView extends BaseView<GuildViewArgs> {
         this.listen(this._shop, () => this.openMemberFeature("shop"));
         this.listen(this._donation, () => this.openMemberFeature("donation"));
         this.listen(this._ranking, () => this.openMemberFeature("ranking"));
+        this.listen(this._technology, () => this.openTechnology());
         this.listen(this._editNotice, () => this.editNotice());
         const donationDot = RedDotBinding.atAnchor(this._donationDotAnchor, GameRedDotKey.GUILD_DONATION);
         this.ownListener(() => donationDot.dispose());
@@ -296,6 +300,18 @@ export class GuildView extends BaseView<GuildViewArgs> {
             : feature === "donation" ? ui.openChild(this, GuildDonationView, { guildId })
             : ui.openChild(this, GuildRankingView);
         void opening.catch(() => {
+            // UIManager 统一反馈资源或绑定失败。
+        });
+    }
+
+    /** 仅大厅当前公会成员能打开科技，页面关闭或变更公会由父子生命周期清理。 */
+    private openTechnology(): void {
+        const guildId = GuildModel.instance.snapshot?.guild?.id;
+        const account = this.args?.account;
+        if (!guildId || !account) {
+            return;
+        }
+        void UIManager.instance.openChild(this, GuildTechnologyView, { guildId, account }).catch(() => {
             // UIManager 统一反馈资源或绑定失败。
         });
     }

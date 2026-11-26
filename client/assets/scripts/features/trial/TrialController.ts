@@ -198,7 +198,7 @@ export class TrialController extends BaseController {
         TrialModel.instance.commit(state, replay);
     }
 
-    /** 结算和进度已经确认后才展示资产变化，普通战斗等战报关闭。 */
+    /** 确认实际发奖，战斗奖励等战报关闭；跨日收到旧回执后补读当天进度。 */
     private acceptSettlement(result: TrialSettlement): void {
         this.acceptState(result.state);
         if (result.actual) {
@@ -209,6 +209,10 @@ export class TrialController extends BaseController {
             }
         }
         this.finishRequest();
+        if (this.visible && !TrialModel.instance.snapshot) {
+            // 原回执完成了待确认请求，但它不能打开旧日地图，仍需查询今天的选档资格。
+            this.refreshVisible();
+        }
     }
 
     /** 释放等待中的写请求，同时在需要时更新助战资格和已使用状态。 */

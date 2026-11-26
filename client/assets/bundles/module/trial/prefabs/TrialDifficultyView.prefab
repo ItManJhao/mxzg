@@ -1837,7 +1837,7 @@
       "__id__": 83
     },
     "_underlineHeight": 2,
-    "_actualFontSize": 24,
+    "_actualFontSize": 21,
     "_isItalic": false,
     "_spacingX": 0,
     "_string": "",
@@ -1881,10 +1881,10 @@
     "_enableShadow": false,
     "_dstBlendFactor": 4,
     "_isUnderline": false,
-    "_fontSize": 24,
+    "_fontSize": 21,
     "_fontFamily": "Arial",
     "_verticalAlign": 1,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_cacheMode": 0
   },
   {
@@ -2855,7 +2855,7 @@
       "__id__": 133
     },
     "_underlineHeight": 2,
-    "_actualFontSize": 24,
+    "_actualFontSize": 21,
     "_isItalic": false,
     "_spacingX": 0,
     "_string": "",
@@ -2899,10 +2899,10 @@
     "_enableShadow": false,
     "_dstBlendFactor": 4,
     "_isUnderline": false,
-    "_fontSize": 24,
+    "_fontSize": 21,
     "_fontFamily": "Arial",
     "_verticalAlign": 1,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_cacheMode": 0
   },
   {
@@ -3873,7 +3873,7 @@
       "__id__": 183
     },
     "_underlineHeight": 2,
-    "_actualFontSize": 24,
+    "_actualFontSize": 21,
     "_isItalic": false,
     "_spacingX": 0,
     "_string": "",
@@ -3917,10 +3917,10 @@
     "_enableShadow": false,
     "_dstBlendFactor": 4,
     "_isUnderline": false,
-    "_fontSize": 24,
+    "_fontSize": 21,
     "_fontFamily": "Arial",
     "_verticalAlign": 1,
-    "_enableWrapText": true,
+    "_enableWrapText": false,
     "_cacheMode": 0
   },
   {

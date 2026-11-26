@@ -216,7 +216,7 @@ function approvedEffectsChanges() {
 
 const actualBundles = bundleEntries().map(entry => entry.name).sort();
 assert.deepEqual(effectsMove.bundleInventory.added.map(row => row.name), ['effects'], '本次仅新增effects素材包');
-const enabledModules = ['market', 'dungeon', 'dreamland', 'trial', 'guild', 'vip', 'arena', 'tower',
+const enabledModules = ['market', 'dungeon', 'dreamland', 'trial', 'rainbow', 'guild', 'vip', 'arena', 'tower',
     'chat', 'friend', 'mail', 'quest', 'ranking', 'reward', 'role', 'blackmarket', 'smith'];
 for (const name of enabledModules) {
     const meta = read(resolveAssetPath(`bundles/module/${name}.meta`));

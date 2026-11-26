@@ -515,6 +515,64 @@ function checkTimiReplacementPresentation(): void {
     }
 }
 
+/** 对照三位试炼守军的旧动作时序、目标、现存音效及全部连续帧。 */
+function checkSharedGuardPresentation(): void {
+    const action = actionRows();
+    const cases = [
+        { ids: [3150200], timing: [[7, 0, 0], [3, 0, 0]], files: ["103050150", ""], sounds: ["103050150", ""] },
+        { ids: [3151201, 3151202, 3151203], timing: [[7, 50, 1], [3, 0, 1], [6, 10, 0]],
+            files: ["103050151", "", "103050151-1"], sounds: ["103050151", "", ""] },
+        { ids: [4070200], timing: [[7, 10, 0], [11, 0, 0]], files: ["104050070", ""], sounds: ["104050070", ""] },
+        { ids: [4071201, 4071202, 4071203], timing: [[3, 0, 1], [6, 85, 0]],
+            files: ["104050071", "104050071-1"], sounds: ["104050071", ""] },
+        { ids: [4073101, 4073102, 4073103], timing: [[3, 0, 0], [7, 30, 0]],
+            files: ["", "104050073"], sounds: ["", "104050073"] },
+        { ids: [5100100], timing: [[3, 0, 0]], files: ["105050100"], sounds: ["105050100"] },
+        { ids: [5101101, 5101102, 5101103], timing: [[3, 0, 0], [9, 120, 1], [6, 0, 0]],
+            files: ["", "105050101", "105050101-1"], sounds: ["", "105050101", ""] },
+        { ids: [5103101, 5103102, 5103103], timing: [[3, 0, 0], [7, 120, 0]],
+            files: ["", "105050103"], sounds: ["", "105050103"] },
+    ];
+    const frameCounts: Record<string, number> = {
+        "103050150": 7, "103050151": 23, "103050151-1": 36,
+        "104050070": 11, "104050071": 6, "104050071-1": 20, "104050073": 12,
+        "105050100": 10, "105050101": 26, "105050101-1": 63, "105050103": 17,
+    };
+    for (const entry of cases) {
+        for (const id of entry.ids) {
+            const rows = action(id);
+            assert.deepEqual(rows.map(row => [row.type, row.delay, row.dimly]), entry.timing, String(id));
+            rows.forEach((row, index) => {
+                const plan = BattleAttackUtils.plan(row);
+                const file = entry.files[index];
+                const sound = entry.sounds[index];
+                assert.deepEqual(plan.effect?.paths ?? [], file ? verifiedFrames("skill-" + file, frameCounts[file]) : []);
+                assert.deepEqual(plan.sounds, sound ? ["skill-" + sound] : []);
+                if (sound) {
+                    assert(resolveBundleFile("audio/skill-" + sound + ".mp3"));
+                }
+            });
+        }
+    }
+    assert.deepEqual(BattleAttackUtils.plan(action(5101103)[1]).battlefieldOffset, [0.75, 0.5]);
+    assert.equal(BattleAttackUtils.plan(action(3151203)[0]).effect?.scaleX, -3.4);
+    assert.equal(BattleAttackUtils.plan(action(4070200)[1]).melee, true);
+}
+
+/** 梦境高星守军第三档继续播放同源的替换普攻和伊狸施法特效。 */
+function checkDreamlandHighStarPresentation(): void {
+    const action = actionRows();
+    const colai = action(3135203);
+    assert.deepEqual(colai.map(row => [row.type, row.delay]), [[7, 20], [3, 0]]);
+    assert.deepEqual(BattleAttackUtils.plan(colai[0]).effect?.paths, verifiedFrames("skill-103050130", 14));
+    const ellie = action(3211103);
+    assert.deepEqual(ellie.map(row => [row.type, row.delay]), [[5, 0], [9, 95], [6, 10]]);
+    assert.deepEqual(BattleAttackUtils.plan(ellie[1]).effect?.paths, verifiedFrames("skill-103050211", 17));
+    assert.deepEqual(BattleAttackUtils.plan(ellie[2]).effect?.paths, verifiedFrames("skill-103050211-1", 52));
+    assert(resolveBundleFile("audio/skill-103050130.mp3"));
+    assert(resolveBundleFile("audio/skill-103050211.mp3"));
+}
+
 actions();
 checkSecondStagePresentation();
 checkThirdStagePresentation();
@@ -523,6 +581,8 @@ checkHigherLevelDungeonPresentation();
 checkAstrologerPresentation();
 checkFlameWitchPresentation();
 checkTimiReplacementPresentation();
+checkSharedGuardPresentation();
+checkDreamlandHighStarPresentation();
 replay();
 assets();
 console.log("PASS daily dungeon actions, six-enemy replays and verified frames/audio");

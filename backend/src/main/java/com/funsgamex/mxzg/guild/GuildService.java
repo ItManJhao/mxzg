@@ -1,6 +1,6 @@
 /**
  * 公会浏览、成员管理和公告编辑，由已鉴权的游戏协议调用。
- * 角色锁先于公会锁，余额、成员、申请与命令标记在同一事务提交。
+ * 角色锁先于公会锁，余额、成员、科技生效引起的战力与命令标记在同一事务提交。
  */
 package com.funsgamex.mxzg.guild;
 
@@ -93,15 +93,17 @@ public class GuildService {
     private final AssetSyncService sync;
     /** 提交后公会名单更新由通信层订阅。 */
     private final ApplicationEventPublisher events;
-    /** 旧角色尚未保存战力时，只读取本队阵容补全公开资料。 */
+    /** 读取及刷新真实主阵战力，公会身份切换时同步生效的科技加成。 */
     private final HeroMainPowerService powers;
+    /** 检查角色是否具备生效科技，避免无科技的身份变更多做一次名册评分。 */
+    private final GuildTechnologyAttributes guildTechnology;
     /** 在同一事务发布建会世界公告，以及只对本会成员可见的入会公告。 */
     private final ChatService chat;
 
-    /** 装配公会业务使用的角色、事件、世界状态与聊天服务。 */
+    /** 装配公会业务使用的角色、事件、世界状态、科技属性与聊天服务。 */
     GuildService(RoleRepository roles, GuildRepository guilds, GuildRules rules, WorldLevelService world,
                  GameClock clock, AssetSyncService sync, ApplicationEventPublisher events, HeroMainPowerService powers,
-                 ChatService chat) {
+                 GuildTechnologyAttributes guildTechnology, ChatService chat) {
         this.roles = roles;
         this.guilds = guilds;
         this.rules = rules;
@@ -110,6 +112,7 @@ public class GuildService {
         this.sync = sync;
         this.events = events;
         this.powers = powers;
+        this.guildTechnology = guildTechnology;
         this.chat = chat;
     }
 
@@ -241,27 +244,34 @@ public class GuildService {
         return guild;
     }
 
-    /** 在入会角色锁内登记成就和成员身份，撤销其他申请并同步所有受影响名单。 */
+    /** 在角色锁内登记入会，启用保留的个人科技并刷新战力，撤销其他申请。 */
     private void join(String guildId, String roleId, long now, Set<String> affected) {
         guilds.insertMember(guildId, roleId, now);
+        if (!guildTechnology.current(roleId).isEmpty()) {
+            powers.observe(roleId);
+        }
         events.publishEvent(new QuestProgressEvent(roleId, QuestMetric.JOIN_CLAN, 0, 1));
         affected.addAll(guilds.clearApplications(roleId));
         affected.addAll(guilds.memberIds(guildId));
         sync.changed(roleId);
     }
 
-    /** 单人会长退出时解散，仍有其他成员时要求保留会长角色。 */
+    /** 单人会长退出时解散。离会停用个人科技并刷新战力，培养进度由原角色保留。 */
     private void leave(RoleProfile actor, Command command, long now, Set<String> affected) {
         var guild = ownGuild(actor, command.guildId());
         boolean onlyMember = guilds.memberCount(guild.id()) == 1;
         if (!onlyMember && guild.leaderId().equals(actor.id())) {
             throw conflict("GUILD_LEADER_CANNOT_LEAVE");
         }
+        boolean hadActiveTechnology = !guildTechnology.current(actor.id()).isEmpty();
         guilds.leave(guild.id(), actor.id(), Math.addExact(now, rules.rejoinSeconds));
         if (onlyMember) {
             affected.addAll(guilds.removeGuild(guild.id()));
         } else {
             affected.addAll(guilds.memberIds(guild.id()));
+        }
+        if (hadActiveTechnology) {
+            powers.observe(actor.id());
         }
         sync.changed(actor.id());
     }

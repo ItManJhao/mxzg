@@ -4,6 +4,7 @@ import { DAILY_DUNGEON_REPLAY_ROSTERS } from "../../../config/DailyGoldReplayRos
 import { DREAMLAND_REPLAY_ROSTERS } from "../../../config/DreamlandReplayRoster.generated";
 import { TOWER_REPLAY_ROSTERS } from "../../../config/TowerReplayRoster.generated";
 import { mxzg } from "../../../platform/GameProtocol.generated";
+import { RAINBOW_REPLAY_ROSTERS } from "../../rainbow/data/RainbowReplayConfig";
 
 /** 生成器运行时64位值；校验时显式转换，实例身份保持字符串。 */
 type WireLong = number | { toString(): string };
@@ -297,8 +298,11 @@ export class BattleReplayUtils {
                 }
                 if (event.kind === "buff.remove") {
                     this.required(event, ["removalReason"]);
-                    // 仅接纳服务端真实产出的原因，诅咒被引爆时由服务端消费现有实例。
-                    if (["expire", "death", "replace", "dispel", "trigger-limit", "shield-depleted",
+                    // 晓的追加斩击只能移除施法者刚消耗的原怒气实例。
+                    const angerConsumed = event.removalReason === "anger-consumed" && skill?.configId === 101050213
+                        && skill.sourceId === event.sourceId && event.sourceId === event.targetId
+                        && event.configId >= 1214201 && event.configId <= 1214206;
+                    if (!angerConsumed && ["expire", "death", "replace", "dispel", "trigger-limit", "shield-depleted",
                         "break-ice", "pure-heart", "counter-crit", "wake", "detonate"].indexOf(event.removalReason) < 0) {
                         throw new Error("Buff移除原因无效");
                     }
@@ -445,11 +449,21 @@ export class BattleReplayUtils {
         });
     }
 
-    /** 按场景定位日常副本、塔楼、永恒梦境和竞技场的同源守军，未知挑战无对应名册。 */
+    /** 按场景定位同源守军，彩虹圣殿使用实际进化档核对阵位与等级。 */
     private static configuredRoster(scenario: string): readonly (readonly [number, number, number, number])[] | undefined {
         const dreamland = /^dreamland:([1-9][0-9]*)$/.exec(scenario);
         if (dreamland) {
             return DREAMLAND_REPLAY_ROSTERS[Number(dreamland[1])];
+        }
+        const rainbow = /^rainbow:([1-3]):([1-9][0-9]{0,2}|1000)$/.exec(scenario);
+        if (rainbow) {
+            const config = RAINBOW_REPLAY_ROSTERS[Number(rainbow[1])];
+            const guardian = config?.levels[Number(rainbow[2]) - 1];
+            if (!config || !guardian) {
+                return undefined;
+            }
+            const [formationIndex, level, star] = guardian;
+            return config.formations[formationIndex].map(([position, template]) => [position, template, level, star] as const);
         }
         const indexed = /^(tower|arena):([1-9][0-9]*)$/.exec(scenario);
         if (indexed) {
