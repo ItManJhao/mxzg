@@ -83,9 +83,7 @@ function actions(): Set<string> {
         assert.equal(actual.length, source.length, "遗漏旧覆盖子动作：" + id);
         actual.forEach((action, index) => {
             const expected = source[index];
-            const base = { ...expected.ani_base };
-            // 两条旧工厂均不读取delay_time；原声明仍有证据，不加入演员等待。
-            delete base.delay_time;
+            const base = expected.ani_base;
             assert.deepEqual([action.type, action.delay, action.dimly], [expected.type, expected.delay, expected.dimly]);
             assert.deepEqual(JSON.parse(action.ani_base), base, "旧参数不等价：" + id + "/" + index);
             assert.deepEqual(JSON.parse(action.sound), Array.isArray(expected.sound) ? expected.sound : []);
@@ -104,10 +102,15 @@ function actions(): Set<string> {
     }
     const negative = BattleAttackUtils.legacyActions(row(1081101))[2];
     assert(Math.abs(BattleAttackUtils.plan(negative).effect!.anchorY - (-0.17)) < 1e-12);
-    assert.throws(() => BattleAttackUtils.plan(row(4010100)), /未支持参数/,
-        "未经旧覆盖的未知参数不能被直接guard放行");
-    const ranged = BattleAttackUtils.plan(BattleAttackUtils.legacyActions(row(4010100))[0]);
-    assert(Math.abs(ranged.attackSeconds + ranged.actionSeconds - 0.6) < 1e-12);
+    const rangedBuff = row(4010100);
+    const ranged = BattleAttackUtils.plan(rangedBuff);
+    assert.deepEqual(BattleAttackUtils.plan(BattleAttackUtils.legacyActions(rangedBuff)[0]), ranged);
+    // 旧投掷读取 attack_time、action_time，保留声明中的 delay_time 但不额外等待。
+    assert.deepEqual([ranged.attackSeconds, ranged.attackDelaySeconds, ranged.actionSeconds], [0.3, 0, 0.3]);
+    assert.throws(() => BattleAttackUtils.plan({
+        ...rangedBuff,
+        ani_base: JSON.stringify({ ...JSON.parse(rangedBuff.ani_base), unsupported_time: 0.3 }),
+    }), /未支持参数/, "旧投掷仍须拒绝未支持的动作参数");
     assert.equal(JSON.stringify(buffs), before, "显示工具不能修改配置源或原事件ID");
     for (const type of [1001, 234] as const) {
         for (const path of BattleAttackUtils.roundEffect(type).paths) paths.add(path);

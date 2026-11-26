@@ -294,13 +294,13 @@ async function checkEquipment(client: ReturnType<typeof fixture>, readState: () 
     assert.equal((unchanged.body as { assetRevision: number }).assetRevision, settledRevision);
 }
 
-/** 验证随机候选无副作用、首次命名的权威快照、重试及同服重名。 */
+/** 验证候选查询、首次命名、同名重试、同服重名与显式重登后的持久状态。 */
 async function checkRoleNaming(client: ReturnType<typeof fixture>): Promise<void> {
     const login = async (account: string) => {
         client.service.logout();
         assert(await client.service.login(account, "local-1"), client.account.snapshot.error);
     };
-    const role = () => client.account.snapshot.role as { nickname: string; firstNamed?: boolean };
+    const role = () => client.account.snapshot.role!;
     const state = () => {
         const frame = client.socket.latestState!;
         return ProtocolStateUtils.statePayload(frame.name as ProtocolName, frame.body);
@@ -324,6 +324,7 @@ async function checkRoleNaming(client: ReturnType<typeof fixture>): Promise<void
     assert(namedRevision > initialRevision);
     assert.deepEqual((await setName(nickname)).body, {});
     assert.equal(state().revision, namedRevision);
+    const lastLoginBefore = role().basics!.lastLoginAtSeconds;
 
     await login("naming_" + randomUUID().slice(0, 12));
     const unnamed = role().nickname;
@@ -337,7 +338,10 @@ async function checkRoleNaming(client: ReturnType<typeof fixture>): Promise<void
     await login(account);
     assert.equal(role().firstNamed, true);
     assert.equal(role().nickname, nickname);
-    assert.equal(state().revision, namedRevision);
+    const lastLoginAfter = role().basics!.lastLoginAtSeconds;
+    assert(lastLoginAfter >= lastLoginBefore, "显式重登的最后登录时间不能倒退");
+    // 显式重登跨秒时会持久化一次登录时间，同名重试本身不会新增版本。
+    assert.equal(state().revision, namedRevision + Number(lastLoginAfter > lastLoginBefore));
 }
 
 /** 未命名角色领取会被拒绝；命名、领取、重试和重登都以权威快照和原回执为准。 */

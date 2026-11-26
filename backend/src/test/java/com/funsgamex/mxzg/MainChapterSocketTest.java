@@ -988,8 +988,8 @@ class MainChapterSocketTest {
                 save.put("formationId", 1);
                 save.put("slots", List.of(Map.of("position", 2, "heroId", hero)));
                 state = success(peer, "trial.act", save).path("state");
-                // 固定测试用的匹配条件：首战后历史主阵战力增加，下一守军从原高战力池匹配。
-                jdbc.update("UPDATE game_role SET max_main_power=8000000 WHERE id=?", role);
+                // 第 2 节点按历史主阵战力的 25%～30% 匹配，此区间仅含技能待接通的原守军 30。
+                jdbc.update("UPDATE game_role SET max_main_power=? WHERE id=?", 181_000, role);
                 var fight = dreamlandCommand(state, "fight");
                 fight.put("choice", 1);
                 var win = peer.request("trial.act", fight);
