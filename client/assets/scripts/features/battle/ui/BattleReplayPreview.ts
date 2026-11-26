@@ -157,6 +157,7 @@ export class BattleReplayPreview {
         }
         if (isCancelled() || !parent.isValid) throw new Error("战场打开已取消");
         const shell = await BattlePageUtils.mountBattlePrefab(parent);
+        UiKitUtils.setText(shell.roundLabel, `第1/${maxRounds}回合`);
         // 正式挑战先播旧 ZDKS 开场；加载期间不提前露出英雄和血条。
         const formalOpening = persistentChapter && !idleEncounter;
         if (idleEncounter) {
@@ -559,6 +560,14 @@ export class BattleReplayPreview {
                 element.active = true;
                 if (actor) {
                     actors.set(id, actor);
+                    // 梦境可继承阵亡单位。保留骨骼供复活使用，开场不让阵亡英雄显示。
+                    if (unit.initialHp === 0) {
+                        actor.node.active = false;
+                        const opacity = actor.node.getComponent(UIOpacity);
+                        if (opacity) {
+                            opacity.opacity = 255;
+                        }
+                    }
                     if (idleEncounter && unit.faction === 2) slot.active = true;
                 }
                 hp(id, unit.initialHp);
@@ -756,7 +765,7 @@ export class BattleReplayPreview {
                     shell.root.getChildByPath("LayerHud/HpBars")!.active = true;
                     syncHpRows();
                 }
-                const entering = units.filter(unit => formalOpening || unit.faction === 2);
+                const entering = units.filter(unit => unit.initialHp > 0 && (formalOpening || unit.faction === 2));
                 // 双方全部出场特效并行；正式挑战在特效60%处开始模型渐入，HP等待两路全部完成。
                 await Promise.all(entering.map(async unit => {
                     const slot = slots.get(unit.unitId)!;

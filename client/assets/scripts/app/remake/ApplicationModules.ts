@@ -9,11 +9,14 @@ import { GConfig } from "../../config/GConfig";
 import type { AccountModel } from "../../features/account/AccountModel";
 import { RoleController } from "../../features/account/RoleController";
 import { ArenaController } from "../../features/arena/ArenaController";
+import { DreamlandController } from "../../features/dreamland/DreamlandController";
 import { BagController } from "../../features/bag/BagController";
+import { BlackMarketController } from "../../features/blackmarket/BlackMarketController";
 import { MainChapterSession } from "../../features/battle/MainChapterSession";
 import { DailyDungeonController } from "../../features/dungeon/DailyDungeonController";
 import { GuildController } from "../../features/guild/GuildController";
 import { FriendController } from "../../features/friend/FriendController";
+import { ChatController } from "../../features/chat/ChatController";
 import { MailController } from "../../features/mail/MailController";
 import { FormationController } from "../../features/hero/FormationController";
 import { HeroArtifactController } from "../../features/hero/HeroArtifactController";
@@ -28,6 +31,7 @@ import { MarketController } from "../../features/market/MarketController";
 import { QuestController } from "../../features/quest/QuestController";
 import { RankingController } from "../../features/ranking/RankingController";
 import { RewardBinding } from "../../features/reward/RewardBinding";
+import { SmithController } from "../../features/smith/SmithController";
 import { TowerController } from "../../features/tower/TowerController";
 import { VipController } from "../../features/vip/VipController";
 import { EventDispatcher } from "../../framework/EventDispatcher";
@@ -118,9 +122,18 @@ export class ApplicationModules {
         heroArtifacts.initialize();
         market.configure(operations, model);
         market.initialize();
+        const blackMarket = BlackMarketController.instance;
+        blackMarket.configure(operations, model);
+        blackMarket.initialize();
+        const smith = SmithController.instance;
+        smith.configure(operations, () => this.assets.acceptedRevision);
+        smith.initialize();
         const dailyDungeon = DailyDungeonController.instance;
         dailyDungeon.configure(operations, this.rewards);
         dailyDungeon.initialize();
+        const dreamland = DreamlandController.instance;
+        dreamland.configure(operations, this.rewards);
+        dreamland.initialize();
         const tower = TowerController.instance;
         tower.configure(operations, this.rewards);
         tower.initialize();
@@ -142,12 +155,16 @@ export class ApplicationModules {
         const friends = FriendController.instance;
         friends.configure(operations, notice => this.rewards.restore(notice));
         friends.initialize();
+        const chat = ChatController.instance;
+        chat.configure(operations);
+        chat.initialize();
         const mail = MailController.instance;
         mail.configure(operations, notice => this.rewards.restore(notice));
         mail.initialize();
         const chapter = new MainChapterSession(controller, operations, this.rewards);
         this.sessions = [chapter, heroLevel, heroEquipment, heroStar, heroJewel, godEquipment,
-            heroArtifacts, market, dailyDungeon, tower, arena, guild, vip, quests, rankings, friends, mail];
+            heroArtifacts, market, blackMarket, smith, dailyDungeon, dreamland, tower, arena, guild, vip, quests, rankings, friends,
+            mail, chat];
         this.assets = new AssetStateBinding(model, bag, this.role,
             heroes, formation, () => {
                 clearRolePages();
@@ -159,19 +176,34 @@ export class ApplicationModules {
             frame => this.rewards.controller.receive(frame), showConnectionNotice,
             frame => ProtocolRouter.instance.dispatch(guild, frame),
             frame => ProtocolRouter.instance.dispatch(quests, frame),
-            frame => ProtocolRouter.instance.dispatch(frame.name === Protocol.MAIL_CHANGED ? mail : friends, frame));
+            frame => {
+                switch (frame.name) {
+                    case Protocol.MAIL_CHANGED:
+                        ProtocolRouter.instance.dispatch(mail, frame);
+                        break;
+                    case Protocol.FRIEND_CHANGED:
+                        ProtocolRouter.instance.dispatch(friends, frame);
+                        chat.refreshVisibility();
+                        break;
+                    case Protocol.CHAT_CHANGED:
+                        ProtocolRouter.instance.dispatch(chat, frame);
+                        break;
+                }
+            });
     }
 
-    /** 整包提交后在同一通知批次更新红点，重连时重新校准独立状态。 */
+    /** 整包提交后更新红点，恢复鉴权时同步可见玩法、货架与可访问频道。 */
     private acceptState(frame: GameFrame): void {
         const authenticated = frame.name === Protocol.SESSION_AUTHENTICATE;
         const previousGuild = this.accountModel.snapshot.role?.guildName;
+        const previousLevel = this.accountModel.snapshot.role?.level;
         const accepted = EventDispatcher.batchNotifications(() => {
             if (!this.assets.apply(frame)) {
                 return false;
             }
             if (authenticated) {
                 DailyDungeonController.instance.refreshVisible();
+                DreamlandController.instance.refreshVisible();
                 TowerController.instance.refreshVisible();
                 ArenaController.instance.refreshVisible();
             }
@@ -182,10 +214,18 @@ export class ApplicationModules {
             return;
         }
         this.rewards.controller.observeRevision(this.assets.acceptedRevision);
-        GuildController.instance.refreshRoleState(authenticated, previousGuild !== this.accountModel.snapshot.role?.guildName);
+        const guildChanged = previousGuild !== this.accountModel.snapshot.role?.guildName;
+        GuildController.instance.refreshRoleState(authenticated, guildChanged);
         this.refreshRankingAccess();
+        if (guildChanged) {
+            ChatController.instance.refreshGuildVisibility();
+        } else if (authenticated || previousLevel !== this.accountModel.snapshot.role?.level) {
+            ChatController.instance.refresh();
+        }
         if (authenticated) {
             MarketController.instance.reloadVisible();
+            BlackMarketController.instance.reloadVisible();
+            SmithController.instance.resume();
             QuestController.instance.refresh();
             RankingController.instance.refreshVisible();
             FriendController.instance.refreshVisible();
@@ -193,7 +233,7 @@ export class ApplicationModules {
         }
     }
 
-    /** 主城及游戏配置就绪后开放跨页反馈和红点。 */
+    /** 主城及游戏配置就绪后开放反馈、红点和聊天预读。 */
     public setHomeReady(ready: boolean): void {
         this.rewards.setReady(ready);
         this.redDots.setReady(ready);
@@ -203,6 +243,7 @@ export class ApplicationModules {
         RankingController.instance.setHomeReady(ready);
         FriendController.instance.setHomeReady(ready);
         MailController.instance.setHomeReady(ready);
+        ChatController.instance.setHomeReady(ready);
         this.questCompletion.setReady(ready);
     }
 

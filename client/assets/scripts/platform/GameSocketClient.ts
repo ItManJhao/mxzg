@@ -50,7 +50,7 @@ export class GameSocketClient {
   onGuildUpdated: ((frame: GameFrame) => void) | null = null;
   /** 当前认证连接的任务状态变化或新达成成就。 */
   onQuestChanged: ((frame: GameFrame) => void) | null = null;
-  /** 邮箱或好友关系提交后的失效通知，应用定向交付相应模块。 */
+  /** 邮箱、好友和世界频道提交后的失效通知，应用定向交付相应模块。 */
   onSocialChanged: ((frame: GameFrame) => void) | null = null;
   /** 当前连接最近的完整帧，供本次登录交付，不另建资产 Model。 */
   latestState: GameFrame | null = null;
@@ -303,6 +303,7 @@ export class GameSocketClient {
       case Protocol.QUEST_CHANGED:
       case Protocol.MAIL_CHANGED:
       case Protocol.FRIEND_CHANGED:
+      case Protocol.CHAT_CHANGED:
         if (frame.id !== undefined || frame.ok !== undefined || frame.error !== undefined) {
           throw new SocketFailure("INVALID_MESSAGE");
         }
@@ -403,7 +404,7 @@ export class GameSocketClient {
 
   /**
    * 解码器已验证协议的必填字段、查询状态和结构。直接回执与查询内回执均在交付前核对角色，
-   * 实际发奖明细及竞技场本人行也须归属本连接。旧战斗记录可没有明细，查无记录可没有回执。
+   * 实际发奖、竞技场本人行与自己发布的聊天回执也须归属本连接。
    */
   private checkReceiptOwner(frame: GameFrame): void {
     const body = this.object(frame.body);
@@ -426,6 +427,9 @@ export class GameSocketClient {
       if (this.object(ranking.own).roleId !== this.roleId) {
         throw new SocketFailure("INVALID_MESSAGE", "竞技场个人名次不属于当前角色");
       }
+    }
+    if (frame.name === Protocol.CHAT_SEND && this.object(body.message).roleId !== this.roleId) {
+      throw new SocketFailure("INVALID_MESSAGE", "聊天发送回执不属于当前角色");
     }
   }
 
@@ -507,6 +511,7 @@ export class GameSocketClient {
       case "HERO_JEWEL_CHANGED": return "该槽宝石已变化，请重新选择";
       case "HERO_JEWEL_RECIPE_INVALID": return "当前宝石没有可用合成配方";
       case "HERO_JEWEL_NOT_AVAILABLE": return "所需宝石材料不足";
+      case "HERO_JEWEL_PREVIEW_CHANGED": return "材料已变化，请重新确认一键合成";
       case "GOD_EQUIPMENT_CHANGE_INVALID": return "神装穿卸参数无效";
       case "GOD_EQUIPMENT_NOT_FOUND": return "该神装已不在背包";
       case "GOD_EQUIPMENT_CHANGED": return "神装槽状态已变化，请重新选择";
@@ -551,6 +556,22 @@ export class GameSocketClient {
       case "MARKET_REFRESH_LIMIT": return "今日付费刷新次数已用完";
       case "MARKET_INSUFFICIENT": return "购买或刷新所需的货币不足";
       case "INVALID_MARKET_REQUEST": return "市场操作参数无效，请重新选择";
+      case "INVALID_BLACK_MARKET_REQUEST": return "商店操作参数无效，请重新选择";
+      case "BLACK_MARKET_LOCKED": return "该商店尚未解锁";
+      case "BLACK_MARKET_UNAVAILABLE": return "该商店暂未开放兑换";
+      case "BLACK_MARKET_PRODUCT_MISSING": return "商品已不在当前货架";
+      case "BLACK_MARKET_CLERGY_REQUIRED": return "神职等级不足，暂不可购买";
+      case "BLACK_MARKET_LIMIT": return "已达到该商品的购买上限";
+      case "BLACK_MARKET_INSUFFICIENT": return "购买所需的货币不足";
+      case "BLACK_MARKET_SHELF_CHANGED": return "货架已更新，请重新选择商品";
+      case "INVALID_SMITH_REQUEST": return "合成参数无效，请重新选择";
+      case "SMITH_LOCKED": return "角色达到 5 级开启铁匠铺";
+      case "SMITH_QUICK_LOCKED": return "角色达到 25 级或已充值后开启装备一键合成";
+      case "SMITH_RECIPE_INVALID": return "该装备没有合成配方";
+      case "SMITH_INSUFFICIENT_GOLD": return "金币不足";
+      case "SMITH_INSUFFICIENT_MATERIAL": return "装备合成材料不足";
+      case "SMITH_EMPTY": return "没有可合成的装备";
+      case "SMITH_PREVIEW_CHANGED": return "库存已变化，请重新预览合成";
       case "GUILD_LOCKED": return "角色达到18级后开放公会";
       case "GUILD_INSUFFICIENT": return "创建公会所需的钻石不足";
       case "GUILD_RECHARGE_REQUIRED": return "尚未达到创建公会的累计充值条件";
@@ -617,6 +638,15 @@ export class GameSocketClient {
       case "FRIEND_DAY_CHANGED": return "友情礼物已跨日刷新，请重试";
       case "FRIEND_INVALID":
       case "FRIEND_REQUEST_CONFLICT": return "好友操作已变化，请重试";
+      case "CHAT_LEVEL_REQUIRED": return "尚未达到当前频道的发言等级";
+      case "CHAT_CHANNEL_UNAVAILABLE": return "当前无法访问此聊天频道或会话";
+      case "CHAT_READ_ONLY": return "系统频道仅显示公告";
+      case "CHAT_RATE_LIMIT": return "发送太快，请稍后再试";
+      case "CHAT_CONTENT_TOO_LONG": return "消息过长，请缩短后重试";
+      case "CHAT_CONTENT_RESTRICTED": return "消息含有无法发送的内容";
+      case "CHAT_REQUEST_EXPIRED": return "原发送已超出历史保留范围";
+      case "CHAT_REQUEST_CONFLICT":
+      case "CHAT_INVALID": return "聊天操作无法完成，请重新确认";
       case "VIP_REQUEST_INVALID": return "VIP 任务参数无效";
       case "VIP_REQUEST_CONFLICT": return "VIP 任务操作已变化，请重新选择";
       case "VIP_TASK_TIER": return "当前档位无法领取该任务";
@@ -650,6 +680,18 @@ export class GameSocketClient {
       case "TOWER_MILESTONE_CLAIMED": return "该楼层奖励已领取";
       case "TOWER_REQUEST_INVALID": return "幻境操作参数无效，请重新选择";
       case "TOWER_REQUEST_CONFLICT": return "幻境操作与原请求不一致，请重新确认";
+      case "DREAMLAND_LEVEL": return "角色达到25级后开放永恒梦境";
+      case "DREAMLAND_FLOOR_UNAVAILABLE": return "当前楼层暂未开放";
+      case "DREAMLAND_FORMATION_EMPTY": return "请先选择出战英雄";
+      case "DREAMLAND_FORMATION_INVALID": return "梦境阵容不可用，请重新选将";
+      case "DREAMLAND_BATTLE_UNAVAILABLE": return "当前阵容无法进行梦境战斗，请检查上阵英雄";
+      case "DREAMLAND_BUFF_INVALID": return "可选增益已变化，请重新选择";
+      case "DREAMLAND_PHASE":
+      case "DREAMLAND_STATE_CHANGED": return "梦境进度已变化，正在同步";
+      case "DREAMLAND_MILESTONE_LOCKED": return "通关对应楼层后可领取当前首通奖励";
+      case "DREAMLAND_MILESTONE_CLAIMED": return "该首通奖励已领取";
+      case "DREAMLAND_REQUEST_INVALID": return "梦境操作参数无效，请重新选择";
+      case "DREAMLAND_REQUEST_CONFLICT": return "梦境操作与原请求不一致，请重新确认";
       case "ARENA_LEVEL": return "角色达到8级后开放竞技场";
       case "ARENA_OPPONENT": return "对手已变化，请重新选择";
       case "ARENA_TICKETS": return "免费次数已用完，竞技场门票不足";

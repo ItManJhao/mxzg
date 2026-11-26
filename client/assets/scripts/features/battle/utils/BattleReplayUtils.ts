@@ -1,6 +1,7 @@
 /** 校验配置关卡、竞技场和历史样本的 Protobuf 战报，整理有序播放步骤；服务端负责伤害和奖励。 */
 import { ARENA_REPLAY_ROSTERS } from "../../../config/ArenaReplayRoster.generated";
 import { DAILY_DUNGEON_REPLAY_ROSTERS } from "../../../config/DailyGoldReplayRoster.generated";
+import { DREAMLAND_REPLAY_ROSTERS } from "../../../config/DreamlandReplayRoster.generated";
 import { TOWER_REPLAY_ROSTERS } from "../../../config/TowerReplayRoster.generated";
 import { mxzg } from "../../../platform/GameProtocol.generated";
 
@@ -130,8 +131,8 @@ export class BattleReplayUtils {
         return this.parse(bytes).steps;
     }
 
-    /** 校验最多双方各8个单位；支持重复模板与跨侧同站位，拒绝缺字段、重复身份和同侧重叠。 */
-    public static validateUnits(units: readonly WireUnit[]): readonly BattleReplayUnit[] {
+    /** 校验最多双方各8个单位；只有永恒梦境允许已阵亡的己方单位沿用0起始生命。 */
+    public static validateUnits(units: readonly WireUnit[], carriesDefeatedAllies = false): readonly BattleReplayUnit[] {
         if (units.length < 2 || units.length > 16) throw new Error("战报单位数量无效");
         const ids = new Set<number>();
         const seats = new Set<string>();
@@ -164,7 +165,8 @@ export class BattleReplayUtils {
             if (star !== null && (star < 1 || star > 14)) {
                 throw new Error("战报星级范围无效");
             }
-            if (maxHp <= 0 || initialHp <= 0 || initialHp > maxHp || finalHp > maxHp) {
+            const lowHpAllowed = carriesDefeatedAllies && unit.faction === 1;
+            if (maxHp <= 0 || (initialHp === 0 && !lowHpAllowed) || initialHp > maxHp || finalHp > maxHp) {
                 throw new Error("战报单位生命范围无效");
             }
             return Object.freeze({unitId: unit.unitId, faction: unit.faction, templateId: unit.templateId,
@@ -199,14 +201,15 @@ export class BattleReplayUtils {
         const chapter = this.chapterScenario(report.scenario);
         const idleMission = chapter?.idle ? chapter.index : 0;
         const configuredRoster = this.configuredRoster(report.scenario);
+        const dreamland = !!configuredRoster && report.scenario.startsWith("dreamland:");
         const playerArena = /^arena:pvp:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(report.scenario);
         const indexedRoster = !!chapter || !!configuredRoster || playerArena;
-        const maxRounds = playerArena || (configuredRoster && report.scenario.startsWith("arena:")) ? 20 : 15;
+        const maxRounds = dreamland ? 10 : playerArena || (configuredRoster && report.scenario.startsWith("arena:")) ? 20 : 15;
         if (report.schemaVersion !== 1 || (!indexedRoster && ["main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:charm", "audit:charm-death", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed"].indexOf(report.scenario) < 0)
             || (!indexedRoster && report.units.length !== ((["audit:control-teams", "audit:charm", "audit:charm-death"].includes(report.scenario)) ? 4 : (report.scenario === "main:1:1:3" || report.scenario === "audit:frozen") ? 3 : 2)) || report.rounds < 1 || report.rounds > maxRounds) {
             throw new Error("战报版本或场景不支持");
         }
-        const roster = this.validateUnits(report.units);
+        const roster = this.validateUnits(report.units, dreamland);
         if (configuredRoster) {
             this.validateConfiguredRoster(report.scenario, roster, configuredRoster);
         }
@@ -429,8 +432,12 @@ export class BattleReplayUtils {
         });
     }
 
-    /** 按场景定位日常副本、塔楼和竞技场的同源守军，未知挑战无对应名册。 */
+    /** 按场景定位日常副本、塔楼、永恒梦境和竞技场的同源守军，未知挑战无对应名册。 */
     private static configuredRoster(scenario: string): readonly (readonly [number, number, number, number])[] | undefined {
+        const dreamland = /^dreamland:([1-9][0-9]*)$/.exec(scenario);
+        if (dreamland) {
+            return DREAMLAND_REPLAY_ROSTERS[Number(dreamland[1])];
+        }
         const indexed = /^(tower|arena):([1-9][0-9]*)$/.exec(scenario);
         if (indexed) {
             const source = indexed[1] === "tower" ? TOWER_REPLAY_ROSTERS : ARENA_REPLAY_ROSTERS;

@@ -246,6 +246,16 @@ export class BattleAttackUtils {
     /** 按旧 G_BATTLE_ACTIONS 的声明顺序返回动作，保留各等级及普攻的时序、暗屏、特效和音效。 */
     private static verifiedLegacyActions(id: number): readonly LegacyAttackAction[] | null {
         switch (id) {
+            case 1120100: // 度魂魔女普攻由投射物和第 50 帧的独立命中特效组成。
+                return [
+                    { type: 5, delay: 0, dimly: 0, base: {
+                        attack_time: 0.4, action_time: 1.2, format: "skill-101040120-1/%d.png" },
+                        files: ["skill-101040120-1"], sounds: [] },
+                    { type: 7, delay: 50, dimly: 0, base: {
+                        format: "skill-101040120-2/%d.png", anchor_y: 0.5, anchor_x: 0.55, duration: 0.06,
+                        scale_x: 1.5, scale_y: 1.5 },
+                        files: ["skill-101040120-2"], sounds: [] },
+                ];
             // 幻境之塔第 11～30 层的旧覆盖段；保持声明顺序和叠加特效。
             // 旧配置引用但原资源缺失的音效见逐帧核验记录，避免预载失败。
             case 1131201:
@@ -1991,6 +2001,7 @@ export class BattleAttackUtils {
         if (files.length || row.type === 10 || directFrames) {
             // 帧数以旧plist连续帧及本地逐像素复验为依据，不能遇到未知资源就跳过表现。
             const counts: Record<string, number> = {
+                "skill-101040120-1": 8, "skill-101040120-2": 14,
                 "skill-101050110": 10, "skill-101050111": 10,
                 "skill-105050051": 19, "skill-105050051-1": 8,
                 "skill-101010011": 9, "skill-101040050": 7, "skill-101040051": 6, "skill-101020021": 11,

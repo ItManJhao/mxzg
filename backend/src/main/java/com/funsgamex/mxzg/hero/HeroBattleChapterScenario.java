@@ -49,6 +49,12 @@ public final class HeroBattleChapterScenario {
     /** 其他关卡配置使用的原守军行，属性、装备和符文保留源表数组格式。 */
     public record ConfiguredEnemy(int configId, int position, int template, int level, int star,
                                   String modifiers, String equipment, String runes) {}
+
+    /**
+     * 一次永恒梦境战斗和需交给下一层的触发次数。
+     * 外层按单位编号和效果配置编号保存已成功消耗的次数。
+     */
+    public record DreamlandResult(Result report, Map<Integer, Map<Integer, Integer>> effectUses) {}
     /** 一次出手结束后的完整单位生命，包含死亡单位，不按阵营合并。 */
     public record Turn(int round, int sourceId, long skillEnergy, Map<Integer, Long> hp) {
         /** 冻结本次出手生命，后续行动不能改写历史记录。 */
@@ -337,6 +343,53 @@ public final class HeroBattleChapterScenario {
         return runConfiguredFormation(scenario, input, enemyRows, decision, HeroBattleRoundUtils.MAX_ROUNDS, Map.of());
     }
 
+    /** 冻结永恒梦境开战身份、基础属性及技能；切换装备和等级不会中途改动本次冒险。 */
+    List<Unit> freezeDreamlandFormation(HeroBattleInputService.Input input) {
+        return List.copyOf(savedFormationUnits(input, 1));
+    }
+
+    /** 逐层使用原守军、冻结攻方及上层的生命和稳定触发计数，在本层重新计算选中的增益。 */
+    DreamlandResult runDreamlandFormation(int floor, List<Unit> attacker, List<ConfiguredEnemy> enemies,
+                                           Map<Integer, Long> remainingHp, Map<Integer, Map<Integer, Integer>> used,
+                                           int buffAttribute, long buffValue, DoublePredicate decision) {
+        var units = new ArrayList<Unit>();
+        for (var unit : attacker) {
+            var attributes = new HashMap<>(unit.attributes());
+            if (buffAttribute != 0 && buffAttribute != 105) {
+                attributes.merge(buffAttribute, buffValue, Math::addExact);
+            }
+            units.add(new Unit(unit.id(), unit.faction(), unit.template(), unit.level(), unit.star(), unit.stage(),
+                    unit.position(), attributes, unit.opening(), unit.skills(), unit.portraitIconId()));
+        }
+        for (var enemy : enemies) {
+            units.add(configuredEnemy(enemy));
+        }
+        var ordered = applyElementHalo(units).stream()
+                .map(unit -> dreamlandOpening(unit, remainingHp, buffAttribute == 105 ? buffValue : 0))
+                .toList();
+        var counts = new HashMap<>(used);
+        var report = runBattle("dreamland:" + floor, ordered, decision, new Random(),
+                HeroBattleRoundUtils.DREAMLAND_MAX_ROUNDS, Map.of(), true, counts);
+        return new DreamlandResult(report, Map.copyOf(counts));
+    }
+
+    /** 已阵亡攻方保留为零血单位，恢复增益只对存活英雄生效且不超过生命上限。 */
+    private static Unit dreamlandOpening(Unit unit, Map<Integer, Long> remainingHp, long healRate) {
+        if (unit.faction() != 1) {
+            return unit;
+        }
+        var opening = unit.opening();
+        long health = Math.min(opening.maxHp(), remainingHp.getOrDefault(unit.id(), opening.maxHp()));
+        if (health > 0 && healRate > 0) {
+            long recovery = Math.round(Math.floor(opening.maxHp() * (healRate / 10000D)));
+            health += Math.min(opening.maxHp() - health, recovery);
+        }
+        var carried = new HeroBattleAttributeUtils.Opening(health, opening.maxHp(), opening.attack(),
+                opening.defense(), opening.speed());
+        return new Unit(unit.id(), unit.faction(), unit.template(), unit.level(), unit.star(), unit.stage(),
+                unit.position(), unit.attributes(), carried, unit.skills(), unit.portraitIconId());
+    }
+
     /** 按旧战斗类型4使用主阵容挑战指定机器人，接入竞技场独立回合上限和每回合累计攻击倍率。 */
     Result runArenaFormation(String scenario, HeroBattleInputService.Input input, List<ConfiguredEnemy> enemyRows,
                              Map<Integer, Long> attackRates, DoublePredicate decision) {
@@ -486,6 +539,11 @@ public final class HeroBattleChapterScenario {
 
     /** 校验本场身份/站位/生命并规范为攻方在前；同模板不同单位合法，同侧站位不得重叠。 */
     public static List<Unit> roster(List<Unit> input) {
+        return roster(input, false);
+    }
+
+    /** 单独放行梦境首帧已阵亡攻方；其他战场仍必须全员带正生命值入场。 */
+    static List<Unit> roster(List<Unit> input, boolean keepFallenAttacker) {
         if (input.size() < 2 || input.size() > 16) throw new IllegalArgumentException("战斗单位数量无效");
         var ids = new HashSet<Integer>();
         var seats = new HashSet<String>();
@@ -494,12 +552,16 @@ public final class HeroBattleChapterScenario {
             if (unit.id() <= 0 || !ids.add(unit.id()) || (unit.faction() != 1 && unit.faction() != 2)
                 || unit.position() < 1 || unit.position() > 8
                 || !seats.add(unit.faction() + ":" + unit.position())
-                || unit.opening().hp() <= 0 || unit.opening().hp() > unit.opening().maxHp()) {
+                || unit.opening().maxHp() <= 0 || unit.opening().hp() < 0
+                || (unit.opening().hp() == 0 && (!keepFallenAttacker || unit.faction() != 1))
+                || unit.opening().hp() > unit.opening().maxHp()) {
                 throw new IllegalArgumentException("战斗单位身份、站位或生命无效");
             }
             factions.add(unit.faction());
         }
-        if (factions.size() != 2) throw new IllegalArgumentException("战斗缺少对战阵营");
+        if (factions.size() != 2 || input.stream().noneMatch(unit -> unit.faction() == 1 && unit.opening().hp() > 0)) {
+            throw new IllegalArgumentException("战斗缺少存活的对战阵营");
+        }
         return input.stream().sorted(Comparator.comparingInt(Unit::faction)).toList();
     }
 
@@ -516,8 +578,15 @@ public final class HeroBattleChapterScenario {
     /** 冻结开战头像，按战斗类型的回合规则完整执行并生成只读战报。 */
     private Result runBattle(String scenario, List<Unit> input, DoublePredicate decision, Random random,
                              int maxRounds, Map<Integer, Long> attackRates) {
+        return runBattle(scenario, input, decision, random, maxRounds, attackRates, false, new HashMap<>());
+    }
+
+    /** 梦境沿用完整战报执行链，仅恢复前层的死亡标识和受支持的累计触发次数。 */
+    private Result runBattle(String scenario, List<Unit> input, DoublePredicate decision, Random random,
+                             int maxRounds, Map<Integer, Long> attackRates, boolean dreamland,
+                             Map<Integer, Map<Integer, Integer>> effectUses) {
         // 在战斗开始前冻结资源身份；之后的名册/配置变化不重算已持久战报。
-        var initial = roster(input).stream().map(unit -> new Unit(unit.id(), unit.faction(), unit.template(),
+        var initial = roster(input, dreamland).stream().map(unit -> new Unit(unit.id(), unit.faction(), unit.template(),
             unit.level(), unit.star(), unit.stage(), unit.position(), unit.attributes(), unit.opening(),
             unit.skills(), unit.portraitIconId() == null
                 ? appearance.icon(unit.template(), unit.star(), 0, 0) : unit.portraitIconId())).toList();
@@ -532,6 +601,11 @@ public final class HeroBattleChapterScenario {
         var engine = new HeroBattleHealingExecutor(skills, states, HeroBattleHealingExecutor.inferredRandom(random));
         initial.forEach(unit -> engine.bindCombatData(unit.id(), unit.template(), unit.attributes()));
         for (var unit : initial) {
+            if (dreamland && unit.faction() == 1) {
+                var actor = engine.state(unit.id()).actor();
+                actor.setDead(unit.opening().hp() == 0);
+                actor.restoreEffectUses(effectUses.getOrDefault(unit.id(), Map.of()));
+            }
             for (var skill : unit.skills()) {
                 if (HeroSkillPanelRules.usesOpeningBattlePassive(skill.skillId())) {
                     engine.initializePassive(unit.id(), skill.skillId(), skill.level());
@@ -582,6 +656,13 @@ public final class HeroBattleChapterScenario {
             completed = round;
             outcome = outcome(initial, snapshot(engine, initial), completed, maxRounds);
             if (outcome != HeroBattleRoundUtils.Outcome.ONGOING) break;
+        }
+        if (dreamland) {
+            for (var unit : initial) {
+                if (unit.faction() == 1) {
+                    effectUses.put(unit.id(), engine.state(unit.id()).actor().continuedEffectUses());
+                }
+            }
         }
         return new Result(scenario, outcome, completed, initial, turns, engine.damages(), frames,
             snapshot(engine, initial), engine.recoveries());

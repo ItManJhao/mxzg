@@ -5,6 +5,7 @@
 package com.funsgamex.mxzg.campaign;
 
 import com.funsgamex.mxzg.auth.SessionService;
+import com.funsgamex.mxzg.chat.ChatService;
 import com.funsgamex.mxzg.network.AssetSyncService;
 import com.funsgamex.mxzg.reward.RewardGrantResult;
 import com.funsgamex.mxzg.reward.RewardGrantService;
@@ -40,6 +41,8 @@ public class MainChapterFirstRewardService {
     private final RewardReceiptPayloads payloads;
     /** 独立通关奖励使用的游戏时钟。 */
     private final GameClock clock;
+    /** 按策划标记在发奖事务内保存本服系统公告。 */
+    private final ChatService chat;
 
     /** 原成功回执，显示真实奖励并等待此版本的统一快照确认。 */
     public record Receipt(int schemaVersion, int chapter, String receiptId, String roleId, long assetRevision,
@@ -65,10 +68,11 @@ public class MainChapterFirstRewardService {
         }
     }
 
-    /** 注入现有领域与游戏时钟，领取回执由数据库持有。 */
+    /** 装配独立领取、游戏时钟与系统公告，回执由数据库持有。 */
     public MainChapterFirstRewardService(SessionService sessions, RoleRepository roles, MainChapterService chapters,
             MainChapterRules chapterRules, MainChapterFirstRewardRules rules, RewardGrantService grants,
-            AssetSyncService sync, JdbcTemplate jdbc, RewardReceiptPayloads payloads, GameClock clock) {
+            AssetSyncService sync, JdbcTemplate jdbc, RewardReceiptPayloads payloads, GameClock clock,
+            ChatService chat) {
         this.sessions = sessions;
         this.roles = roles;
         this.chapters = chapters;
@@ -79,9 +83,10 @@ public class MainChapterFirstRewardService {
         this.jdbc = jdbc;
         this.payloads = payloads;
         this.clock = clock;
+        this.chat = chat;
     }
 
-    /** 按游戏时间发放旧绝对关卡对应的奖励；原回执优先，失败不会产生已领记录。 */
+    /** 原回执优先；新的成功领奖按原配置写入领取记录和公告，失败一起回滚。 */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Receipt claim(String token, int chapter) {
         String role = authorize(token, chapter);
@@ -98,7 +103,7 @@ public class MainChapterFirstRewardService {
             throw new Rejected("FIRST_REWARD_NOT_REACHED", "尚未通关第" + chapter + "关");
         }
         var random = ThreadLocalRandom.current();
-        var actual = grants.grant(role, plan, new RewardGrantService.Context(
+        var actual = grants.grant(role, plan.rewards(), new RewardGrantService.Context(
                 clock.epochSeconds(), chapterRules.tavernLimit(state.maxCleared())), random);
         sync.changed(role);
         var receipt = new Receipt(1, chapter, UUID.randomUUID().toString(), role, roles.revision(role), actual);
@@ -106,6 +111,11 @@ public class MainChapterFirstRewardService {
         var frozen = payloads.freeze(receipt);
         jdbc.update("INSERT INTO game_main_chapter_first_reward(role_id,chapter_id,receipt_id,payload_json,payload_hash) "
                 + "VALUES (?,?,?,?,?)", role, chapter, receipt.receiptId(), frozen.json(), frozen.hash());
+        if (plan.announce()) {
+            var profile = roles.findById(role).orElseThrow();
+            chat.publishSystem(profile.serverId(), "%s成功通关主线副本%d关，领取了强力五星英雄，真是让人羡慕！"
+                    .formatted(profile.nickname(), chapter), 171);
+        }
         return receipt;
     }
 

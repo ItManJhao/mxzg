@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "2b518559-6d78-469b-8149-c2c00a813f6d",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "quest",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

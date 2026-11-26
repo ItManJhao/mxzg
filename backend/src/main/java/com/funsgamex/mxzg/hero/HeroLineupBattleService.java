@@ -56,6 +56,22 @@ public class HeroLineupBattleService {
         return validate(input, report);
     }
 
+    /** 永恒梦境开始时冻结攻方阵容，随后不再查询可能已经升级或替换的英雄。 */
+    public List<HeroBattleChapterScenario.Unit> freezeDreamlandFormation(HeroBattleInputService.Input input) {
+        return battles.freezeDreamlandFormation(input);
+    }
+
+    /** 永恒梦境按类型 11 执行当前楼层，生成真实战报及续战状态。 */
+    public HeroBattleChapterScenario.DreamlandResult dreamland(int floor,
+            List<HeroBattleChapterScenario.Unit> attacker, List<HeroBattleChapterScenario.ConfiguredEnemy> enemies,
+            Map<Integer, Long> remainingHp, Map<Integer, Map<Integer, Integer>> effectUses,
+            int buffAttribute, long buffValue, DoublePredicate decision) {
+        var result = battles.runDreamlandFormation(floor, attacker, enemies, remainingHp, effectUses,
+                buffAttribute, buffValue, decision);
+        HeroBattleReplayUtils.validate(result.report());
+        return result;
+    }
+
     /** 竞技场沿用持久主阵容，并根据旧配置给存活双方追加每回合攻击倍率。 */
     public Preview arena(String token, String scenario, List<HeroBattleChapterScenario.ConfiguredEnemy> enemies,
                          Map<Integer, Long> attackRates, DoublePredicate decision) {

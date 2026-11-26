@@ -5,19 +5,24 @@
 package com.funsgamex.mxzg;
 
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
+import com.funsgamex.mxzg.blackmarket.BlackMarketService;
 import com.funsgamex.mxzg.campaign.CampaignService;
 import com.funsgamex.mxzg.campaign.CampaignBattle;
+import com.funsgamex.mxzg.chat.ChatChannel;
+import com.funsgamex.mxzg.chat.ChatService;
 import com.funsgamex.mxzg.dungeon.DailyDungeonService;
 import com.funsgamex.mxzg.dungeon.DailyDungeonType;
 import com.funsgamex.mxzg.guild.GuildService;
 import com.funsgamex.mxzg.hero.HeroQueries;
 import com.funsgamex.mxzg.hero.HeroRepository;
+import com.funsgamex.mxzg.inventory.InventoryService;
 import com.funsgamex.mxzg.network.SessionSnapshotService;
 import com.funsgamex.mxzg.lineup.Lineup;
 import com.funsgamex.mxzg.lineup.LineupService;
 import com.funsgamex.mxzg.lineup.MainFormationCommandService;
 import com.funsgamex.mxzg.reward.RewardGrantService;
 import com.funsgamex.mxzg.role.RoleService;
+import com.funsgamex.mxzg.smith.SmithService;
 import com.funsgamex.mxzg.time.GameClock;
 import com.funsgamex.mxzg.vip.VipService;
 import java.net.InetAddress;
@@ -52,6 +57,14 @@ class MySqlIT {
     private static final String LEGACY_HERO_ROLE = "00000000-0000-4000-8000-000000000058";
     /** 已在 V56 领取第 10 层奖励的角色，校验独立档位迁移。 */
     private static final String LEGACY_TOWER_ROLE = "00000000-0000-4000-8000-000000000056";
+    /** V71 世界频道的原发信角色，用来验证 V72 保留消息与回执。 */
+    private static final String LEGACY_CHAT_ACTOR = "00000000-0000-4000-8000-000000000071";
+    /** V71 世界频道的已读角色，迁移后必须保留当前读水位。 */
+    private static final String LEGACY_CHAT_READER = "00000000-0000-4000-8000-000000000072";
+    /** V71 发言的固定请求号，以同一正文重试时必须回放原消息。 */
+    private static final String LEGACY_CHAT_REQUEST = "00000000-0000-4000-8000-000000000073";
+    /** 迁移前的真实消息自增编号，迁移后分配的新编号必须更大。 */
+    private static final long LEGACY_CHAT_ID = 101;
 
     private OwnedMysql mysql;
     private ConfigurableApplicationContext app;
@@ -90,9 +103,36 @@ class MySqlIT {
             seedLegacyGoldBeforeMigration();
             seedLegacyTowerBeforeMigration();
             seedLegacyHeroBeforeMigration();
+            seedLegacyChatBeforeMigration();
             boot();
         }
         catch (Exception | AssertionError failure) { close(); throw failure; }
+    }
+
+    /** 先运行原 V71 结构并写入固定的世界发言、回执和已读，再由应用执行 V72。 */
+    private void seedLegacyChatBeforeMigration() throws Exception {
+        org.flywaydb.core.Flyway.configure().dataSource(mysql.url(), mysql.user, mysql.password)
+                .cleanDisabled(true).target("71").load().migrate();
+        try (var connection = mysql.connect(); var statement = connection.createStatement()) {
+            statement.executeUpdate("""
+                    INSERT INTO game_role(id,account_key,nickname,role_level,gold,diamonds,login_account,server_id)
+                    VALUES ('%s','it_world_chat_sender','聊天旧角色',35,0,0,'it_world_chat_sender','local-1'),
+                           ('%s','it_world_chat_reader','已读旧角色',35,0,0,'it_world_chat_reader','local-1')
+                    """.formatted(LEGACY_CHAT_ACTOR, LEGACY_CHAT_READER));
+            statement.executeUpdate("INSERT INTO game_world_chat_channel (server_id) VALUES ('local-1')");
+            statement.executeUpdate("""
+                    INSERT INTO game_world_chat_message (id,server_id,sender_id,sender_name,avatar_id,border_id,
+                        sender_level,content,sent_at_seconds)
+                    VALUES (%d,'local-1','%s','聊天旧角色',0,0,35,'legacy chat',1795449600)
+                    """.formatted(LEGACY_CHAT_ID, LEGACY_CHAT_ACTOR));
+            statement.executeUpdate("""
+                    INSERT INTO game_world_chat_receipt (message_id,server_id,sender_id,request_id,content_hash,sent_at_seconds)
+                    VALUES (%d,'local-1','%s','%s',SHA2('legacy chat',256),1795449600)
+                    """.formatted(LEGACY_CHAT_ID, LEGACY_CHAT_ACTOR, LEGACY_CHAT_REQUEST));
+            statement.executeUpdate("""
+                    INSERT INTO game_world_chat_read (role_id,read_through_id) VALUES ('%s',%d)
+                    """.formatted(LEGACY_CHAT_READER, LEGACY_CHAT_ID));
+        }
     }
 
     /** 在独占 MySQL 上创建真正的 V56 单里程碑记录，让应用启动时执行迁移。 */
@@ -869,6 +909,91 @@ class MySqlIT {
             battleId, 1, false, 0));
         assertEquals(receipt, app.getBean(VipService.class).claim(player.token(), claimId, 101200));
         assertEquals(restored.revision(), snapshots.snapshot(player.token()).revision());
+    }
+
+    /** 真实 MySQL 核对 V71 升级后仍能回放发言和游标，新频道写入后重启恢复。 */
+    @Test @Order(27)
+    void chatRoomsMigrateFromV71AndPersistAfterRestart() throws Exception {
+        assertEquals(1, number("SELECT COUNT(*) FROM flyway_schema_history WHERE version='72' AND success=1"));
+        var chat = app.getBean(ChatService.class);
+        var world = chat.history(LEGACY_CHAT_READER, 0, 0);
+        assertEquals(LEGACY_CHAT_ID, world.readThroughId());
+        assertEquals(0, world.unreadCount());
+        assertEquals(world.messages().getFirst(), chat.send(LEGACY_CHAT_ACTOR, LEGACY_CHAT_REQUEST, "legacy chat"));
+
+        jdbc.update("INSERT INTO game_friend_relation(role_id,target_id) VALUES (?,?),(?,?)",
+                LEGACY_CHAT_ACTOR, LEGACY_CHAT_READER, LEGACY_CHAT_READER, LEGACY_CHAT_ACTOR);
+        var privateMessage = chat.send(LEGACY_CHAT_ACTOR, ChatChannel.PRIVATE, LEGACY_CHAT_READER,
+                UUID.randomUUID().toString(), "升级后的私聊");
+        assertTrue(privateMessage.id() > LEGACY_CHAT_ID);
+        assertEquals(1, chat.overview(LEGACY_CHAT_READER).conversations().getFirst().unreadCount());
+        chat.read(LEGACY_CHAT_READER, ChatChannel.PRIVATE, LEGACY_CHAT_ACTOR, privateMessage.id());
+
+        app.close();
+        boot();
+        var restored = app.getBean(ChatService.class);
+        var history = restored.history(LEGACY_CHAT_READER, ChatChannel.PRIVATE, LEGACY_CHAT_ACTOR, 0, 0);
+        assertEquals(List.of(privateMessage), history.messages());
+        assertEquals(privateMessage.id(), history.readThroughId());
+        assertEquals(0, history.unreadCount());
+        assertEquals(LEGACY_CHAT_ID, restored.history(LEGACY_CHAT_READER, 0, 0).readThroughId());
+    }
+
+    /** 实际 MySQL 上验证 V73 成交、任务原始计数以及应用重启后的幂等回执。 */
+    @Test @Order(28)
+    void blackMarketPurchaseSurvivesApplicationRestart() throws Exception {
+        var player = player();
+        jdbc.update("UPDATE game_role SET role_level=9,diamonds=1000 WHERE id=?", player.id());
+        var market = app.getBean(BlackMarketService.class);
+        int shopType = 100800;
+        long shelfVersion = market.list(player.token(), shopType).shelfVersion();
+        String requestId = UUID.randomUUID().toString();
+        var bought = market.buy(player.token(), requestId, shopType, shelfVersion, 1, 2);
+        assertEquals(2, bought.state().offers().getFirst().purchased());
+        assertEquals(20, inventory(player.token()).stream().filter(item -> item.itemId() == 901812)
+                .findFirst().orElseThrow().quantity());
+
+        app.close();
+        app = null;
+        boot();
+        var restored = login.login(player.account(), "local-1");
+        String token = "Bearer " + restored.session().accessToken();
+        var receipt = app.getBean(BlackMarketService.class).buy(token, requestId, shopType, shelfVersion, 1, 2);
+        assertEquals(bought, receipt);
+        assertEquals(504L, jdbc.queryForObject("SELECT diamonds FROM game_role WHERE id=?", Long.class, player.id()));
+        assertEquals(2L, jdbc.queryForObject("""
+                SELECT amount FROM game_quest_counter WHERE role_id=? AND period_end_seconds=?
+                    AND metric='SHOP_BUY' AND condition_value=?
+                """, Long.class, player.id(), shelfVersion, shopType));
+    }
+
+    /** 独立 MySQL 验证 V74 一键多档实际到账及重启后的原报价重试。 */
+    @Test @Order(29)
+    void smithForgeSurvivesApplicationRestart() throws Exception {
+        var player = player();
+        jdbc.update("UPDATE game_role SET role_level=25,gold=100000 WHERE id=?", player.id());
+        var stock = app.getBean(InventoryService.class);
+        new TransactionTemplate(app.getBean(PlatformTransactionManager.class)).executeWithoutResult(status ->
+                stock.credit(player.id(), 1001001, 10));
+        var smith = app.getBean(SmithService.class);
+        var quote = smith.preview(player.token(), 1);
+        String requestId = UUID.randomUUID().toString();
+        var forged = smith.forgeAll(player.token(), requestId, 1, quote.assetRevision());
+        assertEquals(10_982, forged.goldCost());
+        assertEquals(List.of(new RewardGrantService.Reward(1001003, 1)), forged.rewards());
+
+        app.close();
+        app = null;
+        boot();
+        var restored = login.login(player.account(), "local-1");
+        String token = "Bearer " + restored.session().accessToken();
+        assertEquals(forged, app.getBean(SmithService.class).forgeAll(token, requestId, 1, quote.assetRevision()));
+        assertEquals(89_018L, jdbc.queryForObject("SELECT gold FROM game_role WHERE id=?", Long.class, player.id()));
+        assertEquals(1, inventory(token).stream().filter(item -> item.itemId() == 1001001)
+                .findFirst().orElseThrow().quantity());
+        assertTrue(inventory(token).stream().noneMatch(item -> item.itemId() == 1001002));
+        assertEquals(1, inventory(token).stream().filter(item -> item.itemId() == 1001003)
+                .findFirst().orElseThrow().quantity());
     }
 
     /** 仅拥有本次新建数据目录的 MySQL 进程；不能配置或重用任何外部数据库。 */

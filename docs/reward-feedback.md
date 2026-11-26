@@ -51,8 +51,8 @@ RoleUpgradeView把等级对比、该通知已有的实际奖励和下一功能�
 | 普通操作即时反馈 | 由 [BagController](../client/assets/scripts/features/bag/BagController.ts)、[HeroRosterController](../client/assets/scripts/features/hero/HeroRosterController.ts) 或 [MainChapterController](../client/assets/scripts/features/battle/MainChapterController.ts) 交付本次实际奖励 |
 | 新英雄获得画面 | [HeroRewardView](../client/assets/scripts/features/reward/ui/HeroRewardView.ts) |
 | 协议接收、队列更新事件与 Model 的版本门槛、回执去重 | [RewardController](../client/assets/scripts/features/reward/RewardController.ts)、[RewardModel](../client/assets/scripts/features/reward/RewardModel.ts) |
-| 共用奖励画面 | [RewardView](../client/assets/scripts/features/reward/ui/RewardView.ts)、[完整Prefab](../client/assets/bundles/module/common/prefabs/RewardView.prefab) |
-| 共用升级画面与只读预告 | [RoleUpgradeView](../client/assets/scripts/features/reward/ui/RoleUpgradeView.ts)、[完整Prefab](../client/assets/bundles/module/common/prefabs/RoleUpgradeView.prefab)、[RoleUpgradeUtils](../client/assets/scripts/features/reward/utils/RoleUpgradeUtils.ts) |
+| 共用奖励画面 | [RewardView](../client/assets/scripts/features/reward/ui/RewardView.ts)、[完整Prefab](../client/assets/bundles/module/reward/prefabs/RewardView.prefab) |
+| 共用升级画面与只读预告 | [RoleUpgradeView](../client/assets/scripts/features/reward/ui/RoleUpgradeView.ts)、[完整Prefab](../client/assets/bundles/module/reward/prefabs/RoleUpgradeView.prefab)、[RoleUpgradeUtils](../client/assets/scripts/features/reward/utils/RoleUpgradeUtils.ts) |
 | 共用确认参数与交互 | [ConfirmView](../client/assets/scripts/features/common/ui/ConfirmView.ts)、[完整Prefab](../client/assets/bundles/module/common/prefabs/ConfirmView.prefab) |
 
 新业务复用原事务及同一反馈服务，选择明确模式；不加模块奖励窗、不从BagAdd猜测奖励。打开确认框使用`UIManager.open(ConfirmView, {title, message, onConfirm, onCancel?, confirmText?, cancelText?, showCancel?})`；空标题隐藏标题条，showCancel默认true，单按钮通过Prefab Layout居中。关闭先退订，确定/取消只交付一次。

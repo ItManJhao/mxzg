@@ -5,17 +5,24 @@ from prune_prefabs import ASSETS, REPORT, inventory, read, tokens
 from bundle_paths import resolve_asset_path
 
 files, keep, removed = inventory()
-if removed: raise SystemExit('Out-of-plan Prefabs reintroduced: '+', '.join(row['path'] for row in removed))
-report=read(REPORT)
-retired={row['uuid'] for row in report['removed']}
+if removed:
+    raise SystemExit('Out-of-plan Prefabs reintroduced: ' + ', '.join(row['path'] for row in removed))
+report = read(REPORT)
+retired = {row['uuid'] for row in report['removed']}
+for file in files.values():
+    if read(file.with_suffix('.prefab.meta'))['uuid'] in retired:
+        raise SystemExit('Retired Prefab UUID reintroduced: ' + str(file))
 for path in [*ASSETS.rglob('*.prefab'),*ASSETS.rglob('*.scene')]:
     for token in tokens(read(path)):
-        if token.split('@')[0] in retired:raise SystemExit('Dangling deleted Prefab reference: '+str(path))
+        if token.split('@')[0] in retired:
+            raise SystemExit('Dangling deleted Prefab reference: ' + str(path))
 retired_paths = set()
 for row in report['removed']:
-    path=row['path'][:-7]
+    path = row['path'][:-7]
     current = resolve_asset_path(path).relative_to(ASSETS).as_posix() if path.startswith('bundles/') else path
     retired_paths.update((path, current))
+# 业务恢复可能复用历史文件名。只有已准入的当前地址可用，旧 UUID 仍须保持退役。
+retired_paths.difference_update(keep)
 # 页面在自身类上声明预制体，也可能从业务模块直接打开。检查真实引用处并报告文件名。
 asset_literal = re.compile(r"""(["'`])((?:[\w.-]+/)+[\w.-]+)\1""")
 for script in (ASSETS / 'scripts').rglob('*.ts'):

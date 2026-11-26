@@ -39,8 +39,8 @@ public class TowerRules {
         }
     }
 
-    /** 已开放楼层内按原配置编号独立领取的里程碑。 */
-    record Milestone(int id, int floor, List<Reward> rewards) {
+    /** 按原配置编号独立领取的里程碑，announce 表示领取后发布系统公告。 */
+    record Milestone(int id, int floor, List<Reward> rewards, boolean announce) {
         /** 冻结领取配置，防止共享预览对象改变发奖条件。 */
         Milestone {
             rewards = List.copyOf(rewards);

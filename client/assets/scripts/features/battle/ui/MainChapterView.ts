@@ -1,7 +1,7 @@
 /** 主线挂机主页：静态底板保存关卡、四项收益及三个正式入口，挑战交给页内战场。
- * 挂机显示服务器下发的累计与基础收益。主线控制器通知领取成功后，本页播放收取效果。
+ * 挂机显示服务器下发的累计与基础收益，首通结算关闭后对比新旧收益。领取成功后本页播放收取效果。
  * 页面关闭取消显示但保留服务端待结算状态，奖励到账与通用反馈由应用处理。 */
-import { _decorator, AudioClip, AudioSource, Button, Label, Node, Sprite, SpriteFrame, UITransform, sp } from "cc";
+import { _decorator, AudioClip, AudioSource, Button, Label, Node, Sprite, SpriteFrame, Tween, UIOpacity, UITransform, sp, tween } from "cc";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
@@ -37,6 +37,7 @@ import type { AssetScope } from "../../../framework/assets/ResourceAssetsUtils";
 import { GameConfig } from "../../../config/GameConfig";
 import { ChapterBackgroundUtils } from "../utils/ChapterBackgroundUtils";
 import type { ChapterBackgroundPlan } from "../utils/ChapterBackgroundUtils";
+import { ChapterRewardInfoUtils, chapterIdleIncomeIds } from "../utils/ChapterRewardInfoUtils";
 
 const { ccclass, property } = _decorator;
 
@@ -88,6 +89,12 @@ export class MainChapterView extends BaseView<MainChapterOpenArgs> {
     @property(Label) roleExpRateLabel: Label | null = null;
     /** 英雄经验每分钟收益。 */
     @property(Label) heroExpRateLabel: Label | null = null;
+    /** 中部收益提示的整体透明度，页面关闭或下一场开战时停止动画。 */
+    @property(UIOpacity) private idleIncomeOpacity: UIOpacity | null = null;
+    /** 从上至下三行的上一关数值，顺序为英雄经验、角色经验、金币。 */
+    @property([Label]) private previousIncomeLabels: Label[] = [];
+    /** 从上至下三行的当前每分钟收益，与上一关数值按行对应。 */
+    @property([Label]) private currentIncomeLabels: Label[] = [];
     /** 挂机收益入口，只转交当前显示期；实际门槛、网络、发奖与恢复沿原领取绑定。 */
     @property(Button) idleClaimButton: Button | null = null;
     /** 旧中央章节图标的产物说明入口，只读配置不开放领取。 */
@@ -130,6 +137,8 @@ export class MainChapterView extends BaseView<MainChapterOpenArgs> {
     private stopReplay: (() => void) | null = null;
     /** 准备或播放战报期间阻止再次开场。 */
     private playing = false;
+    /** 已结束正常结算但还在等待升级弹窗的关卡，播出、开战或离开页面时清空。 */
+    private pendingIncomeStage: number | null = null;
 
     /** 当前行军节点，仅本页持有，不影响权威阵容。 */
     private idleDisplay: MainChapterIdleDisplay | null = null;
@@ -152,7 +161,7 @@ export class MainChapterView extends BaseView<MainChapterOpenArgs> {
     /** 正在准备的候选图片作用域；被新地图替代或关页时立即释放，不另造资源池。 */
     private pendingBackgroundScope: AssetScope | null = null;
 
-    /** 绑定主线入口和适配监听，有红点挂点时订阅显示，首次进入转交待结算恢复。 */
+    /** 绑定主线入口、收益提示和适配，有红点挂点时订阅，首次进入转交待结算恢复。 */
     public onOpen(args?: MainChapterOpenArgs): void {
         if (!this.battleHost || !this.panel || !this.challengeButton || !this.quickBattleButton || !this.powerButton
             || !this.stageLabel || !this.statusLabel || !this.challengeLabel || !this.idleTimeLabel
@@ -167,6 +176,11 @@ export class MainChapterView extends BaseView<MainChapterOpenArgs> {
         }
         this.idleResources = new MainChapterIdleResources(this.resourceFlightHost, this.resourceFlightTemplate,
             this.resourceFlightTarget, this.resourceFlightFrames);
+        if (!this.idleIncomeOpacity || this.previousIncomeLabels.length !== chapterIdleIncomeIds.length
+            || this.currentIncomeLabels.length !== chapterIdleIncomeIds.length) {
+            throw new Error("主线收益对比绑定缺失");
+        }
+        this.clearIdleIncome();
         const talkTemplate = this.node.getChildByName("HeroTalkTemplate");
         if (talkTemplate) {
             this.heroTalk = new MainChapterHeroTalk(talkTemplate, this.battleHost,
@@ -342,12 +356,13 @@ export class MainChapterView extends BaseView<MainChapterOpenArgs> {
         }
     }
 
-    /** 显示页内战场或继续原结算；页面关闭时同步撤销显示，保留服务端提交。 */
+    /** 显示页内战场或继续原结算；开战停止上一关提示，正常首通关闭战场后准备新提示。 */
     private async play(battleId: string, settlementOnly = false): Promise<void> {
         if (this.closed || this.playing) {
             return;
         }
         this.playing = true;
+        this.clearIdleIncome();
         this.clearIdleDisplay();
         this.render();
         try {
@@ -357,10 +372,17 @@ export class MainChapterView extends BaseView<MainChapterOpenArgs> {
             if (this.closed || !report) return;
             // 战场在主页内部播放，底部面板与共享导航继续显示。
             this.stopReplay = () => UIManager.instance.closeById("main-chapter-battle");
-            await UIManager.instance.openById("main-chapter-battle", { report, settlementOnly, onClosed: () => {
+            await UIManager.instance.openById("main-chapter-battle", { report, settlementOnly, onClosed: (firstClearStage?: number) => {
                 this.stopReplay = null;
                 this.playing = false;
-                if (!this.closed) { this.panel!.active = true; this.render(); }
+                if (!this.closed) {
+                    this.panel!.active = true;
+                    this.render();
+                    if (firstClearStage !== undefined) {
+                        this.pendingIncomeStage = firstClearStage;
+                        this.schedule(this.showPendingIdleIncome, 0.5);
+                    }
+                }
             }});
         } catch (error) {
             this.stopReplay = null;
@@ -370,6 +392,53 @@ export class MainChapterView extends BaseView<MainChapterOpenArgs> {
                 this.playing = false;
                 if (!this.closed) { this.panel!.active = true; this.render(); }
             }
+        }
+    }
+
+    /** 每半秒等候升级窗关闭，匹配本次首通的最新收益快照后播放 4.5 秒淡入淡出。 */
+    private showPendingIdleIncome = (): void => {
+        const windows = UIManager.instance;
+        if (this.closed || this.playing || windows.isOpen("role-upgrade") || windows.isOpen("chapter-end")) {
+            return;
+        }
+        this.unschedule(this.showPendingIdleIncome);
+        const stage = this.pendingIncomeStage;
+        this.pendingIncomeStage = null;
+        const model = MainChapterModel.instance;
+        if (stage === null || model.state?.maxCleared !== stage || model.state.pendingBattleId) {
+            return;
+        }
+        try {
+            const comparison = ChapterRewardInfoUtils.idleIncomeComparison(
+                GameConfig.instance.getFileByPath("config/chapterreward"), stage, model.idle,
+            );
+            if (!comparison) {
+                return;
+            }
+            comparison.forEach((row, index) => {
+                this.previousIncomeLabels[index].string = String(row.previous);
+                this.currentIncomeLabels[index].string = row.current + "/分";
+            });
+            const opacity = this.idleIncomeOpacity!;
+            opacity.opacity = 0;
+            opacity.node.active = true;
+            tween(opacity).to(1, { opacity: 255 }, { easing: "expoOut" }).delay(0.5)
+                .to(3, { opacity: 0 }).call(() => { opacity.node.active = false; }).start();
+        } catch (error) {
+            GameLog.shared.warnOnce("MODULE", "MainChapterView", "chapter-idle-income:" + stage, String(error));
+        }
+    };
+
+    /** 离开当前战斗场景、开新战或重新显示页面时取消尚未播出或正在播放的收益提示。 */
+    private clearIdleIncome(): void {
+        if (this.pendingIncomeStage !== null) {
+            this.pendingIncomeStage = null;
+            this.unschedule(this.showPendingIdleIncome);
+        }
+        const opacity = this.idleIncomeOpacity;
+        if (opacity?.isValid && opacity.node.isValid) {
+            Tween.stopAllByTarget(opacity);
+            opacity.node.active = false;
         }
     }
 
@@ -435,7 +504,7 @@ export class MainChapterView extends BaseView<MainChapterOpenArgs> {
         }
     }
 
-    /** 按公共时钟显示挂机累计，等待校时时保留正在播放的收取画面。首胜后显示基础收益。 */
+    /** 按公共时钟显示挂机累计，等待校时保留收取画面，首胜后把基础收益换算为每分钟。 */
     private renderIdle(): void {
         const state = MainChapterModel.instance.idle;
         this.refreshIdleDisplay();
@@ -465,7 +534,7 @@ export class MainChapterView extends BaseView<MainChapterOpenArgs> {
             [this.heroExpRateLabel, 900101]] as const) {
             if (label) {
                 const rate = state?.rates.find(row => row.itemId === id);
-                label.string = rate ? String(rate.quantity * 60 / state!.frequency) + "/分" : "—/分";
+                label.string = rate ? ChapterRewardInfoUtils.perMinute(rate.quantity, state!.frequency) + "/分" : "—/分";
             }
         }
     }
@@ -743,7 +812,7 @@ export class MainChapterView extends BaseView<MainChapterOpenArgs> {
         });
     }
 
-    /** 根与背景覆盖实际可见区域，纸张在窄长屏缩至安全宽度，不改变格子内部排布。 */
+    /** 根与背景覆盖可见区域，底栏与中部提示按各自展示位置适配安全宽度。 */
     private fitViewport(): void {
         if (this.closed || !this.panel) {
             return;
@@ -753,15 +822,19 @@ export class MainChapterView extends BaseView<MainChapterOpenArgs> {
         const scale = Math.min(1, Math.max(0.1, (box.width - 24) / 640));
         this.panel.setScale(scale, scale, 1);
         this.panel.setPosition(0, -box.height / 2 + 150 + 84 * scale, 0);
+        const incomeScale = Math.min(1, box.width / 640);
+        this.idleIncomeOpacity?.node.setScale(incomeScale, incomeScale, 1);
+        this.idleIncomeOpacity?.node.setPosition(0, box.height * 0.108, 0);
         for (const name of ["PalaceBackground", "PalaceFloor", "PalaceBackgroundLoop", "PalaceFloorLoop"]) {
             const background = this.node.getChildByName(name);
             background?.getComponent(UITransform)?.setContentSize(box.width, box.height);
         }
     }
 
-    /** 页面关闭只取消展示，不撤销已提交战斗；待领奖随下次登录恢复。 */
+    /** 页面关闭取消提示、播放及监听，已提交的战斗按既有逻辑恢复。 */
     public onClose(): void {
         this.closed = true;
+        this.clearIdleIncome();
         this.backgroundEpoch++;
         for (const name of ["PalaceBackground", "PalaceBackgroundLoop", "PalaceFloor", "PalaceFloorLoop"]) {
             const sprite = this.node.getChildByName(name)?.getComponent(Sprite);

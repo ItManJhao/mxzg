@@ -5,6 +5,7 @@
 package com.funsgamex.mxzg.tower;
 
 import com.funsgamex.mxzg.auth.SessionService;
+import com.funsgamex.mxzg.chat.ChatService;
 import com.funsgamex.mxzg.hero.HeroBattleInputService;
 import com.funsgamex.mxzg.hero.HeroBattleReplayProtocolUtils;
 import com.funsgamex.mxzg.hero.HeroBattleRoundUtils;
@@ -74,6 +75,8 @@ public class TowerService {
     private final GameClock clock;
     /** 塔挑战与扫荡真实结算后，在原事务登记每日任务次数。 */
     private final ApplicationEventPublisher events;
+    /** 在领奖事务内发布原配置标记的本服系统公告。 */
+    private final ChatService chat;
 
     /** 结算动作，挑战有战报，扫荡与里程碑直接发奖。 */
     public enum Action { CHALLENGE, SWEEP, MILESTONE }
@@ -130,12 +133,12 @@ public class TowerService {
         }
     }
 
-    /** 将原配置转换为共用的楼层预览，并在启动时检查每种奖励支持情况。 */
+    /** 装配战斗、奖励和公告，并在启动时检查开放楼层的奖励。 */
     public TowerService(SessionService sessions, RoleRepository roles, TowerRepository tower, TowerRules rules,
                         MainFormationStateService formations, MainFormationRules formationRules, HeroRepository heroes,
                         HeroBattleInputService battleInputs, HeroLineupBattleService battles,
                         RewardGrantService grants, AssetSyncService sync, GameClock clock,
-                        ApplicationEventPublisher events) {
+                        ApplicationEventPublisher events, ChatService chat) {
         this.sessions = sessions;
         this.roles = roles;
         this.tower = tower;
@@ -149,6 +152,7 @@ public class TowerService {
         this.sync = sync;
         this.clock = clock;
         this.events = events;
+        this.chat = chat;
         this.floors = config.floors().stream().map(row -> new FloorState(row.floor(), row.recommendedPower(),
                 row.firstRewards(), row.sweepRewards(), row.enemies().stream().map(enemy -> new EnemyState(
                     enemy.position(), enemy.template(), enemy.level(), enemy.star())).toList())).toList();
@@ -209,7 +213,7 @@ public class TowerService {
         return settle(token, requestId, Action.MILESTONE, milestoneId, 0);
     }
 
-    /** 重试先读取原回执，新结算在角色锁内提交发奖及挑战或扫荡进度。 */
+    /** 重试读取原回执，新结算在角色锁内提交奖励、进度及配置要求的公告。 */
     private Settlement settle(String token, String requestId, Action action, int targetId, long maxDiamonds) {
         if (!RewardReceiptPayloads.validId(requestId) || targetId < 1 || maxDiamonds < 0 || maxDiamonds > MAX_DIAMONDS) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "TOWER_REQUEST_INVALID");
@@ -244,12 +248,20 @@ public class TowerService {
         tower.saveReceipt(targetId, maxDiamonds, result);
         if (action != Action.MILESTONE) {
             events.publishEvent(new QuestProgressEvent(role, QuestMetric.TOWER_CHALLENGE, 0, 1));
+        } else if (outcome.announce()) {
+            chat.publishSystem(profile.serverId(), "%s成功通关幻境之塔%d层，领取了强力五星英雄，真是让人羡慕！"
+                    .formatted(profile.nickname(), outcome.floor()), 172);
         }
         return result;
     }
 
-    /** 操作确定的通关与消耗结果，发奖将在同一事务中提交。 */
-    private record Outcome(int floor, Progress progress, BattleReplay replay, List<Reward> rewards) {}
+    /** 持有一次操作的进度、奖励及领奖公告标记，由外层事务一起提交。 */
+    private record Outcome(int floor, Progress progress, BattleReplay replay, List<Reward> rewards, boolean announce) {
+        /** 挑战和扫荡仅结算进度、战报与奖励，不触发里程碑公告。 */
+        private Outcome(int floor, Progress progress, BattleReplay replay, List<Reward> rewards) {
+            this(floor, progress, replay, rewards, false);
+        }
+    }
 
     /** 用已保存的幻境阵容执行当前层；胜场不消耗精力，首次跌破上限开始计时。 */
     private Outcome fight(RoleProfile role, Progress before, int floor, Instant now, ThreadLocalRandom random) {
@@ -302,7 +314,7 @@ public class TowerService {
         return new Outcome(floor, after, null, config.floors().get(floor - 1).sweepRewards());
     }
 
-    /** 验证指定档位资格并写入独立领取记录，由外层事务一起发奖。 */
+    /** 验证指定档位资格并保存领取记录，返回奖励与旧配置的公告标记。 */
     private Outcome milestone(String role, Progress before, int milestoneId) {
         var milestone = config.milestones().stream()
                 .filter(row -> row.id() == milestoneId && row.floor() <= before.highestCleared())
@@ -311,7 +323,7 @@ public class TowerService {
             throw rejected("TOWER_MILESTONE_CLAIMED");
         }
         tower.saveMilestoneClaim(role, milestoneId);
-        return new Outcome(milestone.floor(), before, null, milestone.rewards());
+        return new Outcome(milestone.floor(), before, null, milestone.rewards(), milestone.announce());
     }
 
     /** 进入角色锁后重新判断会话和旧开门等级，避免旧连接在等待期间继续操作。 */

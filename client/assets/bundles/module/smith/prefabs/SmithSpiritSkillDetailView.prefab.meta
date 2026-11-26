@@ -1,0 +1,13 @@
+{
+  "ver": "1.1.50",
+  "importer": "prefab",
+  "imported": true,
+  "uuid": "b1a4eb1f-6acf-4bbf-85fe-585a4aa52168",
+  "files": [
+    ".json"
+  ],
+  "subMetas": {},
+  "userData": {
+    "syncNodeName": "SmithSpiritSkillDetailView"
+  }
+}

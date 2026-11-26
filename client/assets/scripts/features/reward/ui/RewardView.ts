@@ -36,7 +36,7 @@ const { ccclass, property } = _decorator;
 
 @UIRegistry.view({
     id: "reward",
-    prefab: "bundles/module/common/prefabs/RewardView",
+    prefab: "bundles/module/reward/prefabs/RewardView",
     layer: UILayer.Popup,
     cache: false,
     allowMultiple: false,
@@ -297,7 +297,7 @@ export class RewardView extends BaseView<RewardArgs> {
         this.introReady = true;
     }
 
-    /** 等标题、彩带和头像就绪再展示奖励，普通物品按需赋图，音效遵循设备设置。 */
+    /** 等发奖专用标题、共用彩带和头像就绪后再展示奖励，普通物品按需赋图。 */
     private async prepare(preparation: number): Promise<void> {
         const assets = ResourceAssetsUtils.forNode(this.node);
         const heroIcons = new Set<string>();
@@ -309,7 +309,7 @@ export class RewardView extends BaseView<RewardArgs> {
         }
         const [title, confetti, clip] = await Promise.all([
             Promise.all(Array.from({ length: 10 }, (_, index) => ResManager.getSpriteFrame(this.node,
-                ResManager.ui("common", "item-reward_effect-" + index)))),
+                ResManager.ui("reward", "item-reward_effect-" + index)))),
             Promise.all(Array.from({ length: 11 }, (_, index) => ResManager.getSpriteFrame(this.node,
                 ResManager.ui("common", "item-reward-effect-2_effect-bomb-" + index)))),
             assets.loadPath("audio/item-get", "AudioClip"),

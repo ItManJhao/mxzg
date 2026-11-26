@@ -1,12 +1,14 @@
 /**
  * 主城导航专项：直接调用生产导航，以可控时钟验证350毫秒真实等待和缓存瞬开不提示。
- * 同时检查切页、返回、身份重置、销毁、共享取消重试及框架失败去重，不加载资源或连接服务。
+ * 同时检查切页、返回、身份重置、失败去重及黑市任务跳转，不加载资源或连接服务。
  */
 import { strict as assert } from "node:assert";
 import { HomeFeatureNavigation } from "../assets/scripts/app/remake/HomeFeatureNavigation";
 import { CityNavigationUtils } from "../assets/scripts/config/CityNavigationUtils";
 import type { OpenConditionRow } from "../assets/scripts/config/GConfig";
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
+import { CityMapLayoutUtils } from "../assets/scripts/features/city/ui/CityMapLayoutUtils";
+import type { QuestViewArgs } from "../assets/scripts/features/quest/ui/QuestView";
 import { OpenCancelled, UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 
@@ -72,7 +74,7 @@ function fixture(account?: AccountModel) {
     const state = {
         current: "remake-home", authorized: true, instant: false, backs: 0,
         shared: null as ReturnType<typeof deferred> | null,
-        opens: [] as { id: string; job: ReturnType<typeof deferred> }[],
+        opens: [] as { id: string; args?: unknown; job: ReturnType<typeof deferred> }[],
         notices: [] as string[], intents: [] as string[],
     };
     const flow = new HomeFeatureNavigation({
@@ -84,9 +86,9 @@ function fixture(account?: AccountModel) {
             state.current = "remake-home";
             return true;
         },
-        openById: id => {
+        openById: (id, args) => {
             const job = state.shared || deferred();
-            state.opens.push({ id, job });
+            state.opens.push({ id, args, job });
             if (state.instant) {
                 state.current = id;
                 job.resolve();
@@ -292,7 +294,7 @@ async function failures(clock: ReturnType<typeof controlledClock>): Promise<void
     }
 }
 
-/** 主城及 VIP 前往复用旧入口门槛，日常副本直达关卡页。 */
+/** 复验地图入口、玩法门槛、铁匠铺返回及每日任务直达黑市。 */
 async function cityPlays(): Promise<void> {
     await ConfigFixtureUtils.installReal();
     const account = new AccountModel();
@@ -325,6 +327,42 @@ async function cityPlays(): Promise<void> {
         city.flow.open("main_fantasy_tower");
         await settle();
         assert.equal(city.state.opens[3].id, "tower");
+        assert.equal(CityMapLayoutUtils.cityAtomRoute("main_black_market")?.panel, "main_black_market");
+        assert.equal(city.flow.open("main_black_market"), true);
+        await settle();
+        const market = city.state.opens[4];
+        assert.equal(market.id, "black-market");
+        (market.args as { backToCity: () => void }).backToCity();
+        assert.equal(city.state.current, "remake-home");
+        assert.equal(city.flow.openQuest("daily"), true);
+        const quest = city.state.opens[5].args as QuestViewArgs;
+        assert.equal(quest.canNavigate?.("main_black_market"), true);
+        assert.equal(quest.canNavigate?.("main_smith_shop"), true);
+        assert.equal(quest.navigate?.("main_black_market"), true);
+        await settle();
+        assert.equal(city.state.opens[6].id, "black-market");
+        assert.equal(city.flow.open("main_shop"), true);
+        await settle();
+        assert.equal(city.state.opens[7].id, "market");
+
+        account.replace({ busy: false, error: "", role: { ...role, level: 4 } });
+        assert.equal(CityMapLayoutUtils.cityAtomRoute("main_smith_shop")?.panel, "smith");
+        assert.equal(city.flow.open("main_smith_shop"), true);
+        await settle();
+        assert.equal(city.state.opens.length, 8);
+        assert.equal(city.messages().at(-1), "角色达到 5 级开启铁匠铺");
+        account.replace({ busy: false, error: "", role: { ...role, level: 5 } });
+        assert.equal(city.flow.open("main_smith_shop"), true);
+        await settle();
+        const smith = city.state.opens[8];
+        assert.equal(smith.id, "smith");
+        assert.equal(HomeFeatureNavigation.tabForPage("smith"), "market");
+        const smithArgs = smith.args as { backToCity: () => void; openFeature: (id: string) => boolean };
+        assert.equal(smithArgs.openFeature("main_black_market"), true);
+        await settle();
+        assert.equal(city.state.opens[9].id, "black-market");
+        smithArgs.backToCity();
+        assert.equal(city.state.current, "remake-home");
     } finally {
         city.flow.dispose();
     }

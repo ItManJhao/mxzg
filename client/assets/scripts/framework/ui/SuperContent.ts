@@ -1,4 +1,4 @@
-/** 通用等尺寸列表：保留Layout的Inspector参数，运行时按逻辑总量布局并复用可见范围的有限格子。
+/** 通用虚拟列表：保留Layout的Inspector参数，运行时按逻辑总量布局并复用可见范围的有限格子。
  * 页面监听渲染和选择事件、提交展示数据；本组件管理节点及点击绑定，不读取业务状态。
  * 编辑器样板和明确关闭虚拟化时默认使用原生Layout；短行居中与虚拟池共用逻辑几何，不在页面手排。
  * 实际滚动只换绑，不重置惯性或发业务请求。
@@ -40,9 +40,13 @@ interface ListGeometry {
     viewWidth: number;
     /** 当前视口局部高度。 */
     viewHeight: number;
+    /** 竖向单列可选的累计占用高度，最后一项是末行底部加间距。 */
+    rowOffsets: readonly number[] | null;
+    /** 竖向变高行的最小高度加间距，用于限定虚拟池上限。 */
+    minRowStep: number;
 }
 
-/** 等尺寸单列、单行与网格的逻辑尺寸、可见格子池及当前条目事件；不保存业务状态。 */
+/** 单列、单行与网格的逻辑尺寸、可见格子池及当前条目事件；不保存业务状态。 */
 @ccclass("SuperContent")
 @executeInEditMode
 export class SuperContent extends Layout {
@@ -254,6 +258,8 @@ export class SuperContent extends Layout {
     private readonly selectHandlers = new Map<Node, () => void>();
     /** 当前逻辑数据量，setData更新；虚拟模式下通常大于实际节点量。 */
     private count = 0;
+    /** 竖向单列的可选条目根高度，按逻辑索引提供。新数据或清空列表时替换。 */
+    private rowHeights: readonly number[] | null = null;
     /** 仅编辑器存在的样板格子，不进入运行数据和选择事件。 */
     private previewNodes: Node[] = [];
     /** 上次编辑器参数签名，避免未修改时重复生成样板。 */
@@ -316,13 +322,20 @@ export class SuperContent extends Layout {
      * 提交展示数据并刷新可见格子，节点按视口容量复用；不会请求业务数据或执行页面导航。
      * 页面可在onOpen监听RENDER_ITEM/SELECT_ITEM，再仅调用setData(items)。
      * @param render 已有页面使用的直接渲染回调；省略时仍派发RENDER_ITEM，不必重复维护回调。
+     * @param rowHeights 仅用于虚拟竖向单列，按逻辑索引给出未缩放的行高，单位为设计像素。
      */
-    setData<T>(items: readonly T[], render?: (node: Node, item: T, index: number) => void): void {
+    setData<T>(items: readonly T[], render?: (node: Node, item: T, index: number) => void,
+        rowHeights?: readonly number[]): void {
         this.validateBindings();
+        if (rowHeights && (!this.virtualized || this.layoutType !== SuperLayout.Vertical
+            || rowHeights.length !== items.length || rowHeights.some(height => !Number.isFinite(height) || height <= 0))) {
+            throw this.error("变高条目只适用于虚拟竖向单列，且行高须为有限正数");
+        }
         this.clearPreview();
         const data = items.slice();
         this.items = data;
         this.count = data.length;
+        this.rowHeights = rowHeights?.slice() ?? null;
         this.renderItem = (node, index) => {
             render?.(node, data[index], index);
             this.node.emit(SuperContent.RENDER_ITEM, node, data[index], index);
@@ -359,8 +372,13 @@ export class SuperContent extends Layout {
         if (!Number.isInteger(index) || index < 0 || index >= this.count) {
             throw this.error("定位条目超出列表范围：" + index);
         }
-        const geometry = this.measure();
+        const geometry = this.rowHeights ? this.geometry ?? this.measure() : this.measure();
         const line = Math.floor(index / geometry.across);
+        const offsets = geometry.rowOffsets;
+        if (offsets) {
+            const height = offsets[line + 1] - offsets[line] - this.spacingY;
+            return new Vec2(0, this.paddingTop + offsets[line] + (height - geometry.viewHeight) / 2);
+        }
         return geometry.vertical
             ? new Vec2(0, this.paddingTop + line * geometry.stepY + (geometry.height - geometry.viewHeight) / 2)
             : new Vec2(this.paddingLeft + line * geometry.stepX + (geometry.width - geometry.viewWidth) / 2, 0);
@@ -399,7 +417,19 @@ export class SuperContent extends Layout {
         const width = size.width * template.scale.x;
         const height = size.height * template.scale.y;
         const usedWidth = columns * width + Math.max(0, columns - 1) * this.spacingX;
-        const usedHeight = rows * height + Math.max(0, rows - 1) * this.spacingY;
+        let usedHeight = rows * height + Math.max(0, rows - 1) * this.spacingY;
+        let rowOffsets: number[] | null = null;
+        let minRowStep = height + this.spacingY;
+        if (this.rowHeights && this.layoutType === SuperLayout.Vertical && logicalCount === this.count && logicalCount > 0) {
+            rowOffsets = [0];
+            minRowStep = Infinity;
+            for (const rowHeight of this.rowHeights) {
+                const step = rowHeight * template.scale.y + this.spacingY;
+                rowOffsets.push(rowOffsets[rowOffsets.length - 1] + step);
+                minRowStep = Math.min(minRowStep, step);
+            }
+            usedHeight = rowOffsets[rows] - this.spacingY;
+        }
         const contentWidth = Math.max(port.width, this.paddingLeft + this.paddingRight + usedWidth);
         const contentHeight = Math.max(port.height, this.paddingTop + this.paddingBottom + usedHeight);
         const center = this.centerShortLine && this.layoutType === SuperLayout.Grid
@@ -412,7 +442,7 @@ export class SuperContent extends Layout {
                 ? Math.max(0, contentWidth - this.paddingLeft - this.paddingRight - usedWidth) / 2 : 0,
             shortOffsetY: center && !vertical
                 ? Math.max(0, contentHeight - this.paddingTop - this.paddingBottom - usedHeight) / 2 : 0,
-            viewWidth: port.width, viewHeight: port.height,
+            viewWidth: port.width, viewHeight: port.height, rowOffsets, minRowStep,
         };
     }
 
@@ -469,13 +499,32 @@ export class SuperContent extends Layout {
     private positionCell(cell: Node, index: number, geometry: ListGeometry): void {
         const bounds = this.node.getComponent(UITransform)!;
         const ui = cell.getComponent(UITransform)!;
-        ui.setContentSize(geometry.cellWidth, geometry.cellHeight);
         const column = geometry.vertical ? index % geometry.across : Math.floor(index / geometry.across);
         const row = geometry.vertical ? Math.floor(index / geometry.across) : index % geometry.across;
+        const offsets = geometry.rowOffsets;
+        const rawHeight = offsets ? this.rowHeights![row] : geometry.cellHeight;
+        const height = offsets ? offsets[row + 1] - offsets[row] - this.spacingY : geometry.height;
+        const top = offsets ? offsets[row] : row * geometry.stepY;
+        ui.setContentSize(geometry.cellWidth, rawHeight);
         cell.setPosition(-bounds.anchorX * geometry.contentWidth + this.paddingLeft + geometry.shortOffsetX
             + column * geometry.stepX + ui.anchorX * geometry.width,
             (1 - bounds.anchorY) * geometry.contentHeight - this.paddingTop - geometry.shortOffsetY
-            - row * geometry.stepY - (1 - ui.anchorY) * geometry.height, 0);
+            - top - (1 - ui.anchorY) * height, 0);
+    }
+
+    /** 二分查找首个大于等于滚动位置的行起点，滚动动画无需逐条扫描。 */
+    private findRowOffset(offsets: readonly number[], position: number): number {
+        let start = 0;
+        let end = offsets.length;
+        while (start < end) {
+            const middle = Math.floor((start + end) / 2);
+            if (offsets[middle] < position) {
+                start = middle + 1;
+            } else {
+                end = middle;
+            }
+        }
+        return start;
     }
 
     /**
@@ -499,9 +548,13 @@ export class SuperContent extends Layout {
             const offset = Math.max(0, Math.min(Math.max(0, extent - span), raw));
             const step = geometry.vertical ? geometry.stepY : geometry.stepX;
             const padding = geometry.vertical ? this.paddingTop : this.paddingLeft;
-            const first = Math.min(this.count, Math.max(0, Math.floor((offset - padding) / step) - this.bufferLines) * geometry.across);
-            const end = Math.min(this.count, Math.max(first, (Math.ceil((offset + span - padding) / step) + this.bufferLines) * geometry.across));
-            const limit = Math.min(this.count, (Math.ceil(span / step) + 1 + 2 * this.bufferLines) * geometry.across);
+            const offsets = geometry.rowOffsets;
+            const firstLine = offsets ? this.findRowOffset(offsets, offset - padding) - 1 : Math.floor((offset - padding) / step);
+            const endLine = offsets ? this.findRowOffset(offsets, offset + span - padding) : Math.ceil((offset + span - padding) / step);
+            const first = Math.min(this.count, Math.max(0, firstLine - this.bufferLines) * geometry.across);
+            const end = Math.min(this.count, Math.max(first, (endLine + this.bufferLines) * geometry.across));
+            const poolStep = offsets ? geometry.minRowStep : step;
+            const limit = Math.min(this.count, (Math.ceil(span / poolStep) + 1 + 2 * this.bufferLines) * geometry.across);
             const occupied = new Map<number, Node>();
             this.cells = this.cells.filter(cell => {
                 if (cell.isValid) {

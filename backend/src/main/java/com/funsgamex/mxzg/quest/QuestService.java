@@ -170,12 +170,12 @@ public class QuestService {
 
     /**
      * 同步处理实质业务事件。来源已经取得角色锁并判断了原操作的幂等性。
-     * 任一来源操作回滚时，增量、首次成就标记和通知同时回滚。
+     * 已捕获期次时间的来源与玩法使用同一日界；操作回滚时增量、成就标记和通知一起撤销。
      */
     @EventListener
     @Transactional(propagation = Propagation.MANDATORY)
     public void onSourceChanged(QuestProgressEvent event) {
-        if (event.amount() < 0 || event.condition() < 0 || event.metric() == null
+        if (event.amount() < 0 || event.condition() < 0 || event.occurredAtSeconds() < 0 || event.metric() == null
                 || event.roleId() == null || event.roleId().isBlank()) {
             throw new IllegalArgumentException("任务来源事件无效");
         }
@@ -190,7 +190,7 @@ public class QuestService {
         if (!daily && !achievement) {
             return;
         }
-        long now = clock.epochSeconds();
+        long now = event.occurredAtSeconds() == 0 ? clock.epochSeconds() : event.occurredAtSeconds();
         long period = resetAt(now);
         var metric = event.metric();
         String roleId = event.roleId();
@@ -328,12 +328,12 @@ public class QuestService {
                 task.rewards(), destination(task));
     }
 
-    /** 保留可用玩法的原前往入口；仅入口相同但对应玩法尚未开放时不跳转。 */
+    /** 保留已接通的原玩法目的地；梦境与两类市场均可从各自任务前往。 */
     private static String destination(QuestRules.Task task) {
         return switch (task.metric()) {
             case LOGIN, CHALLENGE_CLAN_DUNGEON, BEAT_CLAN_DUNGEON, ACCEPT_TAVERN_TASK,
-                    PASS_ADVEN, ADVEN_LEVEL, INFINITE_CHALLENGE, COMBINE_RUNE, PROPHECY, SACRIFICE -> "";
-            case SHOP_BUY -> task.condition() == 100100 ? task.destination() : "";
+                    PASS_ADVEN, ADVEN_LEVEL, COMBINE_RUNE, PROPHECY, SACRIFICE -> "";
+            case SHOP_BUY -> task.condition() == 100100 || task.condition() == 100800 ? task.destination() : "";
             default -> task.destination();
         };
     }

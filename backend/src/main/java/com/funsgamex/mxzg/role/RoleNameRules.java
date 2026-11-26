@@ -89,6 +89,32 @@ public class RoleNameRules {
         return false;
     }
 
+    /** 聊天沿用简中配置词表，最长匹配处以等长星号盖住，其他文字保留原样。 */
+    public String maskBlocked(String text) {
+        String lowered = text.toLowerCase(Locale.ROOT);
+        boolean sameLength = lowered.length() == text.length();
+        var masked = new StringBuilder(text.length());
+        int start = 0;
+        while (start < text.length()) {
+            int end = text.length();
+            for (; end > start; end--) {
+                String candidate = sameLength ? lowered.substring(start, end)
+                        : text.substring(start, end).toLowerCase(Locale.ROOT);
+                if (blocked.contains(candidate)) {
+                    break;
+                }
+            }
+            if (end > start) {
+                masked.append("*".repeat(end - start));
+                start = end;
+            } else {
+                masked.append(text.charAt(start));
+                start++;
+            }
+        }
+        return masked.toString();
+    }
+
     /** 各抽一个原表片段拼接为候选，确认可用的昵称仍由提交事务认领。 */
     String randomCandidate() {
         var random = ThreadLocalRandom.current();

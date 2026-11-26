@@ -5,6 +5,8 @@ import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 
 import { FormationView } from "../assets/scripts/features/hero/ui/FormationView";
 import { HeroInfoView } from "../assets/scripts/features/hero/ui/HeroInfoView";
+import { HeroIllustrationView } from "../assets/scripts/features/hero/ui/HeroIllustrationView";
+import { HeroEvolutionCatalogView } from "../assets/scripts/features/hero/ui/HeroEvolutionCatalogView";
 import { HeroLevelController } from "../assets/scripts/features/hero/HeroLevelController";
 import { HeroLevelEvent } from "../assets/scripts/features/hero/utils/HeroLevelEvent";
 import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
@@ -152,12 +154,15 @@ function checkPrefab(): void {
   assert(background && (background._components as {__id__:number}[]).some(ref => layer[ref.__id__].__type__ === "cc.Widget"),
     "完整预制体已有四边Widget背景，不再组装PagePrefabShell");
   assert(layer.some(row => row.__type__ === "b1717x10KxEaZM0E/9VbOly"), "通过统一ViewportScale适配内容容器");
-  for (const name of ["btn_hero", "btn_illustrat", "btn_dragon"]) {
+  for (const name of ["RosterTab", "CatalogTab", "DragonTab"]) {
     const node = layer.find(row => row._name === name)!;
     const title = layer.find(row => row.__type__ === "cc.Node" && row._name === "Label" && idOf(row._parent) === layer.indexOf(node))!;
     assert(uiHeight(layer, layer.indexOf(title)) === 32, name + "页签文字在Prefab保存可读高度");
-    assert(name === "btn_hero" || node._active === false, "未开放页签在Prefab默认隐藏");
+    assert(node._active === (name !== "DragonTab"), "名册与图鉴页签默认显示，圣龙仅在图鉴模式展示");
   }
+  assertComp(layer, view.comp, "catalogTab", 261, "cc.Button");
+  assertComp(layer, view.comp, "evolutionCatalogButton", 172, "cc.Button");
+  assert((view.comp.catalogElements as unknown[]).length === 5, "图鉴绑定独立的五元素筛选");
 
   const boardData = layer;
   const listConfig=boardData.find((row:any)=>row.columns!==undefined) as any;
@@ -175,7 +180,7 @@ function checkPrefab(): void {
   assertComp(boardData, board.comp, "capacityLabel", 88, "cc.Label");
   assert(uiHeight(boardData, idOf(scroll.node)) === HERO_PORT_H, "滚动视口延伸至容量栏上方");
   assert(uiHeight(boardData, idOf(content._parent)) === HERO_PORT_H, "view 跟滚动视口一样高");
-  assert(uiHeight(boardData, idOf(scroll.node)) + 88 < uiHeight(boardData, boardData.findIndex(row => row._name === "spr_box")), "滚动视口与顶部偏移不超过装饰底板");
+  assert(uiHeight(boardData, idOf(scroll.node)) + 88 < uiHeight(boardData, boardData.findIndex(row => row._name === "HeroGridFrame")), "滚动视口与顶部偏移不超过装饰底板");
   const elems = board.comp.elemButtons as { __id__?: number }[];
   assert(elems.length === 6, "六个元素钮");
   for (let i = 0; i < elems.length; i++) {
@@ -392,9 +397,6 @@ function makeBoard(node: Node) {
     button.node.parent = elemRow;
     board.elemButtons.push(button);
   }
-  const evolve = new Node("btn_evolve");
-  evolve.parent = node;
-  evolve.active = false;
   return board;
 }
 
@@ -416,6 +418,32 @@ function makeView(): HeroListView {
   view.emptyLabel = board.emptyLabel;
   view.capacityLabel = board.capacityLabel;
   view.elemButtons = board.elemButtons;
+  view.catalogTab = buttonOn("CatalogTab");
+  view.catalogTab.node.parent = host;
+  view.tabFrames = [new SpriteFrame(), new SpriteFrame()];
+  const catalog = new Node("CatalogElements");
+  catalog.parent = boardRoot;
+  for (const element of ["Fire", "Water", "Wind", "Light", "Dark"]) {
+    const button = buttonOn(element + "Button");
+    button.node.parent = catalog;
+    view.catalogElements.push(button);
+  }
+  view.catalogSelection = view.catalogElements.map((button) => {
+    const ring = new Node("SelectedRing");
+    ring.parent = button.node;
+    return ring;
+  });
+  view.rosterSelection = view.elemButtons.map((button) => {
+    const ring = new Node("SelectedRing");
+    ring.parent = button.node;
+    return ring;
+  });
+  view.dragonTab = buttonOn("DragonTab");
+  view.dragonTab.node.parent = host;
+  view.astrolabeButton = buttonOn("AstrolabeButton");
+  view.astrolabeButton.node.parent = host;
+  view.evolutionCatalogButton = buttonOn("EvolutionCatalogButton");
+  view.evolutionCatalogButton.node.parent = boardRoot;
 
   return view;
 }
@@ -464,16 +492,28 @@ async function checkRemakeRoster(): Promise<void> {
   view.configure(model);
   const ui = UIManager.instance, originalOpen = ui.open, originalOpenChild = ui.openChild, originalToast = ui.toast;
   const selectedIds: string[] = [];
+  const selectedTemplates: number[] = [];
   let formationOpens = 0;
+  let evolutionOpens = 0;
   ui.toast = text => { notice = text; };
-  ui.open = (async (ctor: unknown, args: { heroId: string }) => {
-    assert(ctor === HeroInfoView, "选择直接打开英雄详情类");
-    selectedIds.push(args.heroId);
+  ui.open = (async (ctor: unknown, args: { heroId?: string; entries?: {templateId: number}[]; index?: number }) => {
+    if (ctor === HeroIllustrationView) {
+      assert(!!args.entries?.[args.index ?? -1] && args.heroId === undefined, "图鉴预览接收模板顺序和索引");
+      selectedTemplates.push(args.entries![args.index!].templateId);
+    } else {
+      assert(ctor === HeroInfoView && !!args.heroId, "名册仍按实例打开英雄详情类");
+      selectedIds.push(args.heroId!);
+    }
     return view;
   }) as typeof ui.open;
   ui.openChild = (async (owner, ctor) => {
-    assert(owner === view && ctor === FormationView, "出阵以英雄列表为所属页");
-    formationOpens++;
+    assert(owner === view, "出阵和进化图鉴以英雄列表为所属页");
+    if (ctor === HeroEvolutionCatalogView) {
+      evolutionOpens++;
+    } else {
+      assert(ctor === FormationView, "出阵打开阵容选择窗口");
+      formationOpens++;
+    }
     return view;
   }) as typeof ui.openChild;
   const baseline=EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated);
@@ -490,12 +530,12 @@ async function checkRemakeRoster(): Promise<void> {
 
     assert(cellsOf(view).length === 0, "加载时不读旧名册或图鉴");
     assert(board.emptyLabel!.string === "正在加载英雄…", "绘制加载状态");
-    assert(!board.node.getChildByName("btn_evolve")!.active, "隐藏尚未接入的进化入口");
+    assert(!view.evolutionCatalogButton!.node.active, "持有名册不显示进化图鉴入口");
     sync([]); pump(1);
     assert(board.emptyLabel!.string === "尚未获得英雄" && cellsOf(view).length === 0, "真实空名册不回退图鉴");
     assert(board.capacityLabel!.string === "英雄：0/—", "不显示旧协议容量");
     view.btnHero!.node.emit(Button.EventType.CLICK); pump(1);
-    assert(notice.includes("自动同步"), "点击不发送重复查询");
+    assert(notice === "", "点击已选名册页签不发送查询也不额外打断浏览");
     view.lineupButton!.node.emit(Button.EventType.CLICK);
     assert(formationOpens === 1, "点击只发起一次所属出阵窗");
     sync([{ id: "f45747b7-f032-4d00-9546-3504b9a967e5", templateId: 10101001, level: 7, star: 4, locked:true, deployed:true }]);pump(1);
@@ -533,6 +573,25 @@ async function checkRemakeRoster(): Promise<void> {
     assert(!dot!.active, "最后一项不可操作时立即熄灭");
     sync([deployed]);
     pump(1);
+    view.catalogTab!.node.emit(Button.EventType.CLICK); pump(1);
+    const [firstCatalog] = cellsOf(view);
+    assert(firstCatalog?.levelLabel?.string === "250" && firstCatalog?.rosterStarBadge?.active,
+      "图鉴默认火系，首卡显示该星级的满级与十星翼徽");
+    assert(firstCatalog?.face?.getComponent(Sprite)?.grayscale && !firstCatalog?.battle?.active,
+      "即时名册未获得的图鉴头像仍能浏览，不带名册上阵状态");
+    firstCatalog.node.emit(Button.EventType.CLICK);
+    assert(selectedTemplates[0] === 10105023 && selectedIds.length === 1, "图鉴打开独立只读预览");
+    assert(!view.elemButtons[0].node.parent!.active && view.catalogElements[0].node.parent!.active
+      && !view.capacityLabel!.node.parent!.active && view.evolutionCatalogButton!.node.active,
+      "图鉴只显示五元素和进化图鉴入口");
+    view.evolutionCatalogButton!.node.emit(Button.EventType.CLICK);
+    assert(evolutionOpens === 1, "进化图鉴以名册为父页打开");
+    view.catalogElements[3].node.emit(Button.EventType.CLICK); pump(1);
+    cellsOf(view)[0].node.emit(Button.EventType.CLICK);
+    assert(selectedTemplates[1] === 10405021 && view.catalogSelection[3].active, "光系切换到原版首项");
+    view.btnHero!.node.emit(Button.EventType.CLICK); pump(1);
+    assert(!view.catalogElements[0].node.parent!.active && view.capacityLabel!.node.parent!.active
+      && cellsOf(view)[0].levelLabel!.string === "7", "返回名册恢复当前实例和原筛选");
     view.runClose();
     view.lineupButton!.node.emit(Button.EventType.CLICK);
     assert(formationOpens === 1, "英雄列表关闭后已解绑出阵入口");

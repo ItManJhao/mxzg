@@ -10,6 +10,9 @@ import { EntryGateUtils } from "../../config/EntryGateUtils";
 import { GameConfig } from "../../config/GameConfig";
 import { GConfig } from "../../config/GConfig";
 import type { AccountModel } from "../../features/account/AccountModel";
+import type { ChatNoticeDestination } from "../../features/chat/data/ChatData";
+import type { ChatWorldViewArgs } from "../../features/chat/ui/ChatWorldView";
+import type { FriendEntry } from "../../features/friend/data/FriendData";
 import type { QuestTab } from "../../features/quest/data/QuestState";
 
 /** 导航需要的页面操作；不包含资源获取或业务协议。 */
@@ -46,14 +49,18 @@ type FeatureTab = "hero" | "bag" | "battle" | "summon" | "market" | "dungeon" | 
 /** 主城点击目标、页面和内容区域对应关系。 */
 const routes: Readonly<Record<string, { page: string; title: string; tab: FeatureTab }>> = {
     "hero-info": {page: "hero-info", title: "英雄详情", tab: "hero"},
+    "hero-illustration": {page: "hero-illustration", title: "英雄图鉴", tab: "hero"},
     hero: {page: "hero", title: "英雄", tab: "hero"},
     bag: {page: "bag", title: "背包", tab: "bag"},
     battle: {page: "remake-campaign", title: "战斗", tab: "battle"},
     main_summon: {page: "first-summon", title: "召唤", tab: "summon"},
     main_hero_make: {page: "hero-creation", title: "创造法阵", tab: "summon"},
     main_shop: {page: "market", title: "市场", tab: "market"},
+    main_black_market: {page: "black-market", title: "黑市", tab: "market"},
+    smith: {page: "smith", title: "铁匠铺", tab: "market"},
     dungeon: {page: "dungeon-hall", title: "副本大厅", tab: "dungeon"},
     "gold-dungeon": {page: "gold-dungeon", title: "日常副本", tab: "dungeon"},
+    dreamland: {page: "dreamland", title: "永恒梦境", tab: "dungeon"},
     arena: {page: "arena", title: "竞技场", tab: "arena"},
     tower: {page: "tower", title: "幻境之塔", tab: "tower"},
     clan: {page: "guild", title: "公会", tab: "clan"},
@@ -70,7 +77,10 @@ const questDestinations: Readonly<Record<string, string | undefined>> = {
     main_fantasy_tower: "tower",
     main_clan: "clan",
     main_shop: "main_shop",
+    main_black_market: "main_black_market",
+    main_smith_shop: "smith",
     main_mission: "gold-dungeon",
+    main_infinite: "dreamland",
     main_friend: "main_friend",
 };
 
@@ -104,13 +114,16 @@ export class HomeFeatureNavigation {
         return Object.values(routes).find(route => route.page === page)?.tab ?? null;
     }
 
-    /** 转交功能入口和页内跳转，竞技场按玩法门槛在当前内容上方弹出。 */
+    /** 转交主城建筑、底栏和任务跳转，地图玩法通过同一入口保留返回路径。 */
     open(id: string): boolean {
         if (id === "quest") {
             return this.openQuest("daily");
         }
         if (id === "main_rank") {
             return this.openRanking();
+        }
+        if (id === "chat") {
+            return this.openChat();
         }
         if (id === "main_friend" || id === "mail" || id === "main_mail") {
             return this.openSocial(id === "main_friend" ? "friend" : "mail");
@@ -127,6 +140,9 @@ export class HomeFeatureNavigation {
         if (id === "main_fantasy_tower") {
             id = "tower";
         }
+        if (id === "main_smith_shop") {
+            id = "smith";
+        }
         const route = Object.prototype.hasOwnProperty.call(routes, id) ? routes[id] : undefined;
         if (id !== "city" && !route) {
             return false;
@@ -137,7 +153,9 @@ export class HomeFeatureNavigation {
         if ((id === "dungeon" || id === "clan") && !this.canOpenGatedTab(id)) {
             return true;
         }
-        if ((id === "gold-dungeon" || id === "arena" || id === "tower") && !this.canOpenPlay(id)) {
+        if ((id === "gold-dungeon" || id === "dreamland" || id === "arena" || id === "tower"
+            || id === "main_black_market" || id === "smith")
+            && !this.canOpenPlay(id)) {
             return true;
         }
         if (id === "arena") {
@@ -168,9 +186,17 @@ export class HomeFeatureNavigation {
         this.ui.keepOnly(page);
         let args: unknown;
         if (id === "dungeon") {
-            args = { account: this.host.account, openDailyDungeon: () => this.open("gold-dungeon") };
+            args = { account: this.host.account, openDailyDungeon: () => this.open("gold-dungeon"),
+                openDreamland: () => this.open("dreamland") };
         } else if (id === "gold-dungeon") {
             args = { account: this.host.account, backToHall: () => this.open("dungeon") };
+        } else if (id === "dreamland") {
+            args = { backToHall: () => this.open("dungeon") };
+        } else if (id === "main_black_market") {
+            args = { account: this.host.account, backToCity: () => this.open("city") };
+        } else if (id === "smith") {
+            args = { account: this.host.account, backToCity: () => this.open("city"),
+                openFeature: (featureId: string) => this.open(featureId) };
         } else if (id === "clan") {
             args = { account: this.host.account };
         } else if (id === "fetter") {
@@ -215,10 +241,30 @@ export class HomeFeatureNavigation {
         return true;
     }
 
-    /** 从主城快捷入口或任务跳转打开社会功能窗口。 */
+    /** 打开聊天弹窗；好友入口可以预选会话，未入会入口沿用主城导航。 */
+    private openChat(peer?: FriendEntry): boolean {
+        const account = this.host.account;
+        if (!this.disposed && this.host.authorized() && account?.snapshot.role) {
+            const args: ChatWorldViewArgs = {
+                account,
+                onJoinGuild: () => this.open("clan"),
+                onDestination: (destination: ChatNoticeDestination) => this.open(destination),
+                ...(peer ? { initialScope: { channel: "private", peerRoleId: peer.roleId }, initialPeer: peer } : {}),
+            };
+            void this.ui.openById("chat-world", args).catch(error => {
+                if (!UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
+                    this.host.notice("聊天加载失败，请重试");
+                }
+            });
+        }
+        return true;
+    }
+
+    /** 打开好友或邮件窗口；好友行可沿同一导航进入对应私聊。 */
     private openSocial(page: "friend" | "mail"): boolean {
         if (!this.disposed && this.host.authorized()) {
-            void this.ui.openById(page).catch(error => {
+            const args = page === "friend" ? { onOpenChat: (peer: FriendEntry) => this.openChat(peer) } : undefined;
+            void this.ui.openById(page, args).catch(error => {
                 if (!UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
                     this.host.notice(page === "mail" ? "邮件加载失败，请重试" : "好友加载失败，请重试");
                 }
@@ -274,11 +320,12 @@ export class HomeFeatureNavigation {
         return true;
     }
 
-    /** VIP 任务、地图和副本卡片使用对应玩法的旧版开关，达标后才打开玩法页。 */
-    private canOpenPlay(id: "gold-dungeon" | "arena" | "tower"): boolean {
+    /** 玩法与任务入口共用等级读取；梦境一级入口按副本策划的 main_infinite 条件配置。 */
+    private canOpenPlay(id: "gold-dungeon" | "dreamland" | "arena" | "tower" | "main_black_market" | "smith"): boolean {
         const entry = CityNavigationUtils.findNavEntry(id === "gold-dungeon" ? "daily" : id);
         const role = this.host.account?.snapshot.role;
-        const gate = entry?.gateId && GameConfig.instance.getConfig(GConfig.OpenCondition, entry.gateId);
+        const gateId = id === "dreamland" ? "main_infinite" : entry?.gateId;
+        const gate = gateId && GameConfig.instance.getConfig(GConfig.OpenCondition, gateId);
         if (!role || !gate) {
             this.host.notice(routes[id].title + "条件尚未同步");
             return false;

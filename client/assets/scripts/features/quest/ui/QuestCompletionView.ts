@@ -15,7 +15,7 @@ interface QuestCompletionArgs {
 
 @UIRegistry.view({
     id: "quest-completion",
-    prefab: "bundles/module/common/prefabs/QuestCompletionView",
+    prefab: "bundles/module/quest/prefabs/QuestCompletionView",
     layer: UILayer.Toast,
     hostId: "remake-modal",
     cache: false,

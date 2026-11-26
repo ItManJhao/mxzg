@@ -144,6 +144,16 @@ public final class HeroBattleEventProcessor {
             return true;
         }
 
+        /** 返回永恒梦境续战应继承的成功触发次数，键为稳定的效果配置编号。 */
+        Map<Integer, Integer> continuedEffectUses() {
+            return Map.copyOf(effectUses);
+        }
+
+        /** 恢复已有配置的累计触发次数；临时监听和控制仍由本场重新初始化。 */
+        void restoreEffectUses(Map<Integer, Integer> carried) {
+            effectUses.putAll(carried);
+        }
+
         /** 当前已选技能的主动标志，尚未出手时不能假设为主动。 */
         public boolean activeSkill() { return current != null && current.activeType() == 1; }
         /** 当前技能实例的能量值，反击由队列入口显式传入。 */

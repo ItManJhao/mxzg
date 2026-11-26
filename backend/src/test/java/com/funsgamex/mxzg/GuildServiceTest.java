@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
+import com.funsgamex.mxzg.chat.ChatChannel;
+import com.funsgamex.mxzg.chat.ChatService;
 import com.funsgamex.mxzg.guild.GuildService;
 import com.funsgamex.mxzg.guild.GuildService.Action;
 import com.funsgamex.mxzg.guild.GuildService.Command;
@@ -38,6 +40,8 @@ class GuildServiceTest {
     @Autowired private DevelopmentLoginService login;
     /** 统一写入口与成员快照。 */
     @Autowired private GuildService guilds;
+    /** 按角色读取已提交的建会邀请和入会公告。 */
+    @Autowired private ChatService chat;
     /** 检查持久钱包扣费、角色版本以及未意外写入的资产。 */
     @Autowired private RoleRepository roles;
     /** 准备隔离测试角色等级、钻石和冷却条件。 */
@@ -47,7 +51,7 @@ class GuildServiceTest {
     /** 调整隔离测试服统一时钟，验证退会期限。 */
     @Autowired private GameClock clock;
 
-    /** 同名按区隔离、建会恰好扣 100 钻，重复确认只读当前状态，更换参数拒绝。 */
+    /** 建会按区隔离并提交一次付费和公告，重复回执或失败均不新增公告。 */
     @Test
     void createIsAtomicAndIdempotent() {
         String owner = player("local-1", 17, 100);
@@ -73,6 +77,8 @@ class GuildServiceTest {
         assertEquals(created, guilds.change(owner, create));
         reject("GUILD_REQUEST_CONFLICT", () -> guilds.change(owner,
             new Command(create.requestId(), Action.CREATE, null, null, "另一个公会", null)));
+        assertEquals(1, chat.history(owner, 0, 0).messages().stream()
+                .filter(row -> row.noticeId() == 1 && row.text().contains(name)).count());
 
         String duplicate = player("local-1", 18, 100);
         reject("GUILD_NAME_TAKEN", () -> guilds.change(duplicate, create));
@@ -120,7 +126,7 @@ class GuildServiceTest {
         assertEquals(cjkName, guilds.change(cjk, command(Action.CREATE, null, null, cjkName)).guild().name());
     }
 
-    /** 公告检查真实成员身份、长度、重放和事务回滚；成员与推荐页返回相同等级配置。 */
+    /** 核实入会聊天公告只发本会，并检查公会资料公告的权限、长度和回滚。 */
     @Test
     void noticeAndGuildProgressFollowCommittedGuildState() {
         String owner = player("local-1", 18, 100);
@@ -132,6 +138,9 @@ class GuildServiceTest {
         assertEquals(750, guild.nextLevelExperience());
         guilds.change(member, firstApplyWithNewId(guild));
         guilds.change(owner, command(Action.APPROVE, guild.id(), member, null));
+        assertEquals(List.of(2), chat.history(member, ChatChannel.GUILD, null, 0, 0).messages().stream()
+                .map(ChatService.Message::noticeId).toList());
+        assertTrue(chat.history(visitor, ChatChannel.GUILD, null, 0, 0).messages().isEmpty());
         var edit = new Command(UUID.randomUUID().toString(), Action.UPDATE_NOTICE, guild.id(), null, null, "周末集合");
         reject("GUILD_FORBIDDEN", () -> guilds.change(member, edit));
         reject("GUILD_NOT_MEMBER", () -> guilds.change(visitor, edit));

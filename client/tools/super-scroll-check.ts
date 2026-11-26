@@ -127,6 +127,33 @@ function checkVirtualAnchorsAndResize(): void {
     list.node.parent!.setScale(1, 1, 1);
     list.clear();
 }
+
+/** 变高聊天行保持真实间距，前插时的索引偏移可保持原消息位置，池量仍受视口限制。 */
+function checkVariableRows(): void {
+    const { list, scroll } = fixture(true);
+    list.layoutType = SuperLayout.Vertical;
+    const paint = (cell: Node, value: string): void => { cell.name = value; };
+    list.setData(["短", "长", "第三行"], paint, [40, 80, 120]);
+    const first = list.node.children.find(cell => cell.name === "短")!;
+    const second = list.node.children.find(cell => cell.name === "长")!;
+    assert.equal(first.getComponent(UITransform)!.height, 40);
+    assert.equal(second.getComponent(UITransform)!.height, 80);
+    assert.equal(first.position.y - second.position.y, 66);
+    assert.equal(scroll.getMaxScrollOffset().y, 158);
+    const before = list.centeredOffset(1).y;
+    list.setData(["补拉旧页", "短", "长", "第三行"], paint, [28, 40, 80, 120]);
+    assert.equal(list.centeredOffset(2).y - before, 34, "索引保位包含前插行自己的高度和间距");
+    assert.throws(() => list.setData(["无效"], undefined, [0]), /变高条目/);
+
+    const rows = data(10000);
+    list.setData(rows, paint, rows.map((_, index) => 25 + index % 21));
+    scroll.restorePosition(scroll.getMaxScrollOffset());
+    assert(list.node.children.some(cell => cell.active && cell.name === "Cell 9999"));
+    assert(list.pooledCount < 12, "变高条目依然只保留视口和缓冲格");
+    list.setData(["默认"], paint);
+    assert.equal(list.node.children[0].getComponent(UITransform)!.height, 30, "等尺寸列表不继承上一批变高配置");
+    list.clear();
+}
 const data=(count:number)=>Array.from({length:count},(_,index)=>"Cell "+index);
 
 function checkLayouts(): void {
@@ -453,7 +480,7 @@ function checkRewardLayout(): void {
 
 /** 通用奖励窗开启Inspector短行参数，1至3格居中、4格满行及5格末行保留原网格。 */
 function checkCommonRewardShortLine(): void {
-    const source = JSON.parse(readFileSync("client/assets/bundles/module/common/prefabs/RewardView.prefab", "utf8"));
+    const source = JSON.parse(readFileSync("client/assets/bundles/module/reward/prefabs/RewardView.prefab", "utf8"));
     const config = source.find((row: any) => row.columns !== undefined && row.layoutType === SuperLayout.Grid);
     assert.equal(config.centerShortLine, true, "奖励窗通过Prefab参数启用，不让业务View手排格子");
     const { list } = fixture(true);
@@ -483,6 +510,7 @@ async function main(): Promise<void> {
     checkLayouts();
     checkVirtualLists();
     checkVirtualAnchorsAndResize();
+    checkVariableRows();
     checkListEvents();
     checkShortLineCentering();
     await checkCellReuse();

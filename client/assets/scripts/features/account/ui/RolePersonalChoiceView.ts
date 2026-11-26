@@ -41,7 +41,7 @@ export interface RolePersonalChoiceArgs {
 
 @UIRegistry.view({
     id: "role-personal-choice",
-    prefab: "bundles/module/login/prefabs/RolePersonalChoiceView",
+    prefab: "bundles/module/role/prefabs/RolePersonalChoiceView",
     layer: UILayer.Dialog,
     hostId: "remake-modal",
     cache: false,

@@ -15,6 +15,8 @@ export class FriendCell extends Component {
     public static readonly ACTION = "friend-cell-action";
     /** 将公开资料查看意图转交主窗口。 */
     public static readonly PROFILE = "friend-cell-profile";
+    /** 将打开聊天的好友交给当前窗口导航。 */
+    public static readonly CHAT = "friend-cell-chat";
 
     /** 角色头像和框由统一画像工具加载。 */
     @property(Node) private face: Node | null = null;
@@ -43,6 +45,8 @@ export class FriendCell extends Component {
     private mainAction: FriendAction | null = null;
     /** 次按钮本次绑定的动作，不显示时为 null。 */
     private extraAction: FriendAction | null = null;
+    /** 当前好友行的次按钮是否用于打开聊天。每次渲染时重新判断。 */
+    private chatAction = false;
 
     /** 卡片初始化时绑定按钮，后续只替换当前行的业务数据。 */
     protected onLoad(): void {
@@ -52,7 +56,7 @@ export class FriendCell extends Component {
     }
 
     /** 将公开资料、礼物状态以及该页可用动作渲染到静态卡片。 */
-    public paint(entry: FriendEntry, mode: FriendCellMode, busy: boolean): void {
+    public paint(entry: FriendEntry, mode: FriendCellMode, busy: boolean, canOpenChat = false): void {
         this.entry = entry;
         RolePortraitUtils.paint(this.face, this.border, entry.headId, entry.borderId);
         this.displayName!.string = entry.name;
@@ -61,12 +65,19 @@ export class FriendCell extends Component {
             .toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" })}` : "";
         this.portraitButton!.interactable = mode !== "search" && mode !== "blocked";
         this.extraAction = null;
+        this.chatAction = false;
         this.extraButton!.node.active = false;
         let label: string;
         switch (mode) {
             case "friends":
                 this.mainAction = entry.sentToday ? null : "SEND";
                 label = entry.sentToday ? "已赠送" : "赠送";
+                if (canOpenChat) {
+                    this.chatAction = !busy;
+                    this.extraText!.string = "聊天";
+                    this.extraButton!.node.active = true;
+                    this.extraButton!.interactable = !busy;
+                }
                 break;
             case "remove":
                 this.mainAction = "REMOVE";
@@ -110,7 +121,18 @@ export class FriendCell extends Component {
 
     /** 交付次按钮的当前操作。 */
     private actExtra(): void {
-        this.emitAction(this.extraAction);
+        if (this.chatAction) {
+            this.openChat();
+        } else {
+            this.emitAction(this.extraAction);
+        }
+    }
+
+    /** 将当前好友传给活动窗口，虚拟格不保存聊天会话。 */
+    private openChat(): void {
+        if (this.entry && this.node.activeInHierarchy) {
+            this.node.parent?.emit(FriendCell.CHAT, this.entry);
+        }
     }
 
     /** 转交角色资料，不在卡片内管理黑名单或打开窗口。 */

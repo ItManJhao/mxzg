@@ -16,6 +16,7 @@ import com.funsgamex.mxzg.campaign.MainChapterMilestoneService;
 import com.funsgamex.mxzg.campaign.MainChapterRewardService;
 import com.funsgamex.mxzg.campaign.MainChapterRules;
 import com.funsgamex.mxzg.campaign.MainChapterService;
+import com.funsgamex.mxzg.chat.ChatService;
 import com.funsgamex.mxzg.hero.HeroBattleChapterScenario;
 import com.funsgamex.mxzg.hero.HeroBattleReplayProtocolUtils;
 import com.funsgamex.mxzg.hero.HeroBattleHealingExecutor;
@@ -74,6 +75,8 @@ class MainChapterConfigurationTest {
     @Autowired private RewardReceiptPayloads rewardPayloads;
     /** 共享游戏时钟，保持隔离领取与本机正常领取使用同一时间来源。 */
     @Autowired private GameClock clock;
+    /** 候选关卡独立奖励使用同一套事务内公告发布。 */
+    @Autowired private ChatService chat;
     /** 只读输入及计算不会修改角色资产。 */
     @Autowired private HeroLineupBattleService battles;
     /** 原队伍战力及持久输入版本。 */
@@ -464,7 +467,7 @@ class MainChapterConfigurationTest {
         return verifyCandidateRange(player(), alreadyCleared, limit, List.of(reloginAt), List.of(), Map.of());
     }
 
-    /** 按真实守军连续挑战，并在指定关卡重登或验证原配置中的独立领奖、里程碑与挂机宝箱。 */
+    /** 按真实守军连续挑战，并复验使用生产公告服务的独立领奖、重登、里程碑和挂机宝箱。 */
     private String verifyCandidateRange(Player player, int alreadyCleared, int limit, List<Integer> reloginAt,
                                         List<Integer> independentRewardAt, Map<Integer, MilestoneReward> milestoneAt)
             throws Exception {
@@ -473,7 +476,7 @@ class MainChapterConfigurationTest {
         var configured = new MainChapterRules(mapper);
         var tx = new TransactionTemplate(transactions);
         var firstRewardService = new MainChapterFirstRewardService(sessions, roles, candidate, configured,
-            firstRewards, grants, sync, jdbc, rewardPayloads, clock);
+            firstRewards, grants, sync, jdbc, rewardPayloads, clock, chat);
         var firstRewardPlans = independentRewardAt.isEmpty() ? Map.<Integer, List<RewardGrantService.Reward>>of()
             : readIndependentRewardPlans(alreadyCleared, limit);
         assertEquals(independentRewardAt, firstRewardPlans.keySet().stream().sorted().toList());

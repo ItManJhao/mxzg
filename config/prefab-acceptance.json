@@ -87,11 +87,11 @@
       "inspector": "本机 Creator 浏览器预览。"
     },
     "client/assets/bundles/module/battle/prefabs/MainChapterView.prefab": {
-      "sha256": "7c69a1a785dbc86e6ad42de58d821075e8809ca6f7ae0eb59e4fdb546e7044bb",
+      "sha256": "31dd57228f757321a1ad4a8314d065794f97bf4b51b070a54eff1f0ad8bfc245",
       "date": "2026-11-25",
       "status": "实际预览通过",
-      "scope": "Creator 393×852 竖屏独立会话，验证日常任务按钮与通关奖励并排，能打开共用任务窗并实际领取。",
-      "inspector": "本机 Creator 浏览器预览，限新增任务入口。"
+      "scope": "Creator iPhone 14 Pro 隔离服实际通关第 7 关，胜利窗关闭后核对三项每分钟新旧收益和底栏。",
+      "inspector": "浏览器预览复验正常挑战与结算；先前任务入口的单独验收见 supersededEntries。"
     },
     "client/assets/bundles/module/battle/prefabs/SkillAuditView.prefab": {
       "sha256": "27248211cd95f5e4b417e9a2f9fc93f02308545f3b5dad6891ceb6bee74632ed",
@@ -121,7 +121,7 @@
       "scope": "本批Creator 393×852设备预览/浏览器1280×720：共用旧3500/2220文案及双按钮布局、取消无奖励、确认进入通用队列。空标题/单按钮由Prefab Layout和专项验证，未做本批单按钮实际画面或全机型验收。 证据见docs/validation/reward-preview-review-20261116.json。",
       "inspector": "负责人刷新，浏览器检查；未操作Creator原生窗口或Inspector。"
     },
-    "client/assets/bundles/module/common/prefabs/HeroRewardView.prefab": {
+    "client/assets/bundles/module/reward/prefabs/HeroRewardView.prefab": {
       "sha256": "e1897ac1076e19b2ff4bf510be9b747ec4fea8a3227fca983db2da96e242cf60",
       "date": "2026-11-17",
       "status": "实际预览通过",
@@ -135,7 +135,7 @@
       "scope": "公共模板沿用原底栏红点图片、尺寸及相对位置，实际挂载画面待复验。",
       "inspector": "本轮未操作 Creator Inspector。"
     },
-    "client/assets/bundles/module/common/prefabs/RewardView.prefab": {
+    "client/assets/bundles/module/reward/prefabs/RewardView.prefab": {
       "sha256": "b754406613abb438e56cb2b97e4919705f9c3c700fc84e50bea83e4bec7daf53",
       "date": "2026-11-19",
       "status": "实际预览通过",
@@ -184,8 +184,8 @@
       "scope": "按日服对齐创建页的名称框、徽章、宣言和价格按钮；宣言标题居中，正文与提示避开装饰线和编辑图标。",
       "inspector": "Creator 393×852 独立角色实测两处弹窗、预填宣言、取消与确认回填，创建后名称、宣言同步，实际扣 100 钻。"
     },
-    "client/assets/bundles/module/guild/prefabs/GuildTextInputView.prefab": {
-      "sha256": "b9f26de7a7e66594b8707edf15e5b25affc8a83416ab7661f9808e3bc1c9e5ea",
+    "client/assets/bundles/module/common/prefabs/TextInputView.prefab": {
+      "sha256": "2cff2cd32e038344c3274a8be0439cd8863613afc572ed2a150a0d1dd785c5b6",
       "date": "2026-11-24",
       "status": "实际预览通过",
       "scope": "三处公会文本共享日服式顶部输入窗，使用项目内圆角贴图与共享模态；窗外不提交也不关闭。",
@@ -297,11 +297,11 @@
       "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
     },
     "client/assets/bundles/module/hero/prefabs/HeroIconCellView.prefab": {
-      "sha256": "088be553168b0553c8456cb78f5dbdfde35d4d529ca75645b9cb68feb4ef9dce",
-      "date": "2026-11-24",
-      "status": "实际预览通过",
-      "scope": "名册格恢复右上角等级、星级品质框、金星紫星和高星翼徽。头像按 0.9 倍缩放，格内隐藏元素图标，顶部元素筛选保留。按日服测试图集替换英雄配置使用的 109 张基础头像，出阵和名册沿用同一份资源路径及 UUID。",
-      "inspector": "Creator 独立会话竖屏验证了 7 个不同星级样本，并确认名册和出阵加载同一 SpriteFrame；截图保留在 client/temp/project-checks/hero-roster-card-preview.png。"
+      "sha256": "6522a9b7743e11382a1d6bdc9d4c29bc88e77b8b4ff38f8e2181e8cfd5a02311",
+      "date": "2026-11-25",
+      "status": "依赖所属页面检查的组合资源",
+      "scope": "脚本和组合结构通过。新版图鉴翼徽尺寸和间距待最终预览。",
+      "inspector": "保留前一版名册实际预览记录。"
     },
     "client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab": {
       "sha256": "a84828ff3f5a81e350dfff03e3a3941482efdedd65192069d23f03027151e57b",
@@ -311,11 +311,11 @@
       "inspector": "保留此版本的 Creator 序列化数据，上一版实际预览证据见 supersededEntries。"
     },
     "client/assets/bundles/module/hero/prefabs/HeroListView.prefab": {
-      "sha256": "6550d31d86d0689ef5b957ec0938bfb79c9d82faab6eb761e27d070525558064",
-      "date": "2026-11-19",
-      "status": "实际预览通过",
-      "scope": "Creator 浏览器的两种竖屏尺寸实测日服看板 act 循环，原对白与橙色高亮、去兑换反馈，筛选不重复装配，进详情清理并可返回重开。",
-      "inspector": "验收范围为本机 Creator 浏览器及独立内存服。"
+      "sha256": "92c5522758bdd5d3d64e814c21af4bb5788da7ec7699173da00363d3e4296d41",
+      "date": "2026-11-25",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "Creator iPhone 14 Pro 验证原名册、图鉴火系与光系、普通技能和进化目录。翼徽等后续微调待完成最终画面复验。",
+      "inspector": "未签收最终视觉指纹。"
     },
     "client/assets/bundles/module/hero/prefabs/HeroSkillView.prefab": {
       "sha256": "f69af1436e0ba75da28c8a4dddcc671e3775236c50c279068ebb91866ceceacd",
@@ -359,28 +359,28 @@
       "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。移除旧Notice，导航与全局反馈正常，资料页与GM打开不依赖旧主城提示层。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
       "inspector": "未操作Creator原生窗口；非负责人Inspector签收。"
     },
-    "client/assets/bundles/module/login/prefabs/RolePersonalChoiceView.prefab": {
+    "client/assets/bundles/module/role/prefabs/RolePersonalChoiceView.prefab": {
       "sha256": "18eaad2220fbf219a9bb2a6f91ef86fd1bc12f7edcde5452f1496a1abbee648e",
       "date": "2026-11-20",
       "status": "实际预览通过",
       "scope": "Creator 本机 393×852 竖屏。五页签在同一窗切换、头像更换、框激活后佩戴、图鉴预览及更换、贵重标记进度及开关、称号美术与条件。详见 docs/role-data-contract.md。",
       "inspector": "脚本绑定及 Creator 浏览器检查，范围为本机独立测试环境。"
     },
-    "client/assets/bundles/module/login/prefabs/RoleProfileView.prefab": {
+    "client/assets/bundles/module/role/prefabs/RoleProfileView.prefab": {
       "sha256": "a344a8b4ee0bec1df5f4ff583571e36247520bd34f568d6f6023850be7fdfa7e",
       "date": "2026-11-23",
       "status": "结构检查通过但视觉待验收",
       "scope": "绑定现有公会名称标签，按角色快照显示真实公会名或未加入。保留预制体 UUID 和布局。",
       "inspector": "待 Creator 预览。"
     },
-    "client/assets/bundles/module/login/prefabs/RoleRenameView.prefab": {
+    "client/assets/bundles/module/role/prefabs/RoleRenameView.prefab": {
       "sha256": "7f19d8f1f9d6270b90ac7314694162ea555fe048068403fdd40722e7bd4bb2fc",
       "date": "2026-11-20",
       "status": "实际预览通过",
       "scope": "Creator 本机 393×852 竖屏。输入新名、优先消耗改名卡、后续支付 888 钻石、顶栏与资料更新及重登恢复。详见 docs/role-data-contract.md。",
       "inspector": "脚本绑定及 Creator 浏览器检查，范围为本机独立测试环境。"
     },
-    "client/assets/bundles/module/login/prefabs/RoleSettingsView.prefab": {
+    "client/assets/bundles/module/role/prefabs/RoleSettingsView.prefab": {
       "sha256": "549f7f03c022e69169cc0f82b22142baa45b9ba90ff81adee591422d25fc4569",
       "date": "2026-11-20",
       "status": "实际预览通过",
@@ -471,28 +471,28 @@
       "scope": "Creator 隔离会话核对五类首关及滚动到各类第 9 关，确认关卡牌匾、配置材料、先后锁定和通关后的扫荡按钮。",
       "inspector": "未操作 Creator Inspector。"
     },
-    "client/assets/bundles/module/common/prefabs/QuestView.prefab": {
+    "client/assets/bundles/module/quest/prefabs/QuestView.prefab": {
       "sha256": "3d1f721b0601d47ffb187c7dc91c39eb4ff2bb728655b70e841429e3ba67a138",
       "date": "2026-11-25",
       "status": "实际预览通过",
       "scope": "核对每日与成就两页、真实进度、五档图标与红点，实领登录、召唤、捐献日常及 20 点活跃奖励。",
       "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
     },
-    "client/assets/bundles/module/common/prefabs/RankingView.prefab": {
+    "client/assets/bundles/module/ranking/prefabs/RankingView.prefab": {
       "sha256": "b586f489faa65f9718ade1090adba8c8643b28441bde5e773c0dbf1998776a84",
       "date": "2026-11-25",
       "status": "实际预览通过",
       "scope": "实际点击主城入口，核对本服三榜和跨服两榜、39 级跨服准入、点赞状态及 30000 金币到账。",
       "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
     },
-    "client/assets/bundles/module/common/prefabs/RankingDetailView.prefab": {
+    "client/assets/bundles/module/ranking/prefabs/RankingDetailView.prefab": {
       "sha256": "06f86b18ebe82e18fcdc849382e4d97da469edbdec843dfefeab272733e02da2",
       "date": "2026-11-25",
       "status": "实际预览通过",
       "scope": "由本服剧情进度卡进入详情，核对前三、进度分和本人第 2 名，退回后切换跨服。",
       "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
     },
-    "client/assets/bundles/module/common/prefabs/QuestCompletionView.prefab": {
+    "client/assets/bundles/module/quest/prefabs/QuestCompletionView.prefab": {
       "sha256": "97cbb910861e8b09f34d245f5bd8ed97d74a2e139ead3cadae16241887b96826",
       "date": "2026-11-25",
       "status": "实际预览通过",
@@ -1493,6 +1493,42 @@
         "status": "实际预览通过",
         "scope": "仅 Creator 浏览器 393×852 预览。出阵草稿两名火系显示生命与攻击各加 3%，三名各加 5% 且只高亮三人档，跨排拖动保持加成，从三名依次撤到两名与一名时退档并清除。元素窗展示五向克制的伤害与命中倍率、各组光环与五元素混合档。点击窗外只关闭元素子窗。证据见 docs/development-progress.md 的本机预览记录。",
         "inspector": "验收限上述本机浏览器操作。Inspector、发布包和真机待独立验收。"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/battle/prefabs/MainChapterView.prefab",
+      "supersededOn": "2026-11-25",
+      "reason": "增加首通后中部挂机收益对比。",
+      "record": {
+        "sha256": "7c69a1a785dbc86e6ad42de58d821075e8809ca6f7ae0eb59e4fdb546e7044bb",
+        "date": "2026-11-25",
+        "status": "实际预览通过",
+        "scope": "Creator 393×852 竖屏独立会话，验证日常任务按钮与通关奖励并排，能打开共用任务窗并实际领取。",
+        "inspector": "本机 Creator 浏览器预览，限新增任务入口。"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/hero/prefabs/HeroListView.prefab",
+      "supersededOn": "2026-11-25",
+      "reason": "增加五系英雄图鉴和进化图鉴入口。",
+      "record": {
+        "sha256": "6550d31d86d0689ef5b957ec0938bfb79c9d82faab6eb761e27d070525558064",
+        "date": "2026-11-19",
+        "status": "实际预览通过",
+        "scope": "Creator 浏览器的两种竖屏尺寸实测日服看板 act 循环，原对白与橙色高亮、去兑换反馈，筛选不重复装配，进详情清理并可返回重开。",
+        "inspector": "验收范围为本机 Creator 浏览器及独立内存服。"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/hero/prefabs/HeroIconCellView.prefab",
+      "supersededOn": "2026-11-25",
+      "reason": "为图鉴格增加单独的高星翼徽表现。",
+      "record": {
+        "sha256": "088be553168b0553c8456cb78f5dbdfde35d4d529ca75645b9cb68feb4ef9dce",
+        "date": "2026-11-24",
+        "status": "实际预览通过",
+        "scope": "名册格恢复右上角等级、星级品质框、金星紫星和高星翼徽。头像按 0.9 倍缩放，格内隐藏元素图标，顶部元素筛选保留。按日服测试图集替换英雄配置使用的 109 张基础头像，出阵和名册沿用同一份资源路径及 UUID。",
+        "inspector": "Creator 独立会话竖屏验证了 7 个不同星级样本，并确认名册和出阵加载同一 SpriteFrame；截图保留在 client/temp/project-checks/hero-roster-card-preview.png。"
       }
     }
   ]

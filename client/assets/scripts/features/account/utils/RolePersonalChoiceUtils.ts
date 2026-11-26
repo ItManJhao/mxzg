@@ -129,7 +129,7 @@ export class RolePersonalChoiceUtils {
             return {
                 id: row.level,
                 name: row.nick,
-                icon: ResManager.ui("common", "setting-identification_spr-" + row.level + "-da"),
+                icon: ResManager.ui("role", "setting-identification_spr-" + row.level + "-da"),
                 bonus,
                 progress,
                 unlocked,
@@ -217,7 +217,7 @@ export class RolePersonalChoiceUtils {
             return {
                 id: row.idx, name: row.name, status, availability,
                 tag: row.time > 0 ? "限时" : "永久",
-                icon: ResManager.ui("common", "role-title_title" + row.resources_id),
+                icon: ResManager.ui("role", "role-title_title" + row.resources_id),
                 condition: RolePersonalChoiceUtils.lang(row.remark,
                     RolePersonalChoiceUtils.titleCondition(row.idx, row.jump, row.condition)),
                 bonus: RolePersonalChoiceUtils.attributes(row.ability),

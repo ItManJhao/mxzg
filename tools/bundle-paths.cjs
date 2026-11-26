@@ -27,6 +27,26 @@ function partsOf(value) {
     return parts;
 }
 
+/** 读取同名Prefab的跨Bundle迁移证据；历史改名和已退役资源不作为别名。 */
+function movedEvidencePrefabs(workspace) {
+    const manifest = path.join(workspace, 'config/prefab-renames.json');
+    const prefix = 'client/assets/bundles/module/';
+    const moved = new Map();
+    if (!fs.existsSync(manifest)) {
+        return moved;
+    }
+    for (const { from, to, oldName, name } of readMeta(manifest)) {
+        if (oldName !== name || !from.startsWith(prefix) || !to.startsWith(prefix)) {
+            continue;
+        }
+        const source = from.slice(prefix.length);
+        const target = to.slice(prefix.length);
+        assert(!moved.has(source), '历史Prefab迁移来源重复：' + from);
+        moved.set(source, target);
+    }
+    return moved;
+}
+
 /** 为独立工作区建立只读索引；测试可传临时项目根，默认使用本仓库。 */
 function createBundlePaths(projectRoot = PROJECT_ROOT) {
     const workspace = path.resolve(projectRoot);
@@ -35,6 +55,7 @@ function createBundlePaths(projectRoot = PROJECT_ROOT) {
     assert(fs.existsSync(sourceRoot) && fs.statSync(sourceRoot).isDirectory(), 'Bundle源目录不存在：' + sourceRoot);
     assert.equal(fs.realpathSync(sourceRoot), sourceRoot, 'Bundle源目录不能通过链接跳转');
     const bundles = new Map();
+    const movedPrefabs = movedEvidencePrefabs(workspace);
 
     /** 只读取目录meta；普通分组目录不是Bundle，所有子目录继续发现，空扫描不能假通过。 */
     function discover(directory) {
@@ -93,7 +114,7 @@ function createBundlePaths(projectRoot = PROJECT_ROOT) {
         return result;
     }
 
-    /** 将当前或历史assets物理路径映射到现包根；历史已删模块可显式optional返回null。 */
+    /** 将当前或历史assets物理路径映射到现包根；current模式只接受当前物理路径。 */
     function resolveAssetPath(recorded, options) {
         assert.equal(typeof recorded, 'string', '历史资源路径必须是字符串');
         let value = recorded.replaceAll('\\', '/');
@@ -112,6 +133,9 @@ function createBundlePaths(projectRoot = PROJECT_ROOT) {
         }
         assert(inside(absolute, assets), '历史资源路径越出assets：' + recorded);
         if (fs.existsSync(absolute)) return existing(absolute, options);
+        if (options?.current) {
+            return missing('当前资源不存在：' + recorded, options);
+        }
         if (!inside(absolute, sourceRoot)) return missing('历史资源不存在：' + recorded, options);
         const relative = path.relative(sourceRoot, absolute).replaceAll('\\', '/');
         const parts = partsOf(relative);
@@ -122,6 +146,12 @@ function createBundlePaths(projectRoot = PROJECT_ROOT) {
             const effects = info('effects', options);
             if (!effects) return null;
             return existing(parts[1] === 'effects.meta' ? effects.metaFile : path.join(effects.directory, ...parts.slice(2)), options);
+        }
+        const recordedFile = parts.join('/');
+        const isMeta = recordedFile.endsWith('.meta');
+        const relocated = movedPrefabs.get(isMeta ? recordedFile.slice(0, -5) : recordedFile);
+        if (relocated) {
+            return resolveBundleFile(relocated + (isMeta ? '.meta' : ''), options);
         }
         const first = parts[0];
         const isRootMeta = parts.length === 1 && first.endsWith('.meta');

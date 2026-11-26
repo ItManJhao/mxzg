@@ -206,6 +206,7 @@ const ROUTES: {
     main_smith_shop: { panel: "smith", via: "tab" },
     main_hero_palace: { panel: "hero", via: "tab" },
     main_shop: { panel: "shop", via: "open" },
+    main_black_market: { panel: "main_black_market", via: "open" },
     main_blessingpool: { panel: "wish", via: "open" },
     main_pvp: { panel: "arena", via: "open" },
     main_fantasy_tower: { panel: "tower", via: "open" },

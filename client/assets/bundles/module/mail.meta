@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "6a710939-8adc-426a-9d8c-3d52105451bf",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "mail",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

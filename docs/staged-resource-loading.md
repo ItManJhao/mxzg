@@ -1,13 +1,15 @@
 # Bundle目录与三段加载维护
 
-截至 2026-11-24，`client/assets/bundles` 下有 22 个业务与素材 Bundle。Creator 随主包发布 `bootstrap`，其余 21 个配置为远程包。远程资源在对应阶段或使用时按依赖加载。
+截至 2026-11-25，`client/assets/bundles` 下有 31 个业务与素材 Bundle。Creator 随主包发布 `bootstrap`，其余 30 个配置为远程包。远程资源在对应阶段或使用时按依赖加载。
 
 | 源目录 | 内容 | 维护入口 |
 |---|---|---|
-| `assets/bundles/module` | 14 个页面及模块包，包括本地启动包、主城、背包、英雄、战斗、副本、公会等 | 各模块根目录的 `.meta` 声明 Bundle，View 的 `@UIRegistry.view` 登记页面预制体 |
+| `assets/bundles/module` | 23 个页面及模块包，包括本地启动包、主城、背包、英雄、战斗、副本、公会、社交、黑市和铁匠铺 | 各模块根目录的 `.meta` 声明 Bundle，View 的 `@UIRegistry.view` 登记页面预制体 |
 | `assets/bundles/resources` | 8 个共用素材包，分别为 audio、chapter、config、effects、font、icons、maps、spine | 美术按类别归包，阶段性准备目标由 [LoadingPlan](../client/assets/scripts/app/remake/LoadingPlan.ts) 统一配置 |
 
-两个父目录用于组织源文件。运行时沿用包名和包内路径，例如背包页使用 `bag/prefabs/BagView`，特效使用 `effects/包内路径`。模块的自动图集由 Creator 在构建时处理，动态加载继续使用资源原有的键。
+两个父目录用于组织源文件。运行时按包名和包内路径查找资源，例如背包页使用 `bag/prefabs/BagView`，特效使用 `effects/包内路径`。模块的自动图集由 Creator 在构建时处理。
+
+聊天、好友、邮件、任务与成就、排行和发奖的预制体及专用图片分别归 `chat`、`friend`、`mail`、`quest`、`ranking`、`reward`。个人资料、设置、改名与装饰选择归 `role`，登录、选服、更新、首次命名和新手礼归 `login`。共用物品格、外框、确认、输入、规则、红点和跨业务图片归 `common`。打开业务入口时按 View 的当前注册地址加载，静态依赖继续用原 UUID。
 
 目录与 UUID 的历史核对分别见[目录分组](validation/bundle-directory-groups-20261111.json)和[特效拆包](validation/battle-effects-move-20261113.json)。2026-11-14 的 [Web 发布产物](validation/config-package-release-review-20261114.json)对应当时的 16 个源 Bundle。近期功能与预览数据见[开发进度](development-progress.md)。
 

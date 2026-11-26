@@ -96,6 +96,16 @@ export class Protocol {
     public static readonly MARKET_BUY = "market.buy";
     /** 使用当前货架版本刷新商品，服务端判断免费或付费。 */
     public static readonly MARKET_REFRESH = "market.refresh";
+    /** 获取指定黑市页签的商品、限购和自动刷新时间。 */
+    public static readonly BLACK_MARKET_LIST = "black-market.list";
+    /** 购买指定黑市货架上的商品，服务端原子结算与计数。 */
+    public static readonly BLACK_MARKET_BUY = "black-market.buy";
+    /** 按当前库存预演一个部位的一键装备合成。 */
+    public static readonly SMITH_PREVIEW = "smith.preview";
+    /** 提交普通装备的目标配置和合成数量。 */
+    public static readonly SMITH_FORGE = "smith.forge";
+    /** 按玩家确认的资产版本提交一个部位的连续合成。 */
+    public static readonly SMITH_FORGE_ALL = "smith.forge.all";
     /** 查询本区公会与当前成员状态。 */
     public static readonly GUILD_LIST = "guild.list";
     /** 创建、申请、审批或退出公会，按同一业务编号去重。 */
@@ -140,6 +150,16 @@ export class Protocol {
     public static readonly FRIEND_CHANGE = "friend.change";
     /** 好友关系或礼物提交后的刷新通知。 */
     public static readonly FRIEND_CHANGED = "friend.changed";
+    /** 读取当前角色的可用频道、未读和最近私聊。 */
+    public static readonly CHAT_OVERVIEW = "chat.overview";
+    /** 读取指定频道或私聊最近消息及历史分页。 */
+    public static readonly CHAT_HISTORY = "chat.history";
+    /** 发布有权限的频道或私聊消息；原业务编号用于结果未知时重试。 */
+    public static readonly CHAT_SEND = "chat.send";
+    /** 保存本角色在一个频道或会话的已读位置。 */
+    public static readonly CHAT_READ = "chat.read";
+    /** 角色可访问的消息或已读提交后的空载荷刷新信号。 */
+    public static readonly CHAT_CHANGED = "chat.changed";
     /** 领取当前 VIP 档位已达成的契约任务奖励。 */
     public static readonly VIP_CLAIM = "vip.claim";
     /** 读取金币副本的关卡资格、原产物及当天挑战次数。 */
@@ -172,6 +192,10 @@ export class Protocol {
     public static readonly TOWER_SWEEP = "tower.sweep";
     /** 领取幻境之塔里程碑奖励。 */
     public static readonly TOWER_MILESTONE_CLAIM = "tower.milestone.claim";
+    /** 读取当前梦境挑战、专用阵容、里程碑及可恢复战报。 */
+    public static readonly DREAMLAND_STATE = "dreamland.state";
+    /** 在服务端确认的状态版本上执行一次梦境操作。 */
+    public static readonly DREAMLAND_ACT = "dreamland.act";
     /** 查询新手竞技场的对手、次数、积分与历史。 */
     public static readonly ARENA_STATE = "arena.state";
     /** 请求重新匹配一组配置对手。 */
@@ -267,14 +291,16 @@ export type ProtocolName = Extract<typeof Protocol[keyof typeof Protocol], strin
 export type ReadProtocol = typeof Protocol.SESSION_HEARTBEAT | typeof Protocol.GM_STATUS | typeof Protocol.GM_TIME_GET
     | typeof Protocol.ROLE_NAME_RANDOM | typeof Protocol.ROLE_TITLES_LIST | typeof Protocol.ROLE_IMAGES_LIST
     | typeof Protocol.ROLE_DECORATIONS_LIST
-    | typeof Protocol.MARKET_LIST | DailyDungeonRoutes["list"]
-    | typeof Protocol.TOWER_STATE | typeof Protocol.ARENA_STATE | typeof Protocol.ARENA_REPLAY
+    | typeof Protocol.MARKET_LIST | typeof Protocol.BLACK_MARKET_LIST | typeof Protocol.SMITH_PREVIEW
+    | DailyDungeonRoutes["list"]
+    | typeof Protocol.TOWER_STATE | typeof Protocol.DREAMLAND_STATE | typeof Protocol.ARENA_STATE | typeof Protocol.ARENA_REPLAY
     | typeof Protocol.ARENA_RANKING | typeof Protocol.ARENA_SEASON | typeof Protocol.ARENA_DEFENSE
     | typeof Protocol.ARENA_SHOP
     | typeof Protocol.GUILD_LIST | typeof Protocol.GUILD_SHOP_LIST | typeof Protocol.GUILD_DONATION_INFO
     | typeof Protocol.GUILD_RANKING | typeof Protocol.CHAPTER_QUICK_BATTLE_INFO | typeof Protocol.FORMATION_POWER
     | typeof Protocol.QUEST_LIST | typeof Protocol.RANKING_OVERVIEW | typeof Protocol.RANKING_LIST
-    | typeof Protocol.MAIL_LIST | typeof Protocol.FRIEND_STATE | typeof Protocol.FRIEND_SEARCH;
+    | typeof Protocol.MAIL_LIST | typeof Protocol.FRIEND_STATE | typeof Protocol.FRIEND_SEARCH
+    | typeof Protocol.CHAT_HISTORY | typeof Protocol.CHAT_OVERVIEW;
 /** 具有角色归属回执的操作；查询与原命令经同一条认证连接。 */
 export type RoleOperationProtocol = typeof Protocol.HERO_SUMMON | typeof Protocol.HERO_NORMAL_SUMMON
     | typeof Protocol.HERO_FIRST_SUMMON | typeof Protocol.HERO_FIRST_SUMMON_STATUS
@@ -289,15 +315,16 @@ export type RoleOperationProtocol = typeof Protocol.HERO_SUMMON | typeof Protoco
     | typeof Protocol.HERO_ARTIFACT_CHANGE
     | typeof Protocol.HERO_GOD_EQUIPMENT_SHOP_BUY
     | typeof Protocol.HERO_EQUIPMENT_CHANGE | typeof Protocol.MARKET_BUY | typeof Protocol.MARKET_REFRESH
+    | typeof Protocol.BLACK_MARKET_BUY | typeof Protocol.SMITH_FORGE | typeof Protocol.SMITH_FORGE_ALL
     | typeof Protocol.CHAPTER_FIRST_REWARD_CLAIM | typeof Protocol.CHAPTER_FIRST_REWARD_STATUS
     | typeof Protocol.ROLE_WELCOME_CLAIM | DailyDungeonRoutes["challenge"] | typeof Protocol.GUILD_CHANGE
     | typeof Protocol.GUILD_SHOP_BUY | typeof Protocol.GUILD_DONATION_DONATE | typeof Protocol.GUILD_DONATION_CLAIM
     | typeof Protocol.VIP_CLAIM | typeof Protocol.QUEST_CLAIM | typeof Protocol.RANKING_LIKE
     | typeof Protocol.CHAPTER_QUICK_BATTLE_CLAIM | typeof Protocol.MAIL_CHANGE | typeof Protocol.FRIEND_CHANGE
-    | typeof Protocol.TOWER_CHALLENGE | typeof Protocol.TOWER_SWEEP
+    | typeof Protocol.TOWER_CHALLENGE | typeof Protocol.TOWER_SWEEP | typeof Protocol.DREAMLAND_ACT
     | typeof Protocol.TOWER_MILESTONE_CLAIM | typeof Protocol.ARENA_CHALLENGE | typeof Protocol.ARENA_TICKET_BUY
     | typeof Protocol.ARENA_CHEST_CLAIM | typeof Protocol.ARENA_LIKE | typeof Protocol.ARENA_DEFENSE_SAVE
-    | typeof Protocol.ARENA_SHOP_BUY;
+    | typeof Protocol.ARENA_SHOP_BUY | typeof Protocol.CHAT_SEND | typeof Protocol.CHAT_READ;
 
 /** 现行主线请求，包括历史回执和只读战报。 */
 export type ChapterProtocol = Extract<ProtocolName, `chapter.${string}`>;
@@ -310,6 +337,91 @@ export type AuthenticatedGameProtocol = ReadProtocol | RoleOperationProtocol | C
     | typeof Protocol.ROLE_NAME_SET | typeof Protocol.ROLE_RENAME | typeof Protocol.ROLE_IMAGE_CHANGE
     | typeof Protocol.ROLE_HEAD_CHANGE | typeof Protocol.ROLE_BORDER_CHANGE | typeof Protocol.ROLE_BORDER_ACTIVATE
     | typeof Protocol.ROLE_PEERAGE_DISPLAY;
+
+/** 梦境挑战的持久行为与客户端等待阶段。 */
+export type DreamlandAction = "START" | "SELECT_BUFF" | "NEXT" | "END" | "CLAIM" | "SAVE_FORMATION";
+export type DreamlandPhase = "READY" | "SELECT_BUFF" | "NEXT_BATTLE" | "RESULT";
+
+/** 只展示配置与待结算奖品，最终到账使用实际发奖回执。 */
+export interface DreamlandRewardAmount {
+    readonly itemId: number;
+    readonly quantity: number;
+}
+
+/** 按位置保存的独立阵容格位。 */
+export interface DreamlandSlot {
+    readonly position: number;
+    readonly heroId: string;
+}
+
+/** 一组可选或已生效的增益说明。 */
+export interface DreamlandBuffData {
+    readonly id: number;
+    readonly name: string;
+    readonly description: string;
+}
+
+/** 由服务器按原首通奖励配置返回一次性领奖资格。 */
+export interface DreamlandMilestoneData {
+    readonly id: number;
+    readonly floor: number;
+    readonly claimed: boolean;
+    readonly rewards: readonly DreamlandRewardAmount[];
+}
+
+/** 可重放的末次战斗，战报的具体内容由统一战斗解析器校验。 */
+export interface DreamlandBattleData {
+    readonly battleId: string;
+    readonly floor: number;
+    readonly won: boolean;
+    readonly replay: object;
+}
+
+/** 单个角色的完整梦境状态；截止与重置字段均为服务器 Unix 秒。 */
+export interface DreamlandStateData {
+    readonly version: number;
+    readonly minimumLevel: number;
+    readonly maxFloor: number;
+    readonly startFloor: number;
+    readonly currentFloor: number;
+    readonly highestFloor: number;
+    readonly todayHighestFloor: number;
+    readonly todayRewardFloor: number;
+    readonly challengeCount: number;
+    readonly phase: DreamlandPhase;
+    readonly deadlineSeconds: number;
+    readonly resetAtSeconds: number;
+    readonly activeBuffId: number;
+    readonly buffs: readonly DreamlandBuffData[];
+    readonly slots: readonly DreamlandSlot[];
+    readonly formationId: number;
+    readonly pendingRewards: readonly DreamlandRewardAmount[];
+    readonly milestones: readonly DreamlandMilestoneData[];
+    readonly battle?: DreamlandBattleData;
+}
+
+/** 查询仅使用连接上当前角色，客户端不提交进度或标识。 */
+export type DreamlandStateRequest = Record<string, never>;
+
+/** 发出一条幂等操作，额外参数只允许出现在对应动作。 */
+export interface DreamlandActRequest {
+    readonly requestId: string;
+    readonly expectedVersion: number;
+    readonly action: DreamlandAction;
+    readonly choice?: number;
+    readonly formationId?: number;
+    readonly slots?: readonly DreamlandSlot[];
+}
+
+/** 写操作的原始回执，角色与资产版本交给认证通道和奖励展示校验。 */
+export interface DreamlandActData {
+    readonly requestId: string;
+    readonly roleId: string;
+    readonly assetRevision: number;
+    readonly action: DreamlandAction;
+    readonly state: DreamlandStateData;
+    readonly actual?: unknown;
+}
 
 /** 协议目录的可读说明，不存玩家数据。 */
 export interface ProtocolDefinition {
@@ -356,6 +468,11 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.MARKET_LIST, module: "商店", description: "普通市场当前货架及刷新次数" },
     { name: Protocol.MARKET_BUY, module: "商店", description: "购买当前货架商品" },
     { name: Protocol.MARKET_REFRESH, module: "商店", description: "刷新普通市场货架" },
+    { name: Protocol.BLACK_MARKET_LIST, module: "黑市", description: "查询页签货架、已购数量和自动刷新时间" },
+    { name: Protocol.BLACK_MARKET_BUY, module: "黑市", description: "购买指定页签和货架的商品" },
+    { name: Protocol.SMITH_PREVIEW, module: "铁匠铺", description: "预演一个部位的金币消耗和净产物" },
+    { name: Protocol.SMITH_FORGE, module: "铁匠铺", description: "合成指定普通装备" },
+    { name: Protocol.SMITH_FORGE_ALL, module: "铁匠铺", description: "确认同一资产版本的一键合成" },
     { name: Protocol.GUILD_LIST, module: "公会", description: "查询本区公会和成员状态" },
     { name: Protocol.GUILD_CHANGE, module: "公会", description: "创建、申请、审批或退出公会" },
     { name: Protocol.GUILD_UPDATED, module: "公会", description: "公会状态已提交更新" },
@@ -378,6 +495,11 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.FRIEND_SEARCH, module: "好友", description: "搜索并推荐好友" },
     { name: Protocol.FRIEND_CHANGE, module: "好友", description: "处理好友关系和赠领" },
     { name: Protocol.FRIEND_CHANGED, module: "好友", description: "好友状态已更新" },
+    { name: Protocol.CHAT_OVERVIEW, module: "聊天", description: "读取频道提醒和最近私聊" },
+    { name: Protocol.CHAT_HISTORY, module: "聊天", description: "读取频道或私聊记录" },
+    { name: Protocol.CHAT_SEND, module: "聊天", description: "发送频道或私聊消息" },
+    { name: Protocol.CHAT_READ, module: "聊天", description: "更新频道或私聊已读位置" },
+    { name: Protocol.CHAT_CHANGED, module: "聊天", description: "可访问的聊天状态已更新" },
     { name: Protocol.VIP_CLAIM, module: "VIP", description: "领取当前档位的契约任务奖励" },
     { name: Protocol.CHAPTER_QUICK_BATTLE_INFO, module: "主线", description: "读取今日快速战斗次数与报价" },
     { name: Protocol.CHAPTER_QUICK_BATTLE_CLAIM, module: "主线", description: "确认报价并结算快速战斗" },
@@ -396,6 +518,8 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.TOWER_CHALLENGE, module: "幻境之塔", description: "挑战下一层及结算" },
     { name: Protocol.TOWER_SWEEP, module: "幻境之塔", description: "扫荡已通关最高层" },
     { name: Protocol.TOWER_MILESTONE_CLAIM, module: "幻境之塔", description: "领取通关里程碑奖励" },
+    { name: Protocol.DREAMLAND_STATE, module: "永恒梦境", description: "读取梦境挑战、阵容与可恢复战报" },
+    { name: Protocol.DREAMLAND_ACT, module: "永恒梦境", description: "执行梦境挑战、增益、布阵或领取操作" },
     { name: Protocol.ARENA_STATE, module: "竞技场", description: "读取当前对手、积分、次数与战报列表" },
     { name: Protocol.ARENA_REFRESH, module: "竞技场", description: "刷新当前对手" },
     { name: Protocol.ARENA_CHALLENGE, module: "竞技场", description: "发起挑战并结算积分与奖励" },

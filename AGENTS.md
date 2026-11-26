@@ -167,7 +167,9 @@ TypeScript 优先使用 JSDoc，Java 使用 Javadoc，Python 使用 docstring，
 - 移动Cocos脚本必须同步移动原meta；发现Creator提前生成新meta时先核对UUID引用，保留原UUID并清理孤立meta。目录大小写改名使用中间名；迁移前关闭占用目录的编辑器，完成后检查类型、脚本绑定及所有导入路径大小写。
 - throw按失败语义审查，不按数量归零。普通提示/可忽略通知记录分类日志并明确不更新状态；展示缺失返回明确缺失结果；非法协议、资产与无法继续的资源绑定仍拒绝/抛错，由能决定恢复方式的边界记录一次。禁止为减少throw而吞错、伪造成功、静默return空数据。
 
-- 模块归档同时覆盖资源目录：例如features/bag和bundles/module/bag/prefabs均使用小写模块目录；BagView等预制体/类名保留PascalCase。bundles/resources收纳audio/chapter/config/font/icons/maps/spine等通用素材包，bundles/module收纳页面模块、common和bootstrap；两个父目录不设为Bundle，不改变原包名、远程配置或运行时“包名/包内路径”。资源改路径后修改生成输入并重新生成资源索引，不手改生成结果；同步加载路径、测试、当前文档，校验原资源及meta UUID未变。
+- 模块归档同时覆盖资源目录。例如 `features/bag` 和 `bundles/module/bag/prefabs` 均使用小写模块目录，BagView 等预制体和类名保留 PascalCase。`bundles/resources` 收纳共用素材包，`bundles/module` 收纳页面模块、common 和 bootstrap，两个父目录是普通目录。移动父分组时保留原包名和包内路径。调整资源归属时同步加载地址、测试、当前文档和生成输入，重新生成资源索引，保留资源原 UUID。
+
+- 业务窗口及专用资源归所属模块。common 收纳跨模块共用的控件和素材。login 收纳登录、选服、更新及首次入场资源，个人资料和设置等窗口放在 role。
 
 - 主线阵容也遵守模块Controller不持有View：保存协议与回执进度归FormationController/FormationSaveModel，权威阵容归HeroRosterModel，未保存草稿及交互归FormationView；页面关闭不销毁模块，账号变化由AssetStateBinding统一协调。连接切换与旧回包隔离统一归GameSocketClient和应用装配的AccountController.deliverAuthenticated；BaseController只管理模块生命周期，不再保存会话代次。模块与View不得比较账号/角色键来隔离异步回包。
 

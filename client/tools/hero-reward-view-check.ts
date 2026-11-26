@@ -43,7 +43,7 @@ function classId(path: string): string {
 
 /** 由实际Prefab节点及属性引用装配替身，布局只读取验证，不在工具中另造一套窗口。 */
 function fixture(): { view: HeroRewardView; root: Node; audio: { plays: number; stops: number } } {
-    const rows = read("client/assets/bundles/module/common/prefabs/HeroRewardView.prefab");
+    const rows = read("client/assets/bundles/module/reward/prefabs/HeroRewardView.prefab");
     const objects = new Map<number, any>();
     rows.forEach((row: any, index: number) => {
         if (row.__type__ === "cc.Node") {
@@ -84,7 +84,7 @@ function fixture(): { view: HeroRewardView; root: Node; audio: { plays: number; 
 
 /** 原RewardCell关键坐标、独立骨骼挂点及34份PVR原像素输入均来自实际文件。 */
 function checkStatic(): void {
-    const rows = read("client/assets/bundles/module/common/prefabs/HeroRewardView.prefab");
+    const rows = read("client/assets/bundles/module/reward/prefabs/HeroRewardView.prefab");
     const rootId = rows[0].data.__id__;
     const prefab = rows[rows[rootId]._prefab?.__id__];
     assert.equal(prefab?.__type__, "cc.PrefabInfo", "根必须带Creator可编辑的PrefabInfo，运行替身不能替代编辑器结构");
@@ -119,8 +119,10 @@ function checkStatic(): void {
     const evidence = read("docs/validation/hero-reward-assets-20261117.json");
     assert.equal(evidence.files.length, 34);
     for (const file of evidence.files) {
-        assert.equal(createHash("sha256").update(readFileSync(file.path)).digest("hex"), file.sha256);
-        assert.equal(read(file.path + ".meta").uuid, file.imageUuid);
+        // 沿用原像素证据，专用动画帧从当前奖励包读取，预言树共用图仍按原位置核对。
+        const current = file.path.replace(/(bundles\/module\/)common(\/ui\/reward-effect2?_)/, "$1reward$2");
+        assert.equal(createHash("sha256").update(readFileSync(current)).digest("hex"), file.sha256);
+        assert.equal(read(current + ".meta").uuid, file.imageUuid);
     }
 }
 

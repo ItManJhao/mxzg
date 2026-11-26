@@ -1,4 +1,4 @@
-/** 商店购买确认窗。显示原报价与所选次数，确认后只将购买意图交还来源页面的控制器。 */
+/** 商店购买确认窗。显示原报价、钱包允许的所选次数，确认后只将购买意图交还来源页面的控制器。 */
 import { _decorator, Button, Label, Slider, Sprite, UITransform } from "cc";
 import { EventDispatcher, type EventPayloads } from "../../../framework/EventDispatcher";
 import { ResManager } from "../../../framework/assets/ResManager";
@@ -7,6 +7,7 @@ import { UILayer } from "../../../framework/ui/UILayer";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { UiKitUtils } from "../../../framework/ui/UiKitUtils";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
+import type { AccountModel } from "../../account/AccountModel";
 import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
 import { BagEvent } from "../../bag/utils/BagEvent";
 import type { MarketOffer } from "../MarketModel";
@@ -14,6 +15,8 @@ import type { MarketOffer } from "../MarketModel";
 /** 玩家打开的报价与同一货架周期内的最新可购买情况。 */
 interface MarketBuyArgs {
     readonly offer: MarketOffer;
+    /** 使用角色钱包时监听统一账号快照，口袋货币继续走背包更新事件。 */
+    readonly account?: AccountModel;
     /** 来源货架已换期时返回空，旧确认窗口随即关闭。 */
     readonly read: () => { readonly offer: MarketOffer; readonly maximum: number; readonly busy: boolean } | null;
     /** 来源货架的状态事件，例如普通市场更新或统一名册更新。 */
@@ -76,7 +79,7 @@ export class MarketBuyView extends BaseView<MarketBuyArgs> {
     /** 当前同步余额和货架共同允许的购买上限，重绘时更新。 */
     private maximum = 0;
 
-    /** 装入本次报价；绑定窗口交互以及余额和货架变化。 */
+    /** 装入本次报价；绑定窗口交互、钱包或背包余额和货架变化。 */
     public onOpen(args?: MarketBuyArgs): void {
         if (!args) {
             throw new Error("市场确认窗口缺少商品报价");
@@ -105,6 +108,9 @@ export class MarketBuyView extends BaseView<MarketBuyArgs> {
             }
         });
         this.ownListener(EventDispatcher.instance.on(BagEvent.BagUpdate, this, this.render));
+        if (args.account) {
+            this.ownListener(args.account.subscribe(() => this.render()));
+        }
         for (const event of args.refreshOn) {
             this.ownListener(EventDispatcher.instance.on(event, this, this.render));
         }

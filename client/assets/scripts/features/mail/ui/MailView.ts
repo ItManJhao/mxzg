@@ -18,7 +18,7 @@ const { ccclass, property } = _decorator;
 
 @UIRegistry.view({
     id: "mail",
-    prefab: "bundles/module/common/prefabs/MailView",
+    prefab: "bundles/module/mail/prefabs/MailView",
     layer: UILayer.Popup,
     hostId: "remake-modal",
     cache: false,

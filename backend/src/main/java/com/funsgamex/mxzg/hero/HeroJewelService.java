@@ -28,14 +28,19 @@ public class HeroJewelService {
     /** 旧宝石 4102～4107 的单槽、批量和合成操作。 */
     public enum Action { EQUIP, UNEQUIP, EQUIP_ALL, UNEQUIP_ALL, COMBINE, COMBINE_ALL }
 
-    /** 目标物品是配置 ID。单镶/卸另带读到的原模板，零代表当时空槽。 */
+    /** 目标物品是配置 ID。单镶/卸校验原模板，一键合成可绑定预览的持久资产版本。 */
     public record Request(String requestId, String heroId, Action action, int itemId, int slot,
-                          int expectedItemId, int count) {}
+                          int expectedItemId, int count, Long expectedRevision) {
+        /** 构造无预览版本的既有英雄宝石请求。 */
+        public Request(String requestId, String heroId, Action action, int itemId, int slot, int expectedItemId, int count) {
+            this(requestId, heroId, action, itemId, slot, expectedItemId, count, null);
+        }
+    }
 
     /** 操作及原参数用于回包校验；合成只返回净新增物品，结果中不携带整份资产。 */
     public record Receipt(String requestId, String roleId, String heroId, Action action, int itemId, int slot,
                           int expectedItemId, int count, long assetRevision, boolean changed,
-                          List<RewardGrantService.Reward> rewards) {}
+                          List<RewardGrantService.Reward> rewards, Long expectedRevision) {}
 
     /** 英雄和业务请求的持久身份始终是 UUID 字符串。 */
     private static final String UUID = "[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}";
@@ -77,7 +82,7 @@ public class HeroJewelService {
         this.mapper = mapper;
     }
 
-    /** 重发按角色、编号和所有原参去重，失败不提交资产和回执。 */
+    /** 在角色锁内先重放原回执，再校验一键合成预览的持久版本；拒绝时无需回退客户端估算。 */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Receipt change(String token, Request request) {
         requireValid(request);
@@ -89,11 +94,14 @@ public class HeroJewelService {
         Receipt previous = previous(roleId, request.requestId());
         if (previous != null) {
             var oldRequest = new Request(previous.requestId(), previous.heroId(), previous.action(), previous.itemId(),
-                previous.slot(), previous.expectedItemId(), previous.count());
+                previous.slot(), previous.expectedItemId(), previous.count(), previous.expectedRevision());
             if (!oldRequest.equals(request)) {
                 throw error(HttpStatus.CONFLICT, "IDEMPOTENCY_CONFLICT");
             }
             return previous;
+        }
+        if (request.expectedRevision() != null && request.expectedRevision() != roles.revision(roleId)) {
+            throw error(HttpStatus.CONFLICT, "HERO_JEWEL_PREVIEW_CHANGED");
         }
         boolean changed;
         List<RewardGrantService.Reward> rewards = List.of();
@@ -112,7 +120,8 @@ public class HeroJewelService {
         }
 
         var receipt = new Receipt(request.requestId(), roleId, request.heroId(), request.action(), request.itemId(),
-            request.slot(), request.expectedItemId(), request.count(), roles.revision(roleId), changed, rewards);
+            request.slot(), request.expectedItemId(), request.count(), roles.revision(roleId), changed, rewards,
+            request.expectedRevision());
         jdbc.update("INSERT INTO game_hero_jewel_request(role_id,request_id,receipt_json) VALUES (?,?,?)",
             roleId, request.requestId(), mapper.writeValueAsString(receipt));
         return receipt;
@@ -275,7 +284,7 @@ public class HeroJewelService {
             rows -> rows.next() ? mapper.readValue(rows.getString(1), Receipt.class) : null, roleId, requestId);
     }
 
-    /** 每种动作只接收实际契约字段；资产数量和旧槽不能为空或用无效数。 */
+    /** 校验每个动作的领域参数，预览版本只用于一键合成且须是客户端可精确表示的整数。 */
     private static void requireValid(Request request) {
         if (request == null || !validUuid(request.requestId()) || request.action() == null) {
             throw error(HttpStatus.BAD_REQUEST, "INVALID_HERO_JEWEL_REQUEST");
@@ -292,7 +301,9 @@ public class HeroJewelService {
             case COMBINE_ALL -> request.heroId() == null && validSlot && request.itemId() == 0
                 && request.expectedItemId() == 0 && request.count() == 0;
         };
-        if (!valid) {
+        Long expectedRevision = request.expectedRevision();
+        if (!valid || (expectedRevision != null && (request.action() != Action.COMBINE_ALL
+                || expectedRevision < 0 || expectedRevision > 9_007_199_254_740_991L))) {
             throw error(HttpStatus.BAD_REQUEST, "INVALID_HERO_JEWEL_REQUEST");
         }
     }

@@ -80,7 +80,7 @@ V8 为 game_role 增加基础列。已有新版记录保持原 ID、等级和钱
 
 ## 2026-11-03：正式服截图对应的只读详情实现
 
-用户提供的 [顶部栏](images/role-formal-header-reference.png) 与 [自身资料页](images/role-formal-profile-reference.png) 是本次效果依据。详情使用原 SettingLayer 的背景和图标，保留 UUID `1aedb5a3-4e33-552f-843c-c419fd8174a4`，改名为 `RoleProfileView.prefab`，与绑定的 View 一致；未改动公开玩家资料 RoleInfoLayer。
+详情使用原 SettingLayer 的背景和图标，保留 UUID `1aedb5a3-4e33-552f-843c-c419fd8174a4`。资料、设置、改名和装饰选择放在 `role` Bundle，首次命名与新手赠礼在 `login`。界面可对照用户提供的[顶部栏](images/role-formal-header-reference.png)与[自身资料页](images/role-formal-profile-reference.png)。[RoleProfileView](../client/assets/bundles/module/role/prefabs/RoleProfileView.prefab)
 
 - 顶部头像和头像框使用 `headId`、`borderId`；旧资源 head-icon_0 是真实默认头像，不能把 0 理解为不显示。头像资源与英雄图标分开登记，形象仍由 imageId 表达，不混用。
 - 头像点击打开资料页，关闭回到原页面；主城和背包共用同一入口。资料由 HomePageBinding 的唯一账号订阅经 RemakeHomeView.render 注入，不新增角色查询，也不复制 Model。

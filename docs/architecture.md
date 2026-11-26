@@ -196,10 +196,13 @@ bundles/resources收纳audio/chapter/config/effects/font/icons/maps/spine；bund
 | features/bag | BagController 处理库存协议和精英碎片合成。BagModel 持有库存。BagInfoView、EquipmentInfoView、SpiritInfoView 按类型显示详情 | 普通道具使用、分解、图鉴及精灵养成待恢复 |
 | features/hero | HeroRosterController 收发召唤，HeroRosterModel 保存名册、阵容及佩戴状态。英雄详情按操作调用对应培养 Controller。FormationView 持有草稿，FormationController 收发保存 | 穿脱、升星、宝石、圣器与神装的具体入口见[英雄维护表](hero-lineup-contract.md#当前代码与开放范围) |
 | features/market | MarketController 查询货架、发送购买和刷新请求。MarketView 展示服务端价格、库存及刷新费用 | 主城普通市场与英雄模块的神装商店使用各自的货架和规则 |
+| features/blackmarket | BlackMarketController 查询和更新各商店货架，BlackMarketModel 保存报价及期次，BlackMarketView 复用通用物品和数量选择 | 道具成交推进每日任务，竞技兑换与竞技场共用周账本。[黑市协议](network-contract.md#黑市) |
+| features/smith | SmithController 接收装备预演和结算，SmithModel 保存当前确认的服务端预演，SmithView 按原页签展示配方和持有实例 | 装备一键确认核资产版本，宝石复用英雄宝石协议。金币、背包和奖励通过统一入口更新。[铁匠铺协议](network-contract.md#铁匠铺) |
 | features/dungeon | DungeonHallView 显示副本入口与产物。五类日常副本复用同一关卡视图和消息结构。DailyDungeonController 按类型收发，DailyDungeonModel 按类型更新权威状态，挑战和扫荡由同一回包交付结算 | 当前可玩的关卡与解锁条件见[进度](development-progress.md) |
 | features/tower | TowerController 收发查询、挑战和里程碑领取，TowerModel 保存服务器返回的层数和领奖状态 | [幻境之塔协议](network-contract.md#幻境之塔) |
 | features/arena | ArenaController 收发挑战、攻防、排名、赛季与商店请求，ArenaModel 保存快照与回执。ArenaView 负责四页签，防守编辑复用共享布阵，结算复用通用战报 | [竞技场协议](network-contract.md#竞技场) |
 | features/ranking | RankingController 处理主城榜首、榜单详情与点赞，RankingModel 保存本服和跨服榜单状态 | 公会战力来源与公会排行共用；竞技场积分榜归竞技场。[主城排行榜](network-contract.md#主城排行榜) |
+| features/chat | ChatController 组织发送、历史补读和已读，ChatModel 按频道和私聊对象维护唯一可见记录 | 主城红点和弹窗共用未读状态，房间变化清理旧记录，换号重置，重连按游标补齐。[聊天频道](network-contract.md#聊天频道) |
 | features/friend、features/mail | FriendController 和 MailController 各自向唯一 Model 提交查询及写操作结果，在线变更通知由账号通道分发 | 好友关系、礼物和信箱各有持久记录；奖励到账走共享资产事务。[邮件与好友](network-contract.md#邮件与好友) |
 | features/quest | QuestController 收发任务与领奖消息，QuestModel 保存日常、活跃度与成就进度；完成提示由应用层展示 | 进度取自服务端已提交的玩法操作。[每日任务与成就](network-contract.md#每日任务与成就) |
 | features/vip | VipController 处理任务领奖，VipModel 从统一快照读取等级与任务进度，底栏红点读取同一状态 | [各档任务与进度来源](network-contract.md#vip-契约任务) |
@@ -220,7 +223,7 @@ bundles/resources收纳audio/chapter/config/effects/font/icons/maps/spine；bund
 | 文件 | 负责什么 | 修改与保留边界 |
 |---|---|---|
 | UIManager、BaseView、UIRegistry、UILayer、ViewCloseUtils | 页面注册、分层、异步打开、关闭、取消、缓存与生命周期；ViewCloseUtils连接BaseView的关闭动作 | 核心开关入口，不保存角色资产；页面静态节点不在这里另造 |
-| SuperScroll、SuperContent | 原生滚动手势与等尺寸虚拟列表：完整逻辑尺寸、视口范围、缓冲行及有限节点池 | virtual默认true、bufferLines默认1；原锚点/Cell正缩放保留，view/content局部缩放为1，业务只提交数据和监听事件 |
+| SuperScroll、SuperContent | 原生滚动手势与虚拟列表，计算完整逻辑尺寸、可见窗口、缓冲行及有限节点池 | 默认按等尺寸排列。纵向单列可在 `setData` 提供每行高度，聊天用它展示不同长度的气泡并在加载旧消息时保持滚动位置 |
 | ViewportLayoutUtils、ChromeLayoutUtils | 读取当前可见区域，处理全屏根、背景和顶底栏在不同视口中的尺寸关系 | 运行时可见尺寸与固定布局分开；不能把逐个子节点坐标修补都归为必要适配 |
 | ViewportScale | 按外根可用宽度与设计宽度，对一个内容容器等比缩放 | 在Prefab绑定target、designWidth、maxScale；位置、纵向留白与拉伸交给Widget，不识别模块名或机型 |
 | UiKitUtils | 现有演出、飘字、动态挂点及旧显示回退使用的节点构造辅助 | 无人使用的输入框链已删除；新页面主体与固定控件继续写在Prefab |

@@ -20,7 +20,7 @@
 |---|---|
 | 推荐、查找与大厅 | [GuildView](../client/assets/scripts/features/guild/ui/GuildView.ts) |
 | 建会与徽章选择 | [GuildCreateView](../client/assets/scripts/features/guild/ui/GuildCreateView.ts)、[GuildBadgePickerView](../client/assets/scripts/features/guild/ui/GuildBadgePickerView.ts) |
-| 名称、宣言与查找名称编辑 | [GuildTextInputView](../client/assets/scripts/features/guild/ui/GuildTextInputView.ts) |
+| 名称、宣言与查找名称编辑 | [TextInputView](../client/assets/scripts/features/common/ui/TextInputView.ts) |
 | 成员、退会与审批 | [GuildMemberView](../client/assets/scripts/features/guild/ui/GuildMemberView.ts)、[GuildApprovalView](../client/assets/scripts/features/guild/ui/GuildApprovalView.ts) |
 | 公会状态与已认证请求 | [GuildController](../client/assets/scripts/features/guild/GuildController.ts)、[GuildModel](../client/assets/scripts/features/guild/GuildModel.ts) |
 | 准入、扣费及成员事务 | [GuildService](../backend/src/main/java/com/funsgamex/mxzg/guild/GuildService.java)、[V51 成员迁移](../backend/src/main/resources/db/migration/V51__guild_membership.sql)、[V52 徽章迁移](../backend/src/main/resources/db/migration/V52__guild_badge.sql) |

@@ -1,5 +1,5 @@
-/** 英雄模块的唯一名册快照，保存服务端同步的英雄、阵容、召唤资格与独立装备。 */
-import { HeroSnapshotUtils, type OwnedHero, type HeroRosterInfo, type MainFormation } from "./data/HeroSnapshotUtils";
+/** 英雄模块的唯一名册快照，保存服务端同步的英雄、图鉴、阵容、召唤资格与独立装备。 */
+import { HeroSnapshotUtils, type HeroIllustrationProgress, type OwnedHero, type HeroRosterInfo, type MainFormation } from "./data/HeroSnapshotUtils";
 import { FirstSummonData, type SummonDetails } from "./data/FirstSummonData";
 import { BaseModel } from "../../framework/BaseModel";
 import { ServerClock } from "../../core/ServerClock";
@@ -12,6 +12,8 @@ export interface HeroRosterState {
     readonly error: string;
     /** 同一快照下发的总容量；缺失时显示未同步，不使用本地默认上限。 */
     readonly rosterInfo?: HeroRosterInfo;
+    /** 按模板累计的最高星级，同一资产快照提交，换号时与名册一起清空。 */
+    readonly illustrations?: readonly HeroIllustrationProgress[];
     /** 同一统一快照的主线阵型；换号时一起清空。 */
     readonly mainFormation?: MainFormation;
     /** 服务端下发的下次普通免费召唤时间（Unix 秒），未同步时等待快照。 */
@@ -49,7 +51,7 @@ export class HeroRosterModel extends BaseModel {
         return now === null ? null : Math.max(0, freeAt - now);
     }
 
-    /** 从同一份资产快照读取英雄、阵容、召唤、神装和圣器，提交前一次校验。 */
+    /** 从同一份资产快照读取英雄、图鉴、阵容、召唤、神装和圣器，提交前一次校验。 */
     public static readSnapshot(state: Record<string, unknown>): HeroRosterState {
         const heroes = HeroSnapshotUtils.readOwnedHeroes(state.heroes);
         const heroIds = new Set(heroes.map(hero => hero.id));
@@ -57,6 +59,7 @@ export class HeroRosterModel extends BaseModel {
             status: "ready",
             heroes,
             rosterInfo: HeroSnapshotUtils.readHeroRosterInfo(state.heroRoster),
+            illustrations: HeroSnapshotUtils.readIllustrations(state.heroIllustration),
             mainFormation: HeroSnapshotUtils.readMainFormation(state.mainFormation, heroes),
             normalFreeAtSeconds: FirstSummonData.readFreeAt(state.heroSummon),
             summonDetails: FirstSummonData.readDetails(state.heroSummon),
@@ -66,11 +69,12 @@ export class HeroRosterModel extends BaseModel {
         };
     }
 
-    /** 提交整批状态，复制英雄避免外部后续修改。 */
+    /** 提交整批状态，复制英雄和图鉴进度避免外部后续修改。 */
     replace(state: HeroRosterState): void {
         this.state = Object.freeze({
             ...state,
             rosterInfo: state.rosterInfo ? Object.freeze({ ...state.rosterInfo }) : undefined,
+            illustrations: state.illustrations && Object.freeze(state.illustrations.map(row => Object.freeze({ ...row }))),
             heroes: Object.freeze(state.heroes.map(hero => Object.freeze({ ...hero })))
         });
         this.incrementVersion();

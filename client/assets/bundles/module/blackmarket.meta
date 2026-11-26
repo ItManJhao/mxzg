@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "2053ede3-74a3-4f9b-ab8d-6a29e80f377a",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "blackmarket",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

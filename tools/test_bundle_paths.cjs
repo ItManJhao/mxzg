@@ -82,6 +82,28 @@ fixture(project => {
 });
 
 fixture(project => {
+    addBundle(project, 'module/login', 'login');
+    const role = addBundle(project, 'module/profile-source', 'role');
+    const prefab = path.join(role, 'prefabs/RoleProfileView.prefab');
+    fs.mkdirSync(path.dirname(prefab));
+    fs.writeFileSync(prefab, 'original profile prefab');
+    fs.writeFileSync(prefab + '.meta', 'original profile meta');
+    fs.mkdirSync(path.join(project, 'config'));
+    fs.writeFileSync(path.join(project, 'config/prefab-renames.json'), JSON.stringify([{
+        from: 'client/assets/bundles/module/login/prefabs/RoleProfileView.prefab',
+        to: 'client/assets/bundles/module/role/prefabs/RoleProfileView.prefab',
+        oldName: 'RoleProfileView',
+        name: 'RoleProfileView',
+    }]));
+    const paths = createBundlePaths(project);
+    assert.equal(paths.resolveAssetPath('bundles/login/prefabs/RoleProfileView.prefab'), prefab);
+    assert.equal(paths.resolveAssetPath('client/assets/bundles/module/login/prefabs/RoleProfileView.prefab.meta'), prefab + '.meta');
+    assert.equal(paths.resolveBundleFile('role/prefabs/RoleProfileView.prefab'), prefab);
+    assert.throws(() => paths.resolveBundleFile('login/prefabs/RoleProfileView.prefab'), /不存在/);
+    assert.throws(() => paths.resolveAssetPath('bundles/module/login/prefabs/RoleProfileView.prefab', { current: true }), /不存在/);
+});
+
+fixture(project => {
     addBundle(project, 'one/first', 'duplicate');
     addBundle(project, 'two/second', 'duplicate');
     assert.throws(() => createBundlePaths(project), /Bundle名称重复/);
@@ -95,4 +117,4 @@ fixture(project => {
     assert.throws(() => createBundlePaths(project), SyntaxError, '坏meta不能被当作普通空分组忽略');
 });
 
-console.log('Bundle源目录定位通过：meta发现、普通分组、历史特效拆包、旧运行时键拒绝、缺失/重复/空扫描和越界拒绝。');
+console.log('Bundle源目录定位通过：meta发现、普通分组、历史特效与Prefab拆包、旧运行时键拒绝、缺失/重复/空扫描和越界拒绝。');

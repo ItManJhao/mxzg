@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "59c65d13-0425-4023-8047-efc141232c79",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "chat",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

@@ -2119,14 +2119,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "Creator 393×852 竖屏独立会话，验证日常任务按钮与通关奖励并排，能打开共用任务窗并实际领取。",
-    "sha256": "7c69a1a785dbc86e6ad42de58d821075e8809ca6f7ae0eb59e4fdb546e7044bb",
+    "visual": "Creator iPhone 14 Pro 隔离服实际通关第 7 关，胜利窗关闭后核对三项每分钟新旧收益和底栏。",
+    "sha256": "31dd57228f757321a1ad4a8314d065794f97bf4b51b070a54eff1f0ad8bfc245",
     "acceptance": {
-      "sha256": "7c69a1a785dbc86e6ad42de58d821075e8809ca6f7ae0eb59e4fdb546e7044bb",
+      "sha256": "31dd57228f757321a1ad4a8314d065794f97bf4b51b070a54eff1f0ad8bfc245",
       "date": "2026-11-25",
       "status": "实际预览通过",
-      "scope": "Creator 393×852 竖屏独立会话，验证日常任务按钮与通关奖励并排，能打开共用任务窗并实际领取。",
-      "inspector": "本机 Creator 浏览器预览，限新增任务入口。"
+      "scope": "Creator iPhone 14 Pro 隔离服实际通关第 7 关，胜利窗关闭后核对三项每分钟新旧收益和底栏。",
+      "inspector": "浏览器预览复验正常挑战与结算；先前任务入口的单独验收见 supersededEntries。"
     }
   },
   {
@@ -2277,6 +2277,163 @@
     }
   },
   {
+    "path": "client/assets/bundles/module/blackmarket/prefabs/BlackMarketItemCell.prefab",
+    "classes": [
+      "BlackMarketItemCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 198,
+        "height": 246
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 1
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "3a13517b041f77b9dd6a2a7973a745e54754e59636bbf6fa0812d97d0a919a02"
+  },
+  {
+    "path": "client/assets/bundles/module/blackmarket/prefabs/BlackMarketTabCell.prefab",
+    "classes": [
+      "BlackMarketTabCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 100,
+        "height": 48
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "9f38e1209c20c408566bd42fb23044e4d26524a3a762ea9595445fb2c126b70e"
+  },
+  {
+    "path": "client/assets/bundles/module/blackmarket/prefabs/BlackMarketView.prefab",
+    "classes": [
+      "BlackMarketView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 3,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "7a977191732b3451d33c4eee8c62e85d53027a7bece170d77c9b17cc3929ad19"
+  },
+  {
     "path": "client/assets/bundles/module/bootstrap/prefabs/LoadingLayer.prefab",
     "classes": [],
     "root": {
@@ -2338,6 +2495,350 @@
       "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
       "inspector": "待负责人逐项确认"
     }
+  },
+  {
+    "path": "client/assets/bundles/module/chat/prefabs/ChatFriendCell.prefab",
+    "classes": [
+      "ChatFriendCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 110,
+        "height": 120
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "5940a1a3dafa11056d475577e3f9f6f54f8ffa27d577c78fe414c33cdd4cd72a"
+  },
+  {
+    "path": "client/assets/bundles/module/chat/prefabs/ChatPrivateCell.prefab",
+    "classes": [
+      "ChatWorldCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 430,
+        "height": 86
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 1
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ChatPrivateCell",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "Sender",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "MessageBalloon",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "Message",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "Sender",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "MessageBalloon",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "Message",
+        "anchor": [
+          1,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "0bedc198c3867c245c0be2b833fdf434ad4430163c119838236373cc6072f629"
+  },
+  {
+    "path": "client/assets/bundles/module/chat/prefabs/ChatWorldCell.prefab",
+    "classes": [
+      "ChatWorldCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 554,
+        "height": 86
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 1
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ChatWorldCell",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "Sender",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "MessageBalloon",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "Message",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "Sender",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "MessageBalloon",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "Message",
+        "anchor": [
+          1,
+          1
+        ]
+      },
+      {
+        "node": "SystemNotice",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "NoticeText",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "d6ae5a5ec1131dcc306bbcd47d10178888c58a62270bdf227b9361df52426c7d"
+  },
+  {
+    "path": "client/assets/bundles/module/chat/prefabs/ChatWorldView.prefab",
+    "classes": [
+      "ChatWorldView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 4,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "Text",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "Placeholder",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "MessageMeasurement",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "794e76e0ec2d0f432455f374303bd962d8c0536c6bb080890aa1d402ac82d667"
   },
   {
     "path": "client/assets/bundles/module/common/prefabs/BagItemView.prefab",
@@ -2506,786 +3007,6 @@
     }
   },
   {
-    "path": "client/assets/bundles/module/common/prefabs/FriendCell.prefab",
-    "classes": [
-      "FriendCell"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 532,
-        "height": 116
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 0,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "f0972be9d1c33c04b521463e3d8aa9c3686b9242b352d82a5c9cbeeb886f81ba"
-  },
-  {
-    "path": "client/assets/bundles/module/common/prefabs/FriendSearchView.prefab",
-    "classes": [
-      "FriendSearchView"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 640,
-        "height": 1280
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 1,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [
-      {
-        "node": "InputText",
-        "anchor": [
-          0,
-          1
-        ]
-      },
-      {
-        "node": "Placeholder",
-        "anchor": [
-          0,
-          1
-        ]
-      },
-      {
-        "node": "Content",
-        "anchor": [
-          0.5,
-          1
-        ]
-      }
-    ],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "fa8a265ae14f8f591e14af7f6fa348d6f439fa5d112d0cced83394e22c513758"
-  },
-  {
-    "path": "client/assets/bundles/module/common/prefabs/FriendView.prefab",
-    "classes": [
-      "FriendView"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 640,
-        "height": 1280
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 1,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [
-      {
-        "node": "Content",
-        "anchor": [
-          0.5,
-          1
-        ]
-      }
-    ],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "de4d042f460ff1aca3ef3a054f5edf35cd2ecf0f571c36dff9a54ac6db00b57d"
-  },
-  {
-    "path": "client/assets/bundles/module/common/prefabs/HeroRewardView.prefab",
-    "classes": [
-      "HeroRewardView",
-      "ViewportScale"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 640,
-        "height": 1280
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 1,
-      "Layout": 1,
-      "Mask": 0,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [
-      {
-        "node": "HeroLight",
-        "anchor": [
-          0.5,
-          0
-        ]
-      }
-    ],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "Creator以15关真实回执获得唯一10105007五星实例；保存后的两路原Spine PMA修复已用同一回执只读重放确认，无黑三角或过亮白片，未再次发奖。技能子窗打开、关父窗联动清理及3个专属runtimePack释放已验。仅该五星样本，4星/低星保留专项，不代签发布/真机。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
-    "sha256": "e1897ac1076e19b2ff4bf510be9b747ec4fea8a3227fca983db2da96e242cf60",
-    "acceptance": {
-      "sha256": "e1897ac1076e19b2ff4bf510be9b747ec4fea8a3227fca983db2da96e242cf60",
-      "date": "2026-11-17",
-      "status": "实际预览通过",
-      "scope": "Creator以15关真实回执获得唯一10105007五星实例；保存后的两路原Spine PMA修复已用同一回执只读重放确认，无黑三角或过亮白片，未再次发奖。技能子窗打开、关父窗联动清理及3个专属runtimePack释放已验。仅该五星样本，4星/低星保留专项，不代签发布/真机。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
-      "inspector": "未操作Creator原生Inspector；仅上述限定实际预览。"
-    }
-  },
-  {
-    "path": "client/assets/bundles/module/common/prefabs/MailCell.prefab",
-    "classes": [
-      "MailCell"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 540,
-        "height": 96
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 0,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "4285d63d54ea6ce41d85afe8d7e05d8c4c342d4c24cfb1204bfeb210e9121329"
-  },
-  {
-    "path": "client/assets/bundles/module/common/prefabs/MailDetailView.prefab",
-    "classes": [
-      "MailDetailView"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 640,
-        "height": 1280
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 2,
-      "ScrollView": 1,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [
-      {
-        "node": "LetterContent",
-        "anchor": [
-          0.5,
-          1
-        ]
-      },
-      {
-        "node": "Content",
-        "anchor": [
-          0.5,
-          1
-        ]
-      }
-    ],
-    "scrolls": [
-      {
-        "node": "LetterScroll",
-        "content": {
-          "__id__": 67
-        }
-      }
-    ],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "b3574b136dcf4eea099a6bc0b3cfecf722aa109dc892af33fa8dd7ae11c0eacc"
-  },
-  {
-    "path": "client/assets/bundles/module/common/prefabs/MailView.prefab",
-    "classes": [
-      "MailView"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 640,
-        "height": 1280
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 1,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [
-      {
-        "node": "Content",
-        "anchor": [
-          0.5,
-          1
-        ]
-      }
-    ],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "6a5cc2415adec2035bf05a7241ceb24313f4682023314896d146cd378ee8dc07"
-  },
-  {
-    "path": "client/assets/bundles/module/common/prefabs/QuestCompletionView.prefab",
-    "classes": [
-      "QuestCompletionView"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 640,
-        "height": 1280
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 1,
-      "Layout": 0,
-      "Mask": 0,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "通过真实建会达成加入公会成就。顶部横幅显示成就名称，比实际发奖弹窗更上一层，点按可切到成就页。",
-    "sha256": "97cbb910861e8b09f34d245f5bd8ed97d74a2e139ead3cadae16241887b96826",
-    "acceptance": {
-      "sha256": "97cbb910861e8b09f34d245f5bd8ed97d74a2e139ead3cadae16241887b96826",
-      "date": "2026-11-25",
-      "status": "实际预览通过",
-      "scope": "通过真实建会达成加入公会成就。顶部横幅显示成就名称，比实际发奖弹窗更上一层，点按可切到成就页。",
-      "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
-    }
-  },
-  {
-    "path": "client/assets/bundles/module/common/prefabs/QuestTaskCell.prefab",
-    "classes": [
-      "QuestTaskCell"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 540,
-        "height": 148
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 1,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [
-      {
-        "node": "Condition",
-        "anchor": [
-          0,
-          0.5
-        ]
-      },
-      {
-        "node": "Content",
-        "anchor": [
-          0,
-          0.5
-        ]
-      }
-    ],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "6e29f703239cf359624ff997c437d83e134dcc5811bcdbace389d1c3786badb5"
-  },
-  {
-    "path": "client/assets/bundles/module/common/prefabs/QuestView.prefab",
-    "classes": [
-      "QuestView"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 640,
-        "height": 1280
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 2,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [
-      {
-        "node": "Content",
-        "anchor": [
-          0.5,
-          1
-        ]
-      },
-      {
-        "node": "Content",
-        "anchor": [
-          0.5,
-          1
-        ]
-      }
-    ],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "核对每日与成就两页、真实进度、五档图标与红点，实领登录、召唤、捐献日常及 20 点活跃奖励。",
-    "sha256": "3d1f721b0601d47ffb187c7dc91c39eb4ff2bb728655b70e841429e3ba67a138",
-    "acceptance": {
-      "sha256": "3d1f721b0601d47ffb187c7dc91c39eb4ff2bb728655b70e841429e3ba67a138",
-      "date": "2026-11-25",
-      "status": "实际预览通过",
-      "scope": "核对每日与成就两页、真实进度、五档图标与红点，实领登录、召唤、捐献日常及 20 点活跃奖励。",
-      "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
-    }
-  },
-  {
-    "path": "client/assets/bundles/module/common/prefabs/RankingBoardCell.prefab",
-    "classes": [
-      "RankingBoardCell"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 520,
-        "height": 162
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 0,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "bd8c688986094bd896eed8307ad89a39e88aad38fffc7c8512a997eca136cd9c"
-  },
-  {
-    "path": "client/assets/bundles/module/common/prefabs/RankingDetailView.prefab",
-    "classes": [
-      "RankingDetailView"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 640,
-        "height": 1280
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 1,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [
-      {
-        "node": "Content",
-        "anchor": [
-          0.5,
-          1
-        ]
-      }
-    ],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "由本服剧情进度卡进入详情，核对前三、进度分和本人第 2 名，退回后切换跨服。",
-    "sha256": "06f86b18ebe82e18fcdc849382e4d97da469edbdec843dfefeab272733e02da2",
-    "acceptance": {
-      "sha256": "06f86b18ebe82e18fcdc849382e4d97da469edbdec843dfefeab272733e02da2",
-      "date": "2026-11-25",
-      "status": "实际预览通过",
-      "scope": "由本服剧情进度卡进入详情，核对前三、进度分和本人第 2 名，退回后切换跨服。",
-      "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
-    }
-  },
-  {
-    "path": "client/assets/bundles/module/common/prefabs/RankingEntryCell.prefab",
-    "classes": [
-      "RankingEntryCell"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 558,
-        "height": 108
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 0,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "72f41bdb74d8140d54a9ff370c6c68741472a43f7addeeb7b376c29374484087"
-  },
-  {
-    "path": "client/assets/bundles/module/common/prefabs/RankingView.prefab",
-    "classes": [
-      "RankingView"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 640,
-        "height": 1280
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 1,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [
-      {
-        "node": "Content",
-        "anchor": [
-          0.5,
-          1
-        ]
-      }
-    ],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "实际点击主城入口，核对本服三榜和跨服两榜、39 级跨服准入、点赞状态及 30000 金币到账。",
-    "sha256": "b586f489faa65f9718ade1090adba8c8643b28441bde5e773c0dbf1998776a84",
-    "acceptance": {
-      "sha256": "b586f489faa65f9718ade1090adba8c8643b28441bde5e773c0dbf1998776a84",
-      "date": "2026-11-25",
-      "status": "实际预览通过",
-      "scope": "实际点击主城入口，核对本服三榜和跨服两榜、39 级跨服准入、点赞状态及 30000 金币到账。",
-      "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
-    }
-  },
-  {
     "path": "client/assets/bundles/module/common/prefabs/RedDot.prefab",
     "classes": [],
     "root": {
@@ -3339,167 +3060,6 @@
       "scope": "公共模板沿用原底栏红点图片、尺寸及相对位置，实际挂载画面待复验。",
       "inspector": "本轮未操作 Creator Inspector。"
     }
-  },
-  {
-    "path": "client/assets/bundles/module/common/prefabs/RewardView.prefab",
-    "classes": [
-      "RewardView"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 640,
-        "height": 1280
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 1,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [
-      {
-        "node": "TitleEffect",
-        "anchor": [
-          0.5,
-          0.8615384615384616
-        ]
-      },
-      {
-        "node": "content",
-        "anchor": [
-          0,
-          1
-        ]
-      }
-    ],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "Creator 独立测试服实测三秒开场和点击跳过、高星揭示、三行十格和再次召唤。全部头像在三行中显示，连续点不同英雄只开一窗，关窗后可继续点击。新手赠礼仍通过通用获得窗。",
-    "sha256": "999470cea1bd3f232140691cba1c266337c96127b71552caa00f22542453c5ad",
-    "acceptanceFingerprintDifference": {
-      "difference": "仅CRLF/LF差异",
-      "recordedSha256": "b754406613abb438e56cb2b97e4919705f9c3c700fc84e50bea83e4bec7daf53",
-      "normalizedLfSha256": "999470cea1bd3f232140691cba1c266337c96127b71552caa00f22542453c5ad"
-    },
-    "acceptance": {
-      "sha256": "b754406613abb438e56cb2b97e4919705f9c3c700fc84e50bea83e4bec7daf53",
-      "date": "2026-11-19",
-      "status": "实际预览通过",
-      "scope": "Creator 独立测试服实测三秒开场和点击跳过、高星揭示、三行十格和再次召唤。全部头像在三行中显示，连续点不同英雄只开一窗，关窗后可继续点击。新手赠礼仍通过通用获得窗。",
-      "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
-    }
-  },
-  {
-    "path": "client/assets/bundles/module/common/prefabs/RoleUpgradeView.prefab",
-    "classes": [
-      "ViewportScale",
-      "RoleUpgradeView"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 640,
-        "height": 1280
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 1,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [
-      {
-        "node": "BeforeLevel",
-        "anchor": [
-          1,
-          0.5
-        ]
-      },
-      {
-        "node": "AfterLevel",
-        "anchor": [
-          0,
-          0.5
-        ]
-      },
-      {
-        "node": "content",
-        "anchor": [
-          0,
-          1
-        ]
-      },
-      {
-        "node": "FeatureName",
-        "anchor": [
-          0,
-          0.5
-        ]
-      },
-      {
-        "node": "FeatureDescription",
-        "anchor": [
-          0,
-          0.5
-        ]
-      },
-      {
-        "node": "FeatureCondition",
-        "anchor": [
-          0,
-          0.5
-        ]
-      }
-    ],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "de06028c228cbc733d5ea5a650bcc5839d81a85d8c167727cf94ca2df224d5be"
   },
   {
     "path": "client/assets/bundles/module/common/prefabs/RulesView.prefab",
@@ -3568,6 +3128,164 @@
       "scope": "Creator 预览核对日常副本打开原版样式说明窗，三条说明换行完整、背景模态和右上角关闭返回正常。",
       "inspector": "验证范围为日常副本短文及 393×852 竖屏；不代签其他说明窗内容或长文实画。"
     }
+  },
+  {
+    "path": "client/assets/bundles/module/common/prefabs/TextInputView.prefab",
+    "classes": [
+      "TextInputView",
+      "ViewportScale"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 1,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "PanelAnchor",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "InputPanel",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "三处公会文本共享日服式顶部输入窗，使用项目内圆角贴图与共享模态；窗外不提交也不关闭。",
+    "sha256": "2cff2cd32e038344c3274a8be0439cd8863613afc572ed2a150a0d1dd785c5b6",
+    "acceptance": {
+      "sha256": "2cff2cd32e038344c3274a8be0439cd8863613afc572ed2a150a0d1dd785c5b6",
+      "date": "2026-11-24",
+      "status": "实际预览通过",
+      "scope": "三处公会文本共享日服式顶部输入窗，使用项目内圆角贴图与共享模态；窗外不提交也不关闭。",
+      "inspector": "Creator 393×852 Web 预览核实真实输入、回车、按钮和长度；未覆盖真机软键盘。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/dreamland/prefabs/DreamlandRewardView.prefab",
+    "classes": [
+      "DreamlandRewardView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "8e680ea5deb946b9b07dbd3139a1e4b7b9ef0b8d8b78d626b1cc1d1979cd8aa6"
+  },
+  {
+    "path": "client/assets/bundles/module/dreamland/prefabs/DreamlandView.prefab",
+    "classes": [
+      "DreamlandView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 2,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "07f324b7efeec8972b9cb33469265aa2c134f02c387d1a7894d48412e540b81d"
   },
   {
     "path": "client/assets/bundles/module/dungeon/prefabs/DungeonHallCardView.prefab",
@@ -3797,6 +3515,171 @@
       "scope": "Creator 独立会话核对五类页签独占光效、选中缩放、横幅切换和右侧权威次数；已覆盖 0、1、2 次及打开规则窗后保留当前页签。",
       "inspector": "393×852 竖屏使用隔离后端和真实鼠标操作，未操作 Creator Inspector。"
     }
+  },
+  {
+    "path": "client/assets/bundles/module/friend/prefabs/FriendCell.prefab",
+    "classes": [
+      "FriendCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 532,
+        "height": 116
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "f0972be9d1c33c04b521463e3d8aa9c3686b9242b352d82a5c9cbeeb886f81ba"
+  },
+  {
+    "path": "client/assets/bundles/module/friend/prefabs/FriendSearchView.prefab",
+    "classes": [
+      "FriendSearchView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "InputText",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "Placeholder",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "fa8a265ae14f8f591e14af7f6fa348d6f439fa5d112d0cced83394e22c513758"
+  },
+  {
+    "path": "client/assets/bundles/module/friend/prefabs/FriendView.prefab",
+    "classes": [
+      "FriendView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "de4d042f460ff1aca3ef3a054f5edf35cd2ecf0f571c36dff9a54ac6db00b57d"
   },
   {
     "path": "client/assets/bundles/module/gm/prefabs/GmBattleView.prefab",
@@ -4893,74 +4776,6 @@
       "status": "实际预览通过",
       "scope": "三列、余额、真实周倒计时、滚动和数量确认通过，首商品兑换两份到账 60 碎片并显示限购 2/2。",
       "inspector": "Creator 393×852 浏览器预览与真实隔离服务端。"
-    }
-  },
-  {
-    "path": "client/assets/bundles/module/guild/prefabs/GuildTextInputView.prefab",
-    "classes": [
-      "GuildTextInputView",
-      "ViewportScale"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 640,
-        "height": 1280
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 1,
-      "Layout": 0,
-      "Mask": 0,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [
-      {
-        "node": "PanelAnchor",
-        "anchor": [
-          0.5,
-          1
-        ]
-      },
-      {
-        "node": "InputPanel",
-        "anchor": [
-          0.5,
-          1
-        ]
-      }
-    ],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "三处公会文本共享日服式顶部输入窗，使用项目内圆角贴图与共享模态；窗外不提交也不关闭。",
-    "sha256": "b9f26de7a7e66594b8707edf15e5b25affc8a83416ab7661f9808e3bc1c9e5ea",
-    "acceptance": {
-      "sha256": "b9f26de7a7e66594b8707edf15e5b25affc8a83416ab7661f9808e3bc1c9e5ea",
-      "date": "2026-11-24",
-      "status": "实际预览通过",
-      "scope": "三处公会文本共享日服式顶部输入窗，使用项目内圆角贴图与共享模态；窗外不提交也不关闭。",
-      "inspector": "Creator 393×852 Web 预览核实真实输入、回车、按钮和长度；未覆盖真机软键盘。"
     }
   },
   {
@@ -6080,6 +5895,104 @@
     }
   },
   {
+    "path": "client/assets/bundles/module/hero/prefabs/HeroEvolutionCatalogCell.prefab",
+    "classes": [
+      "HeroIconCellView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 0.82,
+        "y": 0.82,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 124,
+        "height": 124
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 2,
+      "Layout": 1,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "lbl_level",
+        "anchor": [
+          1,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "502e3b6c72b6d20992f54e416a85bd48edfdbf3f21ac4fc0faaf9989690239ab"
+  },
+  {
+    "path": "client/assets/bundles/module/hero/prefabs/HeroEvolutionCatalogView.prefab",
+    "classes": [
+      "HeroEvolutionCatalogView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "c3db554ebd309bb3c00f90ebbc70258abcec02ab492de6ced083f008b1348696"
+  },
+  {
     "path": "client/assets/bundles/module/hero/prefabs/HeroGodEquipmentCatalogCell.prefab",
     "classes": [
       "HeroGodEquipmentCatalogCell"
@@ -6436,16 +6349,61 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "名册格恢复右上角等级、星级品质框、金星紫星和高星翼徽。头像按 0.9 倍缩放，格内隐藏元素图标，顶部元素筛选保留。按日服测试图集替换英雄配置使用的 109 张基础头像，出阵和名册沿用同一份资源路径及 UUID。",
-    "sha256": "088be553168b0553c8456cb78f5dbdfde35d4d529ca75645b9cb68feb4ef9dce",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "脚本和组合结构通过。新版图鉴翼徽尺寸和间距待最终预览。",
+    "sha256": "6522a9b7743e11382a1d6bdc9d4c29bc88e77b8b4ff38f8e2181e8cfd5a02311",
     "acceptance": {
-      "sha256": "088be553168b0553c8456cb78f5dbdfde35d4d529ca75645b9cb68feb4ef9dce",
-      "date": "2026-11-24",
-      "status": "实际预览通过",
-      "scope": "名册格恢复右上角等级、星级品质框、金星紫星和高星翼徽。头像按 0.9 倍缩放，格内隐藏元素图标，顶部元素筛选保留。按日服测试图集替换英雄配置使用的 109 张基础头像，出阵和名册沿用同一份资源路径及 UUID。",
-      "inspector": "Creator 独立会话竖屏验证了 7 个不同星级样本，并确认名册和出阵加载同一 SpriteFrame；截图保留在 client/temp/project-checks/hero-roster-card-preview.png。"
+      "sha256": "6522a9b7743e11382a1d6bdc9d4c29bc88e77b8b4ff38f8e2181e8cfd5a02311",
+      "date": "2026-11-25",
+      "status": "依赖所属页面检查的组合资源",
+      "scope": "脚本和组合结构通过。新版图鉴翼徽尺寸和间距待最终预览。",
+      "inspector": "保留前一版名册实际预览记录。"
     }
+  },
+  {
+    "path": "client/assets/bundles/module/hero/prefabs/HeroIllustrationView.prefab",
+    "classes": [
+      "HeroIllustrationView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 5,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "7936d4d062d446ba85777353d8e0e411467ed9e5a92e6a4bb82e7c0676115451"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab",
@@ -6771,7 +6729,7 @@
         ]
       },
       {
-        "node": "btn_elem2",
+        "node": "WaterElementButton",
         "anchor": [
           0.499,
           0.5
@@ -6785,14 +6743,14 @@
         ]
       },
       {
-        "node": "node_capacity",
+        "node": "RosterCapacity",
         "anchor": [
           0,
           0
         ]
       },
       {
-        "node": "bottom_menu",
+        "node": "CatalogFooter",
         "anchor": [
           0,
           0
@@ -6827,28 +6785,28 @@
         ]
       },
       {
-        "node": "btn_hero",
+        "node": "RosterTab",
         "anchor": [
           0.5,
           0
         ]
       },
       {
-        "node": "btn_illustrat",
+        "node": "CatalogTab",
         "anchor": [
           0.5,
           0
         ]
       },
       {
-        "node": "btn_dragon",
+        "node": "DragonTab",
         "anchor": [
           0.5,
           0
         ]
       },
       {
-        "node": "UIMenu_2",
+        "node": "RosterActions",
         "anchor": [
           1,
           0.5
@@ -6865,15 +6823,15 @@
     "scrolls": [],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "实际预览通过",
-    "visual": "Creator 浏览器的两种竖屏尺寸实测日服看板 act 循环，原对白与橙色高亮、去兑换反馈，筛选不重复装配，进详情清理并可返回重开。",
-    "sha256": "6550d31d86d0689ef5b957ec0938bfb79c9d82faab6eb761e27d070525558064",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "Creator iPhone 14 Pro 验证原名册、图鉴火系与光系、普通技能和进化目录。翼徽等后续微调待完成最终画面复验。",
+    "sha256": "92c5522758bdd5d3d64e814c21af4bb5788da7ec7699173da00363d3e4296d41",
     "acceptance": {
-      "sha256": "6550d31d86d0689ef5b957ec0938bfb79c9d82faab6eb761e27d070525558064",
-      "date": "2026-11-19",
-      "status": "实际预览通过",
-      "scope": "Creator 浏览器的两种竖屏尺寸实测日服看板 act 循环，原对白与橙色高亮、去兑换反馈，筛选不重复装配，进详情清理并可返回重开。",
-      "inspector": "验收范围为本机 Creator 浏览器及独立内存服。"
+      "sha256": "92c5522758bdd5d3d64e814c21af4bb5788da7ec7699173da00363d3e4296d41",
+      "date": "2026-11-25",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "Creator iPhone 14 Pro 验证原名册、图鉴火系与光系、普通技能和进化目录。翼徽等后续微调待完成最终画面复验。",
+      "inspector": "未签收最终视觉指纹。"
     }
   },
   {
@@ -7361,96 +7319,6 @@
     "sha256": "b1deb471d3fe4e34a5c1a580aa03d3b098d7090a9cf9ea8cac95c16b4bd24b94"
   },
   {
-    "path": "client/assets/bundles/module/login/prefabs/RoleHonorChoiceCell.prefab",
-    "classes": [
-      "RolePersonalChoiceCell"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "z": 1,
-        "y": 1,
-        "x": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 548,
-        "height": 120
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 0,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "bd15a75d05dcc4c7b41190038ed0bd371a60b5bd474ae815d6b4108ede113bab"
-  },
-  {
-    "path": "client/assets/bundles/module/login/prefabs/RoleImageChoiceCell.prefab",
-    "classes": [
-      "RolePersonalChoiceCell"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "z": 1,
-        "y": 1,
-        "x": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 108,
-        "height": 111
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 0,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "04012db621b284b7720c928d76407d8ced598b963fb19b754cb6c8210af45c77"
-  },
-  {
     "path": "client/assets/bundles/module/login/prefabs/RoleNameView.prefab",
     "classes": [
       "RoleNameView"
@@ -7509,407 +7377,6 @@
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
     "sha256": "5df549458e1f145455fc7a66c73d58d1c85b82aba599c7c039f6f014fa7b76c3"
-  },
-  {
-    "path": "client/assets/bundles/module/login/prefabs/RolePersonalChoiceView.prefab",
-    "classes": [
-      "RolePersonalChoiceView"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "z": 1,
-        "y": 1,
-        "x": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 640,
-        "height": 1280
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 5,
-      "ScrollView": 1,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [
-      {
-        "node": "Content",
-        "anchor": [
-          0.5,
-          1
-        ]
-      },
-      {
-        "node": "Content",
-        "anchor": [
-          0.5,
-          1
-        ]
-      },
-      {
-        "node": "Content",
-        "anchor": [
-          0,
-          0.5
-        ]
-      },
-      {
-        "node": "Content",
-        "anchor": [
-          0.5,
-          1
-        ]
-      },
-      {
-        "node": "Content",
-        "anchor": [
-          0.5,
-          1
-        ]
-      }
-    ],
-    "scrolls": [
-      {
-        "node": "DecorationTabScroll",
-        "content": {
-          "__id__": 214
-        }
-      }
-    ],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "Creator 本机 393×852 竖屏。五页签在同一窗切换、头像更换、框激活后佩戴、图鉴预览及更换、贵重标记进度及开关、称号美术与条件。详见 docs/role-data-contract.md。",
-    "sha256": "18eaad2220fbf219a9bb2a6f91ef86fd1bc12f7edcde5452f1496a1abbee648e",
-    "acceptance": {
-      "sha256": "18eaad2220fbf219a9bb2a6f91ef86fd1bc12f7edcde5452f1496a1abbee648e",
-      "date": "2026-11-20",
-      "status": "实际预览通过",
-      "scope": "Creator 本机 393×852 竖屏。五页签在同一窗切换、头像更换、框激活后佩戴、图鉴预览及更换、贵重标记进度及开关、称号美术与条件。详见 docs/role-data-contract.md。",
-      "inspector": "脚本绑定及 Creator 浏览器检查，范围为本机独立测试环境。"
-    }
-  },
-  {
-    "path": "client/assets/bundles/module/login/prefabs/RolePortraitChoiceCell.prefab",
-    "classes": [
-      "RolePersonalChoiceCell"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "z": 1,
-        "y": 1,
-        "x": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 121,
-        "height": 150
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 0,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "4555d09c9dbb21b8c31354a73fd8e31d5937a4d187ea9ab8a546f6eaf349cef7"
-  },
-  {
-    "path": "client/assets/bundles/module/login/prefabs/RoleProfileView.prefab",
-    "classes": [
-      "RoleProfileView"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 610,
-        "height": 780
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 9,
-      "Mask": 0,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [
-      {
-        "node": "lbl_province",
-        "anchor": [
-          0,
-          0.5
-        ]
-      },
-      {
-        "node": "lbl_city",
-        "anchor": [
-          0,
-          0.5
-        ]
-      },
-      {
-        "node": "UIMenu_1",
-        "anchor": [
-          0,
-          0
-        ]
-      }
-    ],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "绑定现有公会名称标签，按角色快照显示真实公会名或未加入。保留预制体 UUID 和布局。",
-    "sha256": "a344a8b4ee0bec1df5f4ff583571e36247520bd34f568d6f6023850be7fdfa7e",
-    "acceptance": {
-      "sha256": "a344a8b4ee0bec1df5f4ff583571e36247520bd34f568d6f6023850be7fdfa7e",
-      "date": "2026-11-23",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "绑定现有公会名称标签，按角色快照显示真实公会名或未加入。保留预制体 UUID 和布局。",
-      "inspector": "待 Creator 预览。"
-    }
-  },
-  {
-    "path": "client/assets/bundles/module/login/prefabs/RoleRenameView.prefab",
-    "classes": [
-      "RoleRenameView"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "z": 1,
-        "y": 1,
-        "x": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 640,
-        "height": 1280
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 0,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [
-      {
-        "node": "InputText",
-        "anchor": [
-          0,
-          1
-        ]
-      },
-      {
-        "node": "PlaceholderText",
-        "anchor": [
-          0,
-          1
-        ]
-      }
-    ],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "Creator 本机 393×852 竖屏。输入新名、优先消耗改名卡、后续支付 888 钻石、顶栏与资料更新及重登恢复。详见 docs/role-data-contract.md。",
-    "sha256": "7f19d8f1f9d6270b90ac7314694162ea555fe048068403fdd40722e7bd4bb2fc",
-    "acceptance": {
-      "sha256": "7f19d8f1f9d6270b90ac7314694162ea555fe048068403fdd40722e7bd4bb2fc",
-      "date": "2026-11-20",
-      "status": "实际预览通过",
-      "scope": "Creator 本机 393×852 竖屏。输入新名、优先消耗改名卡、后续支付 888 钻石、顶栏与资料更新及重登恢复。详见 docs/role-data-contract.md。",
-      "inspector": "脚本绑定及 Creator 浏览器检查，范围为本机独立测试环境。"
-    }
-  },
-  {
-    "path": "client/assets/bundles/module/login/prefabs/RoleSettingsView.prefab",
-    "classes": [
-      "ViewportScale",
-      "RoleSettingsView"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 640,
-        "height": 1280
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 1,
-      "Layout": 0,
-      "Mask": 0,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [
-      {
-        "node": "Caption",
-        "anchor": [
-          0,
-          0.5
-        ]
-      },
-      {
-        "node": "Caption",
-        "anchor": [
-          0,
-          0.5
-        ]
-      },
-      {
-        "node": "ServerTitle",
-        "anchor": [
-          1,
-          0.5
-        ]
-      }
-    ],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "Creator 本机 393×852 竖屏。核对当前区服、声音开关与重开保持、切换账号返回登录。详见 docs/role-data-contract.md。",
-    "sha256": "549f7f03c022e69169cc0f82b22142baa45b9ba90ff81adee591422d25fc4569",
-    "acceptance": {
-      "sha256": "549f7f03c022e69169cc0f82b22142baa45b9ba90ff81adee591422d25fc4569",
-      "date": "2026-11-20",
-      "status": "实际预览通过",
-      "scope": "Creator 本机 393×852 竖屏。核对当前区服、声音开关与重开保持、切换账号返回登录。详见 docs/role-data-contract.md。",
-      "inspector": "脚本绑定及 Creator 浏览器检查，范围为本机独立测试环境。"
-    }
-  },
-  {
-    "path": "client/assets/bundles/module/login/prefabs/RoleTitleChoiceCell.prefab",
-    "classes": [
-      "RolePersonalChoiceCell"
-    ],
-    "root": {
-      "position": {
-        "__type__": "cc.Vec3",
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "__type__": "cc.Vec3",
-        "z": 1,
-        "y": 1,
-        "x": 1
-      },
-      "size": {
-        "__type__": "cc.Size",
-        "width": 548,
-        "height": 120
-      },
-      "anchor": {
-        "__type__": "cc.Vec2",
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "components": {
-      "Widget": 0,
-      "Layout": 0,
-      "Mask": 0,
-      "ScrollView": 0,
-      "Animation": 0,
-      "PrefabInstance": 0
-    },
-    "specialAnchors": [],
-    "scrolls": [],
-    "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "759e2bb8b0def0bbb7410bd9aec00b30c75fb5a15332d8e454a25c91778bb18b"
   },
   {
     "path": "client/assets/bundles/module/login/prefabs/ServerCellView.prefab",
@@ -8239,6 +7706,171 @@
     "sha256": "0b6e4dd06e4649d6bbccc9192a1b205b14b13e71d7c4bbb1ff624521be745b5b"
   },
   {
+    "path": "client/assets/bundles/module/mail/prefabs/MailCell.prefab",
+    "classes": [
+      "MailCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 540,
+        "height": 96
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "4285d63d54ea6ce41d85afe8d7e05d8c4c342d4c24cfb1204bfeb210e9121329"
+  },
+  {
+    "path": "client/assets/bundles/module/mail/prefabs/MailDetailView.prefab",
+    "classes": [
+      "MailDetailView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 2,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "LetterContent",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "LetterScroll",
+        "content": {
+          "__id__": 67
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "b3574b136dcf4eea099a6bc0b3cfecf722aa109dc892af33fa8dd7ae11c0eacc"
+  },
+  {
+    "path": "client/assets/bundles/module/mail/prefabs/MailView.prefab",
+    "classes": [
+      "MailView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "6a5cc2415adec2035bf05a7241ceb24313f4682023314896d146cd378ee8dc07"
+  },
+  {
     "path": "client/assets/bundles/module/market/prefabs/MarketBuyView.prefab",
     "classes": [
       "MarketBuyView"
@@ -8416,6 +8048,1691 @@
       "scope": "Creator 独立 H2 本机预览，角色 1 级从主城进入市场，旧看板、六件货架、金币万位缩写、免费和付费刷新、冷重登与返回均通过。截图 client/temp/project-checks/market-shelf.png。",
       "inspector": "Creator 浏览器真实交互与序列化绑定检查。"
     }
+  },
+  {
+    "path": "client/assets/bundles/module/quest/prefabs/QuestCompletionView.prefab",
+    "classes": [
+      "QuestCompletionView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 1,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "通过真实建会达成加入公会成就。顶部横幅显示成就名称，比实际发奖弹窗更上一层，点按可切到成就页。",
+    "sha256": "97cbb910861e8b09f34d245f5bd8ed97d74a2e139ead3cadae16241887b96826",
+    "acceptance": {
+      "sha256": "97cbb910861e8b09f34d245f5bd8ed97d74a2e139ead3cadae16241887b96826",
+      "date": "2026-11-25",
+      "status": "实际预览通过",
+      "scope": "通过真实建会达成加入公会成就。顶部横幅显示成就名称，比实际发奖弹窗更上一层，点按可切到成就页。",
+      "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/quest/prefabs/QuestTaskCell.prefab",
+    "classes": [
+      "QuestTaskCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 540,
+        "height": 148
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Condition",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "6e29f703239cf359624ff997c437d83e134dcc5811bcdbace389d1c3786badb5"
+  },
+  {
+    "path": "client/assets/bundles/module/quest/prefabs/QuestView.prefab",
+    "classes": [
+      "QuestView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 2,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "核对每日与成就两页、真实进度、五档图标与红点，实领登录、召唤、捐献日常及 20 点活跃奖励。",
+    "sha256": "3d1f721b0601d47ffb187c7dc91c39eb4ff2bb728655b70e841429e3ba67a138",
+    "acceptance": {
+      "sha256": "3d1f721b0601d47ffb187c7dc91c39eb4ff2bb728655b70e841429e3ba67a138",
+      "date": "2026-11-25",
+      "status": "实际预览通过",
+      "scope": "核对每日与成就两页、真实进度、五档图标与红点，实领登录、召唤、捐献日常及 20 点活跃奖励。",
+      "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/ranking/prefabs/RankingBoardCell.prefab",
+    "classes": [
+      "RankingBoardCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 520,
+        "height": 162
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "bd8c688986094bd896eed8307ad89a39e88aad38fffc7c8512a997eca136cd9c"
+  },
+  {
+    "path": "client/assets/bundles/module/ranking/prefabs/RankingDetailView.prefab",
+    "classes": [
+      "RankingDetailView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "由本服剧情进度卡进入详情，核对前三、进度分和本人第 2 名，退回后切换跨服。",
+    "sha256": "06f86b18ebe82e18fcdc849382e4d97da469edbdec843dfefeab272733e02da2",
+    "acceptance": {
+      "sha256": "06f86b18ebe82e18fcdc849382e4d97da469edbdec843dfefeab272733e02da2",
+      "date": "2026-11-25",
+      "status": "实际预览通过",
+      "scope": "由本服剧情进度卡进入详情，核对前三、进度分和本人第 2 名，退回后切换跨服。",
+      "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/ranking/prefabs/RankingEntryCell.prefab",
+    "classes": [
+      "RankingEntryCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 558,
+        "height": 108
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "72f41bdb74d8140d54a9ff370c6c68741472a43f7addeeb7b376c29374484087"
+  },
+  {
+    "path": "client/assets/bundles/module/ranking/prefabs/RankingView.prefab",
+    "classes": [
+      "RankingView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "实际点击主城入口，核对本服三榜和跨服两榜、39 级跨服准入、点赞状态及 30000 金币到账。",
+    "sha256": "b586f489faa65f9718ade1090adba8c8643b28441bde5e773c0dbf1998776a84",
+    "acceptance": {
+      "sha256": "b586f489faa65f9718ade1090adba8c8643b28441bde5e773c0dbf1998776a84",
+      "date": "2026-11-25",
+      "status": "实际预览通过",
+      "scope": "实际点击主城入口，核对本服三榜和跨服两榜、39 级跨服准入、点赞状态及 30000 金币到账。",
+      "inspector": "本机 Creator 393×852 竖屏与隔离 WebSocket 服务。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/reward/prefabs/HeroRewardView.prefab",
+    "classes": [
+      "HeroRewardView",
+      "ViewportScale"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 1,
+      "Layout": 1,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroLight",
+        "anchor": [
+          0.5,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator以15关真实回执获得唯一10105007五星实例；保存后的两路原Spine PMA修复已用同一回执只读重放确认，无黑三角或过亮白片，未再次发奖。技能子窗打开、关父窗联动清理及3个专属runtimePack释放已验。仅该五星样本，4星/低星保留专项，不代签发布/真机。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
+    "sha256": "e1897ac1076e19b2ff4bf510be9b747ec4fea8a3227fca983db2da96e242cf60",
+    "acceptance": {
+      "sha256": "e1897ac1076e19b2ff4bf510be9b747ec4fea8a3227fca983db2da96e242cf60",
+      "date": "2026-11-17",
+      "status": "实际预览通过",
+      "scope": "Creator以15关真实回执获得唯一10105007五星实例；保存后的两路原Spine PMA修复已用同一回执只读重放确认，无黑三角或过亮白片，未再次发奖。技能子窗打开、关父窗联动清理及3个专属runtimePack释放已验。仅该五星样本，4星/低星保留专项，不代签发布/真机。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
+      "inspector": "未操作Creator原生Inspector；仅上述限定实际预览。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/reward/prefabs/RewardView.prefab",
+    "classes": [
+      "RewardView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "TitleEffect",
+        "anchor": [
+          0.5,
+          0.8615384615384616
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 独立测试服实测三秒开场和点击跳过、高星揭示、三行十格和再次召唤。全部头像在三行中显示，连续点不同英雄只开一窗，关窗后可继续点击。新手赠礼仍通过通用获得窗。",
+    "sha256": "999470cea1bd3f232140691cba1c266337c96127b71552caa00f22542453c5ad",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "b754406613abb438e56cb2b97e4919705f9c3c700fc84e50bea83e4bec7daf53",
+      "normalizedLfSha256": "999470cea1bd3f232140691cba1c266337c96127b71552caa00f22542453c5ad"
+    },
+    "acceptance": {
+      "sha256": "b754406613abb438e56cb2b97e4919705f9c3c700fc84e50bea83e4bec7daf53",
+      "date": "2026-11-19",
+      "status": "实际预览通过",
+      "scope": "Creator 独立测试服实测三秒开场和点击跳过、高星揭示、三行十格和再次召唤。全部头像在三行中显示，连续点不同英雄只开一窗，关窗后可继续点击。新手赠礼仍通过通用获得窗。",
+      "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/reward/prefabs/RoleUpgradeView.prefab",
+    "classes": [
+      "ViewportScale",
+      "RoleUpgradeView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "BeforeLevel",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "AfterLevel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "FeatureName",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "FeatureDescription",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "FeatureCondition",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "de06028c228cbc733d5ea5a650bcc5839d81a85d8c167727cf94ca2df224d5be"
+  },
+  {
+    "path": "client/assets/bundles/module/role/prefabs/RoleHonorChoiceCell.prefab",
+    "classes": [
+      "RolePersonalChoiceCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 548,
+        "height": 120
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "bd15a75d05dcc4c7b41190038ed0bd371a60b5bd474ae815d6b4108ede113bab"
+  },
+  {
+    "path": "client/assets/bundles/module/role/prefabs/RoleImageChoiceCell.prefab",
+    "classes": [
+      "RolePersonalChoiceCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 108,
+        "height": 111
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "04012db621b284b7720c928d76407d8ced598b963fb19b754cb6c8210af45c77"
+  },
+  {
+    "path": "client/assets/bundles/module/role/prefabs/RolePersonalChoiceView.prefab",
+    "classes": [
+      "RolePersonalChoiceView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 5,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "DecorationTabScroll",
+        "content": {
+          "__id__": 214
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 本机 393×852 竖屏。五页签在同一窗切换、头像更换、框激活后佩戴、图鉴预览及更换、贵重标记进度及开关、称号美术与条件。详见 docs/role-data-contract.md。",
+    "sha256": "18eaad2220fbf219a9bb2a6f91ef86fd1bc12f7edcde5452f1496a1abbee648e",
+    "acceptance": {
+      "sha256": "18eaad2220fbf219a9bb2a6f91ef86fd1bc12f7edcde5452f1496a1abbee648e",
+      "date": "2026-11-20",
+      "status": "实际预览通过",
+      "scope": "Creator 本机 393×852 竖屏。五页签在同一窗切换、头像更换、框激活后佩戴、图鉴预览及更换、贵重标记进度及开关、称号美术与条件。详见 docs/role-data-contract.md。",
+      "inspector": "脚本绑定及 Creator 浏览器检查，范围为本机独立测试环境。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/role/prefabs/RolePortraitChoiceCell.prefab",
+    "classes": [
+      "RolePersonalChoiceCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 121,
+        "height": 150
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "4555d09c9dbb21b8c31354a73fd8e31d5937a4d187ea9ab8a546f6eaf349cef7"
+  },
+  {
+    "path": "client/assets/bundles/module/role/prefabs/RoleProfileView.prefab",
+    "classes": [
+      "RoleProfileView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 610,
+        "height": 780
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 9,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "lbl_province",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_city",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "UIMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "绑定现有公会名称标签，按角色快照显示真实公会名或未加入。保留预制体 UUID 和布局。",
+    "sha256": "a344a8b4ee0bec1df5f4ff583571e36247520bd34f568d6f6023850be7fdfa7e",
+    "acceptance": {
+      "sha256": "a344a8b4ee0bec1df5f4ff583571e36247520bd34f568d6f6023850be7fdfa7e",
+      "date": "2026-11-23",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "绑定现有公会名称标签，按角色快照显示真实公会名或未加入。保留预制体 UUID 和布局。",
+      "inspector": "待 Creator 预览。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/role/prefabs/RoleRenameView.prefab",
+    "classes": [
+      "RoleRenameView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "InputText",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "PlaceholderText",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 本机 393×852 竖屏。输入新名、优先消耗改名卡、后续支付 888 钻石、顶栏与资料更新及重登恢复。详见 docs/role-data-contract.md。",
+    "sha256": "7f19d8f1f9d6270b90ac7314694162ea555fe048068403fdd40722e7bd4bb2fc",
+    "acceptance": {
+      "sha256": "7f19d8f1f9d6270b90ac7314694162ea555fe048068403fdd40722e7bd4bb2fc",
+      "date": "2026-11-20",
+      "status": "实际预览通过",
+      "scope": "Creator 本机 393×852 竖屏。输入新名、优先消耗改名卡、后续支付 888 钻石、顶栏与资料更新及重登恢复。详见 docs/role-data-contract.md。",
+      "inspector": "脚本绑定及 Creator 浏览器检查，范围为本机独立测试环境。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/role/prefabs/RoleSettingsView.prefab",
+    "classes": [
+      "ViewportScale",
+      "RoleSettingsView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 1,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Caption",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "Caption",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "ServerTitle",
+        "anchor": [
+          1,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 本机 393×852 竖屏。核对当前区服、声音开关与重开保持、切换账号返回登录。详见 docs/role-data-contract.md。",
+    "sha256": "549f7f03c022e69169cc0f82b22142baa45b9ba90ff81adee591422d25fc4569",
+    "acceptance": {
+      "sha256": "549f7f03c022e69169cc0f82b22142baa45b9ba90ff81adee591422d25fc4569",
+      "date": "2026-11-20",
+      "status": "实际预览通过",
+      "scope": "Creator 本机 393×852 竖屏。核对当前区服、声音开关与重开保持、切换账号返回登录。详见 docs/role-data-contract.md。",
+      "inspector": "脚本绑定及 Creator 浏览器检查，范围为本机独立测试环境。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/role/prefabs/RoleTitleChoiceCell.prefab",
+    "classes": [
+      "RolePersonalChoiceCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 548,
+        "height": 120
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "759e2bb8b0def0bbb7410bd9aec00b30c75fb5a15332d8e454a25c91778bb18b"
+  },
+  {
+    "path": "client/assets/bundles/module/smith/prefabs/SmithCategoryCell.prefab",
+    "classes": [
+      "SmithCategoryCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 108,
+        "height": 41
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "9c19f0869cf41729e48bff530fee82ef66fb70d072e9a8605684ee788fd70e81"
+  },
+  {
+    "path": "client/assets/bundles/module/smith/prefabs/SmithComposeItemCell.prefab",
+    "classes": [
+      "SmithItemCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 90,
+        "height": 90
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 1
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "ab27132398bb40fd7c412013880305faa4a703250a7ab4bf711e5cabbb7a6631"
+  },
+  {
+    "path": "client/assets/bundles/module/smith/prefabs/SmithComposeView.prefab",
+    "classes": [
+      "SmithComposeView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "fd3ee9434c8ed4f610a44043482768532692c83dee09e978444f040273dfdf54"
+  },
+  {
+    "path": "client/assets/bundles/module/smith/prefabs/SmithItemCell.prefab",
+    "classes": [
+      "SmithItemCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 112,
+        "height": 112
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 1
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "f38b7f31822632a4e1f32196061a5ef665fd7dce22564d0772c91146458a16af"
+  },
+  {
+    "path": "client/assets/bundles/module/smith/prefabs/SmithPickerItemCell.prefab",
+    "classes": [
+      "SmithItemCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 120,
+        "height": 122
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 1
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "e655a1a62aed89de5a4e3e2af557f5658db9fa899fee0a0c4a264843547946ca"
+  },
+  {
+    "path": "client/assets/bundles/module/smith/prefabs/SmithPickerView.prefab",
+    "classes": [
+      "SmithPickerView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 3,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "3069531fd585db23b0da351e96dda99e68cba19e8325d80065f5531d3fc5ca24"
+  },
+  {
+    "path": "client/assets/bundles/module/smith/prefabs/SmithRecipeCell.prefab",
+    "classes": [
+      "SmithItemCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 128,
+        "height": 126
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 1
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "a078bffd3e43892e9177f29b150f7d0b5fba7c78d370cd016f2b919a59f7a659"
+  },
+  {
+    "path": "client/assets/bundles/module/smith/prefabs/SmithSpiritSkillCell.prefab",
+    "classes": [
+      "SmithSpiritSkillCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 105,
+        "height": 112
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "5325f9f223d1e67ab53b78dca68c2498721423efe7912bba30be5a377810b4fd"
+  },
+  {
+    "path": "client/assets/bundles/module/smith/prefabs/SmithSpiritSkillDetailView.prefab",
+    "classes": [
+      "SmithSpiritSkillDetailView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "dddfb2a923766ff5ea432b746337900b9074cef3e6532a6c88f30a62346a84a9"
+  },
+  {
+    "path": "client/assets/bundles/module/smith/prefabs/SmithSpiritSkillView.prefab",
+    "classes": [
+      "SmithSpiritSkillView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "0b2266a2b9be88c64fb507d44f2897ff501c728056e51224377b9b5b2e1eee6a"
+  },
+  {
+    "path": "client/assets/bundles/module/smith/prefabs/SmithView.prefab",
+    "classes": [
+      "SmithView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1384
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 3,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 11
+    },
+    "specialAnchors": [
+      {
+        "node": "InputText",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "Placeholder",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "InputText",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "Placeholder",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "4df59738133c15b2da3e844a3c44ba62a7ab5c9373aa68a9d68e6144ce708d63"
   },
   {
     "path": "client/assets/bundles/module/tower/prefabs/TowerFloorCell.prefab",

@@ -26,7 +26,7 @@ const BOTTOM_TABS: NavEntry[] = [
     { id: "city", title: "主城", blurb: "主城" },
     { id: "hero", title: "英雄", gateId: "main_hero", blurb: "英雄列表、详情与升级" },
     { id: "summon", title: "召唤", gateId: "main_summon", blurb: "普通免费首抽" },
-    { id: "smith", title: "铁匠铺", gateId: "main_smith_shop", blurb: "强化新手短剑，消耗金币和强化石" },
+    { id: "smith", title: "铁匠铺", gateId: "main_smith_shop", blurb: "合成装备与宝石，查看精灵和神装" },
     { id: "plays", title: "玩法", blurb: "按主线等级或开服天开启" },
 ];
 /**
@@ -176,6 +176,7 @@ const PLAY_ENTRIES: NavEntry[] = [
     { id: "fetter", title: "VIP", gateId: "main_fetter", blurb: "VIP" },
     { id: "mail", title: "邮件", gateId: "mail", blurb: "系统欢迎、开服补给和公告。主城按钮也能进" },
     { id: "arena", title: "竞技场", gateId: "main_pvp", blurb: "积分、固定对手、一键挑战。主线 Lv8" },
+    { id: "main_black_market", title: "黑市", gateId: "main_black_market", blurb: "购买道具和兑换商品，限购按货架周期更新" },
     { id: "wish", title: "许愿池", gateId: "main_blessingpool", blurb: "低级许愿。花金币、许愿符或钻石抽一次，主线 Lv10" },
     { id: "cafe", title: "咖啡馆", gateId: "main_cafe", blurb: "派出 1 到 2 名英雄招待，领取金币和咖啡豆。主线 Lv12" },
     { id: "daily", title: "日常副本", gateId: "main_mission", blurb: "金币副本。看剩余次数和奖励预览，主线 Lv15 开启" },

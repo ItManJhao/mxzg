@@ -63,6 +63,196 @@ class GameSocketTest {
         return result;
     }
 
+    /** 实际 Protobuf 预演、单次合成、过期拒绝及一键结算均使用原版本和同一份资产。 */
+    @Test
+    void smithPreviewsAndSettlesEquipmentOnTheGameSocket() throws Exception {
+        var player = player();
+        String roleId = player.role().id();
+        jdbc.update("UPDATE game_role SET role_level=25,gold=100000 WHERE id=?", roleId);
+        new org.springframework.transaction.support.TransactionTemplate(transactions).executeWithoutResult(status ->
+                inventory.credit(roleId, 1001001, 10));
+        try (Peer smith = new Peer()) {
+            assertTrue(smith.authenticate(player.session().accessToken()).path("ok").asBoolean());
+            var preview = smith.request("smith.preview", Map.of("slot", 1));
+            assertTrue(preview.path("ok").asBoolean(), preview::toString);
+            assertEquals(10_982, preview.at("/body/goldCost").asLong());
+            assertEquals(1001003, preview.at("/body/rewards/0/itemId").asInt());
+            assertEquals(100_000, roles.findById(roleId).orElseThrow().gold());
+
+            String singleId = UUID.randomUUID().toString();
+            var single = smith.request("smith.forge", Map.of("requestId", singleId, "itemId", 1001002, "count", 1));
+            assertTrue(single.path("ok").asBoolean(), single::toString);
+            assertEquals(2112, single.at("/body/goldCost").asLong());
+            assertEquals(singleId, smith.event("reward.granted").at("/body/receiptId").asString());
+
+            var old = smith.request("smith.forge.all", Map.of("requestId", UUID.randomUUID().toString(),
+                    "slot", 1, "expectedRevision", preview.at("/body/assetRevision").asLong()));
+            assertEquals("SMITH_PREVIEW_CHANGED", old.at("/error/code").asString());
+            var current = smith.request("smith.preview", Map.of("slot", 1));
+            var order = Map.of("requestId", UUID.randomUUID().toString(), "slot", 1,
+                    "expectedRevision", current.at("/body/assetRevision").asLong());
+            var settled = smith.request("smith.forge.all", order);
+            assertTrue(settled.path("ok").asBoolean(), settled::toString);
+            assertEquals(current.at("/body/rewards"), settled.at("/body/rewards"));
+            assertEquals(settled.path("body"), smith.request("smith.forge.all", order).path("body"));
+            assertEquals(89_018, roles.findById(roleId).orElseThrow().gold());
+            assertEquals(1, inventory.find(roleId, 1001003).orElseThrow().quantity());
+            assertEquals(0L, inventory.find(roleId, 1001002).map(row -> row.quantity()).orElse(0L));
+            java.nio.file.Files.write(java.nio.file.Path.of("target", "smith-receipt.pb"),
+                    GameProtocolCodec.encode(settled));
+        }
+    }
+
+    /** 从真实二进制连接购买黑市道具，核对库存、扣费和黑市任务独立计数。 */
+    @Test
+    void blackMarketPurchaseUsesAuthoritativeQuoteAndQuestCount() throws Exception {
+        var player = player();
+        String roleId = player.role().id();
+        jdbc.update("UPDATE game_role SET role_level=6,diamonds=1000 WHERE id=?", roleId);
+        try (Peer buyer = new Peer()) {
+            assertTrue(buyer.authenticate(player.session().accessToken()).path("ok").asBoolean());
+            var page = buyer.request("black-market.list", Map.of("shopType", 100800));
+            assertTrue(page.path("ok").asBoolean(), page::toString);
+            var state = page.path("body");
+            assertEquals(100800, state.path("shopType").asInt());
+            var offer = state.path("offers").get(0);
+            int productId = offer.path("productId").asInt();
+            int itemId = offer.path("itemId").asInt();
+            long initialInventory = inventory.list(roleId).stream().filter(item -> item.itemId() == itemId)
+                    .mapToLong(item -> item.quantity()).sum();
+            String requestId = UUID.randomUUID().toString();
+            var order = Map.of("requestId", requestId, "shopType", 100800,
+                    "shelfVersion", state.path("shelfVersion").asLong(), "productId", productId, "count", 1);
+            var purchase = buyer.request("black-market.buy", order);
+            assertTrue(purchase.path("ok").asBoolean(), purchase::toString);
+            assertEquals(1, purchase.at("/body/state/offers/0/purchased").asInt());
+            assertEquals(purchase.path("body"), buyer.request("black-market.buy", order).path("body"));
+            assertEquals(1000 - offer.path("costQuantity").asLong(), roles.findById(roleId).orElseThrow().diamonds());
+            assertEquals(initialInventory + offer.path("quantity").asLong(), inventory.list(roleId).stream()
+                    .filter(item -> item.itemId() == itemId).mapToLong(item -> item.quantity()).sum());
+            var quest = buyer.request("quest.list", Map.of());
+            assertTrue(quest.path("ok").asBoolean(), quest::toString);
+            var tasks = quest.at("/body/daily").valueStream().toList();
+            assertEquals(1, tasks.stream().filter(task -> task.path("id").asInt() == 9)
+                    .findFirst().orElseThrow().path("current").asLong());
+            assertEquals(0, tasks.stream().filter(task -> task.path("id").asInt() == 10)
+                    .findFirst().orElseThrow().path("current").asLong());
+            java.nio.file.Files.write(java.nio.file.Path.of("target", "black-market-receipt.pb"),
+                    GameProtocolCodec.encode(purchase));
+        }
+    }
+
+    /** 通过真实二进制连接验证本服发送、异服隔离、已读持久化和离线消息的增量补读。 */
+    @Test
+    void worldChatRecoversUnreadMessagesAfterReconnecting() throws Exception {
+        var author = player();
+        var reader = player();
+        var secondAuthor = player();
+        var otherServer = login.login("ws_" + UUID.randomUUID().toString().substring(0, 15), "local-2");
+        jdbc.update("UPDATE game_role SET role_level=18 WHERE id IN (?, ?)", author.role().id(), secondAuthor.role().id());
+        try (Peer sender = new Peer(); Peer remote = new Peer()) {
+            assertTrue(sender.authenticate(author.session().accessToken()).path("ok").asBoolean());
+            assertTrue(remote.authenticate(otherServer.session().accessToken()).path("ok").asBoolean());
+            String firstId;
+            try (Peer recipient = new Peer()) {
+                assertTrue(recipient.authenticate(reader.session().accessToken()).path("ok").asBoolean());
+                var before = recipient.request("chat.history", Map.of()).path("body");
+                assertFalse(before.path("canSend").asBoolean());
+                var denied = recipient.request("chat.send", Map.of("requestId", UUID.randomUUID().toString(), "text", "尚未开放"));
+                assertEquals("CHAT_LEVEL_REQUIRED", denied.path("error").path("code").asString());
+
+                var send = Map.of("requestId", UUID.randomUUID().toString(), "text", "世界消息 🌟 #1#");
+                var result = sender.request("chat.send", send);
+                assertTrue(result.path("ok").asBoolean());
+                assertEquals(send.get("requestId"), result.path("body").path("requestId").asString());
+                var first = result.path("body").path("message");
+                firstId = first.path("id").asString();
+                assertTrue(firstId.matches("[1-9][0-9]*"));
+                assertEquals(author.role().id(), first.path("roleId").asString());
+                assertEquals(first, sender.request("chat.send", send).path("body").path("message"));
+                assertEquals("chat.changed", recipient.event("chat.changed").path("name").asString());
+                var page = recipient.request("chat.history", Map.of()).path("body");
+                assertEquals(first, page.path("messages").get(page.path("messages").size() - 1));
+                assertEquals(before.path("unreadCount").asInt() + 1, page.path("unreadCount").asInt());
+
+                var read = recipient.request("chat.read", Map.of("throughId", firstId)).path("body");
+                assertEquals(firstId, read.path("readThroughId").asString());
+                assertEquals(0, read.path("unreadCount").asInt());
+                assertEquals(0, read.path("messages").size());
+            }
+            assertNull(remote.messages.poll(250, TimeUnit.MILLISECONDS), "异服连接收到世界聊天通知");
+            assertTrue(remote.request("chat.history", Map.of()).path("body").path("messages").isEmpty());
+
+            String offlineText = "离线期间的世界消息";
+            try (Peer offlineSender = new Peer()) {
+                assertTrue(offlineSender.authenticate(secondAuthor.session().accessToken()).path("ok").asBoolean());
+                assertTrue(offlineSender.request("chat.send", Map.of("requestId", UUID.randomUUID().toString(),
+                    "text", offlineText)).path("ok").asBoolean());
+            }
+            try (Peer recovered = new Peer()) {
+                assertTrue(recovered.authenticate(reader.session().accessToken()).path("ok").asBoolean());
+                var recoveredFrame = recovered.request("chat.history", Map.of("afterId", firstId));
+                var missed = recoveredFrame.path("body");
+                assertEquals(firstId, missed.path("readThroughId").asString());
+                assertEquals(1, missed.path("unreadCount").asInt());
+                assertEquals(1, missed.path("messages").size());
+                assertEquals(offlineText, missed.path("messages").get(0).path("text").asString());
+                assertFalse(missed.path("hasNewer").asBoolean());
+                java.nio.file.Files.write(java.nio.file.Path.of("target", "world-chat-history.pb"), GameProtocolCodec.encode(recoveredFrame));
+                var earlier = recovered.request("chat.history", Map.of("beforeId", missed.path("latestId").asString())).path("body");
+                assertEquals(firstId, earlier.path("messages").get(earlier.path("messages").size() - 1).path("id").asString());
+            }
+        }
+    }
+
+    /** 私聊回包、总览和重连补页通过真实 Protobuf，非会话成员既拿不到正文也收不到刷新。 */
+    @Test
+    void privateChatOnlyNotifiesParticipantsAndRestoresUnread() throws Exception {
+        var author = player();
+        var recipient = player();
+        var outsider = player();
+        String senderId = author.role().id();
+        String peerId = recipient.role().id();
+        jdbc.update("UPDATE game_role SET role_level=18 WHERE id=?", senderId);
+        jdbc.update("INSERT INTO game_friend_relation(role_id,target_id) VALUES (?,?),(?,?)", senderId, peerId, peerId, senderId);
+
+        try (Peer sender = new Peer(); Peer incoming = new Peer(); Peer unrelated = new Peer()) {
+            assertTrue(sender.authenticate(author.session().accessToken()).path("ok").asBoolean());
+            assertTrue(incoming.authenticate(recipient.session().accessToken()).path("ok").asBoolean());
+            assertTrue(unrelated.authenticate(outsider.session().accessToken()).path("ok").asBoolean());
+            var sent = sender.request("chat.send", Map.of("requestId", UUID.randomUUID().toString(),
+                "text", "只在好友会话显示", "channel", 5, "peerRoleId", peerId)).path("body");
+            assertEquals(peerId, sent.path("peerRoleId").asString());
+            var message = sent.path("message");
+            assertEquals(5, message.path("channel").asInt());
+            assertEquals("local-1", message.path("serverId").asString());
+            assertEquals("chat.changed", incoming.event("chat.changed").path("name").asString());
+            assertNull(unrelated.messages.poll(250, TimeUnit.MILLISECONDS));
+            var denied = unrelated.request("chat.history", Map.of("channel", 5, "peerRoleId", senderId)).path("body");
+            assertTrue(denied.path("messages").isEmpty());
+            assertFalse(denied.has("scopeId"));
+            var overviewFrame = incoming.request("chat.overview", Map.of());
+            var thread = overviewFrame.path("body").path("conversations").get(0);
+            assertEquals(senderId, thread.path("roleId").asString());
+            assertEquals(1, thread.path("unreadCount").asInt());
+            assertEquals(message.path("id").asString(), thread.path("latestMessageId").asString());
+            java.nio.file.Files.write(java.nio.file.Path.of("target", "chat-overview.pb"), GameProtocolCodec.encode(overviewFrame));
+            try (Peer recovered = new Peer()) {
+                assertTrue(recovered.authenticate(recipient.session().accessToken()).path("ok").asBoolean());
+                var historyFrame = recovered.request("chat.history", Map.of("channel", 5, "peerRoleId", senderId));
+                var history = historyFrame.path("body");
+                assertEquals(1, history.path("unreadCount").asInt());
+                assertEquals(message, history.path("messages").get(0));
+                assertEquals(senderId, history.path("peerRoleId").asString());
+                assertTrue(history.has("scopeId"));
+                java.nio.file.Files.write(java.nio.file.Path.of("target", "chat-private-history.pb"), GameProtocolCodec.encode(historyFrame));
+                var ack = recovered.request("chat.read", Map.of("channel", 5, "peerRoleId", senderId,
+                    "throughId", message.path("id").asString())).path("body");
+                assertEquals(0, ack.path("unreadCount").asInt());
+            }
+        }
+    }
+
     private final class Peer implements WebSocket.Listener, AutoCloseable {
         final HttpClient client = HttpClient.newHttpClient();
         final BlockingQueue<JsonNode> messages = new LinkedBlockingQueue<>();
@@ -679,7 +869,7 @@ class GameSocketTest {
         }
     }
 
-    /** 个人空间经真实 WS 校验鉴权、图鉴、称号期限、改名扣费、状态推送与重登恢复。 */
+    /** 经真实 WS 校验个人空间鉴权、装饰、改名和完整的英雄图鉴进度同步。 */
     @Test
     void personalSpaceCommandsPublishAndRecover() throws Exception {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
@@ -702,6 +892,8 @@ class GameSocketTest {
             assertFalse(role.path("firstNamed").asBoolean());
             assertTrue(role.path("basics").path("imageId").asInt() > 0);
             assertTrue(initial.path("inventory").isArray());
+            assertTrue(initial.path("heroIllustration").isObject());
+            assertTrue(initial.path("heroIllustration").path("entries").isEmpty());
             assertEquals(0, personalResponse(peer, "role.image.list", Map.of()).path("imageIds").size());
             assertEquals(0, personalResponse(peer, "role.titles.list", Map.of()).path("titles").size());
 
@@ -720,6 +912,9 @@ class GameSocketTest {
             long preparedRevision = named.path("revision").asLong() + 1;
             var prepared = personalStateChanged(peer, preparedRevision);
             assertEquals(1, stackQuantity(prepared, 902044));
+            assertEquals(1, prepared.path("heroIllustration").path("entries").size());
+            assertEquals(10101001, prepared.at("/heroIllustration/entries/0/templateId").asInt());
+            assertEquals(1, prepared.at("/heroIllustration/entries/0/maxStar").asInt());
             assertEquals(List.of(unlockedImage), personalResponse(peer, "role.image.list", Map.of()).path("imageIds")
                 .valueStream().map(JsonNode::asInt).toList());
             var titles = personalResponse(peer, "role.titles.list", Map.of()).path("titles");
@@ -760,6 +955,7 @@ class GameSocketTest {
             var restored = restore.path("body").path("initial");
             assertEquals(committed.path("role"), restored.path("role"));
             assertEquals(committed.path("inventory"), restored.path("inventory"));
+            assertEquals(committed.path("heroIllustration"), restored.path("heroIllustration"));
             assertEquals(committed.path("revision"), restored.path("revision"));
             assertEquals(1, personalResponse(restoredPeer, "role.image.list", Map.of()).path("imageIds").size());
             assertEquals(3, personalResponse(restoredPeer, "role.titles.list", Map.of()).path("titles").size());

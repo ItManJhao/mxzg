@@ -20,7 +20,7 @@ const { ccclass, property } = _decorator;
 
 @UIRegistry.view({
     id: "ranking",
-    prefab: "bundles/module/common/prefabs/RankingView",
+    prefab: "bundles/module/ranking/prefabs/RankingView",
     layer: UILayer.Popup,
     hostId: "remake-modal",
     cache: false,

@@ -22,7 +22,7 @@ export interface RankingDetailOpenArgs {
 
 @UIRegistry.view({
     id: "ranking-detail",
-    prefab: "bundles/module/common/prefabs/RankingDetailView",
+    prefab: "bundles/module/ranking/prefabs/RankingDetailView",
     layer: UILayer.Popup,
     hostId: "remake-modal",
     cache: false,

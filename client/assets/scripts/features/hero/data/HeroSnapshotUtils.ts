@@ -14,6 +14,14 @@ interface HeroStats {
     readonly spd: number;
 }
 
+/** 已同步的图鉴进度按配置模板记录，独立英雄被消耗后仍保留最高星级。 */
+export interface HeroIllustrationProgress {
+    /** 与静态图鉴匹配的英雄模板 ID。 */
+    readonly templateId: number;
+    /** 当前角色曾获得过的最高原始星级。 */
+    readonly maxStar: number;
+}
+
 /** 服务端英雄实例 ID 保持字符串 UUID，templateId 为独立的英雄类型配置键。 */
 export interface OwnedHero {
     /** 持久进化分支/等级及已核验技能；undefined未同步，0/0明确未进化。 */
@@ -152,6 +160,27 @@ export class HeroSnapshotUtils {
             throw new Error("英雄容量无效");
         }
         return Object.freeze({ capacity: row.capacity, buySpaceTimes: row.buySpaceTimes as number });
+    }
+
+    /** 校验模板和最高星级的唯一性。旧快照缺字段时保留未同步含义。 */
+    public static readIllustrations(value: unknown): readonly HeroIllustrationProgress[] | undefined {
+        if (value === undefined) {
+            return undefined;
+        }
+        const records = value && typeof value === "object" ? (value as Record<string, unknown>).entries : null;
+        if (!Array.isArray(records)) {
+            throw new Error("英雄图鉴进度无效");
+        }
+        const templates = new Set<number>();
+        return Object.freeze(records.map((entry: unknown) => {
+            const row = entry && typeof entry === "object" ? entry as Record<string, unknown> : {};
+            if (!HeroSnapshotUtils.positiveInteger(row.templateId) || !HeroSnapshotUtils.positiveInteger(row.maxStar)
+                    || templates.has(row.templateId)) {
+                throw new Error("英雄图鉴模板或最高星级无效");
+            }
+            templates.add(row.templateId);
+            return Object.freeze({ templateId: row.templateId, maxStar: row.maxStar });
+        }));
     }
 
     /** 校验服务端面板、可选战力和来源覆盖声明；缺失字段保留未同步状态。 */

@@ -213,7 +213,8 @@ function approvedEffectsChanges() {
 
 const actualBundles = bundleEntries().map(entry => entry.name).sort();
 assert.deepEqual(effectsMove.bundleInventory.added.map(row => row.name), ['effects'], '本次仅新增effects素材包');
-const enabledModules = ['market', 'dungeon', 'guild', 'vip', 'arena', 'tower'];
+const enabledModules = ['market', 'dungeon', 'dreamland', 'guild', 'vip', 'arena', 'tower',
+    'chat', 'friend', 'mail', 'quest', 'ranking', 'reward', 'role', 'blackmarket', 'smith'];
 for (const name of enabledModules) {
     const meta = read(resolveAssetPath(`bundles/module/${name}.meta`));
     assert.deepEqual(meta.userData, { isBundle: true, bundleName: name, priority: 2, bundleConfigID: 'remote-assets' });
@@ -225,7 +226,7 @@ assert.deepEqual(actualBundles, approvedBundles, '未实现包重生或当前包
 const resourceFiles = files(assets);
 const actualPrefabs = resourceFiles.filter(file => file.endsWith('.prefab')).sort();
 const plannedPrefabs = new Set(prefabPlan.groups.flatMap(group => group.names.map(name =>
-    resolveAssetPath(`${group.directory}/${name}.prefab`))));
+    resolveAssetPath(`${group.directory}/${name}.prefab`, { current: true }))));
 assert.deepEqual(actualPrefabs, [...plannedPrefabs].sort(),
     'Prefab必须对应已实现入口及其依赖，不预留未实现页面');
 const knownUuids = new Set();
@@ -243,13 +244,13 @@ for (const file of resourceFiles.filter(file => file.endsWith('.ts'))) {
     if (source.includes('@UIRegistry.view({')) {
         const match = source.match(/@UIRegistry\.view\(\{[\s\S]*?prefab:\s*["']([^"']+)["']/);
         assert(match, '页面@UIRegistry.view没有明确Prefab地址：' + file);
-        const prefab = resolveAssetPath(match[1] + '.prefab');
+        const prefab = resolveAssetPath(match[1] + '.prefab', { current: true });
         assert(plannedPrefabs.has(prefab), '页面引用未准入的Prefab：' + match[1]);
         assert(!viewPrefabs.has(prefab), '一个Prefab只能绑定一个独立View入口：' + match[1]);
         viewPrefabs.add(prefab);
     }
     for (const match of source.matchAll(/["'](bundles\/(?:[\w-]+\/)+prefabs\/[\w-]+)["']/g)) {
-        resolveAssetPath(match[1] + '.prefab');
+        resolveAssetPath(match[1] + '.prefab', { current: true });
     }
 }
 for (const row of heroFeedback.addedPrefabs) {
@@ -286,7 +287,7 @@ assert.equal(crypto.createHash('sha256').update(effectsMetaText).digest('hex'),
 assert.equal(effectsMeta.uuid, effectsMove.uuid, 'effects根UUID必须保留');
 assert.deepEqual(effectsMeta.userData, { isBundle: true, bundleName: 'effects', priority: 2, bundleConfigID: 'remote-assets' });
 assert.equal(bundleEntries().filter(entry => entry.meta.userData.bundleConfigID === 'remote-assets').length,
-    effectsMove.bundleInventory.after.remoteBundles + enabledModules.length, '远程资源范围包含普通市场与副本大厅');
+    effectsMove.bundleInventory.after.remoteBundles + enabledModules.length, '远程资源包范围与已启用模块不符');
 const roster = read(resolveBundleFile('hero/prefabs/HeroListView.prefab'));
 assert(!roster.some(row => row._name === 'btn_permanent_skin'), '未实现皮肤商店的隐藏资源依赖不可恢复');
 console.log(`当前资源范围通过：${actualBundles.length}包/${actualPrefabs.length}Prefab/${viewPrefabs.size}独立View、原UUID、全部序列化引用及${effectsChanges.size}项有据特效增量；虚拟还原${effectsMove.snapshot.after.files}份原特效整树/UUID摘要。实际下载和构建另验。`);

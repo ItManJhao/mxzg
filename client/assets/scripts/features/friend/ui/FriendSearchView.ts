@@ -14,7 +14,7 @@ import { FriendCell } from "./FriendCell";
 
 const { ccclass, property } = _decorator;
 
-@UIRegistry.view({ id: "friend-search", prefab: "bundles/module/common/prefabs/FriendSearchView", layer: UILayer.Dialog,
+@UIRegistry.view({ id: "friend-search", prefab: "bundles/module/friend/prefabs/FriendSearchView", layer: UILayer.Dialog,
     hostId: "remake-modal", cache: false, allowMultiple: false, modal: { mask: true, closeOnOutside: true } })
 @ccclass("FriendSearchView")
 export class FriendSearchView extends BaseView {

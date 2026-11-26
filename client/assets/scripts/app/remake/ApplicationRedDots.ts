@@ -25,6 +25,7 @@ import { HeroRedDotUtils } from "../../features/hero/utils/HeroRedDotUtils";
 import { QuestModel } from "../../features/quest/QuestModel";
 import { RankingModel } from "../../features/ranking/RankingModel";
 import { FriendModel } from "../../features/friend/FriendModel";
+import { ChatModel } from "../../features/chat/ChatModel";
 import { MailModel } from "../../features/mail/MailModel";
 import { VipModel } from "../../features/vip/VipModel";
 
@@ -47,7 +48,7 @@ export class ApplicationRedDots {
     private readonly unbindSocial: readonly (() => void)[];
 
     /**
-     * 接入独立主线回包，等待场景装配完成后再读配置。
+     * 监听玩法及社交快照，等待场景装配完成后再读配置。
      * @param account 当前应用的角色快照，用于入口等级和升级金币。
      */
     public constructor(private readonly account: AccountModel) {
@@ -57,6 +58,7 @@ export class ApplicationRedDots {
         this.unbindSocial = [
             EventDispatcher.instance.on("friend.updated", this, this.refreshSocial),
             EventDispatcher.instance.on("mail.updated", this, this.refreshSocial),
+            EventDispatcher.instance.on("chat.updated", this, this.refreshSocial),
         ];
     }
 
@@ -186,7 +188,7 @@ export class ApplicationRedDots {
         }
     }
 
-    /** 由权威收件箱、申请和礼物投影主城快捷红点。 */
+    /** 将服务端收件箱、好友状态及所有可访问频道的未读投影为红点。 */
     private refreshSocial(): void {
         if (!this.ready) {
             return;
@@ -194,6 +196,7 @@ export class ApplicationRedDots {
         const friends = FriendModel.instance.state;
         RedDotManager.instance.setMany({
             [GameRedDotKey.MAIL]: MailModel.instance.state?.entries.some(entry => !entry.read) ?? false,
+            [GameRedDotKey.CHAT]: ChatModel.instance.unread() > 0,
             [GameRedDotKey.FRIEND]: !!friends && (friends.applications.length > 0
                 || friends.gifts.some(gift => gift.giftState === 1)),
         });

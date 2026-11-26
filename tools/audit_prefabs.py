@@ -207,7 +207,9 @@ def audit():
         classes = [scripts[c['__type__']] for c in components if c['__type__'] in scripts]
         views = [name for name in classes if name.endswith('View')]
         if views:
-            assert file.stem in views, (rel, classes, '界面资源与实际类不一致')
+            # 进化目录仅缩放头像格，复用名册格的交互及星级绑定。
+            expected_view = 'HeroIconCellView' if file.stem == 'HeroEvolutionCatalogCell' else file.stem
+            assert expected_view in views, (rel, classes, '界面资源与实际类不一致')
         ui = next((c for c in components if c['__type__'] == 'cc.UITransform'), None)
         assert ui is not None, (rel, '根缺少 UITransform')
         if file.stem in ('ChapterRewardLayer', 'ChapterPreviewLayer',

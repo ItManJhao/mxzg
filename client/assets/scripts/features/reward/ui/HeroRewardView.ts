@@ -35,7 +35,7 @@ const { ccclass, property } = _decorator;
 
 @UIRegistry.view({
     id: "hero-reward",
-    prefab: "bundles/module/common/prefabs/HeroRewardView",
+    prefab: "bundles/module/reward/prefabs/HeroRewardView",
     layer: UILayer.Popup,
     cache: false,
     allowMultiple: false,
@@ -189,7 +189,7 @@ export class HeroRewardView extends BaseView<HeroRewardArgs> {
         });
     }
 
-    /** 原资源统一在此准备；高星骨骼尚未就绪不露主体，关闭后的成功不挂载或播放。 */
+    /** 准备领英雄专用序列、跨模块共享彩带及音效，窗口关闭后撤回迟到资源。 */
     private async prepare(hero: HeroGrantItem, preparation: number): Promise<void> {
         const resources = ResourceAssetsUtils.forNode(this.node);
         const template = GameConfig.instance.requireConfig(GConfig.HeroType, hero.templateId);
@@ -198,13 +198,17 @@ export class HeroRewardView extends BaseView<HeroRewardArgs> {
         }
         const color = hero.star === 5 ? "jin" : "zi";
         const paths = hero.star > 3 ? [
-            ["reward-effect2_" + color + "-", 10],
-            ["reward-effect_" + color + "-xun-", 6],
-        ] as const : [["", 0], ["", 0]] as const;
-        const sequences = [...paths, ["item-reward_effect-", 10], ["item-reward-effect-2_effect-bomb-", 11]] as const;
+            ["reward", "reward-effect2_" + color + "-", 10],
+            ["reward", "reward-effect_" + color + "-xun-", 6],
+        ] as const : [["reward", "", 0], ["reward", "", 0]] as const;
+        const sequences = [
+            ...paths,
+            ["reward", "item-reward_effect-", 10],
+            ["common", "item-reward-effect-2_effect-bomb-", 11],
+        ] as const;
         const [frames, clip, element, icons, portrait] = await Promise.all([
-            Promise.all(sequences.map(([prefix, count]) => Promise.all(Array.from({ length: count }, (_, index) =>
-                ResManager.getSpriteFrame(this.node, ResManager.ui("common", prefix + index)))))),
+            Promise.all(sequences.map(([bundle, prefix, count]) => Promise.all(Array.from({ length: count }, (_, index) =>
+                ResManager.getSpriteFrame(this.node, ResManager.ui(bundle, prefix + index)))))),
             resources.loadPath("audio/" + (hero.star === 5 ? "summon5" : hero.star === 4 ? "summon4" : "summonlist"), "AudioClip"),
             ResManager.getSpriteFrame(this.node, ResManager.ui("hero", "hero-icon_elem-"
                 + template.elem)),

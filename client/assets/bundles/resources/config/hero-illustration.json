@@ -1,0 +1,216 @@
+{
+  "table": "hero-illustration",
+  "note": "原版 client/idle/src/config 的 skin.lua 补充 12 行；欧娅的 herotype.lua、herobase.lua、heroupgraderate.lua、heroskill.lua 独立用于只读图鉴。",
+  "rows": [
+    {
+      "type": 10105023,
+      "star_limit": "[5,9,14]",
+      "handbook": "[5,6,10]",
+      "skin": "[10105023,10106023,10110023]"
+    },
+    {
+      "type": 10205023,
+      "star_limit": "[5,9,14]",
+      "handbook": "[5,6,10]",
+      "skin": "[10205023,10206023,10210023]"
+    },
+    {
+      "type": 10405017,
+      "star_limit": "[5,9,14]",
+      "handbook": "[5,6,10]",
+      "skin": "[10405017,10406017,10410017]"
+    },
+    {
+      "type": 10405018,
+      "star_limit": "[5,9,14]",
+      "handbook": "[5,6,10]",
+      "skin": "[10405018,10406018,10410018]"
+    },
+    {
+      "type": 10405019,
+      "star_limit": "[5,9,14]",
+      "handbook": "[5,6,10]",
+      "skin": "[10405019,10406019,10410019]"
+    },
+    {
+      "type": 10405020,
+      "star_limit": "[5,9,14]",
+      "handbook": "[5,6,10]",
+      "skin": "[10405020,10406020,10410020]"
+    },
+    {
+      "type": 10405021,
+      "star_limit": "[5,9,14]",
+      "handbook": "[5,6,10]",
+      "skin": "[10405021,10406021,10410021]"
+    },
+    {
+      "type": 10505017,
+      "star_limit": "[5,9,14]",
+      "handbook": "[5,6,10]",
+      "skin": "[10505017,10506017,10510017]"
+    },
+    {
+      "type": 10505018,
+      "star_limit": "[5,9,14]",
+      "handbook": "[5,6,10]",
+      "skin": "[10505018,10506018,10510018]"
+    },
+    {
+      "type": 10505019,
+      "star_limit": "[5,9,14]",
+      "handbook": "[5,6,10]",
+      "skin": "[10505019,10506019,10510019]"
+    },
+    {
+      "type": 10505020,
+      "star_limit": "[5,9,14]",
+      "handbook": "[5,6,10]",
+      "skin": "[10505020,10506020,10510020]"
+    },
+    {
+      "type": 10505021,
+      "star_limit": "[5,9,14]",
+      "handbook": "[5,6,10]",
+      "skin": "[10505021,10506021,10510021]"
+    }
+  ],
+  "templates": [
+    {
+      "type": 10405021,
+      "kind": 1,
+      "elem": 4,
+      "occupation": 1,
+      "skill_1": 104050211,
+      "skill_2": 104050212,
+      "skill_3": 104050213,
+      "skill_4": 104050214
+    }
+  ],
+  "base": [
+    {
+      "type": 10405021,
+      "star": 5,
+      "atk": 149,
+      "hp": 637,
+      "def": 50,
+      "spd": 122
+    },
+    {
+      "type": 10405021,
+      "star": 6,
+      "atk": 208,
+      "hp": 955,
+      "def": 50,
+      "spd": 122
+    },
+    {
+      "type": 10405021,
+      "star": 10,
+      "atk": 795,
+      "hp": 4830,
+      "def": 50,
+      "spd": 122
+    }
+  ],
+  "rates": [
+    {
+      "hero_id": 10405021,
+      "grade": 5,
+      "atk_rate": 176575,
+      "hp_rate": 171164,
+      "def_rate": 125261,
+      "spd_rate": 47130,
+      "atk_grow": 1965,
+      "hp_grow": 1897,
+      "def_grow": 1459,
+      "spd_grow": 470
+    },
+    {
+      "hero_id": 10405021,
+      "grade": 6,
+      "atk_rate": 248256,
+      "hp_rate": 240469,
+      "def_rate": 154441,
+      "spd_rate": 56530,
+      "atk_grow": 2260,
+      "hp_grow": 2181,
+      "def_grow": 1459,
+      "spd_grow": 470
+    }
+  ],
+  "skills": [
+    {
+      "type": 104050211,
+      "level": 1,
+      "lan_name": 100002077,
+      "lan_describe": 110002077
+    },
+    {
+      "type": 104050211,
+      "level": 2,
+      "lan_name": 100002078,
+      "lan_describe": 110002078
+    },
+    {
+      "type": 104050211,
+      "level": 3,
+      "lan_name": 100002079,
+      "lan_describe": 110002079
+    },
+    {
+      "type": 104050212,
+      "level": 1,
+      "lan_name": 100002080,
+      "lan_describe": 110002080
+    },
+    {
+      "type": 104050212,
+      "level": 2,
+      "lan_name": 100002081,
+      "lan_describe": 110002081
+    },
+    {
+      "type": 104050212,
+      "level": 3,
+      "lan_name": 100002082,
+      "lan_describe": 110002082
+    },
+    {
+      "type": 104050213,
+      "level": 1,
+      "lan_name": 100002083,
+      "lan_describe": 110002083
+    },
+    {
+      "type": 104050213,
+      "level": 2,
+      "lan_name": 100002084,
+      "lan_describe": 110002084
+    },
+    {
+      "type": 104050213,
+      "level": 3,
+      "lan_name": 100002085,
+      "lan_describe": 110002085
+    },
+    {
+      "type": 104050214,
+      "level": 1,
+      "lan_name": 100002089,
+      "lan_describe": 110002086
+    },
+    {
+      "type": 104050214,
+      "level": 2,
+      "lan_name": 100002090,
+      "lan_describe": 110002087
+    },
+    {
+      "type": 104050214,
+      "level": 3,
+      "lan_name": 100002091,
+      "lan_describe": 110002088
+    }
+  ]
+}

@@ -26,6 +26,8 @@ export class GameRedDotKey {
     public static readonly MAIL = "mail";
     /** 收到好友申请或可领取的友情礼物。 */
     public static readonly FRIEND = "friend";
+    /** 世界频道有尚未阅读的可见消息时点亮。 */
+    public static readonly CHAT = "chat.world";
     /** 召唤法阵入口。 */
     public static readonly SUMMON = "city.summon";
     /** 创造法阵至少有一项配方的本体、素材和费用准备齐全。 */

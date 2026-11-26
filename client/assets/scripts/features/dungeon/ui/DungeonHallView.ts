@@ -36,6 +36,8 @@ export interface DungeonHallArgs {
     readonly account: AccountModel;
     /** 日常副本入口打开共用关卡页，默认展示金币。 */
     readonly openDailyDungeon: () => void;
+    /** 永恒梦境入口打开独立进度与挑战页。 */
+    readonly openDreamland: () => void;
 }
 
 const { ccclass, property } = _decorator;
@@ -125,10 +127,14 @@ export class DungeonHallView extends BaseView<DungeonHallArgs> {
         node.getComponent(DungeonHallCardView)!.render(card, (id, quantity) => this.openReward(id, quantity));
     }
 
-    /** 日常副本打开共用关卡页，其他卡片提示当前实现状态。 */
+    /** 打开日常副本或永恒梦境，其他入口反馈当前实现状态。 */
     private selectCard(card: DungeonHallCard, index: number): void {
         if (index === 0) {
             this.args?.openDailyDungeon();
+            return;
+        }
+        if (index === 1) {
+            this.args?.openDreamland();
             return;
         }
         UIManager.instance.toast(`${card.title}玩法尚未接入`);

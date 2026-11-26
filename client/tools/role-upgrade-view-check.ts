@@ -86,7 +86,7 @@ function checkNextFeature(): void {
 
 /** 静态主体保留旧640×550及关键层级；整笔反馈标题统一为本次获得，不将冷恢复基础奖励称为升级附赠。 */
 function checkPrefab(): void {
-    const objects = read("client/assets/bundles/module/common/prefabs/RoleUpgradeView.prefab");
+    const objects = read("client/assets/bundles/module/reward/prefabs/RoleUpgradeView.prefab");
     const component = objects.find((row: any) => row.__type__ === classId(
         "client/assets/scripts/features/reward/ui/RoleUpgradeView.ts.meta"));
     assert(component && component.beforeLevel && component.afterLevel && component.featureInfo && component.featureCondition);
@@ -117,8 +117,8 @@ function checkPrefab(): void {
     assert(objects.some((row: any) => row.__type__ === scaleType && row.target.__id__ === component.panel.__id__ && row.designWidth === 640));
     assert.deepEqual(UIRegistry.viewSpecOf(RoleUpgradeView)!.modal, { mask: true, closeOnOutside: true });
     assert.equal(UIRegistry.viewSpecOf(RoleUpgradeView)!.hostId, "remake-modal");
-    const expected = ["resources/maps/ui/map-bg-result-1", "module/common/ui/reward-layer-lang_spr-upgrade",
-        "module/common/ui/win-bg_text-bg", "module/common/ui/reward-layer_spr-arrow",
+    const expected = ["resources/maps/ui/map-bg-result-1", "module/reward/ui/reward-layer-lang_spr-upgrade",
+        "module/common/ui/win-bg_text-bg", "module/reward/ui/reward-layer_spr-arrow",
         "module/common/ui/win-bg_block-bg-15", "module/common/ui/lang-1_close-tips", "module/home/ui/main-city_btn-login-8"];
     for (const path of expected) {
         const meta = read("client/assets/bundles/" + path + ".png.meta");
@@ -137,7 +137,7 @@ function checkPrefab(): void {
 
 /** 使用新Prefab的实际参数检查7项纵滚、末项可达与1至3项居中，业务页不手排Cell坐标。 */
 function checkRewardScrolling(): void {
-    const objects = read("client/assets/bundles/module/common/prefabs/RoleUpgradeView.prefab");
+    const objects = read("client/assets/bundles/module/reward/prefabs/RoleUpgradeView.prefab");
     const settings = objects.find((row: any) => row.cellPrefab && row.columns === 4);
     const createNode = (name: string, parent: Node | null): Node => {
         const node = new Node(name);

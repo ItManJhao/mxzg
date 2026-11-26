@@ -156,6 +156,24 @@ message Frame {
     ArenaShopState arena_shop_state = 146;
     ArenaShopBuy arena_shop_buy = 147;
     ArenaShopReceipt arena_shop_receipt = 148;
+    ChatHistoryRequest chat_history_request = 149;
+    ChatSendRequest chat_send_request = 150;
+    ChatReadRequest chat_read_request = 151;
+    ChatHistory chat_history = 152;
+    ChatSendResult chat_send_result = 153;
+    ChatOverview chat_overview = 154;
+    BlackMarketListRequest black_market_list_request = 155;
+    BlackMarketBuyRequest black_market_buy_request = 156;
+    BlackMarketState black_market_state = 157;
+    BlackMarketReceipt black_market_receipt = 158;
+    SmithPreviewRequest smith_preview_request = 159;
+    SmithForgeRequest smith_forge_request = 160;
+    SmithForgeAllRequest smith_forge_all_request = 161;
+    SmithPreview smith_preview = 162;
+    SmithReceipt smith_receipt = 163;
+    DreamlandState dreamland_state = 164;
+    DreamlandCommand dreamland_command = 165;
+    DreamlandSettlement dreamland_settlement = 166;
   }
 }
 
@@ -284,6 +302,85 @@ message MailboxReceipt {
   optional RewardNotice notice = 4;
 }
 
+// 聊天按频道及私聊对象请求。频道值沿用旧版，省略时为 2（本服世界）。
+// 消息编号按十进制字符串传输，0 表示无游标。
+message ChatHistoryRequest {
+  optional string after_id = 1;
+  optional string before_id = 2;
+  optional uint32 channel = 3 [default = 2];
+  optional string peer_role_id = 4;
+}
+
+message ChatSendRequest {
+  required string request_id = 1;
+  required string text = 2;
+  optional uint32 channel = 3 [default = 2];
+  optional string peer_role_id = 4;
+}
+
+message ChatReadRequest {
+  required string through_id = 1;
+  optional uint32 channel = 2 [default = 2];
+  optional string peer_role_id = 3;
+}
+
+message ChatMessage {
+  required string id = 1;
+  required string role_id = 2;
+  required string name = 3;
+  required uint32 avatar_id = 4;
+  required uint32 border_id = 5;
+  required uint32 level = 6;
+  required string text = 7;
+  required uint64 sent_at_seconds = 8;
+  optional uint32 channel = 9 [default = 2];
+  optional string server_id = 10;
+  // 旧策划公告编号，仅服务端消息携带。客户端按已实现的固定目标提供跳转。
+  optional uint32 notice_id = 11;
+}
+
+message ChatHistory {
+  repeated ChatMessage messages = 1;
+  required string latest_id = 2;
+  required string read_through_id = 3;
+  required uint32 unread_count = 4;
+  required bool has_more = 5;
+  required bool has_newer = 6;
+  required bool can_send = 7;
+  optional uint32 channel = 8 [default = 2];
+  optional string peer_role_id = 9;
+  // 当前可读范围的标识，范围变化时必须重新开始拉取。
+  optional string scope_id = 10;
+}
+
+message ChatSendResult {
+  required string request_id = 1;
+  required ChatMessage message = 2;
+  optional string peer_role_id = 3;
+}
+
+// 当前角色能看到的频道和最近私聊，由服务端计算频道资格和未读。
+message ChatChannelSummary {
+  required uint32 channel = 1;
+  required bool available = 2;
+  required uint32 unread_count = 3;
+}
+
+message ChatConversation {
+  required string role_id = 1;
+  required string name = 2;
+  required uint32 avatar_id = 3;
+  required uint32 border_id = 4;
+  required uint32 level = 5;
+  required uint32 unread_count = 6;
+  required string latest_message_id = 7;
+}
+
+message ChatOverview {
+  repeated ChatChannelSummary channels = 1;
+  repeated ChatConversation conversations = 2;
+}
+
 // 好友四页签共用公开的角色显示资料，关系与赠领状态按请求角色计算。
 message FriendEntry {
   required string role_id = 1;
@@ -378,6 +475,79 @@ message MarketReceipt {
   required string role_id = 2;
   required int64 asset_revision = 3; // 免费刷新沿用现有版本，未发生资产提交时可为 0
   required MarketState state = 4;
+}
+
+// 以实际商店类型选择黑市货架，未实现兑换的页签仍可查看策划商品。
+message BlackMarketListRequest {
+  required uint32 shop_type = 1;
+}
+
+message BlackMarketBuyRequest {
+  required string request_id = 1;
+  required uint32 shop_type = 2;
+  required int64 shelf_version = 3;
+  required uint32 product_id = 4;
+  required uint32 count = 5;
+}
+
+message BlackMarketTab {
+  required uint32 shop_type = 1;
+  required string name = 2;
+  required uint32 minimum_level = 3;
+  required bool available = 4;
+}
+
+message BlackMarketState {
+  required uint32 shop_type = 1;
+  required int64 shelf_version = 2;
+  // 服务器 Unix 秒，0 表示该货架没有定时更新。
+  required int64 next_refresh_at = 3;
+  required uint32 currency_item_id = 4;
+  repeated BlackMarketTab tabs = 5;
+  // 限购为 0 的商品代表不限购。
+  repeated MarketOffer offers = 6;
+}
+
+message BlackMarketReceipt {
+  required string request_id = 1;
+  required string role_id = 2;
+  required int64 asset_revision = 3;
+  required BlackMarketState state = 4;
+}
+
+// 预演一个部位的装备连锁合成，返回当前资产版本、消耗金币和净产物。
+message SmithPreviewRequest {
+  required uint32 slot = 1;
+}
+
+message SmithForgeRequest {
+  required string request_id = 1;
+  required uint32 item_id = 2;
+  required uint32 count = 3;
+}
+
+message SmithForgeAllRequest {
+  required string request_id = 1;
+  required uint32 slot = 2;
+  required int64 expected_revision = 3;
+}
+
+message SmithPreview {
+  required uint32 slot = 1;
+  required int64 asset_revision = 2;
+  required int64 gold_cost = 3;
+  repeated ChapterReward rewards = 4;
+}
+
+message SmithReceipt {
+  required string request_id = 1;
+  required string role_id = 2;
+  required int64 asset_revision = 3;
+  required uint32 slot = 4;
+  required uint32 item_id = 5; // 一键合成回执为 0。
+  required uint32 count = 6;   // 一键合成回执为 0。
+  required int64 gold_cost = 7;
+  repeated ChapterReward rewards = 8;
 }
 
 // 公会查询只接受当前区服中的名称筛选。页码从 1 开始。
@@ -560,6 +730,67 @@ message DailyDungeonReceipt {
   optional BattleReplay replay = 7;
   required DailyDungeonState state = 8;
   optional RewardGrantResult actual = 9;
+}
+
+// 永恒梦境的连续挑战由服务端持有，包含重连所需的阶段、截止时间和末场战报。
+message DreamlandState {
+  required int64 version = 1;
+  required uint32 minimum_level = 2;
+  required uint32 max_floor = 3;
+  required uint32 start_floor = 4;
+  required uint32 current_floor = 5;
+  required uint32 highest_floor = 6;
+  required uint32 today_highest_floor = 7;
+  required uint32 today_reward_floor = 8;
+  required uint32 challenge_count = 9;
+  required string phase = 10;
+  required int64 deadline_seconds = 11;
+  required int64 reset_at_seconds = 12;
+  required uint32 active_buff_id = 13;
+  repeated DreamlandBuff buffs = 14;
+  repeated FormationSlot slots = 15;
+  required uint32 formation_id = 16;
+  repeated ChapterReward pending_rewards = 17;
+  repeated DreamlandMilestone milestones = 18;
+  optional DreamlandBattle battle = 19;
+}
+
+message DreamlandBuff {
+  required uint32 id = 1;
+  required string name = 2;
+  required string description = 3;
+}
+
+message DreamlandMilestone {
+  required uint32 id = 1;
+  required uint32 floor = 2;
+  required bool claimed = 3;
+  repeated ChapterReward rewards = 4;
+}
+
+message DreamlandBattle {
+  required string battle_id = 1;
+  required uint32 floor = 2;
+  required bool won = 3;
+  required BattleReplay replay = 4;
+}
+
+message DreamlandCommand {
+  required string request_id = 1;
+  required int64 expected_version = 2;
+  required string action = 3;
+  optional uint32 choice = 4;
+  optional uint32 formation_id = 5;
+  repeated FormationSlot slots = 6;
+}
+
+message DreamlandSettlement {
+  required string request_id = 1;
+  required string role_id = 2;
+  required int64 asset_revision = 3;
+  required string action = 4;
+  required DreamlandState state = 5;
+  optional RewardGrantResult actual = 6;
 }
 
 // 幻境之塔的专用布阵、最高层、体力、扫荡及里程碑均由服务端持有。
@@ -986,6 +1217,18 @@ message Snapshot {
   optional HeroArtifactState artifacts = 14;
   // 当前女神 VIP 与任务进度随同一角色事务恢复。
   optional VipState vip = 15;
+  // 历史最高星级，英雄用作素材后仍保留。缺失表示旧快照未同步。
+  optional HeroIllustrationState hero_illustration = 16;
+}
+
+message HeroIllustrationState {
+  repeated HeroIllustrationEntry entries = 1;
+}
+
+// 依英雄模板累计的历史进度，与名册中的独立英雄实例分开。
+message HeroIllustrationEntry {
+  required uint32 template_id = 1;
+  required uint32 max_star = 2;
 }
 
 message VipState {
@@ -1427,6 +1670,8 @@ message HeroJewelChangeRequest {
   optional uint32 slot = 5;
   optional uint32 expected_item_id = 6;
   optional uint32 count = 7;
+  // 铁匠铺一键合成确认时绑定所见的持久资产版本。
+  optional int64 expected_revision = 8;
 }
 message HeroJewelChangeReceipt {
   required string request_id = 1;
@@ -1440,6 +1685,8 @@ message HeroJewelChangeReceipt {
   required int64 asset_revision = 9;
   required bool changed = 10;
   repeated Item rewards = 11;
+  // 原一键合成预览的资产版本，旧入口没有此字段。
+  optional int64 expected_revision = 12;
 }
 
 message GodEquipmentModifier {

@@ -41,8 +41,11 @@ public final class GameProtocolCodec {
         "roleDecorations", "roleDecorationId", "rolePeerageDisplay",
         "heroEquipmentChangeRequest", "heroEquipmentChangeReceipt",
         "marketState", "marketBuyRequest", "marketRefreshRequest", "marketReceipt",
+        "blackMarketListRequest", "blackMarketBuyRequest", "blackMarketState", "blackMarketReceipt",
+        "smithPreviewRequest", "smithForgeRequest", "smithForgeAllRequest", "smithPreview", "smithReceipt",
         "dailyDungeonState", "dailyDungeonChallengeRequest", "dailyDungeonReceipt",
         "towerState", "towerFormationSave", "towerRequest", "towerSettlement",
+        "dreamlandState", "dreamlandCommand", "dreamlandSettlement",
         "arenaState", "arenaChallengeRequest", "arenaReplayRequest", "arenaReplay", "arenaSettlement",
         "arenaTicketBuyRequest", "arenaTicketPurchase",
         "arenaRanking", "arenaSeason", "arenaChestRequest", "arenaChestReceipt", "arenaLikeRequest", "arenaLikeReceipt",
@@ -53,7 +56,8 @@ public final class GameProtocolCodec {
         "questClaimRequest", "questSnapshot", "questClaimReceipt", "questChanged",
         "rankingListRequest", "rankingLikeRequest", "rankingOverview", "rankingDetail", "rankingLikeReceipt",
         "mailCommand", "mailboxState", "mailboxReceipt", "friendSearchRequest", "friendChangeRequest", "friendState",
-        "friendSearchResult", "friendChangeResult");
+        "friendSearchResult", "friendChangeResult", "chatHistoryRequest", "chatSendRequest", "chatReadRequest",
+        "chatHistory", "chatSendResult", "chatOverview");
     /** 工具类不持有实例状态。 */
     private GameProtocolCodec() {}
 
@@ -132,6 +136,11 @@ public final class GameProtocolCodec {
                 case "hero.equipment.change" -> "heroEquipmentChangeRequest";
                 case "market.buy" -> "marketBuyRequest";
                 case "market.refresh" -> "marketRefreshRequest";
+                case "black-market.list" -> "blackMarketListRequest";
+                case "black-market.buy" -> "blackMarketBuyRequest";
+                case "smith.preview" -> "smithPreviewRequest";
+                case "smith.forge" -> "smithForgeRequest";
+                case "smith.forge.all" -> "smithForgeAllRequest";
                 case "guild.list" -> "guildListRequest";
                 case "guild.change" -> "guildChangeRequest";
                 case "guild.shop.buy" -> "guildShopBuyRequest";
@@ -142,9 +151,13 @@ public final class GameProtocolCodec {
                 case "mail.change" -> "mailCommand";
                 case "friend.search" -> "friendSearchRequest";
                 case "friend.change" -> "friendChangeRequest";
+                case "chat.history" -> "chatHistoryRequest";
+                case "chat.send" -> "chatSendRequest";
+                case "chat.read" -> "chatReadRequest";
                 case "vip.claim" -> "vipClaimRequest";
                 case "tower.formation.save" -> "towerFormationSave";
                 case "tower.challenge", "tower.sweep", "tower.milestone.claim" -> "towerRequest";
+                case "dreamland.act" -> "dreamlandCommand";
                 case "arena.challenge" -> "arenaChallengeRequest";
                 case "arena.replay" -> "arenaReplayRequest";
                 case "arena.ticket.buy" -> "arenaTicketBuyRequest";
@@ -167,7 +180,8 @@ public final class GameProtocolCodec {
         if (kind.equals("event") && name.equals("reward.granted")) return "rewardNotice";
         if (kind.equals("event") && name.equals("guild.updated")) return "empty";
         if (kind.equals("event") && name.equals("quest.changed")) return "questChanged";
-        if (kind.equals("event") && (name.equals("mail.changed") || name.equals("friend.changed"))) return "empty";
+        if (kind.equals("event")
+                && (name.equals("mail.changed") || name.equals("friend.changed") || name.equals("chat.changed"))) return "empty";
         if (kind.equals("response")) return switch (name) {
             case "session.login", "session.authenticate" -> "accepted"; case "servers.list" -> "servers";
             case "chapter.idle.claim" -> "chapterIdleClaimReceipt";
@@ -197,6 +211,10 @@ public final class GameProtocolCodec {
             case "hero.equipment.change" -> "heroEquipmentChangeReceipt";
             case "market.list" -> "marketState";
             case "market.buy", "market.refresh" -> "marketReceipt";
+            case "black-market.list" -> "blackMarketState";
+            case "black-market.buy" -> "blackMarketReceipt";
+            case "smith.preview" -> "smithPreview";
+            case "smith.forge", "smith.forge.all" -> "smithReceipt";
             case "guild.list", "guild.change" -> "guildState";
             case "guild.shop.list", "guild.shop.buy" -> "guildShopState";
             case "guild.donation.info", "guild.donation.donate", "guild.donation.claim" -> "guildDonationState";
@@ -210,10 +228,15 @@ public final class GameProtocolCodec {
             case "friend.state" -> "friendState";
             case "friend.search" -> "friendSearchResult";
             case "friend.change" -> "friendChangeResult";
+            case "chat.history", "chat.read" -> "chatHistory";
+            case "chat.send" -> "chatSendResult";
+            case "chat.overview" -> "chatOverview";
             case "guild.ranking" -> "guildRankingState";
             case "vip.claim" -> "vipClaimReceipt";
             case "tower.state", "tower.formation.save" -> "towerState";
             case "tower.challenge", "tower.sweep", "tower.milestone.claim" -> "towerSettlement";
+            case "dreamland.state" -> "dreamlandState";
+            case "dreamland.act" -> "dreamlandSettlement";
             case "arena.state", "arena.refresh" -> "arenaState";
             case "arena.challenge" -> "arenaSettlement";
             case "arena.replay" -> "arenaReplay";

@@ -261,6 +261,15 @@ def export_current(src: Path, out: Path) -> int:
             write_json(target, {"table": name, "rows": [project_full(src)]})
             ensure_meta(Path(str(target) + ".meta"))
             continue
+        if name == "hero-illustration":
+            # 图鉴补齐旧版外观与只读预览数据；共享养成表和服务端可获得模板范围保持独立。
+            source = ROOT / "config/legacy-client/hero-illustration.json"
+            target = out / (name + ".json")
+            content = source.read_bytes()
+            if not target.exists() or target.read_bytes() != content:
+                target.write_bytes(content)
+            ensure_meta(Path(str(target) + ".meta"))
+            continue
         if name.startswith("maincity/"):
             # 这三份当前页面输入与现存XLSX存在已记录差异，完整规则专项前保持原容器和字节。
             source = ROOT / "config/client-maincity" / (stem + ".json")

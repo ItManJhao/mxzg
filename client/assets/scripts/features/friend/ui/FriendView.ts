@@ -24,10 +24,15 @@ const tabs: readonly FriendTab[] = ["friends", "gifts", "applications", "blocked
 /** 原策划表中的友情点物品。 */
 const FRIENDSHIP_ITEM = 900301;
 
-@UIRegistry.view({ id: "friend", prefab: "bundles/module/common/prefabs/FriendView", layer: UILayer.Popup,
+/** 主城快捷栏及聊天加号可以复用好友列表，选中聊天时回到调用方。 */
+export interface FriendViewArgs {
+    readonly onOpenChat?: (peer: FriendEntry) => void;
+}
+
+@UIRegistry.view({ id: "friend", prefab: "bundles/module/friend/prefabs/FriendView", layer: UILayer.Popup,
     hostId: "remake-modal", cache: false, allowMultiple: false, modal: { mask: true, closeOnOutside: true } })
 @ccclass("FriendView")
-export class FriendView extends BaseView {
+export class FriendView extends BaseView<FriendViewArgs> {
     /** 可见区等比适配的原窗口面板。 */
     @property(UITransform) private panel: UITransform | null = null;
     /** 标题栏旁的关闭键。 */
@@ -66,10 +71,11 @@ export class FriendView extends BaseView {
     private dots: RedDotBinding[] = [];
 
     /** 首次显示时校验控件、订阅快照，并立即渲染当前状态。 */
-    public onOpen(): void {
+    public onOpen(args?: FriendViewArgs): void {
         if (this.opened) {
             return;
         }
+        super.onOpen(args);
         if (!this.panel || !this.closeButton || !this.rows || !this.friendshipBar || !this.friendship || !this.count
             || !this.removeButton || !this.removeLabel || !this.searchButton || !this.bulkButton || !this.bulkLabel
             || this.tabButtons.length !== 4 || this.tabHighlights.length !== 4 || this.reminderAnchors.length !== 2) {
@@ -111,6 +117,7 @@ export class FriendView extends BaseView {
         content.on(SuperContent.RENDER_ITEM, this.renderCell, this);
         content.on(FriendCell.ACTION, this.change, this);
         content.on(FriendCell.PROFILE, this.profile, this);
+        content.on(FriendCell.CHAT, this.openChat, this);
         this.ownListener(() => {
             if (content.isValid) {
                 content.targetOff(this);
@@ -189,7 +196,17 @@ export class FriendView extends BaseView {
 
     /** 使用当前页签决定同一列表行的操作。 */
     private renderCell(node: Node, entry: FriendEntry): void {
-        node.getComponent(FriendCell)?.paint(entry, this.removing ? "remove" : this.tab, FriendController.instance.busy);
+        node.getComponent(FriendCell)?.paint(entry, this.removing ? "remove" : this.tab,
+            FriendController.instance.busy, !!this.args?.onOpenChat);
+    }
+
+    /** 选择好友后关闭当前好友页，已打开的聊天窗可以直接切换到这个对象。 */
+    private openChat(entry: FriendEntry): void {
+        const callback = this.args?.onOpenChat;
+        if (callback) {
+            this.close();
+            callback(entry);
+        }
     }
 
     /** 批量操作仅提交当前页签明确选择的动作。 */

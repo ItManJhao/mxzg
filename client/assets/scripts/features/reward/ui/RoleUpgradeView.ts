@@ -29,7 +29,7 @@ const { ccclass, property } = _decorator;
 
 @UIRegistry.view({
     id: "role-upgrade",
-    prefab: "bundles/module/common/prefabs/RoleUpgradeView",
+    prefab: "bundles/module/reward/prefabs/RoleUpgradeView",
     layer: UILayer.Popup,
     cache: false,
     allowMultiple: false,

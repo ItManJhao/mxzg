@@ -26,7 +26,7 @@ import { GuildListCell, type GuildCellRow } from "./GuildListCell";
 import { GuildMemberView } from "./GuildMemberView";
 import { GuildRankingView } from "./GuildRankingView";
 import { GuildShopView } from "./GuildShopView";
-import { GuildTextInputView } from "./GuildTextInputView";
+import { TextInputView } from "../../common/ui/TextInputView";
 
 /** 主城导航提供当前角色，用于大厅的会长入口和建会余额。 */
 export interface GuildViewArgs {
@@ -220,7 +220,7 @@ export class GuildView extends BaseView<GuildViewArgs> {
             return;
         }
         const panel = this._searchPanel!;
-        void UIManager.instance.openChild(this, GuildTextInputView, {
+        void UIManager.instance.openChild(this, TextInputView, {
             initialValue: this.queryDraft,
             maxLength: state.nameLimit,
             onConfirm: value => {
@@ -311,7 +311,7 @@ export class GuildView extends BaseView<GuildViewArgs> {
             UIManager.instance.toast("只有会长可以编辑公告");
             return;
         }
-        void UIManager.instance.openChild(this, GuildTextInputView, {
+        void UIManager.instance.openChild(this, TextInputView, {
             initialValue: guild.description ?? "",
             maxLength: GuildModel.noticeLimit,
             onConfirm: value => {

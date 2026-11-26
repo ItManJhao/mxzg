@@ -65,7 +65,7 @@ function checkProjection(): void {
 
 /** 检查完整Prefab、共享模态和虚拟列表参数，不将替身几何结果当实际画面。 */
 function checkPrefab(): void {
-    const path = "client/assets/bundles/module/common/prefabs/RewardView.prefab";
+    const path = "client/assets/bundles/module/reward/prefabs/RewardView.prefab";
     const objects: any[] = read(path);
     const type = classId("client/assets/scripts/features/reward/ui/RewardView.ts.meta");
     const view = objects.find(row => row.__type__ === type);
@@ -105,9 +105,12 @@ function checkPrefab(): void {
     const spec = UIRegistry.viewSpecOf(RewardView)!;
     assert.deepEqual(spec.modal, { mask: true, closeOnOutside: true });
     assert.equal(spec.prefab, path.replace(/^client\/assets\//, "").replace(/\.prefab$/, ""));
-    for (const [stem, count] of [["item-reward_effect-", 10], ["item-reward-effect-2_effect-bomb-", 11]] as const) {
+    for (const [folder, stem, count] of [
+        ["reward", "item-reward_effect-", 10],
+        ["common", "item-reward-effect-2_effect-bomb-", 11],
+    ] as const) {
         for (let frame = 0; frame < count; frame++) {
-            assert(existsSync("client/assets/bundles/module/common/ui/" + stem + frame + ".png"));
+            assert(existsSync(`client/assets/bundles/module/${folder}/ui/${stem}${frame}.png`));
         }
     }
     assert(existsSync("client/assets/bundles/resources/audio/item-get.mp3"));
@@ -290,9 +293,9 @@ async function checkLifecycle(): Promise<void> {
     const loaded: SpriteFrame[] = [];
     ResManager.getSpriteFrame = async (_node, path) => {
         const frame = new SpriteFrame();
-        const key = typeof path === "string" ? path.match(/item-reward_effect-\d+$/)?.[0] : undefined;
-        if (key) {
-            const meta = read("client/assets/bundles/module/common/ui/" + key + ".png.meta").subMetas.f9941.userData;
+        assert(typeof path === "string" && existsSync(`client/assets/bundles/module/${path}.png`));
+        if (path.startsWith("reward/ui/item-reward_effect-")) {
+            const meta = read(`client/assets/bundles/module/${path}.png.meta`).subMetas.f9941.userData;
             Object.assign(frame, {
                 originalSize: { width: meta.rawWidth, height: meta.rawHeight },
                 rect: { height: meta.height },

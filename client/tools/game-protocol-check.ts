@@ -7,11 +7,90 @@ import {runInNewContext} from "node:vm";
 import {readFileSync} from "node:fs";
 import { GameProtocolCodecUtils, GAME_FRAME_LIMIT } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import { Protocol } from "../assets/scripts/platform/Protocol";
+import { CHAT_CHANNEL_IDS } from "../assets/scripts/features/chat/data/ChatData";
+import { BLACK_MARKET_STALL, type BlackMarketReceipt } from "../assets/scripts/features/blackmarket/data/BlackMarketData";
 import { BattleReplayUtils } from "../assets/scripts/features/battle/utils/BattleReplayUtils";
 import {ProtocolRouter} from "../assets/scripts/platform/ProtocolRouter";
 import { GameProtocolLogUtils } from "../assets/scripts/platform/GameProtocolLogUtils";
 import {mxzg} from "../assets/scripts/platform/GameProtocol.generated";
 const state={revision:2,role:{id:"role",nickname:"测试😀",level:1,gold:0,diamonds:0,serverId:"local-1"},heroes:[],heroRoster:{capacity:325,buySpaceTimes:1},inventory:[{itemId:900101,quantity:4}]};
+
+/** 校验梦境命令的专用字段，并任选一轮真实 Java 六层战报交给客户端播放器解析。 */
+function checkDreamlandWire(): void {
+    const requestId = "d2775714-1086-4271-aa41-2178d5b2e14e";
+    const request = { version: 1, kind: "request", name: Protocol.DREAMLAND_ACT, id: requestId } as const;
+    const body = { requestId, expectedVersion: 0, action: "START" };
+    roundTrip({ ...request, body: { ...body, slots: [] } });
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, body: { ...body, choice: 1 } }));
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, body: { ...body, action: "SELECT_BUFF" } }));
+    if (process.argv.includes("--dreamland-java")) {
+        for (let floor = 1; floor <= 6; floor++) {
+            const frame = GameProtocolCodecUtils.decodeGameFrame(readFileSync(`backend/target/chapter-dreamland-floor-${floor}.pb`));
+            assert.equal(frame.name, Protocol.DREAMLAND_ACT);
+            const receipt = frame.body as import("../assets/scripts/platform/Protocol").DreamlandActData;
+            assert.equal(receipt.state.battle?.floor, floor);
+            assert.equal(receipt.state.battle?.won, true);
+            assert(receipt.state.battle?.replay);
+            BattleReplayUtils.encodeVerified(receipt.state.battle.replay);
+        }
+        console.log("PASS Java/TS Dreamland floor 1–6 battle reports");
+    }
+}
+
+/** 聊天保留精确游标及范围，拒绝混合范围和乱序消息，开发日志隐藏正文。 */
+function checkChatWire(): void {
+    const requestId = "aad15d1b-be88-4b9e-8c84-075cbb9a52df";
+    const roleId = "5f1b01d5-16e4-4dad-9d51-6f7b65a223a3";
+    const text = "测试世界消息 🌟 #1#";
+    const id = "9007199254740993";
+    const message = { id, roleId, text, name: "角色", avatarId: 1, borderId: 0, level: 18, sentAtSeconds: 1795622400 };
+    const page = { messages: [message], latestId: id, readThroughId: "0", unreadCount: 1,
+        hasMore: false, hasNewer: false, canSend: true };
+    const request = { version: 1, kind: "request", name: Protocol.CHAT_HISTORY, body: { afterId: id } };
+    const response = { ...request, kind: "response", ok: true, body: page };
+    roundTrip(request);
+    roundTrip(response);
+    roundTrip({ ...request, name: Protocol.CHAT_SEND, body: { requestId, text } });
+    roundTrip({ ...response, name: Protocol.CHAT_SEND, body: { requestId, message } });
+    roundTrip({ ...request, name: Protocol.CHAT_READ, body: { throughId: id } });
+    roundTrip({ ...response, name: Protocol.CHAT_READ, body: { ...page, messages: [], readThroughId: id, unreadCount: 0 } });
+    roundTrip({ version: 1, kind: "event", name: Protocol.CHAT_CHANGED, body: {} });
+    const peerRoleId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const privateScope = { channel: CHAT_CHANNEL_IDS.private, peerRoleId };
+    const privateMessage = { ...message, channel: CHAT_CHANNEL_IDS.private, serverId: "local-1" };
+    const privatePage = { ...page, ...privateScope, scopeId: `${roleId}:${peerRoleId}`, messages: [privateMessage] };
+    roundTrip({ ...request, body: { ...privateScope, beforeId: id } });
+    roundTrip({ ...response, body: privatePage });
+    roundTrip({ ...request, name: Protocol.CHAT_SEND, body: { ...privateScope, requestId, text } });
+    roundTrip({ ...response, name: Protocol.CHAT_SEND, body: { requestId, message: privateMessage, peerRoleId } });
+    roundTrip({ ...request, name: Protocol.CHAT_READ, body: { ...privateScope, throughId: id } });
+    roundTrip({ ...request, name: Protocol.CHAT_OVERVIEW, body: {} });
+    const channels = Object.values(CHAT_CHANNEL_IDS).map(channel => ({ channel, available: true, unreadCount: 1 }));
+    const conversations = [{ roleId: peerRoleId, name: "私聊玩家", level: 24, avatarId: 1, borderId: 0,
+        latestMessageId: id, unreadCount: 1 }];
+    roundTrip({ ...response, name: Protocol.CHAT_OVERVIEW, body: { channels, conversations } });
+    roundTrip({ ...response, body: { ...page, channel: CHAT_CHANNEL_IDS.system, scopeId: "local-1", canSend: false,
+        messages: [{ ...message, roleId: "", name: "系统", level: 0, avatarId: 0, noticeId: 2, channel: CHAT_CHANNEL_IDS.system }] } });
+    roundTrip({ ...response, body: { ...page, scopeId: "local-1",
+        messages: [{ ...message, roleId: "", name: "系统", level: 0, avatarId: 0, noticeId: 1 }] } });
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, body: { peerRoleId, afterId: id } }), /私聊对象/);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...response, body: { ...privatePage, messages: [message] } }), /聊天消息/);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...response, body: { ...page,
+        messages: [{ ...message, noticeId: 1 }] } }), /聊天消息/);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...response, name: Protocol.CHAT_OVERVIEW,
+        body: { channels, conversations: [...conversations, ...conversations] } }), /私聊摘要/);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, body: { beforeId: id, afterId: id } }), /聊天请求参数/);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, body: { afterId: "9223372036854775808" } }), /聊天请求参数/);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...response, body: { ...page, messages: [message, message] } }),
+        /聊天记录顺序/);
+    assert(!GameProtocolLogUtils.formatServerFrame(response).includes(text));
+    if (process.argv.includes("--chat-java")) {
+        const frame = GameProtocolCodecUtils.decodeGameFrame(readFileSync("backend/target/world-chat-history.pb"));
+        assert.equal(frame.name, Protocol.CHAT_HISTORY);
+        assert.equal((frame.body as { messages: readonly { text: string }[] }).messages[0]?.text, "离线期间的世界消息");
+        console.log("PASS Java/TS world chat history and unread");
+    }
+}
 
 /** 排行协议保留五种榜类、真实名次及已结算的点赞奖励。 */
 function checkRankingWire(): void {
@@ -241,6 +320,7 @@ function main(){
  checkQuestWire();
  checkRankingWire();
  checkSocialWire();
+ checkChatWire();
  checkArenaSeasonWire();
  checkFormationPowerWire();
  checkVipWire();
@@ -302,6 +382,8 @@ function main(){
  checkHeroLockWire();
  checkArtifactAndGodShopWire();
  checkMarketWire();
+ checkBlackMarketWire();
+ checkSmithWire();
  checkDailyDungeonWire();
  checkProgressionBattleWire();
  checkGmToolsWire();
@@ -573,6 +655,85 @@ function checkMarketWire(): void {
     ]) {
         const wire = Frame.encode({ ...response, name: Protocol.MARKET_LIST, marketState: invalid }).finish();
         assert.throws(() => GameProtocolCodecUtils.decodeGameFrame(wire));
+    }
+}
+
+/** 核对黑市页签、宽整数货架及限购；可附加核对 Java 实际购买回执。 */
+function checkBlackMarketWire(): void {
+    const requestId = "10000000-1111-4111-8111-111111111111";
+    const roleId = "20000000-2222-4222-8222-222222222222";
+    const offer = { productId: 22, itemId: 900102, quantity: 250, costItemId: 900002,
+        costQuantity: 80, purchaseLimit: 2, purchased: 0, discount: 80, purchasable: true };
+    const tab = { shopType: 100800, name: "摊位", minimumLevel: 1, available: true };
+    const unknownTab = { shopType: 101000, name: "英雄", minimumLevel: 1, available: false };
+    const shelf = { shopType: tab.shopType, shelfVersion: 4_294_967_311, nextRefreshAt: 1710000000,
+        currencyItemId: 900002, offers: [offer], tabs: [tab, unknownTab] };
+    const buy = { requestId, shopType: tab.shopType, shelfVersion: shelf.shelfVersion, productId: offer.productId, count: 1 };
+    const receipt = { requestId, roleId, assetRevision: 6, state: shelf };
+    const request = { version: 1, kind: "request", id: "black-market" };
+    const response = { ...request, kind: "response", ok: true };
+    roundTrip({ ...request, name: Protocol.BLACK_MARKET_LIST, body: { shopType: tab.shopType } });
+    roundTrip({ ...response, name: Protocol.BLACK_MARKET_LIST, body: shelf });
+    roundTrip({ ...request, name: Protocol.BLACK_MARKET_BUY, body: buy });
+    roundTrip({ ...response, name: Protocol.BLACK_MARKET_BUY, body: receipt });
+    const preview = { ...shelf, shopType: unknownTab.shopType, nextRefreshAt: 0,
+        offers: [{ ...offer, purchaseLimit: 0, purchased: 7, purchasable: false }] };
+    roundTrip({ ...response, name: Protocol.BLACK_MARKET_LIST, body: preview });
+    const frame = (mxzg as any).game.Frame;
+    for (const invalid of [
+        { ...shelf, shopType: 555555 },
+        { ...shelf, nextRefreshAt: -1 },
+        { ...shelf, tabs: [tab, tab] },
+        { ...shelf, offers: [offer, offer] },
+        { ...shelf, offers: [{ ...offer, purchased: 3 }] },
+        { ...preview, offers: [offer] },
+    ]) {
+        const binary = frame.encode({ ...response, name: Protocol.BLACK_MARKET_LIST, blackMarketState: invalid }).finish();
+        assert.throws(() => GameProtocolCodecUtils.decodeGameFrame(binary));
+    }
+    for (const body of [{ ...buy, roleId }, { ...buy, count: 0 }, { ...buy, shopType: -1 }]) {
+        assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, name: Protocol.BLACK_MARKET_BUY, body }));
+    }
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...response, name: Protocol.BLACK_MARKET_BUY,
+        body: { ...receipt, state: preview } }));
+    if (process.argv.includes("--black-market-java")) {
+        const javaFrame = GameProtocolCodecUtils.decodeGameFrame(readFileSync("backend/target/black-market-receipt.pb"));
+        assert.equal(javaFrame.name, Protocol.BLACK_MARKET_BUY);
+        assert.equal(javaFrame.kind, "response");
+        assert.equal(javaFrame.ok, true);
+        const javaReceipt = javaFrame.body as BlackMarketReceipt;
+        assert.ok(javaReceipt.requestId && javaReceipt.roleId && javaReceipt.assetRevision > 0);
+        assert.equal(javaReceipt.state.shopType, BLACK_MARKET_STALL);
+        assert.ok(javaReceipt.state.nextRefreshAt > 0);
+        assert.equal(javaReceipt.state.offers[0]?.purchased, 1);
+        console.log("PASS Java/TS black market receipt");
+    }
+}
+
+/** 校验装备预演、确认绑定版本与 Java 实际成交回执。 */
+function checkSmithWire(): void {
+    const requestId = "10000000-1111-4111-8111-111111111111";
+    const roleId = "20000000-2222-4222-8222-222222222222";
+    const request = { version: 1, kind: "request", id: "smith" };
+    const response = { ...request, kind: "response", ok: true };
+    const quote = { slot: 1, assetRevision: 1, goldCost: 10982, rewards: [{ itemId: 1001003, quantity: 1 }] };
+    const command = { requestId, slot: 1, expectedRevision: 1 };
+    const receipt = { requestId, roleId, ...quote, itemId: 0, count: 0, assetRevision: 2 };
+    roundTrip({ ...request, name: Protocol.SMITH_PREVIEW, body: { slot: 1 } });
+    roundTrip({ ...response, name: Protocol.SMITH_PREVIEW, body: quote });
+    roundTrip({ ...request, name: Protocol.SMITH_FORGE, body: { requestId, itemId: 1001002, count: 1 } });
+    roundTrip({ ...request, name: Protocol.SMITH_FORGE_ALL, body: command });
+    roundTrip({ ...response, name: Protocol.SMITH_FORGE_ALL, body: receipt });
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, name: Protocol.SMITH_FORGE_ALL,
+        body: { ...command, expectedRevision: -1 } }));
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...response, name: Protocol.SMITH_FORGE_ALL,
+        body: { ...receipt, itemId: 1001003 } }));
+    if (process.argv.includes("--smith-java")) {
+        const actual = GameProtocolCodecUtils.decodeGameFrame(readFileSync("backend/target/smith-receipt.pb"));
+        assert.equal(actual.name, Protocol.SMITH_FORGE_ALL);
+        assert.equal(actual.ok, true);
+        assert.deepEqual((actual.body as typeof receipt).rewards, quote.rewards);
+        console.log("PASS Java/TS smith equipment receipt");
     }
 }
 
@@ -910,4 +1071,5 @@ function checkSpiritWire(): void {
     assert(!current.inventory.some((item: any) => item.itemId === 2000002));
     console.log("PASS Java/TS SpiritInventory binary event/reconnect identity and attributes");
 }
+checkDreamlandWire();
 main();

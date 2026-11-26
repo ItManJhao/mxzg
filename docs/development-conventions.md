@@ -173,7 +173,7 @@ Prefab 保存固定布局、资源与控件绑定；业务列表使用 SuperScro
 - 独立业务窗口必须使用 BaseView、同名 Prefab、UIManager 注册与打开/关闭。不得在主城手动 instantiate 角色弹窗、维护第二套 show/hide 和销毁逻辑。
 - 页面静态参数集中在各View的@UIRegistry.view：id、Prefab地址、层级、缓存、模态及prepare配置前置不在ApplicationPages重复登记。prepare由UIManager实际开页时执行，阶段预加载只准备目标资源，不调用页面前置或实例化页面。UIRegistry.bindViewRuntime仅注入createBinding和确需变化的hostId，撤销后恢复页面定义；ApplicationPages只装配登录和主城的页面交互及宿主，ApplicationResources只调度LoadingPlan，不增加各页取址包装。
 - 模态在页面注册的ViewSpec设置`modal:{mask,closeOnOutside}`，仅用于Popup。省略表示不拦截外部；mask=false使用透明拦截，mask=true显示统一蒙版；closeOnOutside独立控制空白是否关闭。UIManager动态共用一份节点，关窗或隐藏后向下恢复仍显示窗口的模态，禁止在每份Prefab再放独立蒙版或挂ModalLayer。实际面板背景保留BlockInputEvents，避免内容点击触发外部关闭；只承载坐标的大节点不要盲加阻挡。布阵草稿与结算沿既有关闭生命周期处理，GM/技能台使用mask=true、closeOnOutside=false。
-- RoleProfileView 在类上登记 `role-profile`，Prefab 位于 bundles/module/login/prefabs，沿用 SettingLayer 的 UUID。主城点击头像经 HomePageBinding 转给 ApplicationPages 打开资料窗。窗口显示时订阅 AccountModel，关闭时退订，切换角色会取消在途开窗。
+- RoleProfileView 在类上登记 `role-profile`，Prefab 位于 `bundles/module/role/prefabs`，沿用 SettingLayer 的 UUID。主城点击头像经 HomePageBinding 转给 ApplicationPages 打开资料窗。窗口显示时订阅 AccountModel，关闭时退订，切换角色会取消在途开窗。
 - AccountLoginView 是登录页面，ServerPickerView 是选服弹窗，两者都由 UIManager 管理。ServerCellView 是列表子组件；LoginArtwork 是登录页面适配组件；LoginLayoutUtils 和 RolePortraitUtils 是无状态辅助，不要求一一对应独立窗口。
 - 服务器和区域两列均为 SuperScroll → view/Mask → content/SuperContent。Prefab 保存 cellPrefab、尺寸、间距和方向；View 只 setData，不销毁重建所有格子、不计算格子坐标或 content 高度。
 - LoadingLayer/BootChrome 是启动加载流程，用于资源准备、进度和提示；AccountLoginView 负责账号、选服与进入。共享背景或尺寸计算不代表同一界面。启动层独立管理不构成业务弹窗绕过 UIManager 的例外。

@@ -42,7 +42,7 @@ export class GameProtocolLogUtils {
         return value;
     }
 
-    /** 返回中文分行日志；心跳默认返回空字符串，调用方不能把空结果写入日志缓冲。 */
+    /** 返回中文分行日志；默认隐藏心跳，聊天只记录协议名、方向和结果。 */
     public static formatServerFrame(frame: Readonly<GameFrame>, options: ServerLogOptions = {}): string {
         if (frame.name === Protocol.SESSION_HEARTBEAT && !options.includeHeartbeat) {
             return "";
@@ -52,6 +52,9 @@ export class GameProtocolLogUtils {
                 + "｜" + (definition?.description || "") + (frame.kind === "response" ? (frame.ok ? "｜成功" : "｜失败") : "｜通知")];
         if (options.includeEnvelope) {
             lines.push("请求标识：" + (frame.id || "-") + "；连接标识：" + (frame.connectionId || "-"));
+        }
+        if (frame.name.startsWith("chat.")) {
+            return lines.join("\n");
         }
         const data = frame.body as Record<string, unknown> | undefined;
         const state = (frame.kind === "event" ? data : data?.initial) as Record<string, unknown> | undefined;

@@ -42,7 +42,7 @@ console.log("预制体索引验证：" + Object.keys(prefabIds).length + " Prefa
 // GM 等新增资源登记后同步运行时准入清单；只生成索引，不删除资源。
 const prefabPlan = JSON.parse(fs.readFileSync(path.join(root, 'tools/prefab-plan.json'), 'utf8'));
 const plannedPaths = [...new Set(prefabPlan.groups.flatMap(group => group.names.map(name => {
-    const file = resolveAssetPath(group.directory + '/' + name + '.prefab');
+    const file = resolveAssetPath(group.directory + '/' + name + '.prefab', { current: true });
     return path.relative(assets, file).split(path.sep).join('/').replace(/\.prefab$/, '');
 })))].sort();
 write('client/assets/scripts/config/PrefabPlanUtils.ts', '/** 由tools/prefab-plan.json和generate_resources.cjs生成的Prefab准入查询，不手工修改。 */\nconst paths = new Set<string>([\n' + plannedPaths.map(value => '    ' + JSON.stringify(value)).join(',\n') + '\n]);\n\n/** 当前阶段允许加载的Prefab地址查询，不表示玩法全部开放。 */\nexport class PrefabPlanUtils {\n    private constructor() { }\n\n    /** 地址存在于当前生成计划时返回true，供统一加载器拒绝退役页面。 */\n    public static prefabInPlan(assetPath: string): boolean {\n        return paths.has(assetPath);\n    }\n}\n');

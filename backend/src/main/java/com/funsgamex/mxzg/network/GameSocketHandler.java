@@ -24,6 +24,9 @@ import com.funsgamex.mxzg.quest.QuestService;
 import com.funsgamex.mxzg.rank.RankService;
 import com.funsgamex.mxzg.friend.FriendChanged;
 import com.funsgamex.mxzg.friend.FriendService;
+import com.funsgamex.mxzg.chat.ChatChanged;
+import com.funsgamex.mxzg.chat.ChatChannel;
+import com.funsgamex.mxzg.chat.ChatService;
 import com.funsgamex.mxzg.mail.MailService;
 import com.funsgamex.mxzg.hero.HeroArtifactService;
 import com.funsgamex.mxzg.hero.HeroEquipmentService;
@@ -38,11 +41,14 @@ import com.funsgamex.mxzg.hero.HeroLevelService;
 import com.funsgamex.mxzg.hero.HeroLockService;
 import com.funsgamex.mxzg.lineup.Lineup;
 import com.funsgamex.mxzg.market.MarketService;
+import com.funsgamex.mxzg.blackmarket.BlackMarketService;
+import com.funsgamex.mxzg.smith.SmithService;
 import com.funsgamex.mxzg.role.RoleProfileService;
 import com.funsgamex.mxzg.role.RoleService;
 import com.funsgamex.mxzg.role.WelcomeGiftService;
 import com.funsgamex.mxzg.time.GameClock;
 import com.funsgamex.mxzg.tower.TowerService;
+import com.funsgamex.mxzg.dreamland.DreamlandService;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -109,6 +115,10 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final HeroGodEquipmentShopService godEquipmentShop;
     /** 普通市场货架、购买与刷新均由当前角色的市场服务处理。 */
     private final MarketService market;
+    /** 黑市货架和扣款由本模块服务处理，统一资产状态随事务提交后发送。 */
+    private final BlackMarketService blackMarket;
+    /** 装备合成预演与原请求号对应的持久结算。 */
+    private final SmithService smith;
     /** 本区的公会列表和成员操作，所有写入都以当前连接的角色为发起人。 */
     private final GuildService guilds;
     /** 权威周货架与兑换事务。 */
@@ -127,10 +137,14 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final MailService mail;
     /** 好友关系、请求和礼物的权威入口。 */
     private final FriendService friends;
+    /** 当前认证区服世界频道的查询、发送与已读操作。 */
+    private final ChatService chat;
     /** 金币副本首关资格、真实挑战和清扫回执由原事务服务处理。 */
     private final DailyDungeonService dailyDungeon;
     /** 幻境之塔专用阵容、次数及实际结算由爬塔事务负责。 */
     private final TowerService tower;
+    /** 梦境连战的权威状态、战报和实际结算。 */
+    private final DreamlandService dreamland;
     /** 竞技场的对手、防守、门票、积分及历史战报。 */
     private final ArenaService arena;
     /** 本服赛季、排名、周宝箱和竞技商店。 */
@@ -164,6 +178,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         long rateWindow = opened;
         int rateCount;
         volatile String role;
+        /** 从认证快照取得的区服，用于限制世界频道变更通知。 */
+        String serverId;
         String token;
         /** 鉴权完成后可向其他角色公开在线状态；连接关闭另行核验。 */
         volatile boolean ready;
@@ -174,7 +190,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         }
     }
 
-    /** 注入认证快照及各领域服务，草稿战力与其它角色操作均由当前连接分派。 */
+    /** 注入认证快照及各领域服务，聊天与角色操作均由当前连接身份分派。 */
     public GameSocketHandler(SessionService sessions, SessionSnapshotService snapshots,
             com.funsgamex.mxzg.auth.DevelopmentLoginService login,
             com.funsgamex.mxzg.server.ServerCatalog servers, com.funsgamex.mxzg.gm.GmService gm,
@@ -189,10 +205,12 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             HeroLevelService heroLevels, HeroLockService heroLocks, HeroEquipmentService heroEquipment,
             HeroStarService heroStars, HeroJewelService heroJewels, HeroGodEquipmentService heroGodEquipment,
             HeroArtifactService heroArtifacts, HeroGodEquipmentShopService godEquipmentShop,
-            MarketService market, GuildService guilds, GuildShopService guildShop,
+            MarketService market, BlackMarketService blackMarket, SmithService smith, GuildService guilds,
+            GuildShopService guildShop,
             GuildDonationService guildDonations, GuildRankingService guildRanking, VipService vip, QuestService quests,
-            RankService rankings, MailService mail, FriendService friends,
-            DailyDungeonService dailyDungeon, TowerService tower, ArenaService arena, ArenaSeasonService arenaSeason,
+            RankService rankings, MailService mail, FriendService friends, ChatService chat,
+            DailyDungeonService dailyDungeon, TowerService tower, DreamlandService dreamland,
+            ArenaService arena, ArenaSeasonService arenaSeason,
             RoleService roles, RoleProfileService profiles, WelcomeGiftService welcomeGifts, GameClock clock,
             HeroMainPowerService formationPower) {
         this.firstRewards = firstRewards;
@@ -206,6 +224,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         this.heroArtifacts = heroArtifacts;
         this.godEquipmentShop = godEquipmentShop;
         this.market = market;
+        this.blackMarket = blackMarket;
+        this.smith = smith;
         this.guilds = guilds;
         this.guildShop = guildShop;
         this.guildDonations = guildDonations;
@@ -215,8 +235,10 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         this.rankings = rankings;
         this.mail = mail;
         this.friends = friends;
+        this.chat = chat;
         this.dailyDungeon = dailyDungeon;
         this.tower = tower;
+        this.dreamland = dreamland;
         this.arena = arena;
         this.arenaSeason = arenaSeason;
         this.roles = roles;
@@ -283,7 +305,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                 ReentrantLock roleLock = roleLock(connection.role);
                 if (!awaitLock(roleLock)) throw rejected("BUSY");
                 var notifications = name.equals("guild.change") || name.equals("guild.donation.donate")
-                    || name.equals("friend.change") || name.startsWith("arena.")
+                    || name.equals("friend.change") || name.startsWith("arena.") || name.startsWith("dreamland.")
                     ? new RoleNotifications(new LinkedHashSet<>(), new LinkedHashSet<>(), new ArrayList<>(),
                         new LinkedHashSet<>(), new LinkedHashSet<>()) : null;
                 if (notifications != null) {
@@ -356,7 +378,9 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             }
             var accepted=new LinkedHashMap<String,Object>();
             accepted.put("connectionId",connection.socket.getId()); accepted.put("roleId",role); accepted.put("serverTimeMs",clock.millis());
-            accepted.put("initial",snapshots.snapshot(token));
+            var initial = snapshots.snapshot(token);
+            connection.serverId = initial.role().serverId();
+            accepted.put("initial", initial);
             if(issued!=null) accepted.put("session",issued);
             respond(connection,request,accepted); connection.ready=true;
         } finally { roleLock.unlock(); }
@@ -445,6 +469,14 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             market(connection, request, name);
             return;
         }
+        if (name.equals("black-market.list") || name.equals("black-market.buy")) {
+            blackMarket(connection, request, name.equals("black-market.list"));
+            return;
+        }
+        if (name.equals("smith.preview") || name.equals("smith.forge") || name.equals("smith.forge.all")) {
+            smith(connection, request, name);
+            return;
+        }
         if (name.equals("guild.list") || name.equals("guild.change")) {
             guild(connection, request, name);
             return;
@@ -477,6 +509,13 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             default -> { /* 其余已认证业务继续按原入口处理。 */ }
         }
         switch (name) {
+            case "chat.history", "chat.send", "chat.read", "chat.overview" -> {
+                chatRequest(connection, request, name);
+                return;
+            }
+            default -> { /* 其余已认证业务继续按原入口处理。 */ }
+        }
+        switch (name) {
             case "tower.state", "tower.formation.save", "tower.challenge", "tower.sweep", "tower.milestone.claim" -> {
                 towerRequest(connection, request, name);
                 return;
@@ -485,6 +524,10 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                  "arena.ranking", "arena.season", "arena.chest.claim", "arena.like", "arena.defense",
                  "arena.defense.save", "arena.shop", "arena.shop.buy" -> {
                 arenaRequest(connection, request, name);
+                return;
+            }
+            case "dreamland.state", "dreamland.act" -> {
+                dreamlandRequest(connection, request, name);
                 return;
             }
             case "chapter.quick-battle.info", "chapter.quick-battle.claim" -> {
@@ -977,18 +1020,21 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                 body.path("heroId").asString(), body.path("expectedStar").asInt(), materials));
     }
 
-    /** 解析单槽和批量宝石操作，未提供的可选字段保留领域的空值。 */
+    /** 解析宝石操作，一键合成可绑定玩家已确认的持久资产版本。 */
     private HeroJewelService.Receipt changeHeroJewel(String token, JsonNode body) {
-        fields(body, Set.of("requestId", "heroId", "action", "itemId", "slot", "expectedItemId", "count"));
+        fields(body, Set.of("requestId", "heroId", "action", "itemId", "slot", "expectedItemId", "count",
+                "expectedRevision"));
         HeroJewelService.Action action;
         try {
             action = HeroJewelService.Action.valueOf(body.path("action").asString());
         } catch (IllegalArgumentException error) {
             throw rejected("INVALID_HERO_JEWEL_REQUEST");
         }
+        Long expectedRevision = body.has("expectedRevision")
+                ? operationAmount(body, "expectedRevision", "INVALID_HERO_JEWEL_REQUEST") : null;
         return heroJewels.change(token, new HeroJewelService.Request(body.path("requestId").asString(),
                 body.path("heroId").asString(null), action, body.path("itemId").asInt(), body.path("slot").asInt(),
-                body.path("expectedItemId").asInt(), body.path("count").asInt()));
+                body.path("expectedItemId").asInt(), body.path("count").asInt(), expectedRevision));
     }
 
     /** 神装穿脱使用实例字符串和期望槽内实例，禁止以配置号替代实例。 */
@@ -1080,6 +1126,59 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             var result = buy ? market.buy(connection.token, requestId, shelfVersion, productId, count)
                     : market.refresh(connection.token, requestId, shelfVersion);
             respond(connection, request, result);
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException error) {
+            fail(connection, request, "BUSY", "角色数据正忙，请稍后重试", true);
+        }
+    }
+
+    /** 由认证连接执行装备合成，配方成本和批量预演均由服务端决定。 */
+    private void smith(Connection connection, JsonNode request, String name) throws IOException {
+        var body = request.path("body");
+        String code = "INVALID_SMITH_REQUEST";
+        try {
+            var result = switch (name) {
+                case "smith.preview" -> {
+                    fields(body, Set.of("slot"));
+                    yield smith.preview(connection.token, operationIndex(body, "slot", code));
+                }
+                case "smith.forge" -> {
+                    fields(body, Set.of("requestId", "itemId", "count"));
+                    yield smith.forge(connection.token, text(body, "requestId", UUID_PATTERN),
+                            operationIndex(body, "itemId", code), operationIndex(body, "count", code));
+                }
+                case "smith.forge.all" -> {
+                    fields(body, Set.of("requestId", "slot", "expectedRevision"));
+                    yield smith.forgeAll(connection.token, text(body, "requestId", UUID_PATTERN),
+                            operationIndex(body, "slot", code), operationAmount(body, "expectedRevision", code));
+                }
+                default -> throw rejected(code);
+            };
+            respond(connection, request, result);
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException error) {
+            fail(connection, request, "BUSY", "角色数据正忙，请稍后重试", true);
+        }
+    }
+
+    /** 按连接身份查看已到期的黑市货架，购买只接受已看版本、配置商品和次数。 */
+    private void blackMarket(Connection connection, JsonNode request, boolean list) throws IOException {
+        var body = request.path("body");
+        String code = "INVALID_BLACK_MARKET_REQUEST";
+        fields(body, list ? Set.of("shopType") : Set.of("requestId", "shopType", "shelfVersion", "productId", "count"));
+        int shopType = operationIndex(body, "shopType", code);
+        try {
+            if (list) {
+                respond(connection, request, blackMarket.list(connection.token, shopType));
+                return;
+            }
+            long shelfVersion = operationAmount(body, "shelfVersion", code);
+            if (shelfVersion == 0) {
+                throw rejected(code);
+            }
+            respond(connection, request, blackMarket.buy(connection.token, text(body, "requestId", UUID_PATTERN),
+                    shopType, shelfVersion, operationIndex(body, "productId", code),
+                    operationIndex(body, "count", code)));
         } catch (org.springframework.dao.PessimisticLockingFailureException
                 | org.springframework.dao.QueryTimeoutException error) {
             fail(connection, request, "BUSY", "角色数据正忙，请稍后重试", true);
@@ -1195,6 +1294,83 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                 | org.springframework.dao.QueryTimeoutException error) {
             fail(connection, request, "BUSY", "角色数据正忙，请稍后重试", true);
         }
+    }
+
+    /** 查询或变更当前角色的梦境。校验操作专属字段，服务器计算楼层、阵容和奖品。 */
+    private void dreamlandRequest(Connection connection, JsonNode request, String name) throws IOException {
+        var body = request.path("body");
+        String code = "DREAMLAND_REQUEST_INVALID";
+        try {
+            if (name.equals("dreamland.state")) {
+                fields(body, Set.of());
+                respond(connection, request, dreamlandState(dreamland.state(connection.token)));
+                return;
+            }
+            String action = text(body, "action", "START|SELECT_BUFF|NEXT|END|CLAIM|SAVE_FORMATION");
+            var allowed = switch (action) {
+                case "SELECT_BUFF", "CLAIM" -> Set.of("requestId", "expectedVersion", "action", "choice", "slots");
+                case "SAVE_FORMATION" -> Set.of("requestId", "expectedVersion", "action", "formationId", "slots");
+                default -> Set.of("requestId", "expectedVersion", "action", "slots");
+            };
+            fields(body, allowed);
+            var slots = body.path("slots");
+            boolean savesFormation = action.equals("SAVE_FORMATION");
+            if (!slots.isArray() || slots.size() > 8 || (!savesFormation && !slots.isEmpty())) {
+                throw rejected(code);
+            }
+            var lineup = new ArrayList<Lineup.Slot>();
+            for (JsonNode slot : slots) {
+                fields(slot, Set.of("position", "heroId"));
+                lineup.add(new Lineup.Slot(operationIndex(slot, "position", code), text(slot, "heroId", UUID_PATTERN)));
+            }
+            var result = dreamland.act(connection.token, new DreamlandService.Command(
+                text(body, "requestId", UUID_PATTERN), operationAmount(body, "expectedVersion", code), action,
+                allowed.contains("choice") ? operationIndex(body, "choice", code) : 0,
+                savesFormation ? operationIndex(body, "formationId", code) : 0, lineup));
+            var response = new LinkedHashMap<String, Object>();
+            response.put("requestId", result.requestId());
+            response.put("roleId", result.roleId());
+            response.put("assetRevision", result.assetRevision());
+            response.put("action", result.action());
+            response.put("state", dreamlandState(result.state()));
+            if (result.actual() != null) {
+                response.put("actual", result.actual());
+            }
+            respond(connection, request, response);
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException error) {
+            fail(connection, request, "BUSY", "角色数据正忙，请稍后重试", true);
+        }
+    }
+
+    /** 梦境战报使用协议描述符转换，避免把 Protobuf 内部字段写入网络回包。 */
+    private static Map<String, Object> dreamlandState(DreamlandService.State state) {
+        var result = new LinkedHashMap<String, Object>();
+        result.put("version", state.version());
+        result.put("minimumLevel", state.minimumLevel());
+        result.put("maxFloor", state.maxFloor());
+        result.put("startFloor", state.startFloor());
+        result.put("currentFloor", state.currentFloor());
+        result.put("highestFloor", state.highestFloor());
+        result.put("todayHighestFloor", state.todayHighestFloor());
+        result.put("todayRewardFloor", state.todayRewardFloor());
+        result.put("challengeCount", state.challengeCount());
+        result.put("phase", state.phase().name());
+        result.put("deadlineSeconds", state.deadlineSeconds());
+        result.put("resetAtSeconds", state.resetAtSeconds());
+        result.put("activeBuffId", state.activeBuffId());
+        result.put("buffs", state.buffs());
+        result.put("slots", state.slots());
+        result.put("formationId", state.formationId());
+        result.put("pendingRewards", state.pendingRewards());
+        result.put("milestones", state.milestones());
+        if (state.battle() != null) {
+            var battle = state.battle();
+            result.put("battle", Map.of(
+                "battleId", battle.battleId(), "floor", battle.floor(), "won", battle.won(),
+                "replay", GameProtocolCodec.tree(battle.replay())));
+        }
+        return result;
     }
 
     /** 竞技场路由校验参数并使用现行会话，攻防、赛季结算和回执由对应事务处理。 */
@@ -1437,6 +1613,113 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         }).map(Map.Entry::getKey).collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
 
+    /** 通过当前鉴权角色处理各频道的历史、发言和已读，编号按精确十进制字符串传输。 */
+    private void chatRequest(Connection connection, JsonNode request, String name) throws IOException {
+        JsonNode body = request.path("body");
+        ChatChannel channel = chatChannel(body);
+        String peer = body.has("peerRoleId") ? text(body, "peerRoleId", UUID_PATTERN) : null;
+        switch (name) {
+            case "chat.history" -> {
+                fields(body, Set.of("afterId", "beforeId", "channel", "peerRoleId"));
+                if (body.has("afterId") && body.has("beforeId")) {
+                    throw rejected("CHAT_INVALID");
+                }
+                long afterId = body.has("afterId") ? chatCursor(body, "afterId") : 0;
+                long beforeId = body.has("beforeId") ? chatCursor(body, "beforeId") : 0;
+                if (body.has("beforeId") && beforeId == 0) {
+                    throw rejected("CHAT_INVALID");
+                }
+                respond(connection, request, chatHistory(chat.history(connection.role, channel, peer, afterId, beforeId)));
+            }
+            case "chat.send" -> {
+                fields(body, Set.of("requestId", "text", "channel", "peerRoleId"));
+                String requestId = text(body, "requestId", UUID_PATTERN);
+                if (!body.path("text").isString() || body.path("text").asString().length() > 408) {
+                    throw rejected("CHAT_CONTENT_TOO_LONG");
+                }
+                var message = chat.send(connection.role, channel, peer, requestId, body.path("text").asString());
+                Map<String, Object> receipt = new LinkedHashMap<>();
+                receipt.put("requestId", requestId);
+                receipt.put("message", chatMessage(message));
+                if (peer != null) {
+                    receipt.put("peerRoleId", peer);
+                }
+                respond(connection, request, receipt);
+            }
+            case "chat.read" -> {
+                fields(body, Set.of("throughId", "channel", "peerRoleId"));
+                respond(connection, request, chatHistory(chat.read(connection.role, channel, peer,
+                        chatCursor(body, "throughId"))));
+            }
+            case "chat.overview" -> {
+                fields(body, Set.of());
+                respond(connection, request, chatOverview(chat.overview(connection.role)));
+            }
+            default -> throw rejected("INVALID_MESSAGE");
+        }
+    }
+
+    /** 省略频道继续使用世界频道，明确传入的频道号必须在协议约定范围内。 */
+    private static ChatChannel chatChannel(JsonNode body) {
+        if (!body.has("channel")) {
+            return ChatChannel.WORLD;
+        }
+        var channel = body.path("channel");
+        if (!channel.isIntegralNumber() || !channel.canConvertToInt()) {
+            throw rejected("CHAT_INVALID");
+        }
+        return ChatChannel.fromWire(channel.asInt());
+    }
+
+    /** 校验可重放的十进制游标，拒绝前导零与超出存储范围的值。 */
+    private static long chatCursor(JsonNode body, String field) {
+        String value = text(body, field, "0|[1-9][0-9]{0,18}");
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException overflow) {
+            throw rejected("CHAT_INVALID");
+        }
+    }
+
+    /** 投影按授权范围读取的聊天页与已读状态，缺少权限的范围不提供范围标识。 */
+    private static Map<String, Object> chatHistory(ChatService.History result) {
+        Map<String, Object> body = new LinkedHashMap<>(Map.of(
+            "messages", result.messages().stream().map(GameSocketHandler::chatMessage).toList(),
+            "latestId", Long.toString(result.latestId()), "readThroughId", Long.toString(result.readThroughId()),
+            "unreadCount", result.unreadCount(), "hasMore", result.hasMore(),
+            "hasNewer", result.hasNewer(), "canSend", result.canSend(), "channel", result.channel().wireId()));
+        if (result.peerRoleId() != null) {
+            body.put("peerRoleId", result.peerRoleId());
+        }
+        if (result.scopeId() != null) {
+            body.put("scopeId", result.scopeId());
+        }
+        return body;
+    }
+
+    /** 只交付可见房间的显示资料、频道和纯文本。系统发送人编号为空。 */
+    private static Map<String, Object> chatMessage(ChatService.Message message) {
+        Map<String, Object> body = new LinkedHashMap<>(Map.of("id", Long.toString(message.id()),
+            "roleId", message.roleId(), "name", message.name(),
+            "avatarId", message.avatarId(), "borderId", message.borderId(), "level", message.level(),
+            "text", message.text(), "sentAtSeconds", message.sentAtSeconds(), "channel", message.channel().wireId(),
+            "serverId", message.serverId()));
+        if (message.noticeId() > 0) {
+            body.put("noticeId", message.noticeId());
+        }
+        return body;
+    }
+
+    /** 投影各频道权限、未读计数及当前可读的好友会话。 */
+    private static Map<String, Object> chatOverview(ChatService.Overview overview) {
+        return Map.of("channels", overview.channels().stream().map(row -> Map.of(
+                        "channel", row.channel().wireId(), "available", row.available(), "unreadCount", row.unreadCount())).toList(),
+                "conversations", overview.conversations().stream().map(row -> Map.of(
+                        "roleId", row.roleId(), "name", row.name(), "avatarId", row.avatarId(), "borderId", row.borderId(),
+                        "level", row.level(), "unreadCount", row.unreadCount(),
+                        "latestMessageId", Long.toString(row.latestMessageId()))).toList());
+    }
+
     /** 按连接角色读取排行榜，点赞只提交看到的榜首和当日期次。 */
     private void rankingRequest(Connection connection, JsonNode request, String name) throws IOException {
         var body = request.path("body");
@@ -1590,6 +1873,34 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         event.roleIds().forEach(id -> notifyRolePage(id, "friend.changed"));
     }
 
+    /** 只向提交时确认的区服和角色发送空载荷通知，正文由每个接收者单独鉴权拉取。 */
+    @org.springframework.transaction.event.TransactionalEventListener
+    public void chatChanged(ChatChanged event) {
+        if (event.serverIds().isEmpty()) {
+            event.roleIds().forEach(roleId -> notifyChatConnection(online.get(roleId)));
+            return;
+        }
+        online.values().forEach(connection -> {
+            if (connection.serverId != null && (event.serverIds().contains(connection.serverId)
+                    || event.roleIds().contains(connection.role))) {
+                notifyChatConnection(connection);
+            }
+        });
+    }
+
+    /** 仅使用线程安全的 WebSocket 发送队列，广播过程不相互获取玩家的请求锁。 */
+    private void notifyChatConnection(Connection connection) {
+        if (connection == null || !connection.ready || online.get(connection.role) != connection || !connection.socket.isOpen()) {
+            return;
+        }
+        try {
+            send(connection, Map.of("version", 1, "kind", "event", "name", "chat.changed",
+                "connectionId", connection.socket.getId(), "body", Map.of()));
+        } catch (IOException | RuntimeException error) {
+            close(connection, CloseStatus.SERVER_ERROR);
+        }
+    }
+
     /** 同一角色锁内检查现行连接，页面失效事件不携带私人资料。 */
     private void notifyRolePage(String roleId, String protocol) {
         var lock = roleLock(roleId);
@@ -1665,13 +1976,13 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         }
     }
 
-    /** 验证统一信封及关联标识；协议段允许 god-equipment 等拼写，分派仍以登记的全名为准。 */
+    /** 验证统一信封及关联标识；模块名与动作名各段可以带连字符，按登记的全名分派。 */
     private static void validateEnvelope(JsonNode request) {
         fields(request, Set.of("version", "kind", "name", "id", "body", "connectionId"));
         if (!request.path("version").isIntegralNumber() || !request.path("version").asString().equals("1")) throw rejected("UNSUPPORTED_VERSION");
         if (!request.path("kind").isString() || !request.path("kind").asString().equals("request")) throw rejected("INVALID_MESSAGE");
         text(request, "id", UUID_PATTERN);
-        text(request, "name", "[a-z]+(?:\\.[a-z]+(?:-[a-z]+)?){1,3}");
+        text(request, "name", "[a-z]+(?:-[a-z]+)?(?:\\.[a-z]+(?:-[a-z]+)?){1,3}");
         if (!request.path("body").isObject()) throw rejected("INVALID_MESSAGE");
     }
 

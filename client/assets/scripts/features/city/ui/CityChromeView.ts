@@ -54,6 +54,8 @@ export interface CityChromeOpenArgs {
         readonly openQuest?: () => void;
         /** 打开主城的本服和跨服排行榜。 */
         readonly openRanking?: () => void;
+        /** 轻点聊天浮标时打开当前区服世界频道。 */
+        readonly openChat?: () => void;
     };
 }
 
@@ -200,7 +202,7 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> {
             this.bindTab(entry.id, this.requireNode(buttons[index], entry.id), this.selectedTabs[index], args.onTab);
         }
         this.bindShortcuts(args.actions);
-        this.bindChat();
+        this.bindChat(args.actions.openChat);
         this.bindActivityRails();
         this.ownListener(ViewportLayoutUtils.bindVisibleRefresh(this.node,
             () => ViewportLayoutUtils.fitVisibleRoot(this.node)));
@@ -397,8 +399,8 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> {
         }
     }
 
-    /** 绑定预制体中的浮动聊天按钮；拖动不触发原有未开放提示。 */
-    private bindChat(): void {
+    /** 绑定聊天浮标，轻点打开世界频道，拖动只改变浮标位置。 */
+    private bindChat(openChat?: () => void): void {
         const node = this.requireNode(this.btnChat, "BtnChat");
         const viewport = this.node.getComponent(UITransform);
         const dock = node.parent?.getComponent(UITransform);
@@ -408,7 +410,11 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> {
             throw new Error("CityChromeView 聊天按钮缺少拖动所需的预制体组件");
         }
         this.ownListener(new CityChatDrag(viewport, dock, button, icon,
-            () => UIManager.instance.toast("功能暂未开放")).bind());
+            () => openChat?.()).bind());
+        if (openChat) {
+            const dot = new RedDotBinding(node, GameRedDotKey.CHAT);
+            this.ownListener(() => dot.dispose());
+        }
     }
 
     /** 各活动栏独立切换两套预制布局，展开与收起无需改节点坐标。 */

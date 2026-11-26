@@ -3,6 +3,7 @@
  * 不保存会话/资产；解码只返回数据，业务合法性与会话时效仍由传输/API/Controller 校验。
  */
 import { Protocol } from "./Protocol";
+import { CHAT_CHANNEL_IDS } from "../features/chat/data/ChatData";
 import { HeroLevelData } from "../features/hero/data/HeroLevelData";
 import { mxzg } from "./GameProtocol.generated";
 /** 两端共同声明的 WebSocket 子协议；握手阶段拒绝误连旧 JSON 服务。 */
@@ -70,8 +71,11 @@ const payloads = [
     "roleDecorations", "roleDecorationId", "rolePeerageDisplay",
     "heroEquipmentChangeRequest", "heroEquipmentChangeReceipt",
     "marketState", "marketBuyRequest", "marketRefreshRequest", "marketReceipt",
+    "blackMarketListRequest", "blackMarketState", "blackMarketBuyRequest", "blackMarketReceipt",
+    "smithPreviewRequest", "smithForgeRequest", "smithForgeAllRequest", "smithPreview", "smithReceipt",
     "dailyDungeonState", "dailyDungeonChallengeRequest", "dailyDungeonReceipt",
     "towerState", "towerFormationSave", "towerRequest", "towerSettlement",
+    "dreamlandState", "dreamlandCommand", "dreamlandSettlement",
     "arenaState", "arenaChallengeRequest", "arenaReplayRequest", "arenaReplay", "arenaSettlement",
     "arenaTicketBuyRequest", "arenaTicketPurchase",
     "arenaRanking", "arenaSeason", "arenaChestRequest", "arenaChestReceipt", "arenaLikeRequest", "arenaLikeReceipt",
@@ -81,7 +85,8 @@ const payloads = [
     "questClaimRequest", "questSnapshot", "questClaimReceipt", "questChanged",
     "rankingListRequest", "rankingLikeRequest", "rankingOverview", "rankingDetail", "rankingLikeReceipt",
     "mailCommand", "mailboxState", "mailboxReceipt", "friendSearchRequest", "friendChangeRequest", "friendState",
-    "friendSearchResult", "friendChangeResult",
+    "friendSearchResult", "friendChangeResult", "chatHistoryRequest", "chatSendRequest", "chatReadRequest",
+    "chatHistory", "chatSendResult", "chatOverview",
     "chapterQuickBattleState", "chapterQuickBattleClaim", "chapterQuickBattleReceipt",
 ];
 /** 无状态协议转换工具；不会持有会话、角色或网络连接。 */
@@ -97,12 +102,26 @@ export class GameProtocolCodecUtils {
         const request = frame.kind === "request";
         if (request || frame.kind === "response") {
             switch (frame.name) {
+                case Protocol.BLACK_MARKET_LIST:
+                    return request ? "blackMarketListRequest" : "blackMarketState";
+                case Protocol.BLACK_MARKET_BUY:
+                    return request ? "blackMarketBuyRequest" : "blackMarketReceipt";
+                case Protocol.SMITH_PREVIEW:
+                    return request ? "smithPreviewRequest" : "smithPreview";
+                case Protocol.SMITH_FORGE:
+                    return request ? "smithForgeRequest" : "smithReceipt";
+                case Protocol.SMITH_FORGE_ALL:
+                    return request ? "smithForgeAllRequest" : "smithReceipt";
                 case Protocol.CHAPTER_QUICK_BATTLE_INFO:
                     return request ? "empty" : "chapterQuickBattleState";
                 case Protocol.CHAPTER_QUICK_BATTLE_CLAIM:
                     return request ? "chapterQuickBattleClaim" : "chapterQuickBattleReceipt";
                 case Protocol.TOWER_STATE:
                     return request ? "empty" : "towerState";
+                case Protocol.DREAMLAND_STATE:
+                    return request ? "empty" : "dreamlandState";
+                case Protocol.DREAMLAND_ACT:
+                    return request ? "dreamlandCommand" : "dreamlandSettlement";
                 case Protocol.TOWER_FORMATION_SAVE:
                     return request ? "towerFormationSave" : "towerState";
                 case Protocol.TOWER_CHALLENGE:
@@ -257,6 +276,9 @@ export class GameProtocolCodecUtils {
                 case Protocol.MAIL_CHANGE: return "mailCommand";
                 case Protocol.FRIEND_SEARCH: return "friendSearchRequest";
                 case Protocol.FRIEND_CHANGE: return "friendChangeRequest";
+                case Protocol.CHAT_HISTORY: return "chatHistoryRequest";
+                case Protocol.CHAT_SEND: return "chatSendRequest";
+                case Protocol.CHAT_READ: return "chatReadRequest";
                 case Protocol.VIP_CLAIM: return "vipClaimRequest";
                 case Protocol.GM_LEVEL_SET: return "gmSetRoleLevel";
                 case Protocol.GM_CHAPTER_SET: return "gmSetChapter";
@@ -278,7 +300,8 @@ export class GameProtocolCodecUtils {
         if (frame.kind === "event" && frame.name === Protocol.GUILD_UPDATED) {
             return "empty";
         }
-        if (frame.kind === "event" && (frame.name === Protocol.MAIL_CHANGED || frame.name === Protocol.FRIEND_CHANGED)) {
+        if (frame.kind === "event" && (frame.name === Protocol.MAIL_CHANGED
+            || frame.name === Protocol.FRIEND_CHANGED || frame.name === Protocol.CHAT_CHANGED)) {
             return "empty";
         }
         if (frame.kind === "event" && frame.name === Protocol.QUEST_CHANGED) {
@@ -339,6 +362,10 @@ export class GameProtocolCodecUtils {
                 case Protocol.FRIEND_STATE: return "friendState";
                 case Protocol.FRIEND_SEARCH: return "friendSearchResult";
                 case Protocol.FRIEND_CHANGE: return "friendChangeResult";
+                case Protocol.CHAT_HISTORY:
+                case Protocol.CHAT_READ: return "chatHistory";
+                case Protocol.CHAT_SEND: return "chatSendResult";
+                case Protocol.CHAT_OVERVIEW: return "chatOverview";
                 case Protocol.GUILD_RANKING: return "guildRankingState";
                 case Protocol.VIP_CLAIM: return "vipClaimReceipt";
                 case Protocol.ROLE_NAME_RANDOM: return "roleName";
@@ -441,6 +468,114 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateMarketState(list ? body : body.state);
     }
 
+    /** 黑市只接受页签与当前报价，成功回执必须包含真实角色和资产版本。 */
+    private static validateBlackMarket(frame: GameFrame): void {
+        const list = frame.name === Protocol.BLACK_MARKET_LIST;
+        if ((!list && frame.name !== Protocol.BLACK_MARKET_BUY) || frame.ok === false) {
+            return;
+        }
+        const body = GameProtocolCodecUtils.messageObject(frame.body);
+        const integer = GameProtocolCodecUtils.isIntegerInRange;
+        if (frame.kind === "request") {
+            const allowed = list ? ["shopType"] : ["requestId", "shopType", "shelfVersion", "productId", "count"];
+            if (Object.keys(body).some(key => !allowed.includes(key)) || !integer(body.shopType, 1, 0x7fffffff)) {
+                throw new Error("黑市请求页签或字段无效");
+            }
+            if (!list && (!GameProtocolCodecUtils.isUuid(body.requestId) || !integer(body.shelfVersion, 1)
+                    || !integer(body.productId, 1, 0x7fffffff) || !integer(body.count, 1, 0x7fffffff))) {
+                throw new Error("黑市购买请求参数无效");
+            }
+            return;
+        }
+        if (frame.kind !== "response") {
+            throw new Error("黑市消息方向无效");
+        }
+        if (!list && (!GameProtocolCodecUtils.isUuid(body.requestId) || !GameProtocolCodecUtils.isUuid(body.roleId)
+                || !integer(body.assetRevision, 1))) {
+            throw new Error("黑市购买回执标识或资产版本无效");
+        }
+        GameProtocolCodecUtils.validateBlackMarketState(list ? body : body.state, !list);
+    }
+
+    /** 校验装备合成的配方指令、单部位预演及实际结算内容。 */
+    private static validateSmith(frame: GameFrame): void {
+        const preview = frame.name === Protocol.SMITH_PREVIEW;
+        const single = frame.name === Protocol.SMITH_FORGE;
+        const all = frame.name === Protocol.SMITH_FORGE_ALL;
+        if ((!preview && !single && !all) || frame.ok === false) {
+            return;
+        }
+        const body = GameProtocolCodecUtils.messageObject(frame.body);
+        const integer = GameProtocolCodecUtils.isIntegerInRange;
+        if (frame.kind === "request") {
+            const keys = preview ? ["slot"] : single ? ["requestId", "itemId", "count"]
+                : ["requestId", "slot", "expectedRevision"];
+            if (Object.keys(body).some(key => !keys.includes(key))
+                    || (!single && !integer(body.slot, 1, 4))
+                    || (!preview && !GameProtocolCodecUtils.isUuid(body.requestId))
+                    || (single && (!integer(body.itemId, 1, 0x7fffffff) || !integer(body.count, 1, 0x7fffffff)))
+                    || (all && !integer(body.expectedRevision, 0))) {
+                throw new Error("装备合成指令无效");
+            }
+            return;
+        }
+        if (frame.kind !== "response" || !integer(body.slot, 1, 4)
+                || !integer(body.assetRevision, preview ? 0 : 1) || !integer(body.goldCost, preview ? 0 : 1)
+                || !Array.isArray(body.rewards) || (!preview && body.rewards.length === 0)) {
+            throw new Error("装备合成结果无效");
+        }
+        const itemIds = new Set<number>();
+        for (const value of body.rewards) {
+            const item = GameProtocolCodecUtils.messageObject(value);
+            if (!integer(item.itemId, 1, 0x7fffffff) || !integer(item.quantity, 1)
+                    || itemIds.has(Number(item.itemId))) {
+                throw new Error("装备合成产物无效");
+            }
+            itemIds.add(Number(item.itemId));
+        }
+        if (preview) {
+            if ((body.goldCost === 0) !== (body.rewards.length === 0)) {
+                throw new Error("装备合成预演消耗与产物不一致");
+            }
+            return;
+        }
+        const first = GameProtocolCodecUtils.messageObject(body.rewards[0]);
+        if (!GameProtocolCodecUtils.isUuid(body.requestId) || !GameProtocolCodecUtils.isUuid(body.roleId)
+                || (all && (body.itemId !== 0 || body.count !== 0))
+                || (single && (!integer(body.itemId, 1) || !integer(body.count, 1)
+                    || body.rewards.length !== 1 || first.itemId !== body.itemId || first.quantity !== body.count))) {
+            throw new Error("装备合成回执与指令不符");
+        }
+    }
+
+    /** 校验当前货架属于唯一的可见页签，未开放页签不得发放可买商品。 */
+    private static validateBlackMarketState(value: unknown, isReceipt: boolean): void {
+        const state = GameProtocolCodecUtils.messageObject(value);
+        const integer = GameProtocolCodecUtils.isIntegerInRange;
+        if (!integer(state.shopType, 1) || !integer(state.shelfVersion, 1) || !integer(state.nextRefreshAt, 0)
+                || !integer(state.currencyItemId, 1) || !Array.isArray(state.tabs) || !Array.isArray(state.offers)) {
+            throw new Error("黑市货架状态无效");
+        }
+        const shopTypes = new Set<number>();
+        let currentAvailable: boolean | undefined;
+        for (const value of state.tabs) {
+            const tab = GameProtocolCodecUtils.messageObject(value);
+            if (!integer(tab.shopType, 1) || shopTypes.has(tab.shopType) || !integer(tab.minimumLevel, 1)
+                    || typeof tab.available !== "boolean" || typeof tab.name !== "string" || !tab.name.trim()) {
+                throw new Error("黑市页签状态无效");
+            }
+            shopTypes.add(tab.shopType);
+            if (tab.shopType === state.shopType) {
+                currentAvailable = tab.available;
+            }
+        }
+        if (currentAvailable === undefined || (!currentAvailable
+                && (isReceipt || state.offers.some(row => GameProtocolCodecUtils.messageObject(row).purchasable)))) {
+            throw new Error("黑市货架与页签不一致");
+        }
+        GameProtocolCodecUtils.validateMarketOffers(state.offers, true);
+    }
+
     /** 校验服务器货架的版本、刷新额度和商品数量；合法商品 ID 在货架内唯一。 */
     private static validateMarketState(value: unknown): void {
         const state = GameProtocolCodecUtils.messageObject(value);
@@ -455,13 +590,20 @@ export class GameProtocolCodecUtils {
                 || !Array.isArray(state.offers) || state.offers.length === 0) {
             throw new Error("市场货架状态无效");
         }
+        GameProtocolCodecUtils.validateMarketOffers(state.offers, false);
+    }
+
+    /** 校验两类货架共用的商品结构；仅黑市可以返回原策划不限购项。 */
+    private static validateMarketOffers(offers: readonly unknown[], allowUnlimited: boolean): void {
+        const integer = GameProtocolCodecUtils.isIntegerInRange;
         const products = new Set<number>();
-        for (const row of state.offers) {
+        for (const row of offers) {
             const offer = GameProtocolCodecUtils.messageObject(row);
             if (!integer(offer.productId, 1) || products.has(offer.productId)
                     || !integer(offer.itemId, 1) || !integer(offer.quantity, 1)
                     || !integer(offer.costItemId, 1) || !integer(offer.costQuantity, 1)
-                    || !integer(offer.purchaseLimit, 1) || !integer(offer.purchased, 0, offer.purchaseLimit)
+                    || !integer(offer.purchaseLimit, allowUnlimited ? 0 : 1)
+                    || !integer(offer.purchased, 0, offer.purchaseLimit || 0xffffffff)
                     || !integer(offer.discount, 1, 100) || typeof offer.purchasable !== "boolean") {
                 throw new Error("市场商品状态无效");
             }
@@ -622,6 +764,88 @@ export class GameProtocolCodecUtils {
         }
     }
 
+    /** 校验梦境查询和操作的阶段、参数、战报来源及角色回执。 */
+    private static validateDreamland(frame: GameFrame): void {
+        if ((frame.name !== Protocol.DREAMLAND_STATE && frame.name !== Protocol.DREAMLAND_ACT)
+                || (frame.kind !== "request" && frame.kind !== "response") || frame.ok === false) {
+            return;
+        }
+        const body = this.messageObject(frame.body);
+        const integer = this.isIntegerInRange;
+        const action = body.action;
+        if (frame.name === Protocol.DREAMLAND_ACT
+                && (typeof action !== "string" || !["START", "SELECT_BUFF", "NEXT", "END", "CLAIM", "SAVE_FORMATION"].includes(action))) {
+            throw new Error("梦境操作无效");
+        }
+        if (frame.kind === "request") {
+            if (frame.name === Protocol.DREAMLAND_STATE) {
+                if (Object.keys(body).length !== 0) {
+                    throw new Error("梦境查询不接受参数");
+                }
+                return;
+            }
+            const choosing = action === "SELECT_BUFF" || action === "CLAIM";
+            const saving = action === "SAVE_FORMATION";
+            const fields = ["requestId", "expectedVersion", "action", "slots"];
+            if (choosing) {
+                fields.push("choice");
+            }
+            if (saving) {
+                fields.push("formationId");
+            }
+            if (!this.isUuid(body.requestId) || !integer(body.expectedVersion, 0)
+                    || Object.keys(body).some(key => !fields.includes(key))
+                    || (choosing && !integer(body.choice, 1, 0x7fffffff))
+                    || (saving && (!integer(body.formationId, 1, 0x7fffffff) || !this.validLineupSlots(body.slots)))
+                    || (!saving && body.slots !== undefined && (!Array.isArray(body.slots) || body.slots.length !== 0))) {
+                throw new Error("梦境操作参数无效");
+            }
+            return;
+        }
+        if (frame.name === Protocol.DREAMLAND_ACT) {
+            this.validateBattleSettlement(body, 0);
+        }
+        const state = frame.name === Protocol.DREAMLAND_ACT ? this.messageObject(body.state) : body;
+        this.validateDreamlandState(state);
+    }
+
+    /** 校验权威梦境快照，允许还没有通关或没有奖励的有效空状态。 */
+    private static validateDreamlandState(state: Record<string, unknown>): void {
+        const integer = this.isIntegerInRange;
+        const maxFloor = state.maxFloor;
+        const zeroFields = ["version", "startFloor", "currentFloor", "highestFloor",
+            "todayHighestFloor", "todayRewardFloor", "challengeCount", "deadlineSeconds", "activeBuffId"];
+        if (!zeroFields.every(field => integer(state[field], 0))
+                || typeof maxFloor !== "number" || !integer(maxFloor, 1)
+                || !integer(state.minimumLevel, 1) || !integer(state.formationId, 1) || !integer(state.resetAtSeconds, 1)
+                || !["READY", "SELECT_BUFF", "NEXT_BATTLE", "RESULT"].some(phase => phase === state.phase)
+                || !this.validLineupSlots(state.slots)
+                || !Array.isArray(state.buffs) || state.buffs.length > 3
+                || !Array.isArray(state.pendingRewards)
+                || (state.pendingRewards.length > 0 && !this.validRewardPreview(state.pendingRewards))
+                || !Array.isArray(state.milestones) || state.milestones.length > 1500) {
+            throw new Error("梦境状态无效");
+        }
+        if (!state.buffs.every(value => {
+            const buff = this.messageObject(value);
+            return integer(buff.id, 1) && typeof buff.name === "string" && typeof buff.description === "string";
+        }) || !state.milestones.every(value => {
+            const milestone = this.messageObject(value);
+            return integer(milestone.id, 1) && integer(milestone.floor, 1, maxFloor)
+                && typeof milestone.claimed === "boolean" && this.validRewardPreview(milestone.rewards);
+        })) {
+            throw new Error("梦境增益或里程碑无效");
+        }
+        if (state.battle !== undefined) {
+            const battle = this.messageObject(state.battle);
+            if (!this.isUuid(battle.battleId) || !integer(battle.floor, 1, maxFloor)
+                    || typeof battle.won !== "boolean") {
+                throw new Error("梦境战报编号或楼层无效");
+            }
+            this.validateProgressionReplay(battle.replay, `dreamland:${battle.floor}`, battle.won);
+        }
+    }
+
     /** 核对爬塔和竞技场的指令字段、战报来源及结算结果的角色归属。 */
     private static validateProgressionBattle(frame: GameFrame): void {
         const isTower = frame.name.startsWith("tower.");
@@ -755,8 +979,8 @@ export class GameProtocolCodecUtils {
         }
     }
 
-    /** 核对防守格位，拒绝重复站位和不属于战斗区域的助战格。 */
-    private static validArenaSlots(source: unknown): boolean {
+    /** 核对独立阵容格位，拒绝重复站位和不属于战斗区域的助战格。 */
+    private static validLineupSlots(source: unknown): boolean {
         if (!Array.isArray(source) || source.length > 8) {
             return false;
         }
@@ -767,7 +991,7 @@ export class GameProtocolCodecUtils {
     }
 
     /** 原策划表的奖品必须为正数量和有效配置编号。 */
-    private static validArenaRewards(value: unknown): boolean {
+    private static validRewardPreview(value: unknown): boolean {
         return Array.isArray(value) && value.length > 0 && value.length <= 30 && value.every(item => {
             const reward = this.messageObject(item);
             return this.isIntegerInRange(reward.itemId, 1, 0x7fffffff) && this.isIntegerInRange(reward.quantity, 1);
@@ -798,7 +1022,7 @@ export class GameProtocolCodecUtils {
                     break;
                 case Protocol.ARENA_DEFENSE_SAVE:
                     valid = Object.keys(body).length === 4 && this.isUuid(body.requestId)
-                        && integer(body.expectedVersion, 0) && integer(body.formationId, 1) && this.validArenaSlots(body.slots);
+                        && integer(body.expectedVersion, 0) && integer(body.formationId, 1) && this.validLineupSlots(body.slots);
                     break;
                 case Protocol.ARENA_SHOP_BUY:
                     valid = Object.keys(body).length === 4 && this.isUuid(body.requestId)
@@ -838,7 +1062,7 @@ export class GameProtocolCodecUtils {
             default: {
                 const defense = savesDefense ? this.messageObject(body.defense) : body;
                 if (!integer(defense.version, savesDefense ? 1 : 0) || !integer(defense.formationId, 1)
-                        || !this.validArenaSlots(defense.slots) || typeof defense.fallback !== "boolean") {
+                        || !this.validLineupSlots(defense.slots) || typeof defense.fallback !== "boolean") {
                     throw new Error("竞技场防守阵容无效");
                 }
                 break;
@@ -871,7 +1095,7 @@ export class GameProtocolCodecUtils {
             && value.every(item => {
                 const tier = this.messageObject(item);
                 return integer(tier.minRank, 1) && integer(tier.maxRank, Number(tier.minRank))
-                    && this.validArenaRewards(tier.rewards);
+                    && this.validRewardPreview(tier.rewards);
             });
         if (!integer(body.seasonEndsAt, 0) || !integer(body.dailyEndsAt, 1) || !integer(body.seasonChallenges, 0)
                 || (body.challengeEndsAt !== undefined && !integer(body.challengeEndsAt, 0, Number(body.seasonEndsAt)))
@@ -879,7 +1103,7 @@ export class GameProtocolCodecUtils {
                 || !Array.isArray(body.chests) || body.chests.length > 6 || !body.chests.every(value => {
                     const chest = this.messageObject(value);
                     return integer(chest.id, 1) && integer(chest.requiredChallenges, 1) && integer(chest.boxPic, 1)
-                        && typeof chest.claimed === "boolean" && this.validArenaRewards(chest.rewards);
+                        && typeof chest.claimed === "boolean" && this.validRewardPreview(chest.rewards);
                 })) {
             throw new Error("竞技场赛季状态无效");
         }
@@ -894,7 +1118,7 @@ export class GameProtocolCodecUtils {
                     return integer(offer.id, 1) && integer(offer.requiredLevel, 0) && integer(offer.price, 1)
                         && integer(offer.purchaseLimit, 0)
                         && integer(offer.purchased, 0, offer.purchaseLimit || Number.MAX_SAFE_INTEGER)
-                        && Array.isArray(offer.rewards) && offer.rewards.length === 1 && this.validArenaRewards(offer.rewards);
+                        && Array.isArray(offer.rewards) && offer.rewards.length === 1 && this.validRewardPreview(offer.rewards);
                 })) {
             throw new Error("竞技商店状态无效");
         }
@@ -1395,6 +1619,7 @@ export class GameProtocolCodecUtils {
                 if (!["EQUIP", "UNEQUIP", "EQUIP_ALL", "UNEQUIP_ALL", "COMBINE", "COMBINE_ALL"].includes(String(action))
                     || values.some(value => value !== undefined && !integer(value, 0, 0x7fffffff))
                     || (combines ? body.heroId !== undefined : !this.isUuid(body.heroId))
+                    || (body.expectedRevision !== undefined && (action !== "COMBINE_ALL" || !integer(body.expectedRevision)))
                     || (!request && (typeof body.changed !== "boolean" || !this.validGrowthAmounts(body.rewards)))) {
                     throw invalid();
                 }
@@ -1786,6 +2011,152 @@ export class GameProtocolCodecUtils {
         this.validateSocialReward(body);
     }
 
+    /** 校验聊天范围、精确游标、发送回执和历史顺序。已读游标可超过当前可见尾部。 */
+    private static validateChat(frame: GameFrame): void {
+        const routes = [Protocol.CHAT_OVERVIEW, Protocol.CHAT_HISTORY, Protocol.CHAT_SEND, Protocol.CHAT_READ];
+        if (frame.ok === false || !routes.some(name => name === frame.name)) {
+            return;
+        }
+        const body = this.messageObject(frame.body);
+        if (frame.name === Protocol.CHAT_OVERVIEW) {
+            this.validateChatOverview(frame.kind, body);
+            return;
+        }
+        if (frame.kind === "request") {
+            this.validateChatScope(body.channel, body.peerRoleId);
+            const count = Object.keys(body).filter(key => key !== "channel" && key !== "peerRoleId").length;
+            const valid = frame.name === Protocol.CHAT_HISTORY
+                ? count === 0 || (count === 1 && (this.chatId(body.afterId, true) || this.chatId(body.beforeId)))
+                : frame.name === Protocol.CHAT_READ
+                    ? count === 1 && this.chatId(body.throughId)
+                    : count === 2 && this.isUuid(body.requestId) && typeof body.text === "string" && body.text.length <= 408;
+            if (!valid) {
+                throw new Error("聊天请求参数无效");
+            }
+            return;
+        }
+        if (frame.name === Protocol.CHAT_SEND) {
+            if (!this.isUuid(body.requestId)) {
+                throw new Error("聊天发送回执编号无效");
+            }
+            const message = this.messageObject(body.message);
+            const channel = this.validateChatScope(message.channel, body.peerRoleId);
+            this.validateChatMessage(message, channel);
+            return;
+        }
+        const channel = this.validateChatScope(body.channel, body.peerRoleId);
+        if (!this.chatId(body.latestId, true) || !this.chatId(body.readThroughId, true)
+            || !this.isIntegerInRange(body.unreadCount, 0, 100)
+            || [body.hasMore, body.hasNewer, body.canSend].some(value => typeof value !== "boolean")
+            || !Array.isArray(body.messages) || body.messages.length > 100
+            || (body.scopeId !== undefined && !this.validChatScopeId(body.scopeId))
+            || (frame.name === Protocol.CHAT_READ && body.messages.length > 0)) {
+            throw new Error("聊天记录页无效");
+        }
+        let previous = "0";
+        for (const message of body.messages) {
+            const id = this.validateChatMessage(this.messageObject(message), channel);
+            if (this.chatIdOrder(id, previous) <= 0 || this.chatIdOrder(id, body.latestId) > 0) {
+                throw new Error("聊天记录顺序无效");
+            }
+            previous = id;
+        }
+    }
+
+    /** 校验页签和会话摘要；同一频道和私聊对象各只能出现一次。 */
+    private static validateChatOverview(kind: string, body: Record<string, unknown>): void {
+        if (kind === "request") {
+            if (Object.keys(body).length !== 0) {
+                throw new Error("聊天摘要请求无需参数");
+            }
+            return;
+        }
+        if (!Array.isArray(body.channels) || body.channels.length !== Object.keys(CHAT_CHANNEL_IDS).length
+            || !Array.isArray(body.conversations) || body.conversations.length > 100) {
+            throw new Error("聊天摘要无效");
+        }
+        const channels = new Set<number>();
+        let privateUnread = 0;
+        for (const value of body.channels) {
+            const row = this.messageObject(value);
+            if (!this.isChatChannel(row.channel) || channels.has(row.channel) || typeof row.available !== "boolean"
+                || !this.isIntegerInRange(row.unreadCount, 0, row.channel === CHAT_CHANNEL_IDS.private ? 5000 : 100)
+                || (!row.available && row.unreadCount !== 0)) {
+                throw new Error("聊天频道摘要无效");
+            }
+            channels.add(row.channel);
+            if (row.channel === CHAT_CHANNEL_IDS.private) {
+                privateUnread = row.unreadCount;
+            }
+        }
+        const roles = new Set<string>();
+        let conversationUnread = 0;
+        for (const value of body.conversations) {
+            const row = this.messageObject(value);
+            if (!this.isUuid(row.roleId) || roles.has(row.roleId) || !this.chatId(row.latestMessageId)
+                || typeof row.name !== "string" || row.name.length === 0 || row.name.length > 128
+                || !this.isIntegerInRange(row.level, 1) || !this.isIntegerInRange(row.avatarId, 0)
+                || !this.isIntegerInRange(row.borderId, 0) || !this.isIntegerInRange(row.unreadCount, 0, 50)) {
+                throw new Error("聊天私聊摘要无效");
+            }
+            roles.add(row.roleId);
+            conversationUnread += row.unreadCount;
+        }
+        if (privateUnread !== conversationUnread) {
+            throw new Error("聊天私聊未读数量不符");
+        }
+    }
+
+    /** 校验当前业务范围；只有私聊必须携带对方角色 ID。 */
+    private static validateChatScope(channel: unknown, peerRoleId: unknown): number {
+        const id = channel === undefined ? CHAT_CHANNEL_IDS.world : channel;
+        if (!this.isChatChannel(id)
+            || (id === CHAT_CHANNEL_IDS.private ? !this.isUuid(peerRoleId) : peerRoleId !== undefined)) {
+            throw new Error("聊天频道或私聊对象无效");
+        }
+        return id;
+    }
+
+    /** 确认协议声明的频道编号，避免把未知频道降级成世界频道。 */
+    private static isChatChannel(channel: unknown): channel is number {
+        return typeof channel === "number" && Object.values(CHAT_CHANNEL_IDS).some(id => id === channel);
+    }
+
+    /** 范围标识来自服务端区服、公会、分组或私聊组合键，仅用于前后比较。 */
+    private static validChatScopeId(value: unknown): boolean {
+        return typeof value === "string" && /^[A-Za-z0-9_:-]{1,73}$/.test(value);
+    }
+
+    /** 校验一条消息的协议身份。公告带通知编号和固定作者身份，玩家发言带真实角色 ID。 */
+    private static validateChatMessage(row: Record<string, unknown>, channel: number): string {
+        const notice = row.noticeId !== undefined;
+        const validAuthor = notice
+            ? row.roleId === "" && row.level === 0 && row.avatarId === 0 && row.borderId === 0
+                && this.isIntegerInRange(row.noticeId, 1, 0xffffffff)
+            : channel !== CHAT_CHANNEL_IDS.system && this.isUuid(row.roleId);
+        if (!this.chatId(row.id) || (row.channel ?? CHAT_CHANNEL_IDS.world) !== channel
+            || !validAuthor
+            || typeof row.name !== "string" || row.name.length === 0 || row.name.length > 128
+            || typeof row.text !== "string" || row.text.length === 0 || row.text.length > (notice ? 512 : 408)
+            || !this.isIntegerInRange(row.avatarId, 0) || !this.isIntegerInRange(row.borderId, 0)
+            || !this.isIntegerInRange(row.level, notice ? 0 : 1) || !this.isIntegerInRange(row.sentAtSeconds, 1)
+            || (row.serverId !== undefined && (typeof row.serverId !== "string" || !/^[A-Za-z0-9_-]{1,32}$/.test(row.serverId)))) {
+            throw new Error("聊天消息无效");
+        }
+        return row.id;
+    }
+
+    /** 比较规范十进制字符串，保留超出 JavaScript 安全整数的服务端编号。 */
+    private static chatIdOrder(left: string, right: string): number {
+        return left.length - right.length || (left < right ? -1 : Number(left !== right));
+    }
+
+    /** 限制游标在有符号 64 位范围。零值只供空历史或无已读位置使用。 */
+    private static chatId(value: unknown, allowZero = false): value is string {
+        return typeof value === "string" && ((allowZero && value === "0")
+            || (/^[1-9][0-9]{0,18}$/.test(value) && this.chatIdOrder(value, "9223372036854775807") <= 0));
+    }
+
     /** 校验好友公开资料、四类列表及与原操作关联的礼物奖励。 */
     private static validateFriend(frame: GameFrame): void {
         if (frame.ok === false || (frame.name !== Protocol.FRIEND_STATE && frame.name !== Protocol.FRIEND_SEARCH
@@ -2054,7 +2425,10 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateHeroLock(frame);
         GameProtocolCodecUtils.validateHeroGrowth(frame);
         GameProtocolCodecUtils.validateMarket(frame);
+        GameProtocolCodecUtils.validateBlackMarket(frame);
+        GameProtocolCodecUtils.validateSmith(frame);
         GameProtocolCodecUtils.validateDailyDungeon(frame);
+        GameProtocolCodecUtils.validateDreamland(frame);
         GameProtocolCodecUtils.validateProgressionBattle(frame);
         GameProtocolCodecUtils.validateQuickBattle(frame);
         GameProtocolCodecUtils.validateVip(frame);
@@ -2065,6 +2439,7 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateRanking(frame);
         GameProtocolCodecUtils.validateMail(frame);
         GameProtocolCodecUtils.validateFriend(frame);
+        GameProtocolCodecUtils.validateChat(frame);
         GameProtocolCodecUtils.validateArenaPanels(frame);
         HeroLevelData.validateFrame(frame);
         HeroLevelData.validateStageFrame(frame);
@@ -2125,7 +2500,10 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateHeroLock(frame);
         GameProtocolCodecUtils.validateHeroGrowth(frame);
         GameProtocolCodecUtils.validateMarket(frame);
+        GameProtocolCodecUtils.validateBlackMarket(frame);
+        GameProtocolCodecUtils.validateSmith(frame);
         GameProtocolCodecUtils.validateDailyDungeon(frame);
+        GameProtocolCodecUtils.validateDreamland(frame);
         GameProtocolCodecUtils.validateProgressionBattle(frame);
         GameProtocolCodecUtils.validateQuickBattle(frame);
         GameProtocolCodecUtils.validateVip(frame);
@@ -2136,6 +2514,7 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateRanking(frame);
         GameProtocolCodecUtils.validateMail(frame);
         GameProtocolCodecUtils.validateFriend(frame);
+        GameProtocolCodecUtils.validateChat(frame);
         GameProtocolCodecUtils.validateArenaPanels(frame);
         HeroLevelData.validateFrame(frame);
         HeroLevelData.validateStageFrame(frame);

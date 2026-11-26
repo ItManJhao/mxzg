@@ -11,7 +11,7 @@ import { GuildController } from "../GuildController";
 import { GuildModel } from "../GuildModel";
 import { GuildBadgePickerView } from "./GuildBadgePickerView";
 import { GuildBadgeUtils } from "./GuildBadgeUtils";
-import { GuildTextInputView } from "./GuildTextInputView";
+import { TextInputView } from "../../common/ui/TextInputView";
 
 const { ccclass, property } = _decorator;
 
@@ -111,7 +111,7 @@ export class GuildCreateView extends Component {
         }
         const form = this.node;
         const isName = field === "name";
-        void UIManager.instance.openChild(this.owner, GuildTextInputView, {
+        void UIManager.instance.openChild(this.owner, TextInputView, {
             initialValue: isName ? this.nameDraft : this.descriptionDraft ?? this.defaultDescription(),
             maxLength: isName ? state.nameLimit : GuildModel.noticeLimit,
             onConfirm: value => {

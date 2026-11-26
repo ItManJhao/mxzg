@@ -5,6 +5,8 @@
 package com.funsgamex.mxzg;
 
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
+import com.funsgamex.mxzg.chat.ChatChannel;
+import com.funsgamex.mxzg.chat.ChatService;
 import com.funsgamex.mxzg.hero.HeroGrowthRules;
 import com.funsgamex.mxzg.inventory.InventoryService;
 import com.funsgamex.mxzg.lineup.Lineup;
@@ -46,6 +48,8 @@ class TowerServiceTest {
     @Autowired private DevelopmentLoginService login;
     /** 使用真实幻境事务入口。 */
     @Autowired private TowerService tower;
+    /** 确认只有配置标记的真实领奖会发布系统公告。 */
+    @Autowired private ChatService chat;
     /** 读取别的模块所用的最高通关进度。 */
     @Autowired private TowerRepository progress;
     /** 复用测试角色的主线阵型保存与持久读取。 */
@@ -68,7 +72,7 @@ class TowerServiceTest {
     /** 隔离账号、角色和本次授权。 */
     private record Player(String account, String role, String token) {}
 
-    /** 走真实三十层、首通发奖、重登战报、付费扫荡及三个独立里程碑。 */
+    /** 走真实三十层、发奖、重登、扫荡和三个里程碑，核实公告只发布一次。 */
     @Test
     void clearThirtyFloorsAndClaimMilestonesWithFrozenRetries() throws Exception {
         var player = player(15);
@@ -157,6 +161,8 @@ class TowerServiceTest {
         assertEquals(tenth, tower.claimMilestone(restored, tenth.requestId(), 1));
         assertEquals(twentieth, tower.claimMilestone(restored, twentieth.requestId(), 2));
         assertEquals(thirtieth, tower.claimMilestone(restored, thirtieth.requestId(), 3));
+        assertEquals(List.of(172), chat.history(player.role(), ChatChannel.SYSTEM, null, 0, 0).messages().stream()
+                .map(ChatService.Message::noticeId).toList());
         assertTrue(tower.current(restored).milestones().stream().allMatch(TowerService.MilestoneState::claimed));
         var restoredItems = inventory.list(player.role());
         for (var reward : List.of(new Reward(1001003, 1), new Reward(1002003, 1),

@@ -155,6 +155,30 @@ class HeroJewelServiceTest {
             new HeroJewelService.Request(UUID.randomUUID().toString(), null, Action.COMBINE, 1011010, 0, 0, 1)));
     }
 
+    /** 材料变化后旧一键预览不能成交，成功后仍能使用原版本和编号重放。 */
+    @Test
+    void combineAllGuardsPreviewRevisionAndReplaysCommittedReceipt() {
+        var player = player(9);
+        credit(player, 1021001, 6);
+        long stale = roles.revision(player.role());
+        credit(player, 1021001, 3);
+        long current = roles.revision(player.role());
+        String requestId = UUID.randomUUID().toString();
+        rejected("HERO_JEWEL_PREVIEW_CHANGED", () -> service.change(player.token(),
+            new HeroJewelService.Request(requestId, null, Action.COMBINE_ALL, 0, 2, 0, 0, stale)));
+        assertEquals(9, quantity(player, 1021001));
+        assertEquals(current, roles.revision(player.role()));
+
+        var request = new HeroJewelService.Request(requestId, null, Action.COMBINE_ALL, 0, 2, 0, 0, current);
+        var result = service.change(player.token(), request);
+        assertEquals(current, result.expectedRevision().longValue());
+        assertEquals(List.of(new RewardGrantService.Reward(1021003, 1)), result.rewards());
+        assertEquals(result, service.change(player.token(), request));
+        assertEquals(current + 1, roles.revision(player.role()));
+        rejected("IDEMPOTENCY_CONFLICT", () -> service.change(player.token(),
+            new HeroJewelService.Request(requestId, null, Action.COMBINE_ALL, 0, 2, 0, 0, stale)));
+    }
+
     /** 归还旧宝石溢出时不消耗新宝石，也不写入回执或推进资产版本。 */
     @Test
     void rollsBackWhenReturningTheReplacedItemFails() {

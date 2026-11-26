@@ -11,8 +11,8 @@
 | 通信、状态和恢复 | [网络契约](network-contract.md)、[断线恢复](reconnect-recovery.md)、[角色](role-data-contract.md) |
 | 背包与资产 | [背包 MVC](bag-mvc-maintenance.md)、[库存事件](bag-inventory-events.md)、[英雄数据与实例](hero-data-contract.md) |
 | 英雄养成、装备和布阵 | [当前操作与协议](hero-lineup-contract.md#当前代码与开放范围)、[神装四件套战斗效果](hero-lineup-contract.md#神装四件套战斗效果)、[阵容编辑](formation-ui-authoring.md) |
-| 主城、社交与任务 | [排行榜与点赞](network-contract.md#主城排行榜)、[邮件与好友](network-contract.md#邮件与好友)、[每日与成就](network-contract.md#每日任务与成就) |
-| 商店与交易 | [普通市场货架、购买与刷新](network-contract.md#普通市场)、[竞技场及其商店](network-contract.md#竞技场)、[公会商店与捐献](network-contract.md#公会成员与申请) |
+| 主城、社交与任务 | [聊天频道](network-contract.md#聊天频道)、[排行榜与点赞](network-contract.md#主城排行榜)、[邮件与好友](network-contract.md#邮件与好友)、[每日与成就](network-contract.md#每日任务与成就) |
+| 商店与合成 | [普通市场](network-contract.md#普通市场)、[黑市与每日任务](network-contract.md#黑市)、[铁匠铺](network-contract.md#铁匠铺)、[竞技场及其商店](network-contract.md#竞技场)、[公会商店与捐献](network-contract.md#公会成员与申请) |
 | 界面、弹窗与列表 | [Prefab 与弹窗](prefab-layout.md)、[虚拟列表](super-scroll-authoring.md)、[全局反馈](architecture.md#全局反馈与开发入口) |
 | 主线和战斗 | [里程碑](main-chapter-milestone.md)、[战斗布局](battle-prefab-layout.md)、[统计](battle-statistics.md)、[待复验问题](battle-known-issues.md) |
 | 挂机与奖励 | [领取事务](main-chapter-idle-settlement.md)、[收益规则](idle-reward-rules.md)、[活动控制](idle-activity-maintenance.md)、[通用奖励与确认](reward-feedback.md) |

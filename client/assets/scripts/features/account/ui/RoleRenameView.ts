@@ -35,7 +35,7 @@ interface RenameCost {
 
 @UIRegistry.view({
     id: "role-rename",
-    prefab: "bundles/module/login/prefabs/RoleRenameView",
+    prefab: "bundles/module/role/prefabs/RoleRenameView",
     hostId: "remake-modal",
     layer: UILayer.Dialog,
     cache: false,

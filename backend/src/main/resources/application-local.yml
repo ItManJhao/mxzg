@@ -8,6 +8,10 @@ spring:
 server:
   address: 127.0.0.1
 mxzg:
+  chat:
+    # 两种跨区频道在本机由真实的两个开发服验收。其他部署默认没有聊天房间映射。
+    cross-rooms: ${MXZG_CHAT_CROSS_ROOMS:local-1=dev-cross,local-2=dev-cross}
+    global-rooms: ${MXZG_CHAT_GLOBAL_ROOMS:local-1=dev-global,local-2=dev-global}
   main-chapter:
     # 复用真实领取事务；缺权威活动控制时明确拒绝，不补假开服时间或跳过奖励来源。
     idle-claim-enabled: ${MXZG_MAIN_CHAPTER_IDLE_CLAIM_ENABLED:true}

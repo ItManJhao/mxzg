@@ -15,7 +15,7 @@ import { SuperContent, SuperLayout } from "../assets/scripts/framework/ui/SuperC
 import { MainChapterIdleDisplay } from "../assets/scripts/features/battle/ui/MainChapterIdleDisplay";
 import { HeroTalkUtils } from "../assets/scripts/features/battle/utils/HeroTalkUtils";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
-import { Button, Label, Mask, Node, Prefab, SpriteFrame, Tween, UITransform, view as screenView } from "cc";
+import { Button, Label, Mask, Node, Prefab, SpriteFrame, Tween, UIOpacity, UITransform, view as screenView } from "cc";
 import { MainChapterView } from "../assets/scripts/features/battle/ui/MainChapterView";
 import { FormationView } from "../assets/scripts/features/hero/ui/FormationView";
 import { MainChapterIdleChest } from "../assets/scripts/features/battle/ui/MainChapterIdleChest";
@@ -457,6 +457,7 @@ function checkIdleCollectionPresentation(): void {
         resident: ui.setResidentHost,
         close: ui.closeById,
         load: ResourceAssetsUtils.loadForNode,
+        stopTween: Tween.stopAllByTarget,
     };
     const listeners = EventDispatcher.instance.snapshot();
     const actions: string[] = [];
@@ -496,6 +497,16 @@ function checkIdleCollectionPresentation(): void {
     page.resourceFlightFrames = [new SpriteFrame(), new SpriteFrame(), new SpriteFrame(), new SpriteFrame()];
     page.idleProgress = new Node("IdleProgress").addComponent(Sprite);
     page.idleProgress.node.parent = node;
+    const comparison = new Node("IdleIncomeComparison");
+    comparison.parent = node;
+    page.idleIncomeOpacity = comparison.addComponent(UIOpacity);
+    for (const key of ["previousIncomeLabels", "currentIncomeLabels"]) {
+        page[key] = [0, 1, 2].map(index => {
+            const row = new Node(key + index);
+            row.parent = comparison;
+            return row.addComponent(Label);
+        });
+    }
     const receipt: IdleClaimReceipt = {
         requestId: "idle-display-request", receiptId: "idle-display-receipt", expectedOperationVersion: 1,
         assetRevision: 4, seconds: 601, maxSeconds: 1000, actual: {},
@@ -505,6 +516,7 @@ function checkIdleCollectionPresentation(): void {
         EventDispatcher.instance.emit("main-chapter.idle-collection", confirmation);
     };
     try {
+        Tween.stopAllByTarget = () => {};
         controller.recoverPendingOnEntry = async () => {};
         spine.mountNamedSpine = () => {};
         ui.setResidentHost = () => () => {};
@@ -515,6 +527,7 @@ function checkIdleCollectionPresentation(): void {
         const resetIdle = model.idle;
         const unopened = page.idleCollectionContext();
         page.runOpen();
+        assert.equal(comparison.active, false, "进入主线时收益提示隐藏，等待本次实际首通");
         const context = page.idleCollectionContext();
         assert.notEqual(context, unopened, "每次onOpen必须生成新的显示期引用");
         assert.equal(EventDispatcher.instance.listenerCount("main-chapter.idle-collection"), 1);
@@ -604,6 +617,7 @@ function checkIdleCollectionPresentation(): void {
         ui.setResidentHost = original.resident;
         ui.closeById = original.close;
         ResourceAssetsUtils.loadForNode = original.load;
+        Tween.stopAllByTarget = original.stopTween;
         model.idle = previous;
         clock.invalidate();
         node.destroy();
@@ -842,12 +856,39 @@ async function checkResultUsesLatestMilestoneProgress(): Promise<void> {
     }
 }
 
+/** 对照正式服第七关、首关及无进度变化时的三行数值，不把奖励数量当每分钟收益。 */
+function checkIdleIncomeComparison(): void {
+    const table = GameConfig.instance.getFileByPath("config/chapterreward");
+    const stageSeven = {
+        serverTime: 1000, startedAt: 900, maxSeconds: 600, frequency: 60, rewardStage: 7,
+        rates: [{ itemId: 900001, quantity: 220 }, { itemId: 900003, quantity: 30 }, { itemId: 900101, quantity: 45 }],
+    };
+    assert.deepEqual(ChapterRewardInfoUtils.idleIncomeComparison(table, 7, stageSeven), [
+        { itemId: 900101, previous: 45, current: 45 },
+        { itemId: 900003, previous: 20, current: 30 },
+        { itemId: 900001, previous: 220, current: 220 },
+    ]);
+    const first = { ...stageSeven, rewardStage: 1, frequency: 30 };
+    assert.deepEqual(ChapterRewardInfoUtils.idleIncomeComparison(table, 1, first), [
+        { itemId: 900101, previous: 0, current: 90 },
+        { itemId: 900003, previous: 0, current: 60 },
+        { itemId: 900001, previous: 0, current: 440 },
+    ]);
+    assert.equal(ChapterRewardInfoUtils.idleIncomeComparison(table, 6, stageSeven), null,
+        "旧结算不应拿后来关卡的收益冒充本次");
+    assert.equal(ChapterRewardInfoUtils.idleIncomeComparison(table, 7, null), null);
+    assert.throws(() => ChapterRewardInfoUtils.idleIncomeComparison(table, 7, {
+        ...stageSeven, rates: stageSeven.rates.slice(0, 2),
+    }));
+}
+
 /** 只测试当前模块的状态、领取能力只读投影、按钮边界和展示；完整资产绑定另由session-state回归覆盖。 */
 async function main(): Promise<void> {
     await ConfigFixtureUtils.installReal();
     await checkSettlementActualAndBonusFeedback();
     checkIdleClaimStateProjection();
     checkIdleCollectionPresentation();
+    checkIdleIncomeComparison();
     checkChapterNextTargetPresentation();
     await checkResultUsesLatestMilestoneProgress();
     const rewardInfo = ChapterRewardInfoUtils.rows(JSON.parse(readFileSync(
@@ -1402,6 +1443,7 @@ async function main(): Promise<void> {
     });
     const settlementViews: any[] = [];
     const resultArgs: any[] = [];
+    const incomeStages: (number | undefined)[] = [];
     const resultCloseRequests: string[] = [];
     let claimCount = 0;
     let closedResults = 0;
@@ -1429,8 +1471,9 @@ async function main(): Promise<void> {
         const current: any = new Node("MainChapterBattleView").addComponent(MainChapterBattleView);
         current.args = {
             report: { battleId, mission: 1, pending: [], bytes: new Uint8Array() },
-            onClosed: () => {},
+            onClosed: (stage?: number) => { incomeStages.push(stage); },
         };
+        current.close = () => current.onClose();
         EventDispatcher.instance.on(MainChapterController.Updated, current, current.showConfirmedSettlement);
         settlementViews.push(current);
         return current;
@@ -1485,14 +1528,17 @@ async function main(): Promise<void> {
         deliverSettlementSnapshot(3, null);
         await resultView.completeBattle(true);
         assert.equal(resultArgs.length, 1, "重复快照和结束回调只展示一次实际结果");
-        resultView.onClose();
+        resultArgs[0].onClosed();
+        resultArgs[0].onClosed();
+        assert.deepEqual(incomeStages, [1], "双确认的胜利页正常关闭后只转出一次首通");
 
         const historicalView = createSettlementView();
         await historicalView.completeBattle(true);
         assert.equal(claimCount, 1, "历史重播不再次发起结算");
         assert.deepEqual(resultArgs[1].rewards, []);
         assert.equal(resultArgs[1].notice, "此战报已结算");
-        historicalView.onClose();
+        resultArgs[1].onClosed();
+        assert.deepEqual(incomeStages, [1, undefined], "历史回放关闭不展示收益对比");
 
         settlementController.resetSession();
         deliverSettlementSnapshot(1, battleId);
@@ -1502,7 +1548,8 @@ async function main(): Promise<void> {
         assert.equal(claimCount, 1, "失败不发奖且同窗口不接受第二次结束结果");
         assert.equal(resultArgs[2].won, false);
         assert.deepEqual(resultArgs[2].rewards, []);
-        failedBattleView.onClose();
+        resultArgs[2].onClosed();
+        assert.deepEqual(incomeStages, [1, undefined, undefined], "失败结算关闭不展示收益对比");
 
         settlementController.resetSession();
         deliverSettlementSnapshot(1, battleId);
@@ -1582,6 +1629,9 @@ async function main(): Promise<void> {
     const children = chapterRoot._children.map((ref: any) => chapterPrefab[ref.__id__]._name);
     assert(children.indexOf("BattleHost") > children.indexOf("PalaceFloor"));
     assert(children.indexOf("BattleHost") < children.indexOf("Panel"), "战场必须位于底部面板之下");
+    const income = chapterPrefab.find((row: any) => row._name === "IdleIncomeComparison");
+    assert.equal(income._active, false, "打开战斗页时保持隐藏");
+    assert(children.indexOf("IdleIncomeComparison") > children.indexOf("BattleHost"), "收益提示显示在行军与遇敌之上");
     const fieldPrefab = JSON.parse(readFileSync("client/assets/bundles/module/battle/prefabs/MainChapterBattleView.prefab", "utf8"));
     assert(!fieldPrefab.some((row: any) => row.__type__ === "cc.BlockInputEvents"), "页内战场不能阻断共享导航");
     assert(!fieldPrefab.some((row: any) => row._name === "PalaceBackground"), "全屏重复背景应退役");

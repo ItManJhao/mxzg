@@ -453,9 +453,9 @@ async function main() {
   model.replace({busy:false,error:"",role:{id:"role-id",nickname:"玩家甲",level:7,gold:0,diamonds:123}});
   const ui = UIManager.instance;
   const releaseHost = ui.setResidentHost("test-role-modal",()=>new Node("ModalHost"));
-  const unregister = UIRegistry.registerView(RoleProfileView,{id:"role-profile",prefab:"bundles/module/login/prefabs/RoleProfileView",layer:UILayer.Popup,cache:false,allowMultiple:false,hostId:"test-role-modal",load:async()=>Object.assign(new Prefab(), {_instantiate:()=>profile.node})});
+  const unregister = UIRegistry.registerView(RoleProfileView,{id:"role-profile",prefab:"bundles/module/role/prefabs/RoleProfileView",layer:UILayer.Popup,cache:false,allowMultiple:false,hostId:"test-role-modal",load:async()=>Object.assign(new Prefab(), {_instantiate:()=>profile.node})});
   const unregisterSettings = UIRegistry.registerView(RoleSettingsView, {
-    id: "role-settings", prefab: "bundles/module/login/prefabs/RoleSettingsView", layer: UILayer.Dialog,
+    id: "role-settings", prefab: "bundles/module/role/prefabs/RoleSettingsView", layer: UILayer.Dialog,
     cache: false, allowMultiple: false, hostId: "test-role-modal", load: async () => Object.assign(new Prefab(), {_instantiate: () => settings.node})
   });
   const controller = new RoleController(model);
@@ -556,7 +556,7 @@ async function main() {
     assert.equal(binding[key].__uuid__, meta.uuid);
   }
   assert(!prefab.some((row:any)=>row._name==="AccountButton"||row._name==="AccountPanel"),"临时账号框已从预制移除");
-  const profileMeta=JSON.parse(readFileSync("client/assets/bundles/module/login/prefabs/RoleProfileView.prefab.meta","utf8"));
+  const profileMeta=JSON.parse(readFileSync("client/assets/bundles/module/role/prefabs/RoleProfileView.prefab.meta","utf8"));
   assert.equal(profileMeta.uuid,"1aedb5a3-4e33-552f-843c-c419fd8174a4");
   assert.equal(binding.profilePrefab,undefined,"主城不能再私自持有资料预制体");
   const config = JSON.parse(readFileSync("client/settings/v2/packages/project.json", "utf8"));

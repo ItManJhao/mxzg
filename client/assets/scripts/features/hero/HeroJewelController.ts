@@ -16,7 +16,7 @@ type JewelRequest =
     | { action: "UNEQUIP"; heroId: string; slot: number; expectedItemId: number }
     | { action: "EQUIP_ALL" | "UNEQUIP_ALL"; heroId: string }
     | { action: "COMBINE"; itemId: number; count: number }
-    | { action: "COMBINE_ALL"; slot: number };
+    | { action: "COMBINE_ALL"; slot: number; expectedRevision?: number };
 
 /** 本次回执供按钮与提示使用；资产仍由统一快照持有。 */
 type JewelReceipt = JewelRequest & {
@@ -76,9 +76,9 @@ export class HeroJewelController extends BaseController {
         this.send({ action: "COMBINE", itemId, count });
     }
 
-    /** 连锁合成一个槽位的普通库存，已镶宝石不参与。 */
-    public combineAll(slot: number): void {
-        this.send({ action: "COMBINE_ALL", slot });
+    /** 连锁合成指定槽位的背包库存，提供版本时绑定玩家已确认的预览。 */
+    public combineAll(slot: number, expectedRevision?: number): void {
+        this.send({ action: "COMBINE_ALL", slot, ...(expectedRevision === undefined ? {} : { expectedRevision }) });
     }
 
     /** 成功结束按钮进度，提示本次合成净产物或穿脱结果。 */

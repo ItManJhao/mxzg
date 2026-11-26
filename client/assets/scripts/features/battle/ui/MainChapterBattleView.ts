@@ -25,8 +25,8 @@ interface MainChapterBattleArgs {
     report: MainChapterReplay;
     /** true仅恢复本应用已结束战斗的结算，不重新播放或生成新挑战。 */
     settlementOnly?: boolean;
-    /** 调用页面清理显示占用；不取消模块结算意图。 */
-    onClosed(): void;
+    /** 调用页面清理显示占用，收到关卡号时同步准备首通收益提示。 */
+    onClosed(firstClearStage?: number): void;
 }
 @UIRegistry.view({
     id: "main-chapter-battle",
@@ -48,8 +48,10 @@ export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
     private awaitingSettlement = false;
     /** 本窗口已开始打开结果页，阻止重复快照或回执重复开窗；关闭时取消该打开。 */
     private resultOpening = false;
+    /** 实际展示的本次首通关卡，只在胜利结算关闭时设置，转交通知后随战场结束。 */
+    private firstClearStage: number | undefined;
 
-    /** 使用既有BattlePage，在退出时撤销适配监听并允许取消异步打开。 */
+    /** 使用既有BattlePage，清空前次展示状态，退出时撤销适配监听及异步打开。 */
     public onOpen(args?: MainChapterBattleArgs): void {
         super.onOpen(args);
         if (!args?.report) {
@@ -59,6 +61,7 @@ export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
         this.finishedWon = null;
         this.awaitingSettlement = false;
         this.resultOpening = false;
+        this.firstClearStage = undefined;
         this.ownListener(EventDispatcher.instance.on(MainChapterController.Updated, this, this.showConfirmedSettlement));
         this.ownListener(ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport()));
         this.beginOpen();
@@ -127,7 +130,7 @@ export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
         }
     };
 
-    /** 从同一次战报校验取得结果页名册和名称；下一目标使用最新快照，父页关闭或窗口被接管后停止旧续段。 */
+    /** 从战报读取结果页名册与名称，实际打开后才能在正常关闭时通知首通。 */
     private async showResult(receipt: MainChapterReceipt | null, notice: string): Promise<void> {
         if (this.closed || !this.args || this.resultOpening) {
             return;
@@ -146,14 +149,7 @@ export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
                     () => GameConfig.instance.getConfig(GConfig.ChapterExtraReward),
                     id => GameConfig.instance.getConfig(GConfig.Language, id)?.value,
                 ) : undefined,
-                onClosed: () => {
-                    if (receipt) {
-                        MainChapterController.instance.afterBattleResultClosed(receipt.battleId);
-                    }
-                    if (!this.closed) {
-                        this.close();
-                    }
-                },
+                onClosed: () => this.finishResult(receipt),
             });
             if (!this.closed && receipt && UIManager.instance.ownsChild(this, result)) {
                 MainChapterController.instance.markSettlementPresented(receipt.battleId);
@@ -166,6 +162,22 @@ export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
         }
     }
 
+    /** 匹配双确认且实际展示的这场首通，关闭战场后由主线页播放收益变化。 */
+    private finishResult(receipt: MainChapterReceipt | null): void {
+        if (receipt) {
+            const settlement = MainChapterModel.instance.settlement;
+            const mission = this.args?.report.mission;
+            if (!this.closed && this.finishedWon && mission === receipt.state.maxCleared
+                && settlement?.battleId === receipt.battleId && settlement.presented) {
+                this.firstClearStage = mission;
+            }
+            MainChapterController.instance.afterBattleResultClosed(receipt.battleId);
+        }
+        if (!this.closed) {
+            this.close();
+        }
+    }
+
     /** 根节点随视口变化，背景统一由主线主页持有，不再另造全屏背景。 */
     private fitViewport(): void {
         if (!this.closed) {
@@ -173,7 +185,7 @@ export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
         }
     }
 
-    /** 关闭播放器并通知父页；BaseView释放本战场仍持有的结果页，模块结算意图不随界面关闭。 */
+    /** 关闭播放器并通知父页本次正常完成的关卡；模块结算意图不随界面关闭。 */
     public onClose(): void {
         if (this.closed) {
             return;
@@ -183,6 +195,6 @@ export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
         this.failOpen(new Error("主线战报窗口已关闭"));
         this.stopReplay?.();
         this.stopReplay = null;
-        this.args?.onClosed();
+        this.args?.onClosed(this.firstClearStage);
     }
 }

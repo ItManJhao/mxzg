@@ -1,4 +1,4 @@
-/** 英雄名册统一状态回归：验证初始化、增删改、版本丢弃、非法整包回滚和退出清理；不连接数据库。 */
+/** 英雄名册统一状态回归：验证历史图鉴、初始化、版本丢弃、非法整包拒绝和退出清理；不连接数据库。 */
 import { strict as assert } from "node:assert";
 import { FormationController } from "../assets/scripts/features/hero/FormationController";
 import { FormationSaveModel } from "../assets/scripts/features/hero/FormationSaveModel";
@@ -33,7 +33,21 @@ let updates=0;const target={};const off=EventDispatcher.instance.on(HeroRosterEv
 try {
  const initial=frame(1,[hero],"session.login");
  (initial.body as any).initial.mainFormation={formationId:1,unlockedIds:[1],assistanceUnlocked:false,version:0,options:[],slots:[{position:2,heroId:hero.id}]};
+ const illustration = { entries: [{ templateId: hero.templateId, maxStar: 6 }] };
+ ((initial.body as { initial: Record<string, unknown> }).initial).heroIllustration = illustration;
  assert(binding.apply(initial));assert.equal(model.snapshot.mainFormation?.slots[0].heroId,hero.id);assert(Object.isFrozen(model.snapshot.mainFormation?.slots));
+ assert.deepEqual(model.snapshot.illustrations, illustration.entries);
+ assert(Object.isFrozen(model.snapshot.illustrations?.[0]));
+ const missingHero = frame(2, []);
+ (missingHero.body as Record<string, unknown>).heroIllustration = illustration;
+ const transferred = GameProtocolCodecUtils.decodeGameFrame(GameProtocolCodecUtils.encodeGameFrame(missingHero));
+ assert.deepEqual((transferred.body as Record<string, unknown>).heroIllustration, illustration);
+ const invalidIllustration = frame(2, []);
+ (invalidIllustration.body as Record<string, unknown>).heroIllustration = {
+     entries: [...illustration.entries, ...illustration.entries],
+ };
+ assert.throws(() => binding.apply(invalidIllustration), /图鉴/);
+ assert.deepEqual(model.snapshot.illustrations, illustration.entries);
  const formation=(initial.body as any).initial.mainFormation;
  assert.deepEqual((GameProtocolCodecUtils.decodeGameFrame(GameProtocolCodecUtils.encodeGameFrame({version:1,kind:"event",name:"state.changed",body:(initial.body as any).initial})).body as any).mainFormation,formation);
  for(const bad of [{...formation,formationId:2},{...formation,unlockedIds:[1,1]},{...formation,unlockedIds:[2]},{...formation,version:-1},{...formation,assistanceUnlocked:1},{...formation,slots:[formation.slots[0],formation.slots[0]]},{...formation,slots:[{position:10,heroId:hero.id}]}])assert.throws(()=>HeroSnapshotUtils.readMainFormation(bad,[hero]));
@@ -64,12 +78,16 @@ assert.equal(model.snapshot.heroes.length,1);
  assert.throws(()=>binding.apply(frame(3,[hero,hero])),/重复/);
  assert.equal(model.snapshot.revision,snapshot.revision);assert.equal(bagModel.snapshot,bagBefore);assert.equal(account.snapshot,roleBefore);
  assert.throws(()=>binding.apply(frame(3,[{...hero,level:-1}])));
- assert(binding.apply(frame(3,[])));assert.equal(model.snapshot.heroes.length,0);
+ const noOwnedHeroes = frame(3, []);
+ (noOwnedHeroes.body as Record<string, unknown>).heroIllustration = illustration;
+ assert(binding.apply(noOwnedHeroes));assert.equal(model.snapshot.heroes.length,0);
+ assert.deepEqual(model.snapshot.illustrations, illustration.entries);
  const recovery=frame(3,[],"session.authenticate");(recovery.body as any).initial.heroRoster={capacity:326,buySpaceTimes:1};
  assert(binding.apply(recovery),"同版本恢复允许重新初始化");
  assert.equal(model.snapshot.rosterInfo?.capacity,326);assert.equal(model.snapshot.rosterInfo?.buySpaceTimes,1);
  formationSaves.replace({busy:true,savedVersion:1});
  account.replace({busy:false,error:"",role:null});assert.equal(model.snapshot.status,"idle");assert.equal(model.snapshot.heroes.length,0);assert.equal(model.snapshot.rosterInfo,undefined);assert.equal(model.snapshot.mainFormation,undefined);
+ assert.equal(model.snapshot.illustrations, undefined);
  assert.equal(binding.apply(frame(4,[hero])),false,"退出后拒绝迟到数据");
  assert.deepEqual(formationSaves.snapshot,{busy:false,savedVersion:null},"应用统一清理旧角色的保存进度");
  const untouchedBag=bagModel.snapshot,untouchedHeroes=model.snapshot;

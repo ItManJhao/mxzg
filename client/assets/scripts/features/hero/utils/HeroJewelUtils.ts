@@ -88,6 +88,12 @@ export class HeroJewelUtils {
         return this.table(config)?.jewels.find(row => row.itemId === itemId);
     }
 
+    /** 返回一个槽位从低到高的完整配方链，包含无法再向下合成的首档材料。 */
+    public static forSlot(slot: number, config = GameConfig.instance): readonly HeroJewelDefinition[] {
+        const jewels = this.table(config)?.jewels ?? [];
+        return jewels.filter(jewel => jewel.slot === slot).sort((left, right) => left.star - right.star);
+    }
+
     /** 返回实际英雄星级门槛，配置未同步或槽非法时返回 undefined。 */
     public static requiredStar(slot: number, config = GameConfig.instance): number | undefined {
         return this.table(config)?.slotStars.find(row => row.slot === slot)?.star;

@@ -1,6 +1,6 @@
 /**
  * 长连接鉴权接管与恢复快照：同一角色锁内读取钱包、库存实例、冒险点、主线已领及普通召唤冷却。
- * 登录首包和提交后 state.changed 共用本入口，角色、公会身份和当前战力均来自同次快照。
+ * 登录首包和提交后 state.changed 共用本入口，角色、公会身份、当前战力与英雄图鉴进度均来自同次快照。
  */
 package com.funsgamex.mxzg.network;
 
@@ -20,6 +20,9 @@ import org.springframework.transaction.annotation.*;
 
 @Service
 public class SessionSnapshotService {
+    /** 图鉴按模板同步历史最高星级，列表为空时表示当前角色尚无图鉴记录。 */
+    public record HeroIllustrationState(List<HeroRepository.Illustration> entries) {}
+
     /** 角色、库存与持久版本的一致读结果；英雄名册与库存处于同一角色锁事务。 */
     public record Snapshot(RoleProfile role, List<HeroProfile> heroes, List<InventoryService.Item> inventory,
                            long revision, TimedInventoryService.State timedInventory, HeroCapacityService.State heroRoster,
@@ -28,7 +31,8 @@ public class SessionSnapshotService {
                            com.funsgamex.mxzg.campaign.MainChapterIdleService.State mainChapterIdle,
                            SpiritInventoryService.State spiritInventory, TavernPointService.State tavernPoints,
                            HeroSummonService.State heroSummon, HeroGodEquipmentService.State godEquipment,
-                           HeroArtifactService.State artifacts, VipService.State vip) {}
+                           HeroArtifactService.State artifacts, VipService.State vip,
+                           HeroIllustrationState heroIllustration) {}
     /** 持久会话鉴权，在角色锁内再次确认凭证。 */
     private final SessionService sessions;
     /** 唯一钱包与版本读取入口，同时提供角色行锁。 */
@@ -120,7 +124,7 @@ public class SessionSnapshotService {
         return role;
     }
 
-    /** 同一角色锁内组装角色及名册，用实际主队补齐公开战力，不改变资产版本。 */
+    /** 同一角色锁内组装角色、名册及图鉴进度，用实际主队补齐公开战力，不改变资产版本。 */
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRES_NEW)
     public Snapshot snapshot(String token) {
         String role = sessions.requireRole(token);
@@ -144,6 +148,7 @@ public class SessionSnapshotService {
         var profile = roles.findById(role).orElseThrow().withGuildName(guilds.nameForRole(role));
         return new Snapshot(profile, roster, inventory.list(role),
                 roles.revision(role), timedState, capacity.current(role), formation, chapter, idleState, spiritState,
-                pointState, heroSummons.current(role), godEquipment.state(role), artifacts.state(role), vip.current(role));
+                pointState, heroSummons.current(role), godEquipment.state(role), artifacts.state(role), vip.current(role),
+                new HeroIllustrationState(List.copyOf(heroes.illustrations(role))));
     }
 }

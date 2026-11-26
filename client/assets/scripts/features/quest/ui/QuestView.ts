@@ -34,7 +34,7 @@ const { ccclass, property } = _decorator;
 
 @UIRegistry.view({
     id: "quest",
-    prefab: "bundles/module/common/prefabs/QuestView",
+    prefab: "bundles/module/quest/prefabs/QuestView",
     layer: UILayer.Popup,
     hostId: "remake-modal",
     cache: false,

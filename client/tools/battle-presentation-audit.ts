@@ -104,6 +104,32 @@ function verifyThirdLevelActions(buffs: ReadonlyMap<number, any>): void {
     }
 }
 
+/** 核对永恒梦境守军度魂魔女普攻的两段时序及原图集连续帧。 */
+function verifyDreamlandProjectile(buffs: ReadonlyMap<number, any>): void {
+    const buff = buffs.get(1120100);
+    assert.ok(buff, "度魂魔女普攻动作缺失");
+    const actions = BattleAttackUtils.legacyActions(buff);
+    assert.deepEqual(actions.map(action => [action.type, action.delay, action.dimly]), [[5, 0, 0], [7, 50, 0]]);
+    const [projectile, impact] = actions.map(action => BattleAttackUtils.plan(action));
+    assert.ok(projectile.projectile && !projectile.effectOnly && projectile.effect);
+    assert.ok(impact.effectOnly && !impact.onSource && impact.effect);
+    assert.deepEqual([projectile.action, projectile.attackSeconds, projectile.actionSeconds], ["attack", 0.4, 1.2]);
+    assert.deepEqual([projectile.effect.interval, projectile.effect.flightSeconds], [0.05, 0.45]);
+    assert.deepEqual([impact.effect.interval, impact.effect.anchorX, impact.effect.anchorY], [0.06, 0.55, 0.5 - 0.07]);
+    assert.deepEqual([impact.effect.scaleX, impact.effect.scaleY], [1.5, 1.5]);
+    assert.deepEqual([projectile.sounds, impact.sounds], [[], []]);
+    for (const [stem, count, effect] of [
+        ["skill-101040120-1", 8, projectile.effect],
+        ["skill-101040120-2", 14, impact.effect],
+    ] as const) {
+        assert.deepEqual(effect.paths, Array.from({ length: count }, (_, index) =>
+            `effects/skill/${stem}/${stem}_${index}/spriteFrame`));
+        for (const frame of effect.paths) {
+            assert.ok(existsSync(resolveBundleFile(frame.replace("/spriteFrame", ".png"))), `缺少度魂魔女普攻帧 ${frame}`);
+        }
+    }
+}
+
 /** 沿模板→技能→动作→表现检查并保存当前结果；历史可解析模板及反馈阵容不能倒退，不覆盖历史证据。 */
 function main(): void {
     assert.deepEqual(process.argv.slice(2), [], "本工具不接受覆盖历史报告的参数；保留批次请使用主线依赖审计的snapshot参数");
@@ -117,6 +143,7 @@ function main(): void {
     }
     verifyChapterProgressionOverrides(buffs);
     verifyThirdLevelActions(buffs);
+    verifyDreamlandProjectile(buffs);
     const heroes = rows("herotype").map(hero => {
         const star = stars.find(row => row.star === hero.star);
         const checked = new Set<number>();

@@ -21,7 +21,7 @@ const { ccclass, property } = _decorator;
 
 @UIRegistry.view({
     id: "role-settings",
-    prefab: "bundles/module/login/prefabs/RoleSettingsView",
+    prefab: "bundles/module/role/prefabs/RoleSettingsView",
     layer: UILayer.Dialog,
     hostId: "remake-modal",
     cache: false,

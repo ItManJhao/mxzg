@@ -25,7 +25,7 @@ interface MailDetailArgs {
 
 @UIRegistry.view({
     id: "mail-detail",
-    prefab: "bundles/module/common/prefabs/MailDetailView",
+    prefab: "bundles/module/mail/prefabs/MailDetailView",
     layer: UILayer.Popup,
     hostId: "remake-modal",
     cache: false,

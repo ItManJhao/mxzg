@@ -13,7 +13,7 @@ REPLAY_OUTPUT = ROOT / "client/assets/scripts/config/TowerReplayRoster.generated
 
 
 def project(source):
-    """提取原守军、奖励和旧战斗入口，规则出现变化时要求重新核对。"""
+    """提取原守军、奖励、领奖公告标记及旧战斗入口，规则变化时要求复核。"""
 
     def rows(file, sheet=None):
         """读取旧服实际使用的列，包括源表中的未标记字段。"""
@@ -56,7 +56,8 @@ def project(source):
     if [row["times"] for row in sweeps] != list(range(1, len(sweeps) + 1)):
         raise ValueError("幻境之塔缺少某次扫荡价格")
     milestones = sorted(
-        ({"id": row["idx"], "floor": row["chapter"], "rewards": rewards(row["reward"])}
+        ({"id": row["idx"], "floor": row["chapter"], "rewards": rewards(row["reward"]),
+          "announce": row["is_notice"] == 1}
          for row in rows("firstrewardtower") if row["chapter"] <= FLOOR_LIMIT),
         key=lambda row: row["floor"],
     )

@@ -10,8 +10,9 @@
 
 | 工作 | 代码入口与边界 |
 |---|---|
-| 聊天入口 | 浮动按钮的拖动与点击在 [CityChromeView.bindChat](../client/assets/scripts/features/city/ui/CityChromeView.ts) 和 [CityChatDrag](../client/assets/scripts/features/city/ui/CityChatDrag.ts)。当前点击只显示未开放提示。好友关系与屏蔽状态可从[好友模块](../client/assets/scripts/features/friend/FriendController.ts)追到服务端 |
-| 黑市入口 | 地图使用 `main_black_market`，节点名称可查[地图配置](../client/assets/scripts/features/city/ui/CityMapLayoutUtils.ts)。[主城导航](../client/assets/scripts/app/remake/HomeFeatureNavigation.ts)目前仅将 `main_shop` 路由到普通市场。现有交易流程见[普通市场协议](network-contract.md#普通市场) |
+| 聊天频道 | 主城浮标 → [ChatWorldView](../client/assets/scripts/features/chat/ui/ChatWorldView.ts) → [ChatController](../client/assets/scripts/features/chat/ChatController.ts) → [ChatService](../backend/src/main/java/com/funsgamex/mxzg/chat/ChatService.java)。读写、分组、隔离与重连见[聊天协议](network-contract.md#聊天频道) |
+| 黑市 | 主城建筑 `main_black_market` 和每日任务经[主城导航](../client/assets/scripts/app/remake/HomeFeatureNavigation.ts)打开[黑市页](../client/assets/scripts/features/blackmarket/ui/BlackMarketView.ts)，交易由[黑市服务](../backend/src/main/java/com/funsgamex/mxzg/blackmarket/BlackMarketService.java)处理。[交易和刷新规则](network-contract.md#黑市) |
+| 铁匠铺 | 主城建筑 `main_smith_shop` 和装备品质成就打开[铁匠铺](../client/assets/scripts/features/smith/ui/SmithView.ts)。[装备合成服务](../backend/src/main/java/com/funsgamex/mxzg/smith/SmithService.java)处理一键预演与资产结算。[配置及开放范围](network-contract.md#铁匠铺) |
 | 邮件与好友 | [MailController](../client/assets/scripts/features/mail/MailController.ts) 处理列表、读信和领取，[MailService](../backend/src/main/java/com/funsgamex/mxzg/mail/MailService.java) 持久化邮件及附件领取。[FriendController](../client/assets/scripts/features/friend/FriendController.ts) 和 [FriendService](../backend/src/main/java/com/funsgamex/mxzg/friend/FriendService.java) 处理申请、好友、赠领与屏蔽 |
 | 排行与主城加号 | [CityUtilityFold](../client/assets/scripts/features/city/ui/CityUtilityFold.ts) 管理快捷入口的收展。[RankingController](../client/assets/scripts/features/ranking/RankingController.ts) 查询本服与跨服榜、提交点赞，服务端入口为 [RankService](../backend/src/main/java/com/funsgamex/mxzg/rank/RankService.java) |
 | 每日与成就 | [QuestController](../client/assets/scripts/features/quest/QuestController.ts) 提交任务回包并分发完成通知。领奖和顶部完成提示的触发时机见[任务协议](network-contract.md#每日任务与成就) |

@@ -8,7 +8,7 @@ import { GuildApprovalCell } from "../assets/scripts/features/guild/ui/GuildAppr
 import { GuildCreateView } from "../assets/scripts/features/guild/ui/GuildCreateView";
 import { GuildListCell } from "../assets/scripts/features/guild/ui/GuildListCell";
 import { GuildMemberCell } from "../assets/scripts/features/guild/ui/GuildMemberCell";
-import { GuildTextInputView, type GuildTextInputOpenArgs } from "../assets/scripts/features/guild/ui/GuildTextInputView";
+import { TextInputView, type TextInputOpenArgs } from "../assets/scripts/features/common/ui/TextInputView";
 import { GuildView } from "../assets/scripts/features/guild/ui/GuildView";
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
 import type { AccountOperations } from "../assets/scripts/features/account/AccountOperations";
@@ -181,7 +181,7 @@ async function checkTextDrafts(): Promise<void> {
     const query = new Node().addComponent(Label);
     const controller = GuildController.instance;
     const ui = UIManager.instance;
-    const opened: GuildTextInputOpenArgs[] = [];
+    const opened: TextInputOpenArgs[] = [];
     const creates: Array<Extract<GuildChange, { action: "CREATE" }>> = [];
     const searches: Array<[string, number]> = [];
     const originals = {
@@ -200,9 +200,9 @@ async function checkTextDrafts(): Promise<void> {
         _confirm: new Node().addComponent(Button), _badge: { node: new Node() },
     });
     Object.assign(owner, { _query: query, _searchPanel: new Node(), _searchList: new Node().addComponent(ScrollView) });
-    ui.openChild = ((source: GuildView, view: typeof GuildTextInputView, args: GuildTextInputOpenArgs) => {
+    ui.openChild = ((source: GuildView, view: typeof TextInputView, args: TextInputOpenArgs) => {
         assert.equal(source, owner);
-        assert.equal(view, GuildTextInputView);
+        assert.equal(view, TextInputView);
         opened.push(args);
         return Promise.resolve();
     }) as typeof ui.openChild;

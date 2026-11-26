@@ -4,6 +4,8 @@
  */
 package com.funsgamex.mxzg.guild;
 
+import com.funsgamex.mxzg.chat.ChatChannel;
+import com.funsgamex.mxzg.chat.ChatService;
 import com.funsgamex.mxzg.hero.HeroMainPowerService;
 import com.funsgamex.mxzg.network.AssetSyncService;
 import com.funsgamex.mxzg.quest.QuestMetric;
@@ -93,10 +95,13 @@ public class GuildService {
     private final ApplicationEventPublisher events;
     /** 旧角色尚未保存战力时，只读取本队阵容补全公开资料。 */
     private final HeroMainPowerService powers;
+    /** 在同一事务发布建会世界公告，以及只对本会成员可见的入会公告。 */
+    private final ChatService chat;
 
-    /** 装配公会业务使用的既有角色、事件和世界状态服务。 */
+    /** 装配公会业务使用的角色、事件、世界状态与聊天服务。 */
     GuildService(RoleRepository roles, GuildRepository guilds, GuildRules rules, WorldLevelService world,
-                 GameClock clock, AssetSyncService sync, ApplicationEventPublisher events, HeroMainPowerService powers) {
+                 GameClock clock, AssetSyncService sync, ApplicationEventPublisher events, HeroMainPowerService powers,
+                 ChatService chat) {
         this.roles = roles;
         this.guilds = guilds;
         this.rules = rules;
@@ -105,6 +110,7 @@ public class GuildService {
         this.sync = sync;
         this.events = events;
         this.powers = powers;
+        this.chat = chat;
     }
 
     /** 在同一只读快照内读取当前角色的公会或区服推荐页；页码从 1 开始。 */
@@ -163,7 +169,7 @@ public class GuildService {
         return state(actor, "", 1, command.requestId());
     }
 
-    /** 建会校验名称及费用，并在同一事务保存选择的徽章和创建者身份。 */
+    /** 校验费用并保存公会资料和创建者，再按旧公告 1 发布本服邀请。 */
     private void create(RoleProfile actor, Command command, long now, Set<String> affected) {
         requireNoGuild(actor.id());
         if (rules.createRechargeRequired > 0 && guilds.recharge(actor.id()) < rules.createRechargeRequired) {
@@ -182,6 +188,8 @@ public class GuildService {
             throw conflict("GUILD_INSUFFICIENT");
         }
         join(guildId, actor.id(), now, affected);
+        chat.publishNotice(actor.serverId(), ChatChannel.WORLD, null,
+                "%s创建了%s公会，实力宏厚，赶紧前往加入吧！".formatted(actor.nickname(), name), 1);
     }
 
     /** 检查申请时的身份、剩余容量与冷却，重复待审申请不写第二条。 */
@@ -194,7 +202,7 @@ public class GuildService {
         }
     }
 
-    /** 只有现任会长可审批本公会的真实待审记录；批准时重新核对申请者与容量。 */
+    /** 只有会长可审批真实待审记录；批准并写入成员后按旧公告 2 欢迎新成员。 */
     private void review(RoleProfile actor, Command command, long now, boolean approve, Set<String> affected) {
         var guild = managedGuild(actor, command.guildId());
         String target = command.applicantId();
@@ -206,6 +214,8 @@ public class GuildService {
             requireLevel(applicant);
             requireCanJoin(target, guild, now);
             join(guild.id(), target, now, affected);
+            chat.publishNotice(actor.serverId(), ChatChannel.GUILD, guild.id(),
+                    "%s加入了公会大家庭，公会实力得到大幅度提升！欢迎欢迎！".formatted(applicant.nickname()), 2);
         } else {
             guilds.deleteApplication(guild.id(), target);
             affected.add(target);

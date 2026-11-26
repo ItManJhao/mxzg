@@ -53,29 +53,25 @@
       "phases": [
         "当前已实现"
       ],
-      "reason": "当前已实现View、Remake场景及动态启动/战场入口的序列化依赖闭包",
+      "reason": "跨模块共用的物品格、弹窗外框、确认、单行输入、说明和红点",
       "names": [
         "BagItemView",
         "CommonPanel1",
         "ConfirmView",
-        "FriendCell",
-        "FriendSearchView",
-        "FriendView",
-        "HeroRewardView",
-        "MailCell",
-        "MailDetailView",
-        "MailView",
-        "QuestCompletionView",
-        "QuestTaskCell",
-        "QuestView",
-        "RankingBoardCell",
-        "RankingDetailView",
-        "RankingEntryCell",
-        "RankingView",
         "RedDot",
-        "RewardView",
-        "RoleUpgradeView",
-        "RulesView"
+        "RulesView",
+        "TextInputView"
+      ]
+    },
+    {
+      "directory": "bundles/module/dreamland/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "永恒梦境的挑战、增益选择与首通奖励说明",
+      "names": [
+        "DreamlandRewardView",
+        "DreamlandView"
       ]
     },
     {
@@ -109,7 +105,7 @@
       "phases": [
         "当前已实现"
       ],
-      "reason": "公会目录与大厅、创建页签、单行输入窗、徽章选择、成员与审批窗口及其列表格",
+      "reason": "公会目录与大厅、创建页签、徽章选择、成员与审批窗口及其列表格",
       "names": [
         "GuildApprovalCell",
         "GuildApprovalView",
@@ -124,7 +120,6 @@
         "GuildRankingView",
         "GuildShopCell",
         "GuildShopView",
-        "GuildTextInputView",
         "GuildView"
       ]
     },
@@ -163,6 +158,8 @@
         "HeroCreationView",
         "HeroEquipmentPickerRow",
         "HeroEquipmentPickerView",
+        "HeroEvolutionCatalogCell",
+        "HeroEvolutionCatalogView",
         "HeroGodEquipmentCatalogCell",
         "HeroGodEquipmentCatalogView",
         "HeroGodEquipmentShopCell",
@@ -170,6 +167,7 @@
         "HeroGodEquipmentTabCell",
         "HeroGrowthPickerView",
         "HeroIconCellView",
+        "HeroIllustrationView",
         "HeroInfoView",
         "HeroListView",
         "HeroSkillView",
@@ -202,22 +200,46 @@
       ]
     },
     {
+      "directory": "bundles/module/blackmarket/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "主城黑市页面、横向货架页签和三列商品格",
+      "names": [
+        "BlackMarketItemCell",
+        "BlackMarketTabCell",
+        "BlackMarketView"
+      ]
+    },
+    {
+      "directory": "bundles/module/smith/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "铁匠铺四页签、配方格、合成预览、材料选择和精灵技能图鉴",
+      "names": [
+        "SmithCategoryCell",
+        "SmithComposeItemCell",
+        "SmithComposeView",
+        "SmithItemCell",
+        "SmithPickerItemCell",
+        "SmithPickerView",
+        "SmithRecipeCell",
+        "SmithSpiritSkillCell",
+        "SmithSpiritSkillDetailView",
+        "SmithSpiritSkillView",
+        "SmithView"
+      ]
+    },
+    {
       "directory": "bundles/module/login/prefabs",
       "phases": [
         "当前已实现"
       ],
-      "reason": "当前已实现View、Remake场景及动态启动/战场入口的序列化依赖闭包",
+      "reason": "登录、选服、更新，以及首次进城的命名和新手赠礼",
       "names": [
         "AccountLoginView",
-        "RoleHonorChoiceCell",
-        "RoleImageChoiceCell",
         "RoleNameView",
-        "RolePersonalChoiceView",
-        "RolePortraitChoiceCell",
-        "RoleProfileView",
-        "RoleRenameView",
-        "RoleSettingsView",
-        "RoleTitleChoiceCell",
         "ServerCellView",
         "ServerPickerView",
         "UpdateLayer",
@@ -251,6 +273,97 @@
         "ArenaShopCell",
         "ArenaShopView",
         "ArenaView"
+      ]
+    },
+    {
+      "directory": "bundles/module/chat/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "六个聊天频道、私聊会话和虚拟消息格",
+      "names": [
+        "ChatFriendCell",
+        "ChatPrivateCell",
+        "ChatWorldCell",
+        "ChatWorldView"
+      ]
+    },
+    {
+      "directory": "bundles/module/friend/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "好友、礼物、申请、黑名单与搜索",
+      "names": [
+        "FriendCell",
+        "FriendSearchView",
+        "FriendView"
+      ]
+    },
+    {
+      "directory": "bundles/module/mail/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "邮件列表、详情和信封格",
+      "names": [
+        "MailCell",
+        "MailDetailView",
+        "MailView"
+      ]
+    },
+    {
+      "directory": "bundles/module/quest/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "每日任务、成就和达成横幅",
+      "names": [
+        "QuestCompletionView",
+        "QuestTaskCell",
+        "QuestView"
+      ]
+    },
+    {
+      "directory": "bundles/module/ranking/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "主城排行榜总览、明细与榜单格",
+      "names": [
+        "RankingBoardCell",
+        "RankingDetailView",
+        "RankingEntryCell",
+        "RankingView"
+      ]
+    },
+    {
+      "directory": "bundles/module/reward/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "统一发奖、获得英雄与角色升级提示",
+      "names": [
+        "HeroRewardView",
+        "RewardView",
+        "RoleUpgradeView"
+      ]
+    },
+    {
+      "directory": "bundles/module/role/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "主城个人资料、设置、改名和装饰选择",
+      "names": [
+        "RoleHonorChoiceCell",
+        "RoleImageChoiceCell",
+        "RolePersonalChoiceView",
+        "RolePortraitChoiceCell",
+        "RoleProfileView",
+        "RoleRenameView",
+        "RoleSettingsView",
+        "RoleTitleChoiceCell"
       ]
     }
   ]

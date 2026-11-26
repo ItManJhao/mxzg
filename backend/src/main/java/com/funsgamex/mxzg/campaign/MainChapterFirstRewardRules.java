@@ -18,11 +18,14 @@ import tools.jackson.databind.ObjectMapper;
 @Component
 public class MainChapterFirstRewardRules {
     /** 以全局关卡号为键的服务端可完整发放目录，不按源表行号领。 */
-    private final Map<Integer, List<RewardGrantService.Reward>> supported;
+    private final Map<Integer, Plan> supported;
 
-    /** 解析同源奖励表并验证目标和奖励字段；未恢复领域的计划整体保留为未开放。 */
+    /** 单个关卡的发奖内容及原策划领奖公告标记。 */
+    public record Plan(List<RewardGrantService.Reward> rewards, boolean announce) {}
+
+    /** 解析同源奖励表、目标和公告标记；无法完整发放的计划暂不开放。 */
     public MainChapterFirstRewardRules(ObjectMapper mapper, MainChapterRules chapters, RewardGrantService grants) {
-        var rewards = new TreeMap<Integer, List<RewardGrantService.Reward>>();
+        var rewards = new TreeMap<Integer, Plan>();
         var targets = new HashSet<Integer>();
         try (var source = getClass().getResourceAsStream("/gameplay/firstrewardchapter.json")) {
             if (source == null) {
@@ -45,7 +48,7 @@ public class MainChapterFirstRewardRules {
                     // 未恢复奖励不伪造，不删除其中不支持的单项再开放领取。
                     continue;
                 }
-                rewards.put(chapter, plan);
+                rewards.put(chapter, new Plan(plan, row.path("is_notice").asInt() == 1));
             }
         } catch (IOException error) {
             throw new IllegalStateException("无法读取独立通关奖励配置", error);
@@ -54,7 +57,7 @@ public class MainChapterFirstRewardRules {
     }
 
     /** 只返回当前开放关卡且可全量发放的原计划；null 表示该项未开放或该关无独立奖励。 */
-    public List<RewardGrantService.Reward> plan(int chapter, int challengeLimit) {
+    public Plan plan(int chapter, int challengeLimit) {
         return chapter <= challengeLimit ? supported.get(chapter) : null;
     }
 

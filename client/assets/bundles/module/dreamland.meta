@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "84e78f3d-4b64-5f2a-9ef2-21aaf0258b28",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "dreamland",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

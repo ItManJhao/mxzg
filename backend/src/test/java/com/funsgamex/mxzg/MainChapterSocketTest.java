@@ -804,6 +804,98 @@ class MainChapterSocketTest {
         assertEquals(30, item.path("credited").asInt());
     }
 
+    /** 用隔离角色走完前六层、第二次选增益、重连和首次里程碑领赏。 */
+    @Test void completesDreamlandOverWebSocketAndResumesOriginalBattle() throws Exception {
+        var player = login.login("dream_" + UUID.randomUUID().toString().substring(0, 12), "local-1");
+        var role = player.role().id();
+        var token = player.session().accessToken();
+        jdbc.update("UPDATE game_role SET role_level=100 WHERE id=?", role);
+        var hero = UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,10105011,100,9,3)",
+            hero, role);
+        var slots = List.of(Map.of("position", 2, "heroId", hero));
+        JsonNode first;
+        Map<String, Object> choice;
+        try (var peer = new Peer()) {
+            assertTrue(peer.authenticate(token).path("ok").asBoolean());
+            var state = success(peer, "dreamland.state", Map.of());
+            assertEquals(25, state.path("minimumLevel").asInt());
+            assertEquals(6, state.path("maxFloor").asInt());
+            assertEquals("READY", state.path("phase").asString());
+            var saved = dreamlandCommand(state, "SAVE_FORMATION");
+            saved.put("formationId", 1);
+            saved.put("slots", slots);
+            state = success(peer, "dreamland.act", saved).path("state");
+            state = success(peer, "dreamland.act", dreamlandCommand(state, "START")).path("state");
+            assertEquals("SELECT_BUFF", state.path("phase").asString());
+            assertEquals(3, state.path("buffs").size());
+            choice = dreamlandCommand(state, "SELECT_BUFF");
+            choice.put("choice", state.path("buffs").get(0).path("id").asInt());
+            var reply = peer.request("dreamland.act", choice);
+            assertTrue(reply.path("ok").asBoolean(), reply.toString());
+            write("dreamland-floor-1", reply);
+            first = reply.path("body");
+            assertTrue(first.path("state").path("battle").path("won").asBoolean());
+            assertEquals("dreamland:1", first.path("state").path("battle").path("replay").path("scenario").asString());
+        }
+        try (var peer = new Peer()) {
+            assertTrue(peer.authenticate(token).path("ok").asBoolean());
+            var state = success(peer, "dreamland.state", Map.of());
+            assertEquals(first.path("state").path("battle"), state.path("battle"));
+            assertEquals(first, success(peer, "dreamland.act", choice));
+            int battleFloor = 1;
+            boolean pickedAgain = false;
+            for (int step = 0; step < 15 && battleFloor < 6; step++) {
+                Map<String, Object> command;
+                if (state.path("phase").asString().equals("SELECT_BUFF")) {
+                    assertEquals(5, battleFloor);
+                    assertEquals(3, state.path("buffs").size());
+                    command = dreamlandCommand(state, "SELECT_BUFF");
+                    command.put("choice", state.path("buffs").get(0).path("id").asInt());
+                    pickedAgain = true;
+                } else {
+                    command = dreamlandCommand(state, "NEXT");
+                }
+                var reply = peer.request("dreamland.act", command);
+                assertTrue(reply.path("ok").asBoolean(), reply.toString());
+                state = reply.path("body").path("state");
+                var battle = state.path("battle");
+                if (!battle.isMissingNode() && battle.path("floor").asInt() > battleFloor) {
+                    battleFloor = battle.path("floor").asInt();
+                    assertTrue(battle.path("won").asBoolean(), "第 " + battleFloor + " 层须真实获胜");
+                    write("dreamland-floor-" + battleFloor, reply);
+                }
+            }
+            assertTrue(pickedAgain);
+            assertEquals(6, battleFloor);
+            var run = success(peer, "dreamland.act", dreamlandCommand(state, "NEXT"));
+            state = run.path("state");
+            assertEquals("READY", state.path("phase").asString());
+            assertFalse(run.path("actual").path("items").isEmpty());
+            assertEquals(6, state.path("highestFloor").asInt());
+            var claim = dreamlandCommand(state, "CLAIM");
+            claim.put("choice", state.path("milestones").get(0).path("id").asInt());
+            var receipt = success(peer, "dreamland.act", claim);
+            assertTrue(receipt.path("state").path("milestones").get(0).path("claimed").asBoolean());
+            assertFalse(receipt.path("actual").path("items").isEmpty());
+            assertEquals(receipt, success(peer, "dreamland.act", claim));
+            var tasks = success(peer, "quest.list", Map.of()).path("daily");
+            var task = tasks.valueStream().filter(row -> row.path("id").asInt() == 14).findFirst().orElseThrow();
+            assertEquals(1, task.path("current").asInt());
+            assertEquals("main_infinite", task.path("destination").asString());
+            assertEquals(6L, jdbc.queryForObject("""
+                SELECT amount FROM game_quest_counter WHERE role_id=? AND metric='INFINITE_CHALLENGE'
+                    AND period_end_seconds=? AND condition_value=0
+                """, Long.class, role, state.path("resetAtSeconds").asLong()));
+        }
+    }
+
+    /** 每次梦境操作使用新请求号；结果未知时由调用者重发原整包。 */
+    private static Map<String, Object> dreamlandCommand(JsonNode state, String action) {
+        return new LinkedHashMap<>(Map.of("requestId", UUID.randomUUID().toString(),
+            "expectedVersion", state.path("version").asLong(), "action", action));
+    }
+
     /** 成功返回请求体并保留失败信封作为断言信息。 */
     private JsonNode success(Peer peer, String name, Map<String, ?> body) throws Exception {
         var response = peer.request(name, body);

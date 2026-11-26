@@ -38,7 +38,7 @@ export interface RoleProfileOpenArgs {
 }
 @UIRegistry.view({
     id: "role-profile",
-    prefab: "bundles/module/login/prefabs/RoleProfileView",
+    prefab: "bundles/module/role/prefabs/RoleProfileView",
     layer: UILayer.Popup,
     cache: false,
     allowMultiple: false,
