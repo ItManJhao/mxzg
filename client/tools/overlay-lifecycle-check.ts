@@ -631,6 +631,7 @@ async function mountReplayCleanup(parent: Node, completed?: (won: boolean) => Pr
         present: { numberFonts: new Map() },
         layerField: child("LayerField"),
         logLabel: child("LayerHud/Log"),
+        roundLabel: child("LayerHud/RoundLabel"),
         slot: (side: string, index: number) => child("Slots/" + side + index),
         hpLabel: (side: string, index: number) => child("Hp/" + side + index + "/Label"),
         bindSkip: () => {},
@@ -638,6 +639,7 @@ async function mountReplayCleanup(parent: Node, completed?: (won: boolean) => Pr
         bindClose: () => {},
     };
     shell.logLabel.addComponent(Label);
+    shell.roundLabel.addComponent(Label);
     BattlePageUtils.mountBattlePrefab = async () => shell as any;
     BattleReplayUtils.parse = () => ({ steps: [], units: [], names: { attacker: null, defender: null } });
     (AudioSource as any).EventType = { STARTED: "audio-started" };
