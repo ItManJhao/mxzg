@@ -7,21 +7,26 @@ public final class HeroBattleReplayUtils {
     /** 工具类不保存跨场状态。 */
     private HeroBattleReplayUtils() {}
 
-    /** 按原顺序核对阵容生命和胜负，竞技场与永恒梦境分别遵循各自的回合限制。 */
+    /** 按原顺序核对阵容生命和胜负，续战根据玩法核对已阵亡的开场单位。 */
     public static void validate(HeroBattleChapterScenario.Result report) {
         boolean dailyDungeon = report.scenario().matches("dungeon:(gold|experience|hero|fetter|spirit):[1-9][0-9]{0,9}");
         boolean tower = report.scenario().matches("tower:[1-9][0-9]{0,9}");
         boolean dreamland = report.scenario().matches("dreamland:[1-9][0-9]{0,9}");
+        boolean trial = report.scenario().matches("trial:[1-3]:(?:[1235679]|1[01345789])");
         boolean robotArena = report.scenario().matches("arena:(?:[1-9]|1[0-9]|2[0-4])");
         boolean playerArena = report.scenario().matches("arena:pvp:[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}");
-        boolean indexed = indexedScenario(report.scenario()) || dailyDungeon || tower || robotArena || playerArena || dreamland;
+        boolean indexed = indexedScenario(report.scenario()) || dailyDungeon || tower || robotArena || playerArena
+                || dreamland || trial;
         int maxRounds = robotArena || playerArena ? HeroBattleRoundUtils.ARENA_MAX_ROUNDS
                 : dreamland ? HeroBattleRoundUtils.DREAMLAND_MAX_ROUNDS : HeroBattleRoundUtils.MAX_ROUNDS;
         if ((!indexed && !Set.of("main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:duel", "audit:charm", "audit:charm-death", "audit:teams", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed", "audit:round-limit").contains(report.scenario()))
             || report.rounds() < 1 || report.rounds() > maxRounds || report.frames().isEmpty()) {
             throw new IllegalArgumentException("战斗回放场景或回合范围无效");
         }
-        var units = HeroBattleChapterScenario.roster(report.initial(), dreamland);
+        var health = trial ? HeroBattleChapterScenario.EntryHealth.TRIAL
+                : dreamland ? HeroBattleChapterScenario.EntryHealth.DREAMLAND
+                : HeroBattleChapterScenario.EntryHealth.FRESH;
+        var units = HeroBattleChapterScenario.roster(report.initial(), health);
         if (dailyDungeon || tower || robotArena || dreamland) {
             long defenders = units.stream().filter(unit -> unit.faction() == 2).count();
             if (defenders != (robotArena ? 4 : 6)) {
@@ -142,33 +147,37 @@ public final class HeroBattleReplayUtils {
         }
     }
 
-    /** 回放内部速度实例的原目标和基础增量，移除必须精确撤回。 */
-    private record SpeedBuff(int targetId, long amount) {}
+    /** 回放内部速度实例的原目标、属性编号及增量，供移除时精确撤回。 */
+    private record SpeedBuff(int targetId, int attribute, long amount) {}
 
-    /** 从同一帧的真实Buff入场/移除记录重放速度；历史零增量战报沿冻结速度校验。 */
+    /** 分别重放固定速度和霜寒的速度百分比，按同一属性池计算混合效果及回合顺序。 */
     private static void updateSpeed(HeroBattleHealingExecutor.Trace event, List<HeroBattleChapterScenario.Unit> units,
                                     Map<Integer, HeroBattleAttributeState> speeds, Map<Long, SpeedBuff> buffs) {
         var entry = event.buff();
         var applied = entry == null ? null : buffs.get(entry.instanceId());
         long delta = event.speedDelta();
-        if (delta == 0 && applied == null) {
+        int attribute = event.speedAttribute();
+        if (attribute == 0 && delta == 0 && applied == null) {
             return;
         }
-        if (entry == null || entry.spec().type() != 160 || entry.spec().id() != event.configId()
+        if (entry == null || (entry.spec().type() != 160 && entry.spec().type() != 1202)
+                || (attribute != 101 && attribute != 204) || (entry.spec().type() == 1202 && attribute != 204)
+                || entry.spec().id() != event.configId()
                 || entry.sourceId() != event.sourceId()) {
             throw new IllegalArgumentException("速度增量缺少对应属性Buff");
         }
         if (event.kind().equals("buff.upsert") && delta != 0 && applied == null) {
-            buffs.put(entry.instanceId(), new SpeedBuff(event.targetId(), delta));
+            buffs.put(entry.instanceId(), new SpeedBuff(event.targetId(), attribute, delta));
         } else if (event.kind().equals("buff.remove") && applied != null
-                && applied.targetId() == event.targetId() && Math.negateExact(applied.amount()) == delta) {
+                && applied.targetId() == event.targetId() && applied.attribute() == attribute
+                && Math.negateExact(applied.amount()) == delta) {
             buffs.remove(entry.instanceId());
         } else {
             throw new IllegalArgumentException("速度Buff实例重复或移除增量不符");
         }
         var state = speeds.computeIfAbsent(event.targetId(), id -> new HeroBattleAttributeState(units.stream()
             .filter(unit -> unit.id() == id).findFirst().orElseThrow().attributes()));
-        state.addBase(101, delta);
+        state.addBase(attribute, delta);
     }
 
     /** 通用生产来源使用正十进制全局uint32索引；历史审计别名另保留原固定准入。 */

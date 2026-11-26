@@ -75,7 +75,9 @@ const payloads = [
     "smithPreviewRequest", "smithForgeRequest", "smithForgeAllRequest", "smithPreview", "smithReceipt",
     "dailyDungeonState", "dailyDungeonChallengeRequest", "dailyDungeonReceipt",
     "towerState", "towerFormationSave", "towerRequest", "towerSettlement",
-    "dreamlandState", "dreamlandCommand", "dreamlandSettlement",
+    "dreamlandState", "dreamlandCommand", "dreamlandSettlement", "dreamlandAssistance", "dreamlandRanking",
+    "dreamlandFormationPowerRequest", "dreamlandFormationPower",
+    "trialState", "trialCommand", "trialSettlement", "trialAssistance", "trialShopState", "trialShopBuy", "trialShopReceipt",
     "arenaState", "arenaChallengeRequest", "arenaReplayRequest", "arenaReplay", "arenaSettlement",
     "arenaTicketBuyRequest", "arenaTicketPurchase",
     "arenaRanking", "arenaSeason", "arenaChestRequest", "arenaChestReceipt", "arenaLikeRequest", "arenaLikeReceipt",
@@ -122,6 +124,22 @@ export class GameProtocolCodecUtils {
                     return request ? "empty" : "dreamlandState";
                 case Protocol.DREAMLAND_ACT:
                     return request ? "dreamlandCommand" : "dreamlandSettlement";
+                case Protocol.DREAMLAND_ASSISTANCE:
+                    return request ? "empty" : "dreamlandAssistance";
+                case Protocol.DREAMLAND_RANKING:
+                    return request ? "empty" : "dreamlandRanking";
+                case Protocol.DREAMLAND_FORMATION_POWER:
+                    return request ? "dreamlandFormationPowerRequest" : "dreamlandFormationPower";
+                case Protocol.TRIAL_STATE:
+                    return request ? "empty" : "trialState";
+                case Protocol.TRIAL_ACT:
+                    return request ? "trialCommand" : "trialSettlement";
+                case Protocol.TRIAL_ASSISTANCE:
+                    return request ? "empty" : "trialAssistance";
+                case Protocol.TRIAL_SHOP:
+                    return request ? "empty" : "trialShopState";
+                case Protocol.TRIAL_SHOP_BUY:
+                    return request ? "trialShopBuy" : "trialShopReceipt";
                 case Protocol.TOWER_FORMATION_SAVE:
                     return request ? "towerFormationSave" : "towerState";
                 case Protocol.TOWER_CHALLENGE:
@@ -764,21 +782,197 @@ export class GameProtocolCodecUtils {
         }
     }
 
+    /** 校验勇者试炼请求、完整状态或带角色归属的发奖回执。 */
+    private static validateTrial(frame: GameFrame): void {
+        if (!frame.name.startsWith("trial.")
+                || (frame.kind !== "request" && frame.kind !== "response") || frame.ok === false) {
+            return;
+        }
+        const body = this.messageObject(frame.body);
+        const integer = this.isIntegerInRange;
+        const isAction = frame.name === Protocol.TRIAL_ACT;
+        const isBuy = frame.name === Protocol.TRIAL_SHOP_BUY;
+        if (isAction && !["selectDifficulty", "saveFormation", "fight", "claim", "revive", "dispatchAssist",
+            "selectAssist", "cancelAssist"].some(action => action === body.action)) {
+            throw new Error("试炼操作无效");
+        }
+        if (frame.kind === "request") {
+            if (isAction) {
+                this.validateTrialCommand(body);
+            } else if (isBuy) {
+                if (!this.isUuid(body.requestId) || !integer(body.offerId, 1) || !integer(body.count, 1)
+                        || !integer(body.refreshAt, 1)
+                        || Object.keys(body).some(key => !["requestId", "offerId", "count", "refreshAt"].includes(key))) {
+                    throw new Error("试炼兑换请求无效");
+                }
+            } else if (Object.keys(body).length !== 0) {
+                throw new Error("试炼查询不接受额外参数");
+            }
+            return;
+        }
+        if (isAction || isBuy) {
+            this.validateBattleSettlement(body, isBuy ? 1 : 0);
+        }
+        if (frame.name === Protocol.TRIAL_ASSISTANCE) {
+            this.validateTrialAssistance(body);
+        } else if (isBuy || frame.name === Protocol.TRIAL_SHOP) {
+            if (isBuy && body.actual === undefined) {
+                throw new Error("试炼兑换缺少实发结果");
+            }
+            this.validateTrialShop(isBuy ? this.messageObject(body.state) : body);
+        } else {
+            this.validateTrialState(isAction ? this.messageObject(body.state) : body);
+        }
+    }
+
+    /** 校验操作版本和每种操作允许的参数，阵容使用 1～8 号有效站位。 */
+    private static validateTrialCommand(body: Record<string, unknown>): void {
+        const integer = this.isIntegerInRange;
+        const fields = ["requestId", "expectedVersion", "action", "slots", "heroIds"];
+        const choosing = ["selectDifficulty", "fight", "claim"].includes(body.action as string);
+        const saving = body.action === "saveFormation";
+        const targeting = ["dispatchAssist", "selectAssist", "cancelAssist"].includes(body.action as string);
+        if (choosing) {
+            fields.push("choice");
+        }
+        if (saving) {
+            fields.push("formationId");
+        }
+        if (targeting) {
+            fields.push("targetId");
+        }
+        if (!this.isUuid(body.requestId) || !integer(body.expectedVersion, 0)
+                || Object.keys(body).some(key => !fields.includes(key))
+                || (choosing && !integer(body.choice, 1, body.action === "selectDifficulty" ? 3 : 20))
+                || (saving && (!integer(body.formationId, 1) || !this.validLineupSlots(body.slots)))
+                || (!saving && body.slots !== undefined && (!Array.isArray(body.slots) || body.slots.length))
+                || (targeting && !this.isUuid(body.targetId))
+                || (body.heroIds !== undefined && (!Array.isArray(body.heroIds)
+                    || (body.action !== "revive" && body.heroIds.length !== 0)
+                    || body.heroIds.length > 8 || !body.heroIds.every(value => this.isUuid(value))
+                    || new Set(body.heroIds).size !== body.heroIds.length))) {
+            throw new Error("试炼操作参数无效");
+        }
+    }
+
+    /** 校验当天难度、地图节点、阵容、生命以及最近的战报。 */
+    private static validateTrialState(state: Record<string, unknown>): void {
+        const integer = this.isIntegerInRange;
+        if (!integer(state.version, 0) || !integer(state.minimumLevel, 1) || !integer(state.resetAtSeconds, 1)
+                || !integer(state.difficulty, 0, 3) || !integer(state.maxDifficulty, 1, 3)
+                || !integer(state.completedDifficulty, 0, 3) || !integer(state.currentNode, 0, 21)
+                || !integer(state.reviveLimit, 0) || !integer(state.reviveUsed, 0, state.reviveLimit)
+                || (state.reviveCost !== undefined && !this.validRewardPreview([state.reviveCost]))
+                || !integer(state.formationId, 1) || !this.validLineupSlots(state.slots)
+                || !Array.isArray(state.difficulties) || state.difficulties.length !== 3
+                || !Array.isArray(state.nodes) || ![0, 20].includes(state.nodes.length)
+                || !Array.isArray(state.todayRewards)
+                || (state.todayRewards.length !== 0 && !this.validRewardPreview(state.todayRewards))
+                || !Array.isArray(state.heroHealth) || state.heroHealth.some(value => {
+                    const hero = this.messageObject(value);
+                    return !this.isUuid(hero.heroId) || !this.validTrialHealth(hero);
+                })) {
+            throw new Error("试炼快照无效");
+        }
+        if (!state.difficulties.every((raw, index) => {
+            const difficulty = this.messageObject(raw);
+            return difficulty.id === index + 1 && integer(difficulty.minimumPower, 0)
+                && typeof difficulty.combatReady === "boolean" && this.validRewardPreview(difficulty.rewards);
+        }) || !state.nodes.every((raw, index) => this.validTrialNode(raw, index + 1))) {
+            throw new Error("试炼地图或难度无效");
+        }
+        if (state.battle !== undefined) {
+            const battle = this.messageObject(state.battle);
+            if (!this.isUuid(battle.battleId) || !integer(battle.node, 1, 20) || typeof battle.won !== "boolean") {
+                throw new Error("试炼战报名单无效");
+            }
+            this.validateProgressionReplay(battle.replay, `trial:${state.difficulty}:${battle.node}`, battle.won);
+        }
+    }
+
+    /** 验证一格节点的展示状态，以及确实已经匹配的守军生命与站位。 */
+    private static validTrialNode(value: unknown, expectedNode: number): boolean {
+        const node = this.messageObject(value);
+        const integer = this.isIntegerInRange;
+        if (node.node !== expectedNode || node.type !== (expectedNode % 4 === 0 ? "chest" : "battle")
+                || !["locked", "available", "cleared", "blocked"].some(status => status === node.status)
+                || (node.type === "chest" ? node.displayLevel !== 0 : !integer(node.displayLevel, 1, 15))
+                || !this.validRewardPreview(node.rewards)) {
+            return false;
+        }
+        if (node.opponent === undefined) {
+            return true;
+        }
+        const opponent = this.messageObject(node.opponent);
+        return node.type === "battle" && typeof opponent.name === "string" && opponent.name.length <= 128
+            && integer(opponent.power, 0) && integer(opponent.level, 1) && integer(opponent.avatarId, 0)
+            && integer(opponent.formationId, 1) && Array.isArray(opponent.heroes) && opponent.heroes.length <= 8
+            && opponent.heroes.every(raw => {
+                const hero = this.messageObject(raw);
+                return integer(hero.position, 1, 8) && integer(hero.templateId, 1)
+                    && integer(hero.level, 1) && integer(hero.star, 1) && integer(hero.element, 0)
+                    && this.validTrialHealth(hero);
+            });
+    }
+
+    /** 当前生命允许为零，最大生命必须为正且两项都能安全表示。 */
+    private static validTrialHealth(hero: Record<string, unknown>): boolean {
+        return this.isIntegerInRange(hero.maxHp, 1) && this.isIntegerInRange(hero.hp, 0, hero.maxHp);
+    }
+
+    /** 校验当天的支援英雄身份与已出战标志。 */
+    private static validateTrialAssistance(body: Record<string, unknown>): void {
+        const integer = this.isIntegerInRange;
+        if (!integer(body.version, 0) || !integer(body.resetAtSeconds, 1) || !integer(body.dispatchLimit, 1)
+                || !integer(body.maxAssistPower, 0) || ![body.dispatched, body.selected, body.available].every(list =>
+                    Array.isArray(list) && list.every(value => this.validDreamlandAssistHero(value)
+                        && typeof this.messageObject(value).used === "boolean"))) {
+            throw new Error("试炼支援状态无效");
+        }
+    }
+
+    /** 兑换报价只携带已提交的周货架和非负限购计数。 */
+    private static validateTrialShop(body: Record<string, unknown>): void {
+        const integer = this.isIntegerInRange;
+        if (!integer(body.refreshAt, 1) || !Array.isArray(body.offers) || !body.offers.every(value => {
+            const row = this.messageObject(value);
+            return integer(row.id, 1) && this.validRewardPreview([row.reward]) && integer(row.price, 1)
+                && integer(row.purchaseLimit, 0) && integer(row.purchased, 0)
+                && (row.purchaseLimit === 0 || row.purchased <= row.purchaseLimit);
+        })) {
+            throw new Error("试炼货架无效");
+        }
+    }
+
     /** 校验梦境查询和操作的阶段、参数、战报来源及角色回执。 */
     private static validateDreamland(frame: GameFrame): void {
-        if ((frame.name !== Protocol.DREAMLAND_STATE && frame.name !== Protocol.DREAMLAND_ACT)
+        if (!frame.name.startsWith("dreamland.")
                 || (frame.kind !== "request" && frame.kind !== "response") || frame.ok === false) {
             return;
         }
         const body = this.messageObject(frame.body);
         const integer = this.isIntegerInRange;
         const action = body.action;
+        if (frame.name === Protocol.DREAMLAND_FORMATION_POWER) {
+            const isRequest = frame.kind === "request";
+            const allowed = isRequest ? ["requestId", "expectedVersion", "formationId", "slots"]
+                : ["requestId", "version", "power"];
+            if (!this.isUuid(body.requestId) || Object.keys(body).some(key => !allowed.includes(key))
+                || (isRequest
+                    ? !integer(body.expectedVersion, 0) || !integer(body.formationId, 1, 0x7fffffff)
+                        || !this.validLineupSlots(body.slots)
+                    : !integer(body.version, 0) || !integer(body.power, 0, 0x7fffffff))) {
+                throw new Error("梦境阵容战力请求或回显无效");
+            }
+            return;
+        }
         if (frame.name === Protocol.DREAMLAND_ACT
-                && (typeof action !== "string" || !["START", "SELECT_BUFF", "NEXT", "END", "CLAIM", "SAVE_FORMATION"].includes(action))) {
+                && (typeof action !== "string" || !["START", "SELECT_BUFF", "NEXT", "END", "CLAIM", "SAVE_FORMATION",
+                    "DISPATCH_ASSIST", "SELECT_ASSIST", "CLEAR_ASSIST"].includes(action))) {
             throw new Error("梦境操作无效");
         }
         if (frame.kind === "request") {
-            if (frame.name === Protocol.DREAMLAND_STATE) {
+            if (frame.name !== Protocol.DREAMLAND_ACT) {
                 if (Object.keys(body).length !== 0) {
                     throw new Error("梦境查询不接受参数");
                 }
@@ -786,6 +980,7 @@ export class GameProtocolCodecUtils {
             }
             const choosing = action === "SELECT_BUFF" || action === "CLAIM";
             const saving = action === "SAVE_FORMATION";
+            const selectingHero = action === "DISPATCH_ASSIST" || action === "SELECT_ASSIST";
             const fields = ["requestId", "expectedVersion", "action", "slots"];
             if (choosing) {
                 fields.push("choice");
@@ -793,13 +988,25 @@ export class GameProtocolCodecUtils {
             if (saving) {
                 fields.push("formationId");
             }
+            if (selectingHero) {
+                fields.push("targetId");
+            }
             if (!this.isUuid(body.requestId) || !integer(body.expectedVersion, 0)
                     || Object.keys(body).some(key => !fields.includes(key))
                     || (choosing && !integer(body.choice, 1, 0x7fffffff))
+                    || (selectingHero && !this.isUuid(body.targetId))
                     || (saving && (!integer(body.formationId, 1, 0x7fffffff) || !this.validLineupSlots(body.slots)))
                     || (!saving && body.slots !== undefined && (!Array.isArray(body.slots) || body.slots.length !== 0))) {
                 throw new Error("梦境操作参数无效");
             }
+            return;
+        }
+        if (frame.name === Protocol.DREAMLAND_ASSISTANCE) {
+            this.validateDreamlandAssistance(body);
+            return;
+        }
+        if (frame.name === Protocol.DREAMLAND_RANKING) {
+            this.validateDreamlandRanking(body);
             return;
         }
         if (frame.name === Protocol.DREAMLAND_ACT) {
@@ -820,6 +1027,7 @@ export class GameProtocolCodecUtils {
                 || !integer(state.minimumLevel, 1) || !integer(state.formationId, 1) || !integer(state.resetAtSeconds, 1)
                 || !["READY", "SELECT_BUFF", "NEXT_BATTLE", "RESULT"].some(phase => phase === state.phase)
                 || !this.validLineupSlots(state.slots)
+                || (state.assistance !== undefined && !this.validDreamlandAssistHero(state.assistance))
                 || !Array.isArray(state.buffs) || state.buffs.length > 3
                 || !Array.isArray(state.pendingRewards)
                 || (state.pendingRewards.length > 0 && !this.validRewardPreview(state.pendingRewards))
@@ -844,6 +1052,55 @@ export class GameProtocolCodecUtils {
             }
             this.validateProgressionReplay(battle.replay, `dreamland:${battle.floor}`, battle.won);
         }
+    }
+
+    /** 只接受服务端可展示的持久英雄标识和面板快照。 */
+    private static validDreamlandAssistHero(source: unknown): boolean {
+        const hero = this.messageObject(source);
+        const integer = this.isIntegerInRange;
+        return this.isUuid(hero.roleId) && this.isUuid(hero.heroId) && typeof hero.roleName === "string"
+            && hero.roleName.length <= 128 && integer(hero.templateId, 1) && integer(hero.level, 1)
+            && integer(hero.star, 1) && integer(hero.power, 0);
+    }
+
+    /** 核对派遣与借用回包的当日期次、列表唯一性及奖励配置。 */
+    private static validateDreamlandAssistance(body: Record<string, unknown>): void {
+        const integer = this.isIntegerInRange;
+        if (!integer(body.version, 0) || !integer(body.resetAtSeconds, 1) || !integer(body.maxAssistPower, 0)
+                || typeof body.canSelect !== "boolean" || !Array.isArray(body.available) || body.available.length > 100
+                || !body.available.every(offer => this.validDreamlandAssistHero(offer))
+                || new Set(body.available.map(offer => this.messageObject(offer).roleId)).size !== body.available.length
+                || [body.selected, body.dispatched].some(hero => hero !== undefined && !this.validDreamlandAssistHero(hero))
+                || !this.validRewardPreview(body.dispatchRewards)) {
+            throw new Error("梦境好友支援状态无效");
+        }
+    }
+
+    /** 只接收最多前百名和实际本人记录，奖档必须有合法区间及原物品数量。 */
+    private static validateDreamlandRanking(body: Record<string, unknown>): void {
+        const integer = this.isIntegerInRange;
+        if (!integer(body.resetAtSeconds, 1) || !Array.isArray(body.entries) || body.entries.length > 100
+                || !body.entries.every((entry, index) => this.validDreamlandRankEntry(entry)
+                    && this.messageObject(entry).rank === index + 1)
+                || !this.validDreamlandRankEntry(body.own)
+                || !Array.isArray(body.rewardTiers) || body.rewardTiers.length > 50
+                || !body.rewardTiers.every(value => {
+                    const tier = this.messageObject(value);
+                    return typeof tier.minRank === "number" && integer(tier.minRank, 1, 50)
+                        && integer(tier.maxRank, tier.minRank, 50) && this.validRewardPreview(tier.rewards);
+                })) {
+            throw new Error("梦境榜单状态无效");
+        }
+    }
+
+    /** 排行用实际公开角色资料与服务端名次，时间为零兼容旧通关记录。 */
+    private static validDreamlandRankEntry(source: unknown): boolean {
+        const entry = this.messageObject(source);
+        const integer = this.isIntegerInRange;
+        return this.isUuid(entry.roleId) && typeof entry.name === "string" && entry.name.length <= 128
+            && integer(entry.level, 1) && integer(entry.headId, 0) && integer(entry.headBorderId, 0)
+            && integer(entry.power, 0) && integer(entry.floor, 0, 1500) && integer(entry.rank, 0)
+            && integer(entry.achievedAtSeconds, 0);
     }
 
     /** 核对爬塔和竞技场的指令字段、战报来源及结算结果的角色归属。 */
@@ -2429,6 +2686,7 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateSmith(frame);
         GameProtocolCodecUtils.validateDailyDungeon(frame);
         GameProtocolCodecUtils.validateDreamland(frame);
+        GameProtocolCodecUtils.validateTrial(frame);
         GameProtocolCodecUtils.validateProgressionBattle(frame);
         GameProtocolCodecUtils.validateQuickBattle(frame);
         GameProtocolCodecUtils.validateVip(frame);
@@ -2504,6 +2762,7 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateSmith(frame);
         GameProtocolCodecUtils.validateDailyDungeon(frame);
         GameProtocolCodecUtils.validateDreamland(frame);
+        GameProtocolCodecUtils.validateTrial(frame);
         GameProtocolCodecUtils.validateProgressionBattle(frame);
         GameProtocolCodecUtils.validateQuickBattle(frame);
         GameProtocolCodecUtils.validateVip(frame);

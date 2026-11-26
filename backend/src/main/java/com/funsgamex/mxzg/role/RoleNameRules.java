@@ -116,7 +116,7 @@ public class RoleNameRules {
     }
 
     /** 各抽一个原表片段拼接为候选，确认可用的昵称仍由提交事务认领。 */
-    String randomCandidate() {
+    public String randomCandidate() {
         var random = ThreadLocalRandom.current();
         return prefixes.get(random.nextInt(prefixes.size())) + suffixes.get(random.nextInt(suffixes.size()));
     }

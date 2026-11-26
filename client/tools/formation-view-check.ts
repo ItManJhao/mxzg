@@ -12,6 +12,7 @@ import { FormationHeroCellView } from "../assets/scripts/features/hero/ui/Format
 import { FormationController } from "../assets/scripts/features/hero/FormationController";
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 import { HeroRosterEvent } from "../assets/scripts/features/hero/utils/HeroRosterEvent";
+import { FormationEvent } from "../assets/scripts/features/hero/utils/FormationEvent";
 import { Protocol } from "../assets/scripts/platform/Protocol";
 import { FormationSaveModel } from "../assets/scripts/features/hero/FormationSaveModel";
 import { HeroRosterModel } from "../assets/scripts/features/hero/HeroRosterModel";
@@ -812,6 +813,75 @@ function checkIndependentFormation(heroes: Parameters<FormationView["render"]>[0
     root.destroy();
 }
 
+/** 梦境借将使用专属战力请求，迟到回包不覆盖新版本，失效助战撤下后立即预估。 */
+function checkDreamlandAssistDraft(): void {
+    const root = instantiateData(read(PAGE));
+    const editor = root.getComponent(FormationView)!;
+    const roster = new HeroRosterModel();
+    const saves = new FormationSaveModel();
+    const controller = new FormationController(saves, roster);
+    const own = { id: "own", templateId: 10105011, level: 140, star: 9 };
+    const assist = { id: "assist", templateId: 10105008, level: 60, star: 5 };
+    const main = {
+        formationId: 1, unlockedIds: [1], assistanceUnlocked: false, version: 4,
+        slots: [{ position: 2, heroId: own.id }],
+        options: [{ formationId: 1, openPositions: [2, 3, 5, 6, 7, 8] }],
+    };
+    roster.replace({ status: "ready", heroes: [own], error: "", mainFormation: main });
+    editor.configure(controller, roster, saves);
+    let assistValid = true;
+    let authority = { ...main, version: 7, slots: [...main.slots, { position: 3, heroId: assist.id }] };
+    let refresh: (() => void) | undefined;
+    const calls: Omit<FormationSaveRequest, "requestId">[] = [];
+    /** 只触发真实视图刚为当前草稿创建的去抖请求。 */
+    const flush = (): void => {
+        const task = scheduledPreviews.get(editor);
+        scheduledPreviews.delete(editor);
+        task?.();
+    };
+    try {
+        editor.runOpen({
+            title: "永恒梦境出阵",
+            formation: {
+                read: () => authority,
+                save: () => assert.fail("预估不保存阵容"),
+                additionalHero: () => assistValid ? assist : undefined,
+                previewPower: draft => {
+                    calls.push(draft);
+                    return String(calls.length);
+                },
+                watch: changed => {
+                    refresh = changed;
+                    return () => { refresh = undefined; };
+                },
+            },
+            complete: () => {},
+        });
+        assert(slotAt(editor, 3).portrait!.active);
+        flush();
+        assert.deepEqual(calls[0], { expectedVersion: 7, formationId: 1, slots: authority.slots });
+        EventDispatcher.instance.emit(FormationEvent.PowerPreviewed, { requestId: "1", power: 17_451 });
+        assert.equal(editor.powerLabel!.string, "17451");
+        assistValid = false;
+        authority = { ...authority, slots: main.slots };
+        refresh?.();
+        assert.equal(slotAt(editor, 3).portrait!.active, false);
+        assert.equal(editor.powerLabel!.string, "-");
+        flush();
+        assert.deepEqual(calls[1], { expectedVersion: 7, formationId: 1, slots: main.slots });
+        EventDispatcher.instance.emit(FormationEvent.PowerPreviewed, { requestId: "1", power: 17_451 });
+        assert.equal(editor.powerLabel!.string, "-");
+        EventDispatcher.instance.emit(FormationEvent.PowerPreviewed, { requestId: "2", power: 12_087 });
+        assert.equal(editor.powerLabel!.string, "12087");
+        assert.deepEqual(roster.snapshot.heroes, [own]);
+    } finally {
+        editor.runClose();
+        assert.equal(refresh, undefined);
+        controller.dispose();
+        root.destroy();
+    }
+}
+
 /** 检查原预制视口在列表首尾均能显示两整行英雄，包含头像和星级。 */
 function checkDefaultListGeometry(): void {
     const root = instantiateData(read(PAGE));
@@ -997,6 +1067,7 @@ async function main(): Promise<void> {
     await checkFormationMatrix(heroes);
     await checkElementDraft(heroes);
     checkIndependentFormation(heroes);
+    checkDreamlandAssistDraft();
     console.log("formation-view-check passed: real Prefab bindings, automatic placement, drag, matrix, live draft bonuses and authoritative save confirmation");
 }
 void main().catch(error=>{console.error(error);process.exitCode=1;});

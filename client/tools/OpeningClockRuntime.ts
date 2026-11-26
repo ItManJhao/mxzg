@@ -36,6 +36,8 @@ export class Material {
 type ClockStep = {
     duration: number;
     values?: Record<string, number | BaseVec3>;
+    /** true为从本段开始值增减传入的幅度，震屏使用此分支。 */
+    relative?: boolean;
     callback?: () => void;
     onUpdate?: (target: Record<string, any>, progress: number) => void;
 };
@@ -123,10 +125,12 @@ export class OpeningClockRuntime {
                 for (const [key, value] of Object.entries(row.step.values || {})) {
                     const start = row.before[key];
                     if (typeof start === "number" && typeof value === "number") {
-                        row.tween.target[key] = start + (value - start) * progress;
+                        row.tween.target[key] = start + (row.step.relative ? value : value - start) * progress;
                     } else if (start instanceof BaseVec3 && value instanceof BaseVec3) {
-                        row.tween.target[key] = new Vec3(start.x + (value.x - start.x) * progress,
-                            start.y + (value.y - start.y) * progress, start.z + (value.z - start.z) * progress);
+                        const delta = row.step.relative ? value
+                            : new Vec3(value.x - start.x, value.y - start.y, value.z - start.z);
+                        row.tween.target[key] = new Vec3(start.x + delta.x * progress,
+                            start.y + delta.y * progress, start.z + delta.z * progress);
                     } else {
                         throw new Error("测试渐变值和初始值的类型不一致：" + key);
                     }
@@ -183,6 +187,12 @@ export class Tween {
             throw new Error("战斗专项只模拟数值和三维坐标渐变");
         }
         this.steps.push({ duration: seconds, values, onUpdate: options?.onUpdate });
+        return this;
+    }
+
+    /** 登记从当前段开始位置增减的震屏位移，段结束后保持结果供下一段使用。 */
+    public by(seconds: number, values: Record<string, BaseVec3>): this {
+        this.steps.push({ duration: seconds, values, relative: true });
         return this;
     }
 

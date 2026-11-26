@@ -103,6 +103,11 @@ public final class HeroBattleBuffState {
         return remove(entries.stream().filter(entry -> entry.instanceId() == instanceId).toList());
     }
 
+    /** 光环拥有者倒下后，只撤回该来源在本单位上的全部实例。 */
+    public List<Entry> removeFromSource(int sourceId) {
+        return remove(entries.stream().filter(entry -> entry.sourceId() == sourceId).toList());
+    }
+
     /** 沿旧getBuffersByType顺序移除首个指定类型实例；由调用方同步记录和清理关联监听。 */
     public List<Entry> removeFirst(int type) {
         return remove(entries.stream().filter(entry -> entry.spec().type() == type).limit(1).toList());
@@ -116,6 +121,11 @@ public final class HeroBattleBuffState {
     /** 沿旧getBuffersBy过滤：绝对到期回合小于999、允许驱散、效果类别相等。 */
     public List<Entry> dispel(int effect) {
         return remove(dispellable(effect));
+    }
+
+    /** 旧 type1103 按安装顺序移除首项可驱散的主动增益，永久被动不会进入候选。 */
+    public List<Entry> removeFirstGain() {
+        return remove(dispellable(1).stream().limit(1).toList());
     }
 
     /** 旧 type1102 按安装顺序移除允许驱散的负面和控制，0 表示不限个数。 */

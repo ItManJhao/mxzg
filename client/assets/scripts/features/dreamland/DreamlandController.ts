@@ -7,12 +7,15 @@ import { BaseController } from "../../framework/BaseController";
 import { UIManager } from "../../framework/ui/UIManager";
 import { SocketFailure } from "../../platform/GameSocketClient";
 import {
-    Protocol, type DreamlandAction, type DreamlandActData, type DreamlandActRequest, type DreamlandStateData, type ProtocolName,
+    Protocol, type DreamlandAction, type DreamlandActData, type DreamlandActRequest, type DreamlandAssistanceData,
+    type DreamlandFormationPowerData, type DreamlandFormationPowerRequest,
+    type DreamlandRankingData, type DreamlandStateData, type ProtocolName,
 } from "../../platform/Protocol";
 import { ProtocolRouter } from "../../platform/ProtocolRouter";
 import type { AccountOperations } from "../account/AccountOperations";
 import { BattleReplayUtils } from "../battle/utils/BattleReplayUtils";
 import type { FormationSaveRequest } from "../hero/data/FormationData";
+import { FormationEvent } from "../hero/utils/FormationEvent";
 import type { RewardBinding } from "../reward/RewardBinding";
 import { DreamlandModel } from "./DreamlandModel";
 
@@ -21,6 +24,9 @@ declare module "../../framework/EventDispatcher" {
         "dreamland.updated": void;
     }
 }
+
+/** 支援命令使用日内公开状态，其目标与战斗的增益或里程碑不同。 */
+type DreamlandAssistAction = "DISPATCH_ASSIST" | "SELECT_ASSIST" | "CLEAR_ASSIST";
 
 export class DreamlandController extends BaseController {
     /** 应用装配的唯一永恒梦境控制器。 */
@@ -34,6 +40,9 @@ export class DreamlandController extends BaseController {
 
     /** 梦境主页显示时主动补读，关页仍接收已经发出的确认结果。 */
     private visible = false;
+
+    /** 首次支援回包前断线时，依此在认证恢复后重读支援；窗口关闭和换号时清除。 */
+    private assistanceVisible = false;
 
     /** 当前正在等待回包，完成后允许下一次点击或自然查询。 */
     private inFlight = false;
@@ -72,14 +81,45 @@ export class DreamlandController extends BaseController {
     public refreshVisible(): void {
         if (this.visible) {
             this.send(this.pending);
+            this.loadRanking();
+            if (this.assistanceVisible || DreamlandModel.instance.assistance) {
+                this.loadAssistance();
+            }
         }
     }
 
     /** 用当前进度版本提交挑战、选增益、推进、退出或领奖。 */
-    public act(action: Exclude<DreamlandAction, "SAVE_FORMATION">, choice?: number): void {
+    public act(action: Exclude<DreamlandAction, "SAVE_FORMATION" | DreamlandAssistAction>, choice?: number): void {
         const state = DreamlandModel.instance.snapshot?.state;
         if (state && !this.pending && !this.inFlight) {
             this.execute({ action, expectedVersion: state.version, ...(choice === undefined ? {} : { choice }) });
+        }
+    }
+
+    /** 向服务端查询可选好友镜像及派遣奖，窗口不读取其他角色资产。 */
+    public loadAssistance(): void {
+        this.readPanel(Protocol.DREAMLAND_ASSISTANCE);
+    }
+
+    /** 支援开窗时立即读取，重连则沿当前窗口可见性恢复未完成的首次读取。 */
+    public setAssistanceVisible(visible: boolean): void {
+        this.assistanceVisible = visible;
+        if (visible) {
+            this.loadAssistance();
+        }
+    }
+
+    /** 刷新大厅排行摘要和双页排行窗口。 */
+    public loadRanking(): void {
+        this.readPanel(Protocol.DREAMLAND_RANKING);
+    }
+
+    /** 提交本日支援操作。派遣目标为英雄实例，借用目标为好友。 */
+    public actAssistance(action: DreamlandAssistAction, targetId?: string): void {
+        const model = DreamlandModel.instance;
+        const state = model.assistance;
+        if (state && state.version === model.snapshot?.state.version && !this.pending && !this.inFlight) {
+            this.execute({ action, expectedVersion: state.version, ...(targetId ? { targetId } : {}) });
         }
     }
 
@@ -93,15 +133,62 @@ export class DreamlandController extends BaseController {
         this.execute({ ...draft, action: "SAVE_FORMATION" });
     }
 
+    /** 只读预估不影响保存或战斗操作；按请求号和版本核对回包，过期时补读权威阵容。 */
+    public previewFormationPower(draft: Omit<DreamlandFormationPowerRequest, "requestId">): string | null {
+        const operations = this.operations;
+        if (!this.isInitialized || !operations) {
+            return null;
+        }
+        const requestId = RequestIdUtils.create();
+        void operations.deliver(Protocol.DREAMLAND_FORMATION_POWER, { ...draft, requestId }, frame => {
+            const result = frame.body as DreamlandFormationPowerData;
+            if (result.requestId !== requestId || result.version !== draft.expectedVersion) {
+                throw new Error("梦境阵容战力回包与请求不符");
+            }
+            ProtocolRouter.instance.dispatch(this, frame);
+        }, error => {
+            this.emit(FormationEvent.PowerPreviewed, { requestId, power: null });
+            if (this.visible && error instanceof SocketFailure
+                && (error.code === "DREAMLAND_STATE_CHANGED" || error.code === "DREAMLAND_FORMATION_INVALID")) {
+                this.send(this.pending);
+            }
+        });
+        return requestId;
+    }
+
     /** 按真实回包提交状态，实际奖励通过现有队列消费。 */
     public onNotify(protocol: ProtocolName, data: unknown): void {
+        const model = DreamlandModel.instance;
+        const previouslyHighest = model.snapshot?.state.highestFloor;
+        let updateAssistance = false;
         switch (protocol) {
+            case Protocol.DREAMLAND_FORMATION_POWER: {
+                const { requestId, power } = data as DreamlandFormationPowerData;
+                this.emit(FormationEvent.PowerPreviewed, { requestId, power });
+                return;
+            }
+            case Protocol.DREAMLAND_ASSISTANCE: {
+                const assistance = data as DreamlandAssistanceData;
+                model.commitAssistance(assistance);
+                // 辅助查询也会补推进已到期的冒险；同步主进度后方可提交下一条命令。
+                if (this.visible && assistance.version > (model.snapshot?.state.version ?? -1)) {
+                    this.send(this.pending);
+                }
+                this.emit("dreamland.updated", undefined);
+                return;
+            }
+            case Protocol.DREAMLAND_RANKING:
+                model.ranking = data as DreamlandRankingData;
+                this.emit("dreamland.updated", undefined);
+                return;
             case Protocol.DREAMLAND_STATE:
                 this.acceptState(data as DreamlandStateData);
                 break;
             case Protocol.DREAMLAND_ACT: {
                 const receipt = data as DreamlandActData;
                 this.acceptState(receipt.state);
+                updateAssistance = receipt.action === "DISPATCH_ASSIST"
+                    || receipt.action === "SELECT_ASSIST" || receipt.action === "CLEAR_ASSIST";
                 if (receipt.actual) {
                     this.rewards?.restoreActual(receipt.requestId, receipt.assetRevision, receipt.actual);
                 }
@@ -116,16 +203,25 @@ export class DreamlandController extends BaseController {
         this.saved = null;
         saved?.(true);
         this.emit("dreamland.updated", undefined);
+        if (this.visible && (updateAssistance
+            || (model.assistance && model.assistance.version !== model.snapshot?.state.version))) {
+            this.loadAssistance();
+        }
+        if (this.visible && previouslyHighest !== undefined && (model.snapshot?.state.highestFloor ?? 0) > previouslyHighest) {
+            this.loadRanking();
+        }
     }
 
-    /** 模块初始化时登记实际开放的两个协议。 */
+    /** 模块初始化时登记梦境挑战、搭档、同服排行榜和独立阵容战力回包。 */
     protected onInitialize(): void {
-        this.ownListener(ProtocolRouter.instance.register(this, [Protocol.DREAMLAND_STATE, Protocol.DREAMLAND_ACT]));
+        this.ownListener(ProtocolRouter.instance.register(this, [Protocol.DREAMLAND_STATE, Protocol.DREAMLAND_ACT,
+            Protocol.DREAMLAND_ASSISTANCE, Protocol.DREAMLAND_RANKING, Protocol.DREAMLAND_FORMATION_POWER]));
     }
 
     /** 由应用层在换号时统一清理操作和玩法状态。 */
     protected onResetSession(): void {
         this.visible = false;
+        this.assistanceVisible = false;
         this.inFlight = false;
         this.pending = null;
         this.saved = null;
@@ -142,6 +238,15 @@ export class DreamlandController extends BaseController {
     private execute(fields: Omit<DreamlandActRequest, "requestId">): void {
         this.pending = { ...fields, requestId: RequestIdUtils.create() };
         this.send(this.pending);
+    }
+
+    /** 独立读取展示数据，回包不会清除正在等待确认的挑战请求。 */
+    private readPanel(name: typeof Protocol.DREAMLAND_ASSISTANCE | typeof Protocol.DREAMLAND_RANKING): void {
+        void this.operations?.deliver(name, {}, frame => ProtocolRouter.instance.dispatch(this, frame), error => {
+            if (this.visible && !(error instanceof SocketFailure && error.interrupted)) {
+                UIManager.instance.toast(error instanceof Error ? error.message : "梦境信息读取失败");
+            }
+        });
     }
 
     /** 交付前核对同一个写入请求和动作，防止错误回包引发领奖或推进。 */

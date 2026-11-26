@@ -15,7 +15,64 @@ import { GameProtocolLogUtils } from "../assets/scripts/platform/GameProtocolLog
 import {mxzg} from "../assets/scripts/platform/GameProtocol.generated";
 const state={revision:2,role:{id:"role",nickname:"测试😀",level:1,gold:0,diamonds:0,serverId:"local-1"},heroes:[],heroRoster:{capacity:325,buySpaceTimes:1},inventory:[{itemId:900101,quantity:4}]};
 
-/** 校验梦境命令的专用字段，并任选一轮真实 Java 六层战报交给客户端播放器解析。 */
+/** 验证试炼实际节点和换周报价需要的字段，可同时交叉解析隔离服务端导出的二进制战报。 */
+function checkTrialWire(): void {
+    const requestId = "d2775714-1086-4271-aa41-2178d5b2e14e";
+    const roleId = "12d69bcd-16c2-418d-986e-f27764156e68";
+    const resetAt = 1795708800;
+    const rewards = [{ itemId: 901201, quantity: 55 }, { itemId: 900001, quantity: 30000 }];
+    const request = { version: 1, kind: "request", id: requestId } as const;
+    const response = { ...request, kind: "response", ok: true } as const;
+    const act = { ...request, name: Protocol.TRIAL_ACT,
+        body: { requestId, expectedVersion: 4, action: "fight", choice: 1, slots: [], heroIds: [] } };
+    roundTrip(act);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...act, body: { ...act.body, choice: 21 } }));
+
+    const nodes = Array.from({ length: 20 }, (_, index) => {
+        const node = index + 1;
+        const chest = node % 4 === 0;
+        return { node, type: chest ? "chest" : "battle", status: node === 1 ? "available" : "locked",
+            displayLevel: chest ? 0 : node - Math.floor(node / 4), rewards };
+    });
+    const selected = { version: 4, minimumLevel: 30, resetAtSeconds: resetAt, difficulty: 1, maxDifficulty: 1,
+        completedDifficulty: 0, currentNode: 1, reviveUsed: 0, reviveLimit: 0, formationId: 1,
+        slots: [], nodes, heroHealth: [], todayRewards: [],
+        difficulties: [0, 1000000, 1800000].map((minimumPower, index) => ({
+            id: index + 1, minimumPower, rewards, combatReady: index === 0,
+        })) };
+    const selection = { ...response, name: Protocol.TRIAL_ACT,
+        body: { requestId, roleId, assetRevision: 0, action: "selectDifficulty", state: selected } };
+    roundTrip(selection);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({
+        ...selection, body: { ...selection.body,
+            state: { ...selected, nodes: nodes.map(row => row.node === 4 ? { ...row, displayLevel: 4 } : row) } },
+    }), /试炼地图/);
+    const buy = { ...request, name: Protocol.TRIAL_SHOP_BUY, body: { requestId, offerId: 1, count: 1, refreshAt: resetAt } };
+    roundTrip(buy);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...buy, body: { ...buy.body, price: 1250 } }));
+
+    for (const argument of process.argv.filter(value => value.startsWith("--trial-java="))) {
+        const path = argument.slice("--trial-java=".length);
+        const frame = GameProtocolCodecUtils.decodeGameFrame(readFileSync(path));
+        if (frame.name === Protocol.TRIAL_SHOP_BUY) {
+            const receipt = frame.body as import("../assets/scripts/platform/Protocol").TrialShopReceipt;
+            assert.equal(receipt.state.offers[0].price, 1250);
+            const result = receipt.actual as { items: readonly { itemId: number; credited: number }[] };
+            assert(result.items.some(item => item.itemId === 901503 && item.credited === 5));
+            console.log(`PASS Java/TS Trial purchase ${path}`);
+            continue;
+        }
+        assert.equal(frame.name, Protocol.TRIAL_ACT);
+        const actual = frame.body as import("../assets/scripts/platform/Protocol").TrialSettlement;
+        const replay = actual.state.battle?.replay;
+        assert(replay, "真实试炼回执应包含战报");
+        assert.equal(replay.scenario, `trial:${actual.state.difficulty}:${actual.state.battle?.node}`);
+        assert.doesNotThrow(() => BattleReplayUtils.encodeVerified(replay));
+        console.log(`PASS Java/TS Trial replay ${path}`);
+    }
+}
+
+/** 校验梦境命令字段，并可读取指定范围内 Java 实际连战的战报验证客户端解析。 */
 function checkDreamlandWire(): void {
     const requestId = "d2775714-1086-4271-aa41-2178d5b2e14e";
     const request = { version: 1, kind: "request", name: Protocol.DREAMLAND_ACT, id: requestId } as const;
@@ -23,18 +80,113 @@ function checkDreamlandWire(): void {
     roundTrip({ ...request, body: { ...body, slots: [] } });
     assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, body: { ...body, choice: 1 } }));
     assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, body: { ...body, action: "SELECT_BUFF" } }));
-    if (process.argv.includes("--dreamland-java")) {
-        for (let floor = 1; floor <= 6; floor++) {
-            const frame = GameProtocolCodecUtils.decodeGameFrame(readFileSync(`backend/target/chapter-dreamland-floor-${floor}.pb`));
+    const javaFixtureArgument = process.argv.find(arg => arg === "--dreamland-java" || arg.startsWith("--dreamland-java="));
+    if (javaFixtureArgument) {
+        const fixtureFolder = javaFixtureArgument.split("=", 2)[1] ?? "backend/target";
+        const limitArgument = process.argv.find(arg => arg.startsWith("--dreamland-floors="));
+        const lastFloor = limitArgument ? Number(limitArgument.split("=", 2)[1]) : 35;
+        assert(Number.isSafeInteger(lastFloor) && lastFloor > 0 && lastFloor <= 1500, "梦境校验楼层必须在配置范围内");
+        for (let floor = 1; floor <= lastFloor; floor++) {
+            const frame = GameProtocolCodecUtils.decodeGameFrame(readFileSync(`${fixtureFolder}/chapter-dreamland-floor-${floor}.pb`));
             assert.equal(frame.name, Protocol.DREAMLAND_ACT);
             const receipt = frame.body as import("../assets/scripts/platform/Protocol").DreamlandActData;
+            assert.equal(receipt.state.maxFloor, lastFloor);
+            assert.equal(receipt.state.highestFloor, floor - 1);
             assert.equal(receipt.state.battle?.floor, floor);
             assert.equal(receipt.state.battle?.won, true);
-            assert(receipt.state.battle?.replay);
-            BattleReplayUtils.encodeVerified(receipt.state.battle.replay);
+            const replay = receipt.state.battle?.replay;
+            assert(replay);
+            assert.equal(replay.scenario, `dreamland:${floor}`);
+            assert.doesNotThrow(() => BattleReplayUtils.encodeVerified(replay), `第 ${floor} 层连战战报应可回放`);
         }
-        console.log("PASS Java/TS Dreamland floor 1–6 battle reports");
+        console.log(`PASS Java/TS Dreamland floor 1–${lastFloor} battle reports`);
     }
+    const guardFixtureArgument = process.argv.find(arg => arg.startsWith("--dreamland-guards-from="));
+    if (guardFixtureArgument) {
+        const firstFloor = Number(guardFixtureArgument.split("=", 2)[1]);
+        const lastFloor = Number(process.argv.find(arg => arg.startsWith("--dreamland-floors="))?.split("=", 2)[1]);
+        assert(Number.isSafeInteger(firstFloor) && Number.isSafeInteger(lastFloor)
+            && firstFloor >= 1 && firstFloor <= lastFloor && lastFloor <= 1500);
+        for (let floor = firstFloor; floor <= lastFloor; floor++) {
+            const bytes = readFileSync(`backend/target/dreamland-guard-replays/floor-${floor}.pb`);
+            const replay = BattleReplayUtils.parse(bytes);
+            assert(replay.steps.some(step => step.kind === "skill.begin" && step.sourceId > 8),
+                `第 ${floor} 层的守军必须真实出手`);
+        }
+        console.log(`PASS Java/TS Dreamland guard replays ${firstFloor}–${lastFloor}`);
+    }
+}
+
+/** 核对好友支援、绑定助战和排行独立回包，拒绝跨请求夹带字段与损坏的列表。 */
+function checkDreamlandSocialWire(): void {
+    const roleId = "12d69bcd-16c2-418d-986e-f27764156e68";
+    const peerId = "b21eb5c2-5d40-47cb-af0c-8ca04f92d513";
+    const heroId = "65d961c9-ba29-424f-8986-d47a502a5098";
+    const requestId = "b7fa5fe7-6231-42ea-92f5-c140aec03bf1";
+    const request = { version: 1, kind: "request", id: requestId } as const;
+    const response = { ...request, kind: "response", ok: true } as const;
+    const assistQuery = { ...request, name: Protocol.DREAMLAND_ASSISTANCE, body: {} };
+    const rankQuery = { ...request, name: Protocol.DREAMLAND_RANKING, body: {} };
+    roundTrip(assistQuery);
+    roundTrip(rankQuery);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...assistQuery, body: { roleId } }), /梦境查询/);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...rankQuery, body: { floor: 3 } }), /梦境查询/);
+
+    const hero = { roleId: peerId, roleName: "好友", heroId, templateId: 10304012, level: 35, star: 4, power: 6000 };
+    const resetAtSeconds = 1795708800;
+    const dispatchRewards = [{ itemId: 900101, quantity: 5000 }];
+    const assist = { version: 3, resetAtSeconds, canSelect: true, maxAssistPower: 7500, selected: hero,
+        available: [hero], dispatchRewards };
+    const assistReply = { ...response, name: Protocol.DREAMLAND_ASSISTANCE, body: assist };
+    roundTrip(assistReply);
+    roundTrip({ ...assistReply, body: { ...assist, dispatched: { ...hero, roleId, roleName: "自己" }, available: [] } });
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({
+        ...assistReply, body: { ...assist, available: [hero, hero] },
+    }), /梦境好友支援/);
+
+    const operation = { ...request, name: Protocol.DREAMLAND_ACT, body: { requestId, expectedVersion: 3,
+        action: "SELECT_ASSIST", targetId: peerId, slots: [] } };
+    roundTrip(operation);
+    roundTrip({ ...operation, body: { ...operation.body, action: "DISPATCH_ASSIST", targetId: heroId } });
+    roundTrip({ ...operation, body: { requestId, expectedVersion: 3, action: "CLEAR_ASSIST", slots: [] } });
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({
+        ...operation, body: { ...operation.body, targetId: "bad-id" },
+    }), /梦境操作参数/);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({
+        ...operation, body: { ...operation.body, action: "CLEAR_ASSIST" },
+    }), /梦境操作参数/);
+
+    const leader = { roleId: peerId, name: "好友", level: 35, headId: 1, headBorderId: 0,
+        power: 6020, floor: 8, rank: 1, achievedAtSeconds: 1795698800 };
+    const own = { ...leader, roleId, name: "自己", floor: 0, rank: 0, achievedAtSeconds: 0 };
+    const ranking = { entries: [leader], own, resetAtSeconds,
+        rewardTiers: [{ minRank: 1, maxRank: 1, rewards: [{ itemId: 900202, quantity: 10 }] }] };
+    const rankReply = { ...response, name: Protocol.DREAMLAND_RANKING, body: ranking };
+    roundTrip(rankReply);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({
+        ...rankReply, body: { ...ranking, entries: [{ ...leader, rank: 2 }] },
+    }), /梦境榜单/);
+}
+
+/** 梦境预估保留版本及普通站位，禁止额外角色身份、重复站位和负数分值。 */
+function checkDreamlandFormationPowerWire(): void {
+    const requestId = "b7fa5fe7-6231-42ea-92f5-c140aec03bf1";
+    const first = { position: 2, heroId: "65d961c9-ba29-424f-8986-d47a502a5098" };
+    const second = { position: 3, heroId: "b21eb5c2-5d40-47cb-af0c-8ca04f92d513" };
+    const body = { requestId, expectedVersion: 3, formationId: 1, slots: [first, second] };
+    const request = { version: 1, kind: "request", name: Protocol.DREAMLAND_FORMATION_POWER, id: requestId, body } as const;
+    const response = { ...request, kind: "response", ok: true, body: { requestId, version: 3, power: 12000 } };
+    roundTrip(request);
+    roundTrip({ ...request, body: { ...body, slots: [] } });
+    roundTrip(response);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, body: { ...body, roleId: first.heroId } }));
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({
+        ...request, body: { ...body, slots: [first, { ...second, position: 2 }] },
+    }));
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({
+        ...request, body: { ...body, slots: [{ ...first, position: 9 }] },
+    }));
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...response, body: { requestId, version: 3, power: -1 } }));
 }
 
 /** 聊天保留精确游标及范围，拒绝混合范围和乱序消息，开发日志隐藏正文。 */
@@ -1072,4 +1224,7 @@ function checkSpiritWire(): void {
     console.log("PASS Java/TS SpiritInventory binary event/reconnect identity and attributes");
 }
 checkDreamlandWire();
+checkDreamlandSocialWire();
+checkTrialWire();
+checkDreamlandFormationPowerWire();
 main();

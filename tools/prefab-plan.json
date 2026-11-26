@@ -68,9 +68,13 @@
       "phases": [
         "当前已实现"
       ],
-      "reason": "永恒梦境的挑战、增益选择与首通奖励说明",
+      "reason": "永恒梦境的挑战、增益、好友支援、排行和首通奖励",
       "names": [
         "DreamlandRewardView",
+        "DreamlandSocialCell",
+        "DreamlandSocialView",
+        "DreamlandSupportCell",
+        "DreamlandSupportView",
         "DreamlandView"
       ]
     },
@@ -85,6 +89,22 @@
         "DungeonHallView",
         "GoldDungeonStageCell",
         "GoldDungeonView"
+      ]
+    },
+    {
+      "directory": "bundles/module/trial/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "勇者试炼地图、难度、守军、宝箱、助战和兑换商店",
+      "names": [
+        "TrialView",
+        "TrialDifficultyView",
+        "TrialStageView",
+        "TrialSupportView",
+        "TrialSupportCell",
+        "TrialShopView",
+        "TrialShopCell"
       ]
     },
     {

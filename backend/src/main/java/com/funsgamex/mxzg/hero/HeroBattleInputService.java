@@ -100,7 +100,21 @@ public class HeroBattleInputService {
     @Transactional(propagation = Propagation.MANDATORY)
     public Input forFormation(String role, long version, int formationId, List<Lineup.Slot> slots) {
         var formation = formations.current(role);
-        return assemble(role, formation, version, formationId, formationId, slots);
+        return assemble(role, formation, version, formationId, formationId, slots, null);
+    }
+
+    /** 独立玩法可附一名已核验的派遣英雄，按借用方的当前阵型组装战斗属性。 */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Input forAssistedFormation(String role, long version, int formationId, List<Lineup.Slot> slots,
+                                      HeroProfile borrowed) {
+        var formation = formations.current(role);
+        return assemble(role, formation, version, formationId, formationId, slots, borrowed);
+    }
+
+    /** 从派遣时冻结的数据重建个人评分面板，不读取派遣人的当前名册、装备或成长。 */
+    public HeroProfile dreamlandAssistPanel(HeroProfile frozen) {
+        return frozen.withLoadout(frozen.equipment(), null, frozen.growthAttributes(), panels, skills, evolution,
+                frozen.loadoutSkills());
     }
 
     /** 主线使用所选阵型，挂机使用起源阵型的站位属性。 */
@@ -111,16 +125,18 @@ public class HeroBattleInputService {
         var formation = formations.current(role);
         int attributesFormationId = idle ? 1 : formation.formationId();
         return assemble(role, formation, formation.version(), formation.formationId(),
-                attributesFormationId, formation.slots());
+                attributesFormationId, formation.slots(), null);
     }
 
-    /** 复用角色名册、原站位加成及神装、圣器套装技能，校验专用阵容与同一永久解锁目录。 */
+    /** 复用名册及站位规则；有业务核验过的派遣快照时，只将该英雄加入本次可用名册。 */
     private Input assemble(String role, MainFormationStateService.State unlocked, long version, int formationId,
-                           int attributesFormationId, List<Lineup.Slot> slots) {
-        var roster = heroes.list(role);
-        var owned = new HashMap<String, HeroProfile>();
-        roster.forEach(hero -> owned.put(hero.id(), hero));
-        var candidates = roster.stream().map(hero -> new MainFormationRules.Hero(
+                           int attributesFormationId, List<Lineup.Slot> slots, HeroProfile borrowed) {
+        var battleRoster = new LinkedHashMap<String, HeroProfile>();
+        heroes.list(role).forEach(hero -> battleRoster.put(hero.id(), hero));
+        if (borrowed != null && battleRoster.putIfAbsent(borrowed.id(), borrowed) != null) {
+            throw new IllegalStateException("派遣英雄与借用方名册冲突");
+        }
+        var candidates = battleRoster.values().stream().map(hero -> new MainFormationRules.Hero(
             hero.id(), hero.templateId(), hero.level(), hero.star())).toList();
         var unlocks = new MainFormationRules.Unlocks(
             new HashSet<>(unlocked.unlockedIds()), unlocked.assistanceUnlocked());
@@ -131,7 +147,7 @@ public class HeroBattleInputService {
 
         var units = new ArrayList<Unit>();
         for (var slot : validated) {
-            var hero = owned.get(slot.heroId());
+            var hero = battleRoster.get(slot.heroId());
             var evolved = evolution.resolve(hero.templateId(), hero.evolution().type(), hero.evolution().level());
             var position = formationRules.position(attributesFormationId, slot.position());
             var attributes = panels.attributes(hero.baseStats(), hero.equipment(), add -> {

@@ -17333,6 +17333,18 @@
     },
     "battleMusic": {
       "__id__": 706
+    },
+    "rankingStatusLabel": {
+      "__id__": 190
+    },
+    "rankingRewardStatusLabel": {
+      "__id__": 196
+    },
+    "myRankingLabel": {
+      "__id__": 202
+    },
+    "friendSupportCaption": {
+      "__id__": 352
     }
   },
   {

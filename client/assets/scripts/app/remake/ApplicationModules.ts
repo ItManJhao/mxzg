@@ -10,6 +10,8 @@ import type { AccountModel } from "../../features/account/AccountModel";
 import { RoleController } from "../../features/account/RoleController";
 import { ArenaController } from "../../features/arena/ArenaController";
 import { DreamlandController } from "../../features/dreamland/DreamlandController";
+import { TrialController } from "../../features/trial/TrialController";
+import { TrialShopController } from "../../features/trial/TrialShopController";
 import { BagController } from "../../features/bag/BagController";
 import { BlackMarketController } from "../../features/blackmarket/BlackMarketController";
 import { MainChapterSession } from "../../features/battle/MainChapterSession";
@@ -134,6 +136,12 @@ export class ApplicationModules {
         const dreamland = DreamlandController.instance;
         dreamland.configure(operations, this.rewards);
         dreamland.initialize();
+        const trial = TrialController.instance;
+        trial.configure(operations, this.rewards);
+        trial.initialize();
+        const trialShop = TrialShopController.instance;
+        trialShop.configure(operations, this.rewards);
+        trialShop.initialize();
         const tower = TowerController.instance;
         tower.configure(operations, this.rewards);
         tower.initialize();
@@ -163,8 +171,8 @@ export class ApplicationModules {
         mail.initialize();
         const chapter = new MainChapterSession(controller, operations, this.rewards);
         this.sessions = [chapter, heroLevel, heroEquipment, heroStar, heroJewel, godEquipment,
-            heroArtifacts, market, blackMarket, smith, dailyDungeon, dreamland, tower, arena, guild, vip, quests, rankings, friends,
-            mail, chat];
+            heroArtifacts, market, blackMarket, smith, dailyDungeon, dreamland, trial, trialShop,
+            tower, arena, guild, vip, quests, rankings, friends, mail, chat];
         this.assets = new AssetStateBinding(model, bag, this.role,
             heroes, formation, () => {
                 clearRolePages();
@@ -204,6 +212,8 @@ export class ApplicationModules {
             if (authenticated) {
                 DailyDungeonController.instance.refreshVisible();
                 DreamlandController.instance.refreshVisible();
+                TrialController.instance.refreshVisible();
+                TrialShopController.instance.refreshVisible();
                 TowerController.instance.refreshVisible();
                 ArenaController.instance.refreshVisible();
             }

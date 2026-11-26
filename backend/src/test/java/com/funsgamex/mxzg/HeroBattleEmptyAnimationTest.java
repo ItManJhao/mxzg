@@ -1,5 +1,5 @@
 /**
- * type1空客户端动作的通用预检与实际执行回归，沿旧BT_AMIN/ClientBuffHandler记录表现。
+ * 空客户端动作的通用预检与实际执行回归，沿旧 ClientBuffHandler 记录表现。
  * 新版保留原表声明及既有wire顺序，不声称等同旧Cache的非逻辑前置排序；Lua覆盖演出另核。
  */
 package com.funsgamex.mxzg;
@@ -9,6 +9,7 @@ import com.funsgamex.mxzg.hero.HeroBattleEventProcessor.Actor;
 import com.funsgamex.mxzg.hero.HeroBattleHealingExecutor;
 import com.funsgamex.mxzg.hero.HeroBattleHealingExecutor.State;
 import com.funsgamex.mxzg.hero.HeroBattleReplayProtocolUtils;
+import com.funsgamex.mxzg.hero.HeroEvolutionRules;
 import com.funsgamex.mxzg.hero.HeroSkillPanelRules;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,25 @@ class HeroBattleEmptyAnimationTest {
 
     /** 直接复用生产客户端表现预检，不维护第5关专属动作映射。 */
     private final HeroSkillPanelRules rules = new HeroSkillPanelRules(mapper);
+
+    /** 两个10号空声明保留独立演出事件，尼罗公主的速度动作沿旧处理器忽略未调用的子动作。 */
+    @Test
+    void acceptsLegacyMotionOverridesWithoutChangingDamageActions() throws Exception {
+        var nile = rules.battleSchedule(List.of(new HeroEvolutionRules.Skill(101050203, 1))).getFirst();
+        var nileArts = rules.damageSkillArts(nile);
+        assertEquals(List.of(1203101, 1203201), nileArts.getFirst().buffs());
+        assertEquals(List.of(1203301), nileArts.getLast().buffs());
+        var speed = rules.controlAttribute(1203301);
+        assertEquals(101, speed.attribute());
+        assertEquals(10, speed.amount());
+        assertEquals(0.6D, rules.directAttributeChance(1203301));
+        mutableBuff(1203301).put("art_list", "[1203402]");
+        assertThrows(IllegalArgumentException.class, () -> rules.damageSkillArts(nile));
+        var knight = rules.battleSchedule(List.of(new HeroEvolutionRules.Skill(102050203, 1))).getFirst();
+        assertEquals(List.of(2203101, 2203201, 2203301), rules.damageSkillArts(knight).getFirst().buffs());
+        mutableBuff(2203101).put("sound", "[\"unknown\"]");
+        assertThrows(IllegalArgumentException.class, () -> rules.battleProjectile(2203101));
+    }
 
     /** 四个空占位及金妮原表遮罩可以播放；错配的金妮遮罩与神祇音效仍须被拒绝。 */
     @Test

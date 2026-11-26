@@ -26,6 +26,8 @@ import { HeroCatalog } from "../../hero/utils/HeroCatalog";
 import { DreamlandController } from "../DreamlandController";
 import { DreamlandModel } from "../DreamlandModel";
 import { DreamlandRewardView } from "./DreamlandRewardView";
+import { DreamlandSocialView } from "./DreamlandSocialView";
+import { DreamlandSupportView } from "./DreamlandSupportView";
 
 const { ccclass, property } = _decorator;
 
@@ -68,10 +70,18 @@ export class DreamlandView extends BaseView<DreamlandViewArgs> {
     @property(Button) private rewardsButton: Button | null = null;
     /** 显示旧规则，数值仍由服务器处理。 */
     @property(Button) private rulesButton: Button | null = null;
-    /** 好友支援的装饰按钮，当前阶段用于说明开放状态。 */
+    /** 打开每日好友派遣与借用窗口。 */
     @property(Button) private supportButton: Button | null = null;
-    /** 排行榜详情按钮，当前阶段用于说明开放状态。 */
+    /** 打开本服榜单和排行奖档。 */
     @property(Button) private rankingButton: Button | null = null;
+    /** 服务器当前榜首及已确认层数。 */
+    @property(Label) private rankingStatusLabel: Label | null = null;
+    /** 显示排行奖励的实际领取方式。 */
+    @property(Label) private rankingRewardStatusLabel: Label | null = null;
+    /** 当前角色的梦境名次，尚未确认胜场时为榜外。 */
+    @property(Label) private myRankingLabel: Label | null = null;
+    /** 未开始挑战时提示当前选中的借将。 */
+    @property(Label) private friendSupportCaption: Label | null = null;
     /** 按服务端阶段提交出阵、继续或结算。 */
     @property(Button) private challengeButton: Button | null = null;
     /** 运行时显示本次阶段对应的操作文字。 */
@@ -142,7 +152,8 @@ export class DreamlandView extends BaseView<DreamlandViewArgs> {
         super.onOpen(args);
         if (!args || !this.panel || !this.battleHost || !this.battleBackground || !this.battleHud
             || !this.battleFloorLabel || !this.battleRewardLabel || !this.battleExitButton || !this.buffPanel
-            || !this.lobbyMusic || !this.battleMusic
+            || !this.lobbyMusic || !this.battleMusic || !this.rankingStatusLabel || !this.rankingRewardStatusLabel
+            || !this.myRankingLabel || !this.friendSupportCaption
             || this.buffOptions.length !== 3 || this.buffArtwork.length !== 10) {
             throw new Error("永恒梦境预制体绑定不完整");
         }
@@ -151,8 +162,14 @@ export class DreamlandView extends BaseView<DreamlandViewArgs> {
         this.listen(this.battleExitButton!, () => this.endRun());
         this.listen(this.rewardsButton!, () => this.openRewards());
         this.listen(this.rulesButton!, () => this.openRules());
-        this.listen(this.supportButton!, () => UIManager.instance.toast("好友支援尚未开放"));
-        this.listen(this.rankingButton!, () => UIManager.instance.toast("永恒梦境排行尚未开放"));
+        this.listen(this.supportButton!, () => {
+            void UIManager.instance.openChild(this, DreamlandSupportView, undefined)
+                .catch(() => { /* 统一开窗入口反馈异常。 */ });
+        });
+        this.listen(this.rankingButton!, () => {
+            void UIManager.instance.openChild(this, DreamlandSocialView, undefined)
+                .catch(() => { /* 统一开窗入口反馈异常。 */ });
+        });
         this.listen(this.challengeButton!, () => this.challenge());
         this.listen(this.claimButton!, () => this.claimMilestone());
         this.listen(this.stopButton!, () => this.endRun());
@@ -234,6 +251,15 @@ export class DreamlandView extends BaseView<DreamlandViewArgs> {
         this.refreshButton!.interactable = !controller.busy;
         this.rewardsButton!.interactable = !!state;
         this.recordLabel!.string = state ? String(state.highestFloor) : "—";
+        const rank = DreamlandModel.instance.ranking;
+        const leader = rank?.entries[0];
+        this.rankingStatusLabel!.string = leader ? `第1名 ${leader.name} · ${leader.floor}层` : rank ? "暂无通关记录" : "读取排行…";
+        this.rankingRewardStatusLabel!.string = "零点邮件发放";
+        this.myRankingLabel!.string = "我的排名 " + (rank ? rank.own.rank || "榜外" : "—");
+        this.friendSupportCaption!.node.active = !state || state.phase === "READY";
+        const support = state?.assistance;
+        this.friendSupportCaption!.string = support
+            ? `已选择 ${HeroCatalog.find(support.templateId)?.name ?? support.roleName}` : "选择一位好友英雄助战";
         this.startLabel!.string = state?.phase === "READY" ? `从第 ${state.startFloor + 1} 层开始`
             : state ? `第 ${state.currentFloor + 1} 层` : "读取梦境进度";
         this.todayLabel!.string = state ? `今日通关 ${Math.max(0, state.todayHighestFloor - state.startFloor)} 层` : "今日通关 — 层";
@@ -286,7 +312,7 @@ export class DreamlandView extends BaseView<DreamlandViewArgs> {
         });
     }
 
-    /** 服务器下发有效选择时展示固定三格和当前梦境队伍。 */
+    /** 按服务端显示三档增益的名称、效果说明及当前梦境队伍。 */
     private drawBuffs(state: DreamlandStateData | undefined, available: boolean): void {
         this.buffPanel!.active = state?.phase === "SELECT_BUFF";
         if (!state || state.phase !== "SELECT_BUFF") {
@@ -297,7 +323,7 @@ export class DreamlandView extends BaseView<DreamlandViewArgs> {
             const option = state.buffs[index];
             button.node.parent!.active = !!option;
             button.interactable = available;
-            this.buffLabels[index].string = option?.description ?? "";
+            this.buffLabels[index].string = option ? `${option.name}\n${option.description}` : "";
             const icon = option ? buffIconOrder[option.id] : 0;
             this.buffIcons[index].spriteFrame = icon ? this.buffArtwork[icon - 1] : null;
         });
@@ -306,7 +332,8 @@ export class DreamlandView extends BaseView<DreamlandViewArgs> {
             const roster = HeroRosterModel.instance.snapshot.heroes;
             this.lineupIcons.forEach((sprite, index) => {
                 const slot = state.slots[index];
-                const hero = slot && roster.find(row => row.id === slot.heroId);
+                const hero = slot && (roster.find(row => row.id === slot.heroId)
+                    ?? (state.assistance?.heroId === slot.heroId ? state.assistance : undefined));
                 const face = hero ? HeroCatalog.find(hero.templateId) : null;
                 sprite.node.parent!.active = !!face;
                 ResManager.setSprite(sprite.node, face?.icon ?? null, () => this.opened && this.lineupVersion === state.version);
@@ -423,7 +450,7 @@ export class DreamlandView extends BaseView<DreamlandViewArgs> {
         const read = (): MainFormation | null => {
             const state = DreamlandModel.instance.snapshot?.state;
             const main = HeroRosterModel.instance.snapshot.mainFormation;
-            if (!state || !main) {
+            if (state?.phase !== "READY" || !main) {
                 return null;
             }
             return {
@@ -440,7 +467,16 @@ export class DreamlandView extends BaseView<DreamlandViewArgs> {
         void UIManager.instance.openChild(this, FormationView, {
             title: "永恒梦境出阵",
             closeAfterSave: true,
-            formation: { read, save: (draft, done) => controller.saveFormation(draft, done) },
+            formation: {
+                read,
+                save: (draft, done) => controller.saveFormation(draft, done),
+                previewPower: draft => controller.previewFormationPower(draft),
+                watch: refresh => EventDispatcher.instance.on("dreamland.updated", this, refresh),
+                additionalHero: () => {
+                    const hero = DreamlandModel.instance.snapshot?.state.assistance;
+                    return hero && { id: hero.heroId, templateId: hero.templateId, level: hero.level, star: hero.star };
+                },
+            },
             complete: confirmed => {
                 if (confirmed && this.opened) {
                     controller.act("START");

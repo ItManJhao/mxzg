@@ -690,8 +690,35 @@ export class GameSocketClient {
       case "DREAMLAND_STATE_CHANGED": return "梦境进度已变化，正在同步";
       case "DREAMLAND_MILESTONE_LOCKED": return "通关对应楼层后可领取当前首通奖励";
       case "DREAMLAND_MILESTONE_CLAIMED": return "该首通奖励已领取";
+      case "DREAMLAND_ASSIST_ALREADY_DISPATCHED": return "今日已派遣英雄";
+      case "DREAMLAND_ASSIST_OWN_HERO": return "请选择自己拥有的英雄";
+      case "DREAMLAND_ASSIST_UNAVAILABLE": return "该好友英雄当前不可借用，请重新选择";
+      case "DREAMLAND_ASSIST_POWER": return "该英雄超出当前助战战力上限";
       case "DREAMLAND_REQUEST_INVALID": return "梦境操作参数无效，请重新选择";
       case "DREAMLAND_REQUEST_CONFLICT": return "梦境操作与原请求不一致，请重新确认";
+      case "TRIAL_LEVEL": return "角色达到30级后开放勇者试炼";
+      case "TRIAL_DIFFICULTY_ALREADY_SELECTED": return "今日已选择难度";
+      case "TRIAL_DIFFICULTY_LOCKED": return "需要通关上一难度并达到对应战力";
+      case "TRIAL_DIFFICULTY_UNAVAILABLE": return "该难度的守军规则尚未开放";
+      case "TRIAL_FORMATION_INVALID": return "请选择满足要求的试炼英雄";
+      case "TRIAL_NO_LIVING_HERO": return "试炼阵容中没有可出战的英雄";
+      case "TRIAL_NODE_LOCKED": return "请先完成前面的关卡";
+      case "TRIAL_CHEST_CLAIMED": return "该试炼宝箱已领取";
+      case "TRIAL_BATTLE_UNAVAILABLE": return "当前战斗无法开始，请稍后重试";
+      case "TRIAL_OPPONENT_UNAVAILABLE": return "当前试炼守军的战斗规则尚未开放";
+      case "TRIAL_REVIVE_UNAVAILABLE": return "当前无法复活英雄";
+      case "TRIAL_ASSIST_POWER": return "该英雄超出试炼助战战力上限";
+      case "TRIAL_ASSIST_UNAVAILABLE": return "该支援当前不可操作，请重新选择";
+      case "TRIAL_STATE_CHANGED": return "试炼进度已更新，请重新操作";
+      case "TRIAL_CLOCK_REGRESSED": return "试炼刷新时间异常，请稍后重试";
+      case "TRIAL_REQUEST_INVALID":
+      case "TRIAL_REQUEST_CONFLICT": return "试炼操作已失效，请重新确认";
+      case "TRIAL_SHOP_INSUFFICIENT": return "试炼之血不足";
+      case "TRIAL_SHOP_LIMIT": return "该商品已达到本周限购";
+      case "TRIAL_SHOP_OFFER_UNAVAILABLE": return "该试炼商品当前无法兑换";
+      case "TRIAL_SHOP_RESET": return "试炼商店已刷新，请重新选择";
+      case "TRIAL_SHOP_REQUEST_INVALID":
+      case "TRIAL_SHOP_REQUEST_REUSED": return "试炼兑换请求已失效，请重新确认";
       case "ARENA_LEVEL": return "角色达到8级后开放竞技场";
       case "ARENA_OPPONENT": return "对手已变化，请重新选择";
       case "ARENA_TICKETS": return "免费次数已用完，竞技场门票不足";

@@ -196,6 +196,22 @@ export class Protocol {
     public static readonly DREAMLAND_STATE = "dreamland.state";
     /** 在服务端确认的状态版本上执行一次梦境操作。 */
     public static readonly DREAMLAND_ACT = "dreamland.act";
+    /** 读取本日派遣、已选支援和好友提供的英雄。 */
+    public static readonly DREAMLAND_ASSISTANCE = "dreamland.assistance";
+    /** 读取同服通关排行、本人名次与零点奖励档。 */
+    public static readonly DREAMLAND_RANKING = "dreamland.ranking";
+    /** 预估独立草稿与已选好友助战的服务端战力。 */
+    public static readonly DREAMLAND_FORMATION_POWER = "dreamland.formation.power";
+    /** 读取上海自然日的试炼难度、进度和恢复战报。 */
+    public static readonly TRIAL_STATE = "trial.state";
+    /** 执行试炼选难度、布阵、挑战、领奖与好友支援。 */
+    public static readonly TRIAL_ACT = "trial.act";
+    /** 查询当日派遣、已借用和可用好友支援。 */
+    public static readonly TRIAL_ASSISTANCE = "trial.assistance";
+    /** 读取勇者试炼周货架。 */
+    public static readonly TRIAL_SHOP = "trial.shop";
+    /** 使用试炼之血按本周报价兑换。 */
+    public static readonly TRIAL_SHOP_BUY = "trial.shop.buy";
     /** 查询新手竞技场的对手、次数、积分与历史。 */
     public static readonly ARENA_STATE = "arena.state";
     /** 请求重新匹配一组配置对手。 */
@@ -294,6 +310,8 @@ export type ReadProtocol = typeof Protocol.SESSION_HEARTBEAT | typeof Protocol.G
     | typeof Protocol.MARKET_LIST | typeof Protocol.BLACK_MARKET_LIST | typeof Protocol.SMITH_PREVIEW
     | DailyDungeonRoutes["list"]
     | typeof Protocol.TOWER_STATE | typeof Protocol.DREAMLAND_STATE | typeof Protocol.ARENA_STATE | typeof Protocol.ARENA_REPLAY
+    | typeof Protocol.DREAMLAND_ASSISTANCE | typeof Protocol.DREAMLAND_RANKING | typeof Protocol.DREAMLAND_FORMATION_POWER
+    | typeof Protocol.TRIAL_STATE | typeof Protocol.TRIAL_ASSISTANCE | typeof Protocol.TRIAL_SHOP
     | typeof Protocol.ARENA_RANKING | typeof Protocol.ARENA_SEASON | typeof Protocol.ARENA_DEFENSE
     | typeof Protocol.ARENA_SHOP
     | typeof Protocol.GUILD_LIST | typeof Protocol.GUILD_SHOP_LIST | typeof Protocol.GUILD_DONATION_INFO
@@ -322,6 +340,7 @@ export type RoleOperationProtocol = typeof Protocol.HERO_SUMMON | typeof Protoco
     | typeof Protocol.VIP_CLAIM | typeof Protocol.QUEST_CLAIM | typeof Protocol.RANKING_LIKE
     | typeof Protocol.CHAPTER_QUICK_BATTLE_CLAIM | typeof Protocol.MAIL_CHANGE | typeof Protocol.FRIEND_CHANGE
     | typeof Protocol.TOWER_CHALLENGE | typeof Protocol.TOWER_SWEEP | typeof Protocol.DREAMLAND_ACT
+    | typeof Protocol.TRIAL_ACT | typeof Protocol.TRIAL_SHOP_BUY
     | typeof Protocol.TOWER_MILESTONE_CLAIM | typeof Protocol.ARENA_CHALLENGE | typeof Protocol.ARENA_TICKET_BUY
     | typeof Protocol.ARENA_CHEST_CLAIM | typeof Protocol.ARENA_LIKE | typeof Protocol.ARENA_DEFENSE_SAVE
     | typeof Protocol.ARENA_SHOP_BUY | typeof Protocol.CHAT_SEND | typeof Protocol.CHAT_READ;
@@ -339,8 +358,165 @@ export type AuthenticatedGameProtocol = ReadProtocol | RoleOperationProtocol | C
     | typeof Protocol.ROLE_PEERAGE_DISPLAY;
 
 /** 梦境挑战的持久行为与客户端等待阶段。 */
-export type DreamlandAction = "START" | "SELECT_BUFF" | "NEXT" | "END" | "CLAIM" | "SAVE_FORMATION";
+export type DreamlandAction = "START" | "SELECT_BUFF" | "NEXT" | "END" | "CLAIM" | "SAVE_FORMATION"
+    | "DISPATCH_ASSIST" | "SELECT_ASSIST" | "CLEAR_ASSIST";
 export type DreamlandPhase = "READY" | "SELECT_BUFF" | "NEXT_BATTLE" | "RESULT";
+
+/** 试炼模块接受的状态变更操作，由服务端校验当前难度、节点与请求版本。 */
+export type TrialAction = "selectDifficulty" | "saveFormation" | "fight" | "claim" | "revive"
+    | "dispatchAssist" | "selectAssist" | "cancelAssist";
+
+/** 原难度档位、所需战力和难度窗口展示的整轮奖励。 */
+export interface TrialDifficulty {
+    readonly id: number;
+    readonly minimumPower: number;
+    readonly rewards: readonly DreamlandRewardAmount[];
+    readonly combatReady: boolean;
+}
+
+/** 守方一个真实站位的头像数据与可恢复生命。 */
+export interface TrialOpponentHero {
+    readonly position: number;
+    readonly templateId: number;
+    readonly level: number;
+    readonly star: number;
+    readonly element: number;
+    readonly hp: number;
+    readonly maxHp: number;
+}
+
+/** 已冻结守方的身份、战力、阵型和英雄。 */
+export interface TrialOpponent {
+    readonly name: string;
+    readonly power: number;
+    readonly level: number;
+    readonly avatarId: number;
+    readonly formationId: number;
+    readonly heroes: readonly TrialOpponentHero[];
+}
+
+/** 原地图节点、服务端可用状态及预览奖励。 */
+export interface TrialNode {
+    readonly node: number;
+    readonly type: "battle" | "chest";
+    readonly status: "locked" | "available" | "cleared" | "blocked";
+    readonly displayLevel: number;
+    readonly rewards: readonly DreamlandRewardAmount[];
+    readonly opponent?: TrialOpponent;
+}
+
+/** 当日已参战英雄的持久生命值。 */
+export interface TrialHeroHealth {
+    readonly heroId: string;
+    readonly hp: number;
+    readonly maxHp: number;
+}
+
+/** 服务端冻结的最近一次挑战和原二进制战报数据。 */
+export interface TrialBattle {
+    readonly battleId: string;
+    readonly node: number;
+    readonly won: boolean;
+    readonly replay: Readonly<Record<string, unknown>>;
+}
+
+/** 权威试炼快照。difficulty 为 0 时等待当天选择；resetAtSeconds 是上海次日零点。 */
+export interface TrialState {
+    readonly version: number;
+    readonly minimumLevel: number;
+    readonly resetAtSeconds: number;
+    readonly difficulty: number;
+    readonly maxDifficulty: number;
+    readonly completedDifficulty: number;
+    readonly currentNode: number;
+    readonly reviveUsed: number;
+    readonly reviveLimit: number;
+    readonly reviveCost?: DreamlandRewardAmount;
+    readonly formationId: number;
+    readonly slots: readonly DreamlandSlot[];
+    readonly nodes: readonly TrialNode[];
+    readonly heroHealth: readonly TrialHeroHealth[];
+    readonly todayRewards: readonly DreamlandRewardAmount[];
+    readonly battle?: TrialBattle;
+    readonly difficulties: readonly TrialDifficulty[];
+}
+
+/** 指令携带服务端版本及本次操作需要的选择，标识始终作为字符串传输。 */
+export interface TrialCommand {
+    readonly requestId: string;
+    readonly expectedVersion: number;
+    readonly action: TrialAction;
+    readonly choice?: number;
+    readonly formationId?: number;
+    readonly slots?: readonly DreamlandSlot[];
+    readonly targetId?: string;
+    readonly heroIds?: readonly string[];
+}
+
+/** 已提交的原请求、角色资产版本和可安全重放的试炼状态。 */
+export interface TrialSettlement {
+    readonly requestId: string;
+    readonly roleId: string;
+    readonly assetRevision: number;
+    readonly action: TrialAction;
+    readonly state: TrialState;
+    readonly actual?: unknown;
+}
+
+/** 试炼支援英雄的冻结属性摘要与当天已出战状态。 */
+export interface TrialAssistHero {
+    readonly roleId: string;
+    readonly roleName: string;
+    readonly heroId: string;
+    readonly templateId: number;
+    readonly level: number;
+    readonly star: number;
+    readonly power: number;
+    readonly used: boolean;
+}
+
+/** 当日派遣上限、允许借用战力及三个列表。 */
+export interface TrialAssistance {
+    readonly version: number;
+    readonly resetAtSeconds: number;
+    readonly dispatched: readonly TrialAssistHero[];
+    readonly selected: readonly TrialAssistHero[];
+    readonly available: readonly TrialAssistHero[];
+    readonly dispatchLimit: number;
+    readonly maxAssistPower: number;
+}
+
+/** 原货位、单份价格和本周已购数量。 */
+export interface TrialShopOffer {
+    readonly id: number;
+    readonly reward: DreamlandRewardAmount;
+    readonly price: number;
+    readonly purchaseLimit: number;
+    readonly purchased: number;
+}
+
+/** 当周试炼之血货架及服务端确认的刷新时间。 */
+export interface TrialShopState {
+    readonly refreshAt: number;
+    readonly offers: readonly TrialShopOffer[];
+}
+
+/** 客户端确认原货位、自然周期及份数。价格按服务端配置。 */
+export interface TrialShopBuy {
+    readonly requestId: string;
+    readonly offerId: number;
+    readonly count: number;
+    readonly refreshAt: number;
+}
+
+/** 试炼商店成交回执，通用资产版本与实际发放来自同一事务。 */
+export interface TrialShopReceipt {
+    readonly requestId: string;
+    readonly roleId: string;
+    readonly assetRevision: number;
+    readonly state: TrialShopState;
+    readonly actual: unknown;
+}
 
 /** 只展示配置与待结算奖品，最终到账使用实际发奖回执。 */
 export interface DreamlandRewardAmount {
@@ -398,6 +574,7 @@ export interface DreamlandStateData {
     readonly pendingRewards: readonly DreamlandRewardAmount[];
     readonly milestones: readonly DreamlandMilestoneData[];
     readonly battle?: DreamlandBattleData;
+    readonly assistance?: DreamlandAssistHeroData;
 }
 
 /** 查询仅使用连接上当前角色，客户端不提交进度或标识。 */
@@ -411,6 +588,7 @@ export interface DreamlandActRequest {
     readonly choice?: number;
     readonly formationId?: number;
     readonly slots?: readonly DreamlandSlot[];
+    readonly targetId?: string;
 }
 
 /** 写操作的原始回执，角色与资产版本交给认证通道和奖励展示校验。 */
@@ -421,6 +599,69 @@ export interface DreamlandActData {
     readonly action: DreamlandAction;
     readonly state: DreamlandStateData;
     readonly actual?: unknown;
+}
+
+/** 只读预估基于可保存的独立站位和本次玩家看到的梦境版本。 */
+export interface DreamlandFormationPowerRequest {
+    readonly requestId: string;
+    readonly expectedVersion: number;
+    readonly formationId: number;
+    readonly slots: readonly DreamlandSlot[];
+}
+
+/** 回显请求号及同次服务器版本，只用于当前草稿展示。 */
+export interface DreamlandFormationPowerData {
+    readonly requestId: string;
+    readonly version: number;
+    readonly power: number;
+}
+
+/** 派遣当时的英雄镜像；不会成为借用角色的背包或英雄资产。 */
+export interface DreamlandAssistHeroData {
+    readonly roleId: string;
+    readonly roleName: string;
+    readonly heroId: string;
+    readonly templateId: number;
+    readonly level: number;
+    readonly star: number;
+    readonly power: number;
+}
+
+/** 同一自然日的派遣和借用状态；每天按服务器零点更新。 */
+export interface DreamlandAssistanceData {
+    readonly version: number;
+    readonly resetAtSeconds: number;
+    readonly canSelect: boolean;
+    readonly maxAssistPower: number;
+    readonly dispatched?: DreamlandAssistHeroData;
+    readonly selected?: DreamlandAssistHeroData;
+    readonly available: readonly DreamlandAssistHeroData[];
+    readonly dispatchRewards: readonly DreamlandRewardAmount[];
+}
+
+/** 服务端排序后的行，零名次表示未上榜，零到达时间表示旧记录没有时间。 */
+export interface DreamlandRankEntryData {
+    readonly roleId: string;
+    readonly name: string;
+    readonly level: number;
+    readonly headId: number;
+    readonly headBorderId: number;
+    readonly power: number;
+    readonly floor: number;
+    readonly rank: number;
+    readonly achievedAtSeconds: number;
+}
+
+/** 当前区服排行榜以及下一次结算的奖励区间。 */
+export interface DreamlandRankingData {
+    readonly entries: readonly DreamlandRankEntryData[];
+    readonly own: DreamlandRankEntryData;
+    readonly rewardTiers: readonly Readonly<{
+        minRank: number;
+        maxRank: number;
+        rewards: readonly DreamlandRewardAmount[];
+    }>[];
+    readonly resetAtSeconds: number;
 }
 
 /** 协议目录的可读说明，不存玩家数据。 */
@@ -520,6 +761,14 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.TOWER_MILESTONE_CLAIM, module: "幻境之塔", description: "领取通关里程碑奖励" },
     { name: Protocol.DREAMLAND_STATE, module: "永恒梦境", description: "读取梦境挑战、阵容与可恢复战报" },
     { name: Protocol.DREAMLAND_ACT, module: "永恒梦境", description: "执行梦境挑战、增益、布阵或领取操作" },
+    { name: Protocol.DREAMLAND_ASSISTANCE, module: "永恒梦境", description: "读取派遣和可用好友支援" },
+    { name: Protocol.DREAMLAND_RANKING, module: "永恒梦境", description: "读取同服排行与奖励档" },
+    { name: Protocol.DREAMLAND_FORMATION_POWER, module: "永恒梦境", description: "预估梦境布阵及好友助战的战力" },
+    { name: Protocol.TRIAL_STATE, module: "勇者试炼", description: "读取当天难度、挑战和英雄生命" },
+    { name: Protocol.TRIAL_ACT, module: "勇者试炼", description: "执行试炼挑战、宝箱、布阵或支援" },
+    { name: Protocol.TRIAL_ASSISTANCE, module: "勇者试炼", description: "读取当天派遣和好友支援" },
+    { name: Protocol.TRIAL_SHOP, module: "勇者试炼", description: "读取试炼之血兑换货架" },
+    { name: Protocol.TRIAL_SHOP_BUY, module: "勇者试炼", description: "兑换试炼商品" },
     { name: Protocol.ARENA_STATE, module: "竞技场", description: "读取当前对手、积分、次数与战报列表" },
     { name: Protocol.ARENA_REFRESH, module: "竞技场", description: "刷新当前对手" },
     { name: Protocol.ARENA_CHALLENGE, module: "竞技场", description: "发起挑战并结算积分与奖励" },

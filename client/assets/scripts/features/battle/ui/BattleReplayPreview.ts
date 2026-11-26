@@ -134,7 +134,8 @@ export class BattleReplayPreview {
                     namedStatuses.add(row.idx);
                 }
                 if (step.kind === "damage" && row.type === 100) BattleAttackUtils.damageSounds(row);
-                if (step.kind === "revival" && row.type !== 154) {
+                // 旧自体重生和队友复活共用回放事件，按对应的原 Buff 类型校验资源。
+                if (step.kind === "revival" && row.type !== (BattleReplayUtils.isSelfRebirthBuff(step.configId) ? 150 : 154)) {
                     throw new Error("战报复活表现与旧技能类型不符：" + step.configId);
                 }
                 if (step.kind === "presentation") {
@@ -372,7 +373,7 @@ export class BattleReplayPreview {
             const values = Array.from(activeBuffs.get(id)!.values());
             const counts = new Map<number, number>();
             for (const configId of values) {
-                if (selected.get(configId)?.buff_icon) {
+                if (BattleAttackUtils.buffIconPath(selected.get(configId)?.buff_icon ?? 0)) {
                     counts.set(configId, (counts.get(configId) ?? 0) + 1);
                 }
             }
@@ -486,7 +487,7 @@ export class BattleReplayPreview {
                     UiKitUtils.setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, "独立冰冻验收");
                 }
             };
-            /** 同一动作的帧、声音互不依赖，资源池合并其他动作重复引用的路径。 */
+            /** 同时载入动作的帧和声音，或载入旧状态栏实际会显示的 Buff 图标。 */
             const loadActionAssets = async (row: BuffRow) => {
                 if (BattleAttackUtils.isActionType(row.type) || row.type === 100) {
                     const plan = row.type === 100 ? null : attackPlans.get(row.idx) ?? BattleAttackUtils.plan(row);
@@ -496,9 +497,11 @@ export class BattleReplayPreview {
                         effectFrames && Promise.all(effectFrames).then(sequence => { frames.set(row.idx, sequence); }),
                         ...actionSounds.map(async name => { sounds.set(name, await assets.loadPath("audio/" + name, "AudioClip")); }),
                     ]);
-                } else if (row.buff_icon) {
-                    icons.set(row.idx, await assets.loadPath(
-                        "hero/ui/skill-icon_" + row.buff_icon + "/spriteFrame", "SpriteFrame"));
+                    return;
+                }
+                const iconPath = BattleAttackUtils.buffIconPath(row.buff_icon);
+                if (iconPath) {
+                    icons.set(row.idx, await assets.loadPath(iconPath, "SpriteFrame"));
                 }
             };
             for (const side of ["ally", "enemy"] as const) {
@@ -869,6 +872,8 @@ export class BattleReplayPreview {
             /** 配对后的命中可由动作到位或关场完成，按当前技能的出手和目标独立保存。 */
             let impacts = new Map<string, { ready: Promise<void>; finish: () => void }>();
             const hitReadiness = new WeakMap<BattleReplayStep, Promise<void>>();
+            /** 本次技能已播放的共享伤害表现，键为施法者和伤害配置。 */
+            let sharedDamageEffects = new Set<string>();
             /** 同一群攻动作按来源和每个目标各自确认到达。 */
             const impactKey = (actionId: number, sourceId: number, targetId: number) => `${actionId}:${sourceId}:${targetId}`;
             player = new BattleReplayPlayer({
@@ -884,9 +889,10 @@ export class BattleReplayPreview {
                         prefetchGroup();
                     });
                 },
-                /** 只给同技能、同来源且同目标的直接伤害配对可见命中，独立后续装饰不拖延打击。 */
+                /** 配对同技能、同来源且同目标的可见命中，并重置当前施法的共享伤害表现。 */
                 prepareSkill(events) {
                     impacts = new Map();
+                    sharedDamageEffects = new Set();
                     const actions = events.filter(step => step.kind === "presentation");
                     for (const step of events) {
                         const damage = selected.get(step.configId);
@@ -941,6 +947,7 @@ export class BattleReplayPreview {
                 /**
                  * 播放真实步骤或旧覆盖子动作；type8按战场比例往返，空动作仅等待配置延迟。
                  * 伤害、治疗和复活各自使用报告值生成独立数字，血条仍用实际血量；具名状态采用旧版飘字。
+                 * 末日使者的同组命中共用一次震屏、暗屏和伤害音效，各目标仍独立扣血及受击。
                  * 骨骼与配置都到收尾时才开始归位；直接伤害同时等原延迟和可见命中。
                  * 空动作也处理配置中的延时和暗屏；关闭后丢弃迟到回调，活跃帧失败统一取消。
                  */
@@ -954,15 +961,23 @@ export class BattleReplayPreview {
                     const cancelled = () => closed || epoch !== effectEpoch;
                     if (cancelled()) return;
                     const skillImpacts = impacts;
+                    const skillDamageEffects = sharedDamageEffects;
                     const effectRow = selected.get(step.configId);
                     const empty = step.kind === "presentation" && effectRow?.type === 1;
+                    let playSharedEffect = true;
                     if (effectRow && step.kind !== "buff.remove") {
                         const delay = BattleAttackUtils.delaySeconds(effectRow);
                         if (!empty || delay > 0) await wait(delay);
                         const hitReady = hitReadiness.get(step);
                         if (hitReady) await hitReady;
                         if (cancelled()) return;
-                        if (effectRow.shake === 1) {
+                        if (step.kind === "damage" && step.configId >= 5061301 && step.configId <= 5061303) {
+                            // 旧EffectInfo将这三个等级的群攻各自打包，再对整组播放一次公共效果。
+                            const key = `${step.sourceId}:${step.configId}`;
+                            playSharedEffect = !skillDamageEffects.has(key);
+                            skillDamageEffects.add(key);
+                        }
+                        if (playSharedEffect && effectRow.shake === 1) {
                             let shake = tween(shell.root);
                             // 旧Lua的0..5为六次，最后幅度保持1；每组位移净值为0。
                             for (let index = 0; index <= 5; index++) {
@@ -973,7 +988,7 @@ export class BattleReplayPreview {
                             }
                             shake.start();
                         }
-                        if (effectRow.dimly === 1) {
+                        if (playSharedEffect && effectRow.dimly === 1) {
                             Tween.stopAllByTarget(dimOpacity);
                             if (dimOpacity.isValid) dimOpacity.opacity = 0;
                             const times = BattleAttackUtils.dimly(effectRow);
@@ -1136,7 +1151,7 @@ export class BattleReplayPreview {
                     } else if (step.kind === "damage") {
                         const row = selected.get(step.configId)!;
                         // 回合伤害不冒充直接伤害100；这里只恢复已核对的伤害音效来源。
-                        if (row.type === 100) {
+                        if (playSharedEffect && row.type === 100) {
                             for (const name of BattleAttackUtils.damageSounds(row)) {
                                 audio.clip = sounds.get(name)!;
                                 AudioPreferences.playEffect(audio);

@@ -110,7 +110,12 @@ public class HeroMainPowerService {
             }
             team.add(hero);
         }
-        return new DraftPower(requestId, heroIds, total(scoreTeam(team)), roles.revision(roleId));
+        return new DraftPower(requestId, heroIds, scoreFormation(team), roles.revision(roleId));
+    }
+
+    /** 按统一元素规则计算已核验的队伍，不读取资料或写入角色战力。 */
+    public int scoreFormation(List<HeroProfile> team) {
+        return total(scoreTeam(team));
     }
 
     /** 规范实例与请求编号，防止同一个编号使用不同文本表示。 */
@@ -147,7 +152,7 @@ public class HeroMainPowerService {
 
     /** 从名册的真实上阵标记挑选主战成员，沿公共队伍规则计分。 */
     private int totalDeployed(List<HeroProfile> roster) {
-        return total(scoreTeam(roster.stream().filter(HeroProfile::deployed).toList()));
+        return scoreFormation(roster.stream().filter(HeroProfile::deployed).toList());
     }
 
     /** 同一份队伍光环应用到各自个人属性，不使用含格位或临时状态的战斗输入属性。 */

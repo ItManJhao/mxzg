@@ -9,8 +9,8 @@ import java.util.function.IntPredicate;
 import java.util.function.LongSupplier;
 
 public final class HeroBattleTargetUtils {
-    /** 已核对的选择器，未知类型不能降级为默认敌人。 */
-    private static final Set<Integer> SUPPORTED = Set.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 14, 18, 21, 22, 23);
+    /** 已核对的选择器，包括选择最多存活单位的列；未知类型仍拒绝。 */
+    private static final Set<Integer> SUPPORTED = Set.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 14, 18, 19, 21, 22, 23, 101);
 
     /** 纯规则工具禁止实例化。 */
     private HeroBattleTargetUtils() {}
@@ -80,6 +80,10 @@ public final class HeroBattleTargetUtils {
             if (selectors.contains(21) && (values.isEmpty() || values.stream().anyMatch(value -> value < 1 || value > 5))) {
                 throw new IllegalArgumentException("职业顺序选择参数无效：" + artId);
             }
+            if (selectors.contains(101) && ((artId < 4104201 || artId > 4104203) || !selectors.equals(List.of(3, 4, 8, 101))
+                    || count != 2 || !values.isEmpty())) {
+                throw new IllegalArgumentException("排除本次技能原目标的配置尚未核对：" + artId);
+            }
         }
     }
 
@@ -102,10 +106,17 @@ public final class HeroBattleTargetUtils {
         return select(plan, source, liveUnits, List.of(), context, ordinaryCounterattack, randomIndex);
     }
 
-    /** 倒下单位按阵营的死亡先后传入；旧5号选择器无倒下盟友时才回退到存活盟友。 */
+    /** 按旧规则依次筛选目标；阵亡候选保留倒下顺序，人数最多的一列保留该列候选原顺序。 */
     public static List<Unit> select(Plan plan, Unit source, List<Unit> liveUnits, List<Unit> fallenUnits,
                                     List<Unit> context, boolean ordinaryCounterattack,
                                     java.util.function.IntUnaryOperator randomIndex) {
+        return select(plan, source, liveUnits, fallenUnits, context, ordinaryCounterattack, randomIndex, null);
+    }
+
+    /** 战斗动作可提供首批技能目标；101排除这些单位后按原顺序取指定数量。 */
+    public static List<Unit> select(Plan plan, Unit source, List<Unit> liveUnits, List<Unit> fallenUnits,
+                                    List<Unit> context, boolean ordinaryCounterattack,
+                                    java.util.function.IntUnaryOperator randomIndex, Set<Integer> skillGoals) {
         var targets = new LinkedHashSet<Unit>(context);
         if (ordinaryCounterattack && !targets.isEmpty()) {
             return List.copyOf(targets);
@@ -152,6 +163,13 @@ public final class HeroBattleTargetUtils {
                         replace(targets, selected);
                     }
                 }
+                case 101 -> {
+                    if (skillGoals == null) {
+                        throw new IllegalArgumentException("排除目标缺少当前技能的首批选择结果：" + plan.artId());
+                    }
+                    replace(targets, targets.stream().filter(unit -> !skillGoals.contains(unit.id()))
+                        .limit(count).toList());
+                }
                 case 11 -> replace(targets, targets.stream()
                     .sorted(Comparator.comparingDouble(unit -> unit.hp() * 1D / unit.maxHp()))
                     .limit(count).toList());
@@ -177,6 +195,7 @@ public final class HeroBattleTargetUtils {
                         .limit(count).toList());
                 }
                 case 18 -> forwardColumn(source, targets);
+                case 19 -> largestColumn(targets);
                 case 21 -> {
                     if (targets.stream().anyMatch(unit -> unit.job() == null)) {
                         throw new IllegalArgumentException("职业顺序选择缺少本场职业：" + plan.artId());
@@ -232,6 +251,23 @@ public final class HeroBattleTargetUtils {
                 .thenComparing(Comparator.reverseOrder())).orElseThrow();
         replace(targets, targets.stream().filter(unit -> (unit.position() - 1) % 4 == column)
             .sorted(Comparator.comparingInt(Unit::position)).toList());
+    }
+
+    /** 旧19选择人数最多的一列；旧HashMap遍历四列时同人数先取较小列号，忽略目标数量限制。 */
+    private static void largestColumn(LinkedHashSet<Unit> targets) {
+        var counts = new int[4];
+        for (var unit : targets) {
+            counts[(unit.position() - 1) % counts.length]++;
+        }
+        int largest = 0;
+        for (int column = 1; column < counts.length; column++) {
+            if (counts[column] > counts[largest]) {
+                largest = column;
+            }
+        }
+        int selectedColumn = largest;
+        replace(targets, targets.stream()
+            .filter(unit -> (unit.position() - 1) % counts.length == selectedColumn).toList());
     }
 
     /** 旧BuffSelector按首个已有状态的配置顺序排名，无匹配权重100，同权重保持原敌方次序。 */

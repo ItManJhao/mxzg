@@ -102,6 +102,12 @@ export interface ParsedBattleReplay {
 }
 
 export class BattleReplayUtils {
+    /** 识别森林之主和莫露可三档自体重生，复用同阶段死亡与阵营校验。 */
+    public static isSelfRebirthBuff(configId: number): boolean {
+        return Number.isInteger(configId)
+            && ((configId >= 3233301 && configId <= 3233303) || (configId >= 5074301 && configId <= 5074303));
+    }
+
     /** 将协议内的战报编码为播放器使用的字节；字段和完整事件链都通过后才交付。 */
     public static encodeVerified(replay: object): Uint8Array {
         const codec = (mxzg as unknown as { game: { BattleReplay: {
@@ -131,8 +137,9 @@ export class BattleReplayUtils {
         return this.parse(bytes).steps;
     }
 
-    /** 校验最多双方各8个单位；只有永恒梦境允许已阵亡的己方单位沿用0起始生命。 */
-    public static validateUnits(units: readonly WireUnit[], carriesDefeatedAllies = false): readonly BattleReplayUnit[] {
+    /** 校验双方最多各 8 人；梦境沿用己方零生命，试炼另允许守方沿用零生命。 */
+    public static validateUnits(units: readonly WireUnit[], carriesDefeatedAllies = false,
+        carriesDefeatedDefenders = false): readonly BattleReplayUnit[] {
         if (units.length < 2 || units.length > 16) throw new Error("战报单位数量无效");
         const ids = new Set<number>();
         const seats = new Set<string>();
@@ -165,7 +172,7 @@ export class BattleReplayUtils {
             if (star !== null && (star < 1 || star > 14)) {
                 throw new Error("战报星级范围无效");
             }
-            const lowHpAllowed = carriesDefeatedAllies && unit.faction === 1;
+            const lowHpAllowed = unit.faction === 1 ? carriesDefeatedAllies : carriesDefeatedDefenders;
             if (maxHp <= 0 || (initialHp === 0 && !lowHpAllowed) || initialHp > maxHp || finalHp > maxHp) {
                 throw new Error("战报单位生命范围无效");
             }
@@ -202,14 +209,15 @@ export class BattleReplayUtils {
         const idleMission = chapter?.idle ? chapter.index : 0;
         const configuredRoster = this.configuredRoster(report.scenario);
         const dreamland = !!configuredRoster && report.scenario.startsWith("dreamland:");
+        const trial = /^trial:[1-3]:(?:[1235679]|1[01345789])$/.test(report.scenario);
         const playerArena = /^arena:pvp:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(report.scenario);
-        const indexedRoster = !!chapter || !!configuredRoster || playerArena;
+        const indexedRoster = !!chapter || !!configuredRoster || playerArena || trial;
         const maxRounds = dreamland ? 10 : playerArena || (configuredRoster && report.scenario.startsWith("arena:")) ? 20 : 15;
         if (report.schemaVersion !== 1 || (!indexedRoster && ["main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:charm", "audit:charm-death", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed"].indexOf(report.scenario) < 0)
             || (!indexedRoster && report.units.length !== ((["audit:control-teams", "audit:charm", "audit:charm-death"].includes(report.scenario)) ? 4 : (report.scenario === "main:1:1:3" || report.scenario === "audit:frozen") ? 3 : 2)) || report.rounds < 1 || report.rounds > maxRounds) {
             throw new Error("战报版本或场景不支持");
         }
-        const roster = this.validateUnits(report.units, dreamland);
+        const roster = this.validateUnits(report.units, dreamland || trial, trial);
         if (configuredRoster) {
             this.validateConfiguredRoster(report.scenario, roster, configuredRoster);
         }
@@ -350,7 +358,12 @@ export class BattleReplayUtils {
                         const reviving = event.kind === "revival";
                         if (reviving) {
                             const source = roster.find(unit => unit.unitId === event.sourceId)!;
-                            if (!skill || before !== 0 || change <= 0 || source.faction !== target.faction) {
+                            // 持续伤害阶段没有技能起止；只允许同阶段刚倒下的单位触发已接入的自体重生。
+                            const selfRebirth = this.isSelfRebirthBuff(event.configId);
+                            const validSelfRebirth = selfRebirth && source.unitId === target.unitId
+                                && deathsInPhase.has(event.targetId) && (skill !== null || phase.sourceId === 0);
+                            if ((selfRebirth ? !validSelfRebirth : !skill) || before !== 0 || change <= 0
+                                || source.faction !== target.faction) {
                                 throw new Error("战报复活目标或技能上下文无效");
                             }
                         }

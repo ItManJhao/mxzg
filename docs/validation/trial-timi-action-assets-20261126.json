@@ -1,0 +1,137 @@
+{
+  "scope": "勇者试炼提米三档替换普攻的已有目标特效帧",
+  "sourceActions": [
+    3155201,
+    3155202,
+    3155203
+  ],
+  "assetsTotal": 7,
+  "sources": [
+    {
+      "name": "skill-103050150",
+      "originalPvr": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103050150.pvr.ccz",
+      "originalPlist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103050150.plist",
+      "pvr": {
+        "bytes": 70524,
+        "sha256": "bc1be41e05137e0da847ef8f35080ee624bc738f1673a75a6cfa79287b9d9558"
+      },
+      "plist": {
+        "bytes": 4189,
+        "sha256": "32b324836c3dcfe8e03303957c0f9001e75c98b9a7dd661273d6ebb035b71c09"
+      },
+      "frames": 7,
+      "originalAudio": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/music/skill-103050150.mp3",
+      "audio": {
+        "bytes": 9030,
+        "sha256": "5facbdc8d3942decd8126b7ab6bf002aa95868ef31260b67398f203094ee8ce9"
+      }
+    }
+  ],
+  "files": [
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050150/skill-103050150_0.png",
+      "legacyFrame": "skill-103050150/0.png",
+      "canvasSize": [
+        83,
+        83
+      ],
+      "imageUuid": "31c68d86-7e07-4c64-8450-a384fed0aeb3",
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "beforeSha256": "e6d6fc89f8365df56aaf5e3d2e798a97e93fa384522574aa3aca8e9fc4a21f7c",
+      "afterSha256": "1fef9b5b89178593e827be6ae838b4f4e8c99c90466d59d2060b0e23df44f5e9",
+      "metaSha256Before": "a21238f5cb6ecc8c1a2849d3904c75cba7d113e181411e68022a9e3883c77767",
+      "metaSha256After": "af37cf4d8a815ab9abbc81219ee06c0c814cadaba13e04474350bbbec01bb973"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050150/skill-103050150_1.png",
+      "legacyFrame": "skill-103050150/1.png",
+      "canvasSize": [
+        83,
+        83
+      ],
+      "imageUuid": "389e550f-e17f-424f-b81b-3ddc20b1030c",
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "beforeSha256": "910d93b9fc6fd86354c990091addf75c33bd34d13019c89c97d3ec3056e4b158",
+      "afterSha256": "fc1f5a8bf40d57d8c2329f4accb47f2c6657b68a7f8d2b0b97c091718434b57e",
+      "metaSha256Before": "66d09d847342ebb769fc9aeb6c0ba54880950ef53b8991ed3d33de0e8720aecf",
+      "metaSha256After": "fba22aa33a3d3ecf1907e5911639bf852f81f1ed84fb880fe84765438666ae45"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050150/skill-103050150_2.png",
+      "legacyFrame": "skill-103050150/2.png",
+      "canvasSize": [
+        83,
+        83
+      ],
+      "imageUuid": "4dbc32df-78f5-4c93-999a-5a870fca49ff",
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "beforeSha256": "a3ee289aa7505417fc3d6ed72d8c65d0b7d16b453bf8b27850ac1268d6d4df9c",
+      "afterSha256": "b7d6a13a8425de88e83e86d2a56f63519b6565ce961ca150f73198caa648e66e",
+      "metaSha256Before": "3d65b0d47ee68cfb65d8520619f75afee009bbbb3de08594dfd5b2b3fadd4e1e",
+      "metaSha256After": "35d03fcb978ca4a1d6ce8e8d9ac212dcb93dfdfc4a9992b944a94383f72bd35a"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050150/skill-103050150_3.png",
+      "legacyFrame": "skill-103050150/3.png",
+      "canvasSize": [
+        83,
+        83
+      ],
+      "imageUuid": "16c0dfe7-f147-4ba6-888d-28e77680bd70",
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "beforeSha256": "c0a81ae04147cecd5fa15b958c5ad56d029d58928a7b21939a16b2e977efcb79",
+      "afterSha256": "a2a03121b3f50925ed3f1d0a5c754579a5374735b97ff2f4076bf2dce3dc5d30",
+      "metaSha256Before": "25d604421248766282b36776275c1e51780bf3b55e281bf5f19a6d454fda1893",
+      "metaSha256After": "0e18284af6dca446308c961d704ee89477cbdbec411e015086af08d5a1133420"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050150/skill-103050150_4.png",
+      "legacyFrame": "skill-103050150/4.png",
+      "canvasSize": [
+        83,
+        83
+      ],
+      "imageUuid": "a0be925c-9ce4-4e80-83c1-fc3e78c011c7",
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "beforeSha256": "eb820abc51f4df2d1d56575aa2edb39b7c8fa5554c46a49a746d6972be30fb1e",
+      "afterSha256": "fb958dce95bc77ce4fa1afd3401016b6696a920ae6e13ffadddffd0c933e40c8",
+      "metaSha256Before": "cd30a59606836c762a8f74e68312d8a02c4a581f7f284bf7d3102e042f19e298",
+      "metaSha256After": "02dbbfa1df9562d714b2393e44f6d89b3d3e3e53b56870f858edf29ee82ebb8b"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050150/skill-103050150_5.png",
+      "legacyFrame": "skill-103050150/5.png",
+      "canvasSize": [
+        83,
+        83
+      ],
+      "imageUuid": "8e6a4934-ead3-43d9-87ec-138911e1f56e",
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "beforeSha256": "99f4b5ca7f628d63c86687db41a7175cd552aed53ae3f6000b1e64d56bb1c877",
+      "afterSha256": "877591c3d4248b070d247facf8a79582653717b564a194e2a05466ac9cbddf50",
+      "metaSha256Before": "fe2078d8a7bcbec709e6fa76739e3924a74cf7667eaf445a8465b4f7e62abd51",
+      "metaSha256After": "cb03f76f060f28c6feb2af53f5c2fab65f5d16f74c109358da48835b861c4eb6"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103050150/skill-103050150_6.png",
+      "legacyFrame": "skill-103050150/6.png",
+      "canvasSize": [
+        83,
+        83
+      ],
+      "imageUuid": "187472ab-5b09-4372-b774-c36f08b278e4",
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "beforeSha256": "28f74e9b22e8a1496e194da83b98752091d3c558649650a40cf383969910f1c5",
+      "afterSha256": "bbc222df47048fe117c282234b112e69a94f4cb8da527ac4dbff8324617e8a6e",
+      "metaSha256Before": "2ec5b413cf8a63931d6d3aaeeffef527deec28463e67864801537ad9082c7711",
+      "metaSha256After": "d73f94b3b75a4c2f029b66f1d6688e44087543857c6189f49786c1d248d44f74"
+    }
+  ]
+}

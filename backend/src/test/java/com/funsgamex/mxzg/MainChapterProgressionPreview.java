@@ -10,6 +10,8 @@ import com.funsgamex.mxzg.campaign.IdleActivityMaintenanceService;
 import com.funsgamex.mxzg.campaign.MainChapterMilestoneRules;
 import com.funsgamex.mxzg.campaign.MainChapterMilestoneService;
 import com.funsgamex.mxzg.campaign.MainChapterRules;
+import com.funsgamex.mxzg.hero.HeroBattleAttributeUtils;
+import com.funsgamex.mxzg.hero.HeroBattleChapterScenario.Unit;
 import com.funsgamex.mxzg.hero.HeroGrowthRules;
 import com.funsgamex.mxzg.lineup.Lineup;
 import com.funsgamex.mxzg.lineup.MainFormationCommandService;
@@ -18,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -194,6 +197,19 @@ public final class MainChapterProgressionPreview {
             lineup.add(new Lineup.Slot(member.getKey(), heroId));
         }
         return List.copyOf(lineup);
+    }
+
+    /** 600 层隔离结算验收用强队。只加强测试攻方，原守军、回放、胜负和奖品由实际逻辑计算。 */
+    static List<Unit> dreamlandAcceptanceTeam(List<Unit> frozenTeam) {
+        var result = new ArrayList<Unit>();
+        for (var unit : frozenTeam) {
+            var attributes = new HashMap<>(unit.attributes());
+            attributes.computeIfPresent(220, (key, amount) -> Math.multiplyExact(amount, 8L));
+            attributes.computeIfPresent(223, (key, amount) -> Math.multiplyExact(amount, 4L));
+            result.add(new Unit(unit.id(), unit.faction(), unit.template(), unit.level(), unit.star(), unit.stage(),
+                unit.position(), attributes, HeroBattleAttributeUtils.opening(attributes), unit.skills(), unit.portraitIconId()));
+        }
+        return List.copyOf(result);
     }
 
     /** 仅显式导入本测试宿主的身份探针；不被正式游戏装配，也不返回角色或凭证。 */

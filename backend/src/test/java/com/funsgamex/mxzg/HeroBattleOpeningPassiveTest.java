@@ -22,14 +22,138 @@ import com.funsgamex.mxzg.hero.HeroSkillPanelRules;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import tools.jackson.databind.ObjectMapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HeroBattleOpeningPassiveTest {
+    /** 菲林德之翼三档沿普攻伤害触发器，对原目标单独判定眩晕并按配置回合数移除。 */
+    @ParameterizedTest
+    @CsvSource({"1, 0.4, 1", "2, 0.5, 1", "3, 0.75, 2"})
+    void philinderOnlyStunsTheOrdinaryDamageTarget(int level, double chance, int rounds) {
+        var mapper = new ObjectMapper();
+        var rules = new HeroSkillPanelRules(mapper);
+        var elements = new HeroBattleElementRules(mapper);
+        var skills = rules.battleSchedule(List.of(new HeroEvolutionRules.Skill(103050180, 0)));
+        var engine = new HeroBattleHealingExecutor(rules, List.of(
+            new State(new Actor(1, skills), 1, 2, 10000, 10000, 1000, 0, 0, 0),
+            new State(new Actor(2, List.of()), 2, 2, 10000, 10000, 0, 0, 0, 0),
+            new State(new Actor(3, List.of()), 2, 3, 10000, 10000, 0, 0, 0, 0)));
+        engine.bindCombatData(1, 10305018, Map.of(220, 1000L, 150, 500L));
+        engine.bindCombatData(2, 10305018, Map.of(150, 500L));
+        engine.bindCombatData(3, 10305018, Map.of(150, 500L));
+        engine.initializePassive(1, 103050182, level);
+        int stunId = 3182200 + level;
+        assertEquals(List.of(3182100 + level), engine.buffs(1).stream().map(entry -> entry.spec().id()).toList());
+
+        var observed = new ArrayList<Double>();
+        engine.beginRound(1, List.of(1, 2, 3), elements, value -> value >= 1D);
+        engine.act(1, 2, 100, elements, value -> {
+            observed.add(value);
+            return value >= 1D;
+        });
+        assertTrue(observed.contains(chance));
+        assertTrue(engine.buffs(2).isEmpty());
+
+        engine.act(1, 2, 100, elements, value -> value >= 1D || value == chance);
+        var stun = engine.buffs(2).stream().filter(entry -> entry.spec().id() == stunId).findFirst().orElseThrow();
+        assertEquals(1 + rounds, stun.expiresAt());
+        assertTrue(engine.buffs(3).isEmpty());
+        assertEquals(1, engine.buffs(1).size());
+        engine.expireAt(1 + rounds);
+        assertTrue(engine.buffs(2).isEmpty());
+    }
+
+    /** 菲林德之翼的眩晕概率同时受施控、免控与专属抗性影响，未命中不会留下控制实例。 */
+    @Test
+    void philinderStunUsesBothResistanceAttributesWithoutLeavingFailedControl() {
+        var mapper = new ObjectMapper();
+        var rules = new HeroSkillPanelRules(mapper);
+        var elements = new HeroBattleElementRules(mapper);
+        var engine = new HeroBattleHealingExecutor(rules, List.of(
+            new State(new Actor(1, List.of()), 1, 2, 10000, 10000, 1000, 0, 0, 0),
+            new State(new Actor(2, List.of()), 2, 2, 10000, 10000, 0, 0, 0, 0)));
+        engine.bindCombatData(1, 10305018, Map.of(219, 2500L));
+        engine.bindCombatData(2, 10305018, Map.of(212, 2500L, 217, 2000L));
+        engine.beginRound(1, List.of(1, 2), elements, chance -> chance >= 1D);
+
+        var attempts = new ArrayList<Double>();
+        engine.applyDizzy(3182203, 1, 2, chance -> {
+            attempts.add(chance);
+            return chance >= 0.6D;
+        });
+        assertEquals(1, attempts.size());
+        assertEquals(0.5625D, attempts.getFirst(), 1e-9);
+        assertTrue(engine.buffs(2).isEmpty());
+        assertNull(engine.lastControl(2));
+
+        engine.applyDizzy(3182203, 1, 2, chance -> chance >= 0.55D);
+        var control = engine.lastControl(2);
+        assertNotNull(control);
+        assertEquals(3182203, control.spec().id());
+        assertEquals(3, control.expiresAt());
+    }
+
+    /** 布兰特三档只在普攻完成后给自身叠加暴击，原有十层上限跨回合保留。 */
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2, 3})
+    void brantAddsCriticalOnlyAfterOrdinaryAttackAndKeepsTenStacks(int level) {
+        var mapper = new ObjectMapper();
+        var rules = new HeroSkillPanelRules(mapper);
+        var elements = new HeroBattleElementRules(mapper);
+        var schedule = rules.battleSchedule(List.of(new HeroEvolutionRules.Skill(103040120, 0),
+                new HeroEvolutionRules.Skill(103040121, 1), new HeroEvolutionRules.Skill(103040122, level)));
+        var engine = new HeroBattleHealingExecutor(rules, List.of(
+                new State(new Actor(1, schedule), 1, 2, 100000, 100000, 1000, 0, 0, 0),
+                new State(new Actor(2, List.of()), 2, 2, 100000, 100000, 0, 0, 0, 0)));
+        engine.bindCombatData(1, 10304012, Map.of(207, 700L, 220, 1000L, 150, 500L));
+        engine.bindCombatData(2, 10304012, Map.of(150, 500L));
+        engine.initializePassive(1, 103040122, level);
+        assertEquals(List.of(3122100 + level), engine.buffs(1).stream().map(entry -> entry.spec().id()).toList());
+
+        int buffId = 3122300 + level;
+        var order = List.of(1, 2);
+        var chances = new ArrayList<Double>();
+        DoublePredicate decision = chance -> {
+            chances.add(chance);
+            return chance >= 1D;
+        };
+        engine.beginRound(1, order, elements, decision);
+        engine.act(1, 2, 100, elements, decision);
+        assertTrue(engine.buffs(1).stream().noneMatch(entry -> entry.spec().id() == buffId));
+        assertEquals(List.of(103040121), engine.trace().stream().filter(event -> event.kind().equals("skill.begin"))
+                .map(HeroBattleHealingExecutor.Trace::configId).toList());
+
+        engine.beginRound(2, order, elements, decision);
+        chances.clear();
+        engine.act(1, 2, 100, elements, decision);
+        assertTrue(chances.stream().anyMatch(chance -> Math.abs(chance - 0.07D) < 1e-9));
+        assertFalse(chances.stream().anyMatch(chance -> Math.abs(chance - 0.17D) < 1e-9));
+        var boost = engine.buffs(1).stream().filter(entry -> entry.spec().id() == buffId).findFirst().orElseThrow();
+        assertEquals(1001, boost.expiresAt());
+        assertTrue(engine.buffs(2).stream().noneMatch(entry -> entry.spec().id() == buffId));
+
+        engine.beginRound(3, order, elements, decision);
+        chances.clear();
+        engine.act(1, 2, 100, elements, decision);
+        assertTrue(chances.stream().anyMatch(chance -> Math.abs(chance - 0.17D) < 1e-9));
+        for (int attack = 0; attack < 10; attack++) {
+            engine.act(1, 2, 100, elements, decision);
+        }
+        assertEquals(10L, engine.buffs(1).stream().filter(entry -> entry.spec().id() == buffId).count());
+        engine.beginRound(4, order, elements, decision);
+        chances.clear();
+        engine.act(1, 2, 100, elements, decision);
+        assertTrue(chances.stream().anyMatch(chance -> Math.abs(chance - 1.07D) < 1e-9));
+        assertFalse(chances.stream().anyMatch(chance -> chance > 1.07D + 1e-9));
+    }
+
     /** 两套圣器只在出手后按旧20%判定，命中自身并在原两回合期限结束移除。 */
     @ParameterizedTest
     @CsvSource({"500010001, 12001001, 12001101, 201", "500020001, 12002001, 12002101, 291"})
@@ -145,7 +269,7 @@ class HeroBattleOpeningPassiveTest {
         engine.bindCombatData(1, 10205007, Map.of(220, 1000L, 150, 500L));
         engine.bindCombatData(2, 10205007, Map.of(150, 500L));
         engine.initializePassive(1, 102050072, 3);
-        assertThrows(IllegalArgumentException.class, () -> rules.openingPassiveArts(105040032, 3));
+        assertThrows(IllegalArgumentException.class, () -> rules.openingPassiveArts(105040032, 4));
 
         engine.beginRound(1, order, elements, chance -> true);
         engine.act(1, 2, 100, elements, chance -> true);
@@ -246,6 +370,59 @@ class HeroBattleOpeningPassiveTest {
         assertEquals(List.of(buff), rules.openingPassiveArts(skill, 3).stream()
             .flatMap(art -> art.buffs().stream()).toList());
         assertThrows(IllegalArgumentException.class, () -> rules.openingPassiveArts(skill, 4));
+    }
+
+    /** 暗黑女爵的两种受击监听均强化自身，普攻结束监听保持独立，并读取本档数值与期限。 */
+    @ParameterizedTest
+    @CsvSource({"1, 200", "2, 300", "3, 500"})
+    void darkDuchessUsesMatchingLevelForEveryOpeningListener(int level, int amount) {
+        var mapper = new ObjectMapper();
+        var rules = new HeroSkillPanelRules(mapper);
+        var engine = new HeroBattleHealingExecutor(rules, List.of(
+                new State(new Actor(1, List.of()), 1, 2, 100_000, 100_000, 1000, 0, 0, 0),
+                new State(new Actor(2, List.of()), 2, 2, 100_000, 100_000, 1000, 0, 0, 0)));
+        engine.bindCombatData(1, 10504003, Map.of(220, 1000L, 150, 500L));
+        engine.bindCombatData(2, 10101001, Map.of(220, 1000L, 150, 500L));
+        engine.initializePassive(1, 105040032, level);
+        engine.initializePassive(1, 105040033, level);
+        assertEquals(List.of(5032100 + level, 5032200 + level, 5033100 + level),
+                engine.buffs(1).stream().map(entry -> entry.spec().id()).toList());
+
+        engine.beginRound(1, List.of(1, 2), new HeroBattleElementRules(mapper), chance -> true);
+        engine.signal(178, 1, 2);
+        engine.signal(179, 1, 2);
+        engine.signal(172, 1, 1);
+        int attackBuff = 5032300 + level;
+        int criticalBuff = 5033300 + level;
+        assertEquals(2, engine.buffs(1).stream().filter(entry -> entry.spec().id() == attackBuff
+                && entry.sourceId() == 1 && entry.expiresAt() == 3).count());
+        assertEquals(1, engine.buffs(1).stream().filter(entry -> entry.spec().id() == criticalBuff
+                && entry.sourceId() == 1 && entry.expiresAt() == 3).count());
+        assertEquals(amount, rules.controlAttribute(attackBuff).amount());
+        assertEquals(amount, rules.controlAttribute(criticalBuff).amount());
+        assertTrue(engine.buffs(2).isEmpty());
+    }
+
+    /** 利姆的单次伤害上限在三级降到最大生命三成，面板永久加成不会作为监听重复安装。 */
+    @ParameterizedTest
+    @CsvSource({"1, 10000", "2, 10000", "3, 3000"})
+    void limCapsIncomingRegularDamageAtConfiguredLevel(int level, int cap) {
+        var mapper = new ObjectMapper();
+        var rules = new HeroSkillPanelRules(mapper);
+        var elements = new HeroBattleElementRules(mapper);
+        var attacks = rules.battleSchedule(List.of(new HeroEvolutionRules.Skill(103040050, 0)));
+        var engine = new HeroBattleHealingExecutor(rules, List.of(
+                new State(new Actor(1, attacks), 1, 2, 10_000, 10_000, 40_000, 0, 0, 0),
+                new State(new Actor(2, List.of()), 2, 2, 10_000, 10_000, 100, 0, 0, 0)));
+        engine.bindCombatData(1, 10304005, Map.of(220, 40_000L, 150, 500L));
+        engine.bindCombatData(2, 10405009, Map.of(220, 100L, 150, 500L));
+        engine.initializePassive(2, 104050092, level);
+        assertEquals(List.of(4092400 + level), engine.buffs(2).stream().map(entry -> entry.spec().id()).toList());
+
+        engine.beginRound(1, List.of(1, 2), elements, chance -> true);
+        engine.act(1, 2, 100, elements, chance -> true);
+        assertEquals(-cap, engine.damages().getFirst().actual());
+        assertEquals(10_000 - cap, engine.state(2).hp());
     }
 
     /** 安妮雅受击仍按自己当时的攻击自疗，使用三级90%倍率，并消费原一次性攻击覆盖。 */

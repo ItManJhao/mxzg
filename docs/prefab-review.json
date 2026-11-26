@@ -3243,6 +3243,238 @@
     "sha256": "8e680ea5deb946b9b07dbd3139a1e4b7b9ef0b8d8b78d626b1cc1d1979cd8aa6"
   },
   {
+    "path": "client/assets/bundles/module/dreamland/prefabs/DreamlandSocialCell.prefab",
+    "classes": [
+      "DreamlandSocialCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 524,
+        "height": 83
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "fff8962c646fb66954748c698ea64faac037409dc83f5e1ff937f9c525098776"
+  },
+  {
+    "path": "client/assets/bundles/module/dreamland/prefabs/DreamlandSocialView.prefab",
+    "classes": [
+      "DreamlandSocialView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "c926684edd8aea6b5d6cb836fbbc04aa876f8fc695377229c8d868bf1cab57ff"
+  },
+  {
+    "path": "client/assets/bundles/module/dreamland/prefabs/DreamlandSupportCell.prefab",
+    "classes": [
+      "DreamlandSupportCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 566,
+        "height": 152
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 1
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroName",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CombatPower",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "OwnerName",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "0a48557b287bf8bee608c8354209e08627846fe12f549d6730b365722ec41cad"
+  },
+  {
+    "path": "client/assets/bundles/module/dreamland/prefabs/DreamlandSupportView.prefab",
+    "classes": [
+      "DreamlandSupportView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 1
+    },
+    "specialAnchors": [
+      {
+        "node": "CurrentSelectionTitle",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "AvailableSelectionTitle",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "23092e4427536bc85e78cc9de51b9bf334d46c974ac13bb240eea31bc838b9ba"
+  },
+  {
     "path": "client/assets/bundles/module/dreamland/prefabs/DreamlandView.prefab",
     "classes": [
       "DreamlandView"
@@ -3285,7 +3517,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "07f324b7efeec8972b9cb33469265aa2c134f02c387d1a7894d48412e540b81d"
+    "sha256": "d21e4f9429a41b4e3194670ffab31abac423b949e5369d7598a241c15862c677"
   },
   {
     "path": "client/assets/bundles/module/dungeon/prefabs/DungeonHallCardView.prefab",
@@ -9929,6 +10161,359 @@
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
     "sha256": "fd026f5b506aeb33f05677cae0968ab710e2502ca6402448add7256ba1374e83"
+  },
+  {
+    "path": "client/assets/bundles/module/trial/prefabs/TrialDifficultyView.prefab",
+    "classes": [
+      "TrialDifficultyView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 6
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "ad4bee00b72171d70fa81bdd5b0a4b02758e8508ef5b66f78aff07815d20000a"
+  },
+  {
+    "path": "client/assets/bundles/module/trial/prefabs/TrialShopCell.prefab",
+    "classes": [
+      "TrialShopCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 168,
+        "height": 214
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 1
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "c0691741c00d47ef9db274af82e7efff6accb80e2d40a1bc3d38979c1244c781"
+  },
+  {
+    "path": "client/assets/bundles/module/trial/prefabs/TrialShopView.prefab",
+    "classes": [
+      "TrialShopView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "a2e454b4a3ae12cf7f91486a439d603ee6f2b5827e6fafea2ab4f6b593046aa6"
+  },
+  {
+    "path": "client/assets/bundles/module/trial/prefabs/TrialStageView.prefab",
+    "classes": [
+      "TrialStageView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 14
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "4a994736e78f03eb6387bad2855cd8f119ebe01c8f8b9a9f4f0fe1a83788a481"
+  },
+  {
+    "path": "client/assets/bundles/module/trial/prefabs/TrialSupportCell.prefab",
+    "classes": [
+      "TrialSupportCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 566,
+        "height": 152
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 1
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroName",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CombatPower",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "OwnerName",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "162e36766728e972cbdd049723f4c32296570c5865275866386aac574eed1eea"
+  },
+  {
+    "path": "client/assets/bundles/module/trial/prefabs/TrialSupportView.prefab",
+    "classes": [
+      "TrialSupportView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "e1c94fcfe2ef842ef34491f526826f9a4ea6088a7285bf5afc4bf8f349cc037a"
+  },
+  {
+    "path": "client/assets/bundles/module/trial/prefabs/TrialView.prefab",
+    "classes": [
+      "TrialView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "9621ecd45da5b65459da32ec7e4ae6a09dd2bb9908b40a08a4b6d3b3e1e1fd46"
   },
   {
     "path": "client/assets/bundles/module/vip/prefabs/VipBenefitCell.prefab",

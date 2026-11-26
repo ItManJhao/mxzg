@@ -43,6 +43,8 @@ export class HeroIconCellView extends Component {
 
     /** 英雄名册的品质框。其他用途的头像格不绑定此字段。 */
     @property(Sprite) rosterFrame: Sprite | null = null;
+    /** 支援等带品质框的头像仍显示元素；名册与出阵沿各自预制体的默认显示。 */
+    @property private showRankedElement = false;
 
     /** 名册品质框按日服编号 0～5 排列，编号 0 用于空位。 */
     @property([SpriteFrame]) rosterFrames: SpriteFrame[] = [];
@@ -163,10 +165,11 @@ export class HeroIconCellView extends Component {
         this.nameLabel.string = show ? cell.name : "";
     }
 
-    /** 共用格按元素绘制。名册使用独立的顶部元素筛选，头像上隐藏元素图标。 */
+    /** 按头像预制体设置显示元素；名册沿用独立筛选条。 */
     private paintElem(cell: HeroCellModel, empty: boolean, revision: number): void {
         if (!this.elem) return;
-        const show = !this.rosterFrame && !empty && cell.elem !== null && !!ELEMENT_FRAMES[cell.elem];
+        const show = (!this.rosterFrame || this.showRankedElement) && !empty
+            && cell.elem !== null && !!ELEMENT_FRAMES[cell.elem];
         this.elem.active = show;
         if (show && cell.elem !== null) {
             ResManager.setSprite(this.elem, ELEMENT_FRAMES[cell.elem], () => this.isValid && revision === this.revision);

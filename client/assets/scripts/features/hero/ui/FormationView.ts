@@ -1,5 +1,5 @@
 /**
- * 共用出阵页面。主线和幻境之塔编辑各自的阵容；阵型和元素子窗只修改本页草稿。
+ * 共用出阵页面。主线、幻境之塔和其他副本编辑各自的阵容；阵型和元素子窗只修改本页草稿。
  * 草稿战力由服务器按队员预览；保存后由所属业务控制器确认，主线继续等待统一角色快照。
  */
 import { _decorator, Button, EventTouch, Label, Node, UITransform, Vec3, view as ccView } from "cc";
@@ -27,7 +27,7 @@ import { HeroCatalog } from "../utils/HeroCatalog";
 import { FormationElementUtils, type FormationElementPreview } from "../utils/FormationElementUtils";
 import { FormationMatrixUtils, type FormationMatrixEntry } from "../utils/FormationMatrixUtils";
 import type { FormationSaveRequest, FormationState } from "../data/FormationData";
-import type { MainFormation } from "../data/HeroSnapshotUtils";
+import type { MainFormation, OwnedHero } from "../data/HeroSnapshotUtils";
 
 const { ccclass, property } = _decorator;
 
@@ -63,6 +63,18 @@ export interface FormationRequest {
         read(): MainFormation | null;
         /** 将独立草稿交给所属玩法，收到确认后给出结果。 */
         save(draft: Omit<FormationSaveRequest, "requestId">, done: (success: boolean) => void): void;
+        /** 独立玩法可提供已核验的借将，普通阵容和拥有名册不读该实例。 */
+        additionalHero?(): OwnedHero | undefined;
+        /** 玩法已确认的可选借将列表，由其控制器持有真实借用记录。 */
+        additionalHeroes?(): readonly OwnedHero[];
+        /** 各玩法提供的当前英雄状态。已上阵也可通过点击撤下损耗或不符合条件的英雄。 */
+        heroState?(hero: OwnedHero): Readonly<{ canDeploy: boolean; caption: string }>;
+        /** 同时上场的借将上限；省略时由玩法服务端按自身规则校验。 */
+        maxAdditionalHeroes?: number;
+        /** 可选的玩法专属评分入口，可校验该玩法的版本和站位。 */
+        previewPower?(draft: Omit<FormationSaveRequest, "requestId">): string | null;
+        /** 可选的玩法权威状态监听，窗口关闭时注销。 */
+        watch?(refresh: () => void): () => void;
     };
 }
 
@@ -127,8 +139,13 @@ export class FormationView extends BaseView<FormationRequest> {
     private closed = true;
     /** 当前页面草稿，绝不回写权威Model。 */
     private state: FormationState = { heroes: [], lineup: { version: 0, slots: [] }, busy: true, message: "等待阵容同步…" };
-    /** 当前草稿队员与名册版本的键，以及已发送的只读预览请求编号。 */
-    private powerDraft: { readonly key: string; readonly heroIds: readonly string[]; requestId: string | null } | null = null;
+    /** 当前草稿的预估参数和请求编号，站位版参数只交给该独立玩法。 */
+    private powerDraft: {
+        readonly key: string;
+        readonly heroIds: readonly string[];
+        readonly formation: Omit<FormationSaveRequest, "requestId"> | null;
+        requestId: string | null;
+    } | null = null;
     /** 本次开窗读取的阵型说明，用当前草稿阵型查找各格的加成。 */
     private matrices: readonly FormationMatrixEntry[] = [];
     /** 当前草稿派生的说明和总加成，关闭或未取得配置时清空。 */
@@ -180,6 +197,9 @@ export class FormationView extends BaseView<FormationRequest> {
         });
         EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.onAssetsChanged);
         this.ownListener(EventDispatcher.instance.on(FormationEvent.PowerPreviewed, this, this.onPowerPreviewed));
+        if (args?.formation?.watch) {
+            this.ownListener(args.formation.watch(() => this.onAssetsChanged()));
+        }
         if (args?.title) {
             this.titleLabel!.string = args.title;
         } else if (args?.closeAfterSave) {
@@ -245,7 +265,7 @@ export class FormationView extends BaseView<FormationRequest> {
         });
     }
 
-    /** 同版本名册变化保留草稿；权威阵容换版时取消旧选择窗，再按现有保存状态决定是否重载。 */
+    /** 同版本更新保留有效草稿并清除失效借将；阵容换版时按当前保存状态重新加载。 */
     private onAssetsChanged(): void {
         if (this.closed) return;
         const current = this.currentFormation();
@@ -260,7 +280,13 @@ export class FormationView extends BaseView<FormationRequest> {
             this.reload("服务器阵容已更新，已载入最新数据");
         } else if (current) {
             const option = current.options?.find(row => row.formationId === this.state.formationId);
-            this.state = { ...this.state, heroes: this.roster.snapshot.heroes,
+            const heroes = this.formationHeroes();
+            const canBorrow = this.args?.formation?.additionalHero || this.args?.formation?.additionalHeroes;
+            const lineup = canBorrow ? {
+                ...this.state.lineup,
+                slots: this.state.lineup.slots.filter(slot => heroes.some(hero => hero.id === slot.heroId)),
+            } : this.state.lineup;
+            this.state = { ...this.state, heroes, lineup,
                 unlockedIds: current.unlockedIds, openPositions: option?.openPositions ?? this.state.openPositions };
             this.paint();
         }
@@ -349,19 +375,21 @@ export class FormationView extends BaseView<FormationRequest> {
         const selected = this.elementButtons[this.elem].node;
         this.filterMark!.setPosition(selected.position.x, selected.position.y, 0);
         this.elementButtons.forEach(button => { button.interactable = !state.busy; });
-        // 排序使用已保存的主线阵容，编辑草稿时仅更新格子的出阵标记。
+        // 按共用名册顺序展示，独立玩法可在名称区显示该英雄的剩余生命或出战限制。
         const heroes = state.heroes
             .filter(hero => !this.elem || HeroCatalog.find(hero.templateId)?.elem === this.elem)
             .sort(HeroRosterUtils.compareOwned);
         this.heroScroll!.list.setData(heroes, (node, hero) => {
             const face = HeroCatalog.find(hero.templateId);
             const cell = node.getComponent(HeroIconCellView)!;
+            const deployed = state.lineup.slots.some(slot => slot.heroId === hero.id);
+            const qualification = this.args?.formation?.heroState?.(hero);
             cell.show({ kind: "owned", instanceId: hero.id,
-                name: face?.name || String(hero.templateId), showName: false,
-                face: face?.icon || null, elem: face?.elem || null, level: hero.level, stars: hero.star, locked: false,
-                deployed: state.lineup.slots.some(slot => slot.heroId === hero.id),
+                name: qualification?.caption || face?.name || String(hero.templateId), showName: !!qualification?.caption,
+                face: face?.icon || null, elem: face?.elem || null, level: hero.level, stars: hero.star,
+                locked: qualification?.canDeploy === false, deployed,
             });
-            cell.button!.interactable = editable;
+            cell.button!.interactable = editable && (deployed || qualification?.canDeploy !== false);
         });
         const matrix = this.matrices.find(entry => entry.id === formationId);
         this.slots.forEach(slot => {
@@ -375,20 +403,27 @@ export class FormationView extends BaseView<FormationRequest> {
         });
     }
 
-    /** 只在普通队员或权威名册变化时重新预估；筛选和仅交换站位不发包。 */
+    /** 主线按普通队员去重预估；独立玩法各自核对草稿站位、阵型和版本。 */
     private refreshDraftPower(state: FormationState): void {
         const positions = state.openPositions;
-        const heroIds = positions ? state.lineup.slots
-            .filter(slot => slot.position !== ASSISTANCE_POSITION && positions.includes(slot.position))
-            .map(slot => slot.heroId)
-            .sort() : [];
-        const key = positions ? JSON.stringify([this.roster.snapshot.revision, ...heroIds]) : null;
+        const slots = positions ? state.lineup.slots.filter(slot =>
+            slot.position !== ASSISTANCE_POSITION && positions.includes(slot.position)) : [];
+        const heroIds = slots.map(slot => slot.heroId).sort();
+        const source = this.args?.formation;
+        const formation = source?.previewPower && state.formationId && source.read() ? {
+            expectedVersion: state.lineup.version,
+            formationId: state.formationId,
+            slots,
+        } : null;
+        const borrowed = this.borrowedHeroes();
+        const available = !!positions && (source?.previewPower ? !!formation : !borrowed.some(row => heroIds.includes(row.id)));
+        const key = available ? JSON.stringify([this.roster.snapshot.revision, formation ?? heroIds]) : null;
         if (this.powerDraft?.key === key) {
             return;
         }
         this.unschedule(this.requestDraftPower);
         this.powerLabel!.string = "-";
-        this.powerDraft = key === null ? null : { key, heroIds, requestId: null };
+        this.powerDraft = key === null ? null : { key, heroIds, formation, requestId: null };
         if (this.powerDraft) {
             this.scheduleOnce(this.requestDraftPower, POWER_DEBOUNCE_SECONDS);
         }
@@ -396,8 +431,11 @@ export class FormationView extends BaseView<FormationRequest> {
 
     /** 发送最近一次仍在显示的草稿，旧选择不再触发请求。 */
     private readonly requestDraftPower = (): void => {
-        if (!this.closed && this.powerDraft) {
-            this.powerDraft.requestId = this.module.previewPower(this.powerDraft.heroIds);
+        const draft = this.powerDraft;
+        if (!this.closed && draft) {
+            const source = this.args?.formation;
+            draft.requestId = draft.formation && source?.previewPower
+                ? source.previewPower(draft.formation) : this.module.previewPower(draft.heroIds);
         }
     };
 
@@ -441,19 +479,32 @@ export class FormationView extends BaseView<FormationRequest> {
     }
     /** 仅从唯一快照复制草稿；未同步允许位置时不开放编辑。 */
     private reload(message = ""): void {
-        const snapshot = this.roster.snapshot;
         const current = this.currentFormation();
         const option = current?.options?.find(row => row.formationId === current.formationId);
         if (!current || !option) {
             this.state = {...this.state, busy: true, message: "阵型配置尚未同步，请等待连接恢复"};
         } else {
             this.state = {
-                heroes: snapshot.heroes, formationId: current.formationId,
+                heroes: this.formationHeroes(), formationId: current.formationId,
                 openPositions: option.openPositions, unlockedIds: current.unlockedIds,
                 lineup: {version: current.version, slots: current.slots.map(slot => ({...slot}))}, busy: false, message
             };
         }
         this.paint();
+    }
+
+    /** 只在本页草稿合并借将，普通阵容继续使用角色的唯一拥有名册。 */
+    private formationHeroes(): FormationState["heroes"] {
+        const owned = this.roster.snapshot.heroes;
+        const borrowed = this.borrowedHeroes().filter(row => !owned.some(hero => hero.id === row.id));
+        return borrowed.length ? [...borrowed, ...owned] : owned;
+    }
+
+    /** 读取所属玩法提交的可选借将；主线返回空列表。 */
+    private borrowedHeroes(): readonly OwnedHero[] {
+        const source = this.args?.formation;
+        const borrowed = source?.additionalHero?.();
+        return source?.additionalHeroes?.() ?? (borrowed ? [borrowed] : []);
     }
 
     /** 从本页所属玩法读取权威阵容；塔尚未同步时保持空状态。 */
@@ -466,7 +517,7 @@ export class FormationView extends BaseView<FormationRequest> {
         return !this.closed && !this.state.busy;
     }
 
-    /** 已上阵则撤下，否则填入编号最小的开放空位；同模板不能重复出阵。 */
+    /** 已上阵则撤下，否则填入编号最小的开放空位，并校验本玩法的借将上限。 */
     private toggleHero(id: string): void {
         const hero = this.state.heroes.find(row => row.id === id);
         if (!this.editable() || !hero) {
@@ -478,7 +529,18 @@ export class FormationView extends BaseView<FormationRequest> {
             this.removeSlot(deployed.position);
             return;
         }
+        const source = this.args?.formation;
+        if (source?.heroState?.(hero).canDeploy === false) {
+            return;
+        }
         const deployedIds = new Set(slots.map(slot => slot.heroId));
+        const loaned = this.borrowedHeroes();
+        const limit = source?.maxAdditionalHeroes;
+        if (limit !== undefined && loaned.some(row => row.id === id)
+            && loaned.filter(row => deployedIds.has(row.id)).length >= limit) {
+            UIManager.instance.toast(`最多同时出战 ${limit} 名助战英雄`);
+            return;
+        }
         if (this.state.heroes.some(row => row.templateId === hero.templateId && deployedIds.has(row.id))) {
             UIManager.instance.toast("相同英雄不能重复上阵");
             return;

@@ -49,6 +49,9 @@ import com.funsgamex.mxzg.role.WelcomeGiftService;
 import com.funsgamex.mxzg.time.GameClock;
 import com.funsgamex.mxzg.tower.TowerService;
 import com.funsgamex.mxzg.dreamland.DreamlandService;
+import com.funsgamex.mxzg.dreamland.DreamlandRankService;
+import com.funsgamex.mxzg.trial.TrialService;
+import com.funsgamex.mxzg.trial.TrialShopService;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -145,6 +148,12 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final TowerService tower;
     /** 梦境连战的权威状态、战报和实际结算。 */
     private final DreamlandService dreamland;
+    /** 勇者试炼的角色资格、跨关生命、阵容和奖励统一由试炼事务处理。 */
+    private final TrialService trial;
+    /** 试炼固定货架购买使用认证角色、统一资产和独立持久回执。 */
+    private final TrialShopService trialShop;
+    /** 同服梦境通关排行与当日结算规则。 */
+    private final DreamlandRankService dreamlandRank;
     /** 竞技场的对手、防守、门票、积分及历史战报。 */
     private final ArenaService arena;
     /** 本服赛季、排名、周宝箱和竞技商店。 */
@@ -209,8 +218,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             GuildShopService guildShop,
             GuildDonationService guildDonations, GuildRankingService guildRanking, VipService vip, QuestService quests,
             RankService rankings, MailService mail, FriendService friends, ChatService chat,
-            DailyDungeonService dailyDungeon, TowerService tower, DreamlandService dreamland,
-            ArenaService arena, ArenaSeasonService arenaSeason,
+            DailyDungeonService dailyDungeon, TowerService tower, DreamlandService dreamland, DreamlandRankService dreamlandRank,
+            TrialService trial, TrialShopService trialShop, ArenaService arena, ArenaSeasonService arenaSeason,
             RoleService roles, RoleProfileService profiles, WelcomeGiftService welcomeGifts, GameClock clock,
             HeroMainPowerService formationPower) {
         this.firstRewards = firstRewards;
@@ -239,6 +248,9 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         this.dailyDungeon = dailyDungeon;
         this.tower = tower;
         this.dreamland = dreamland;
+        this.dreamlandRank = dreamlandRank;
+        this.trial = trial;
+        this.trialShop = trialShop;
         this.arena = arena;
         this.arenaSeason = arenaSeason;
         this.roles = roles;
@@ -306,6 +318,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                 if (!awaitLock(roleLock)) throw rejected("BUSY");
                 var notifications = name.equals("guild.change") || name.equals("guild.donation.donate")
                     || name.equals("friend.change") || name.startsWith("arena.") || name.startsWith("dreamland.")
+                    || name.startsWith("trial.")
                     ? new RoleNotifications(new LinkedHashSet<>(), new LinkedHashSet<>(), new ArrayList<>(),
                         new LinkedHashSet<>(), new LinkedHashSet<>()) : null;
                 if (notifications != null) {
@@ -526,8 +539,17 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                 arenaRequest(connection, request, name);
                 return;
             }
-            case "dreamland.state", "dreamland.act" -> {
+            case "dreamland.state", "dreamland.act", "dreamland.assistance", "dreamland.ranking",
+                 "dreamland.formation.power" -> {
                 dreamlandRequest(connection, request, name);
+                return;
+            }
+            case "trial.state", "trial.act", "trial.assistance" -> {
+                trialRequest(connection, request, name);
+                return;
+            }
+            case "trial.shop", "trial.shop.buy" -> {
+                trialShopRequest(connection, request, name);
                 return;
             }
             case "chapter.quick-battle.info", "chapter.quick-battle.claim" -> {
@@ -1301,32 +1323,43 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         var body = request.path("body");
         String code = "DREAMLAND_REQUEST_INVALID";
         try {
-            if (name.equals("dreamland.state")) {
-                fields(body, Set.of());
-                respond(connection, request, dreamlandState(dreamland.state(connection.token)));
+            if (name.equals("dreamland.formation.power")) {
+                fields(body, Set.of("requestId", "expectedVersion", "formationId", "slots"));
+                respond(connection, request, dreamland.previewFormationPower(connection.token,
+                        text(body, "requestId", UUID_PATTERN), operationAmount(body, "expectedVersion", code),
+                        operationIndex(body, "formationId", code), dreamlandFormationSlots(body.path("slots"))));
                 return;
             }
-            String action = text(body, "action", "START|SELECT_BUFF|NEXT|END|CLAIM|SAVE_FORMATION");
+            if (!name.equals("dreamland.act")) {
+                fields(body, Set.of());
+                Object state = switch (name) {
+                    case "dreamland.state" -> dreamlandState(dreamland.state(connection.token));
+                    case "dreamland.assistance" -> dreamland.assistance(connection.token);
+                    case "dreamland.ranking" -> dreamlandRank.ranking(connection.token);
+                    default -> throw rejected(code);
+                };
+                respond(connection, request, state);
+                return;
+            }
+            String action = text(body, "action",
+                "START|SELECT_BUFF|NEXT|END|CLAIM|SAVE_FORMATION|DISPATCH_ASSIST|SELECT_ASSIST|CLEAR_ASSIST");
             var allowed = switch (action) {
                 case "SELECT_BUFF", "CLAIM" -> Set.of("requestId", "expectedVersion", "action", "choice", "slots");
                 case "SAVE_FORMATION" -> Set.of("requestId", "expectedVersion", "action", "formationId", "slots");
+                case "DISPATCH_ASSIST", "SELECT_ASSIST" -> Set.of("requestId", "expectedVersion", "action", "targetId", "slots");
                 default -> Set.of("requestId", "expectedVersion", "action", "slots");
             };
             fields(body, allowed);
-            var slots = body.path("slots");
             boolean savesFormation = action.equals("SAVE_FORMATION");
-            if (!slots.isArray() || slots.size() > 8 || (!savesFormation && !slots.isEmpty())) {
+            var lineup = dreamlandFormationSlots(body.path("slots"));
+            if (!savesFormation && !lineup.isEmpty()) {
                 throw rejected(code);
-            }
-            var lineup = new ArrayList<Lineup.Slot>();
-            for (JsonNode slot : slots) {
-                fields(slot, Set.of("position", "heroId"));
-                lineup.add(new Lineup.Slot(operationIndex(slot, "position", code), text(slot, "heroId", UUID_PATTERN)));
             }
             var result = dreamland.act(connection.token, new DreamlandService.Command(
                 text(body, "requestId", UUID_PATTERN), operationAmount(body, "expectedVersion", code), action,
                 allowed.contains("choice") ? operationIndex(body, "choice", code) : 0,
-                savesFormation ? operationIndex(body, "formationId", code) : 0, lineup));
+                savesFormation ? operationIndex(body, "formationId", code) : 0, lineup,
+                allowed.contains("targetId") ? text(body, "targetId", UUID_PATTERN) : null));
             var response = new LinkedHashMap<String, Object>();
             response.put("requestId", result.requestId());
             response.put("roleId", result.roleId());
@@ -1341,6 +1374,20 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                 | org.springframework.dao.QueryTimeoutException error) {
             fail(connection, request, "BUSY", "角色数据正忙，请稍后重试", true);
         }
+    }
+
+    /** 只解析梦境允许的普通站位；具体阵型和可选英雄归梦境领域校验。 */
+    private static List<Lineup.Slot> dreamlandFormationSlots(JsonNode slots) {
+        String code = "DREAMLAND_REQUEST_INVALID";
+        if (!slots.isArray() || slots.size() > 8) {
+            throw rejected(code);
+        }
+        var lineup = new ArrayList<Lineup.Slot>(slots.size());
+        for (JsonNode slot : slots) {
+            fields(slot, Set.of("position", "heroId"));
+            lineup.add(new Lineup.Slot(operationIndex(slot, "position", code), text(slot, "heroId", UUID_PATTERN)));
+        }
+        return lineup;
     }
 
     /** 梦境战报使用协议描述符转换，避免把 Protobuf 内部字段写入网络回包。 */
@@ -1364,11 +1411,133 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         result.put("formationId", state.formationId());
         result.put("pendingRewards", state.pendingRewards());
         result.put("milestones", state.milestones());
+        if (state.assistance() != null) {
+            result.put("assistance", state.assistance());
+        }
         if (state.battle() != null) {
             var battle = state.battle();
             result.put("battle", Map.of(
                 "battleId", battle.battleId(), "floor", battle.floor(), "won", battle.won(),
                 "replay", GameProtocolCodec.tree(battle.replay())));
+        }
+        return result;
+    }
+
+    /** 读取同一认证角色的货架或确认当前报价，拒绝客户端传入价格、奖励或角色。 */
+    private void trialShopRequest(Connection connection, JsonNode request, String name) throws IOException {
+        var body = request.path("body");
+        if (name.equals("trial.shop")) {
+            fields(body, Set.of());
+            respond(connection, request, trialShop.list(connection.role));
+            return;
+        }
+        fields(body, Set.of("requestId", "offerId", "count", "refreshAt"));
+        String code = "TRIAL_SHOP_REQUEST_INVALID";
+        var buy = new TrialShopService.BuyRequest(text(body, "requestId", UUID_PATTERN),
+                operationIndex(body, "offerId", code), operationIndex(body, "count", code),
+                operationAmount(body, "refreshAt", code));
+        try {
+            respond(connection, request, trialShop.buy(connection.role, buy));
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException failure) {
+            fail(connection, request, "BUSY", "角色数据正忙，请稍后重试", true);
+        }
+    }
+
+    /** 校验试炼动作的专用入参并使用原会话完成查询、挑战与领取。 */
+    private void trialRequest(Connection connection, JsonNode request, String name) throws IOException {
+        var body = request.path("body");
+        String code = "TRIAL_REQUEST_INVALID";
+        try {
+            if (!name.equals("trial.act")) {
+                fields(body, Set.of());
+                respond(connection, request, name.equals("trial.state")
+                        ? trialState(trial.state(connection.token)) : trial.assistance(connection.token));
+                return;
+            }
+            String action = text(body, "action",
+                    "selectDifficulty|saveFormation|fight|claim|revive|dispatchAssist|selectAssist|cancelAssist");
+            var allowed = new HashSet<>(Set.of("requestId", "expectedVersion", "action", "slots", "heroIds"));
+            boolean hasChoice = Set.of("selectDifficulty", "fight", "claim").contains(action);
+            boolean savesFormation = action.equals("saveFormation");
+            boolean hasTarget = Set.of("dispatchAssist", "selectAssist", "cancelAssist").contains(action);
+            if (hasChoice) {
+                allowed.add("choice");
+            }
+            if (savesFormation) {
+                allowed.add("formationId");
+            }
+            if (hasTarget) {
+                allowed.add("targetId");
+            }
+            fields(body, allowed);
+            var slots = body.path("slots");
+            if (!slots.isArray() || slots.size() > 8) {
+                throw rejected(code);
+            }
+            var lineup = new ArrayList<Lineup.Slot>(slots.size());
+            for (var slot : slots) {
+                fields(slot, Set.of("position", "heroId"));
+                lineup.add(new Lineup.Slot(operationIndex(slot, "position", code),
+                        text(slot, "heroId", UUID_PATTERN)));
+            }
+            var ids = body.path("heroIds");
+            if (!ids.isArray() || ids.size() > 6) {
+                throw rejected(code);
+            }
+            var heroIds = new ArrayList<String>(ids.size());
+            for (var id : ids) {
+                if (!id.isString() || !id.asString().matches(UUID_PATTERN)) {
+                    throw rejected(code);
+                }
+                heroIds.add(id.asString());
+            }
+            var result = trial.act(connection.token, new TrialService.Command(
+                    text(body, "requestId", UUID_PATTERN), operationAmount(body, "expectedVersion", code), action,
+                    hasChoice ? operationIndex(body, "choice", code) : 0,
+                    savesFormation ? operationIndex(body, "formationId", code) : 0, lineup,
+                    hasTarget ? text(body, "targetId", UUID_PATTERN) : null, heroIds));
+            var response = new LinkedHashMap<String, Object>();
+            response.put("requestId", result.requestId());
+            response.put("roleId", result.roleId());
+            response.put("assetRevision", result.assetRevision());
+            response.put("action", result.action());
+            response.put("state", trialState(result.state()));
+            if (result.actual() != null) {
+                response.put("actual", result.actual());
+            }
+            respond(connection, request, response);
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException failure) {
+            fail(connection, request, "BUSY", "角色数据正忙，请稍后重试", true);
+        }
+    }
+
+    /** 将可空的原生成战报通过描述符写回 Protobuf，不把内部对象属性串给协议层。 */
+    private static Map<String, Object> trialState(TrialService.State state) {
+        var result = new LinkedHashMap<String, Object>();
+        result.put("version", state.version());
+        result.put("minimumLevel", state.minimumLevel());
+        result.put("resetAtSeconds", state.resetAtSeconds());
+        result.put("difficulty", state.difficulty());
+        result.put("maxDifficulty", state.maxDifficulty());
+        result.put("completedDifficulty", state.completedDifficulty());
+        result.put("currentNode", state.currentNode());
+        result.put("reviveUsed", state.reviveUsed());
+        result.put("reviveLimit", state.reviveLimit());
+        if (state.reviveCost() != null) {
+            result.put("reviveCost", state.reviveCost());
+        }
+        result.put("formationId", state.formationId());
+        result.put("slots", state.slots());
+        result.put("nodes", state.nodes());
+        result.put("heroHealth", state.heroHealth());
+        result.put("todayRewards", state.todayRewards());
+        result.put("difficulties", state.difficulties());
+        if (state.battle() != null) {
+            var battle = state.battle();
+            result.put("battle", Map.of("battleId", battle.battleId(), "node", battle.node(), "won", battle.won(),
+                    "replay", GameProtocolCodec.tree(battle.replay())));
         }
         return result;
     }

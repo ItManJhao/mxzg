@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(properties = {
     "spring.datasource.url=jdbc:h2:mem:dreamland;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
     "spring.datasource.username=sa", "spring.datasource.password=", "mxzg.gm.enabled=false",
-    "mxzg.dreamland-maintenance.enabled=false"
+    "mxzg.dreamland-maintenance.enabled=false", "mxzg.dreamland.max-floor=35"
 })
 @ActiveProfiles("local")
 class DreamlandServiceTest {
@@ -50,16 +50,16 @@ class DreamlandServiceTest {
     /** 标记当前测试角色及当前登录授权。 */
     private record Player(String account, String role, String token) {}
 
-    /** 用原六层守军跑到第二次选增益及封顶，验证断线和重发不会新增战斗或资产。 */
+    /** 连续挑战至第 35 层，核对第 30 层增益、续战生命、封顶结算及上海零点回退。 */
     @Test
-    void advancesSixFloorsAndCarriesHpWithFrozenSettlement() throws Exception {
+    void advancesThirtyFiveFloorsAndCarriesHpWithFrozenSettlement() throws Exception {
         clock.setEpochSeconds(Instant.parse("2026-11-25T01:00:00Z").getEpochSecond());
         try {
             var player = player(24);
             assertFailure("DREAMLAND_LEVEL", () -> service.state(player.token()));
             jdbc.update("UPDATE game_role SET role_level=100 WHERE id=?", player.role());
             var initial = service.state(player.token());
-            assertEquals(6, initial.maxFloor());
+            assertEquals(35, initial.maxFloor());
             assertEquals(Phase.READY, initial.phase());
             assertFailure("DREAMLAND_MILESTONE_LOCKED",
                     () -> service.act(player.token(), command(initial, "CLAIM", 5)));
@@ -86,7 +86,7 @@ class DreamlandServiceTest {
             assertEquals(stage.state(), service.state(newToken));
             assertEquals(stage, service.act(newToken, first));
             var openingGold = roles.findById(player.role()).orElseThrow().gold();
-            for (int floor = 1; floor <= 6; floor++) {
+            for (int floor = 1; floor <= initial.maxFloor(); floor++) {
                 var battle = stage.state().battle();
                 assertEquals(floor, battle.floor());
                 assertTrue(battle.won(), "第 " + floor + " 层");
@@ -96,26 +96,47 @@ class DreamlandServiceTest {
                 var confirm = command(stage.state(), "NEXT", 0);
                 var acknowledged = service.act(newToken, confirm);
                 assertEquals(floor, acknowledged.state().highestFloor());
-                if (floor == 6) {
+                if (floor == initial.maxFloor()) {
                     assertEquals(Phase.READY, acknowledged.state().phase());
-                    assertEquals(6, acknowledged.state().todayRewardFloor());
-                    assertEquals(107500, acknowledged.actual().wallet().goldAfter() - openingGold);
+                    assertTrue(acknowledged.state().buffs().isEmpty());
+                    assertEquals(35, acknowledged.state().todayRewardFloor());
+                    assertEquals(180000, acknowledged.actual().wallet().goldAfter() - openingGold);
+                    assertEquals(264000, credited(acknowledged, 900101));
                     assertEquals(acknowledged, service.act(newToken, confirm));
                     var milestone = command(acknowledged.state(), "CLAIM", 5);
                     var claimed = service.act(newToken, milestone);
                     assertTrue(claimed.state().milestones().getFirst().claimed());
                     assertEquals(30000, claimed.actual().items().getFirst().credited());
                     assertEquals(claimed, service.act(newToken, milestone));
-                } else if (floor == 5) {
-                    assertEquals(Phase.SELECT_BUFF, acknowledged.state().phase());
-                    var state = acknowledged.state();
-                    stage = service.act(newToken, command(state, "SELECT_BUFF", state.buffs().getFirst().id()));
+                    clock.setEpochSeconds(claimed.state().resetAtSeconds());
+                    var nextDay = service.state(newToken);
+                    assertEquals(Phase.READY, nextDay.phase());
+                    assertEquals(35, nextDay.highestFloor());
+                    assertEquals(25, nextDay.startFloor());
+                    assertEquals(25, nextDay.todayHighestFloor());
+                    assertEquals(25, nextDay.todayRewardFloor());
+                    assertEquals(0, nextDay.challengeCount());
+                    assertTrue(nextDay.pendingRewards().isEmpty());
+                    var restarted = service.act(newToken, command(nextDay, "START", 0)).state();
+                    assertEquals(1, restarted.challengeCount());
+                    var nextBattle = service.act(newToken,
+                        command(restarted, "SELECT_BUFF", restarted.buffs().getFirst().id())).state();
+                    assertEquals(26, nextBattle.battle().floor());
+                    assertTrue(nextBattle.battle().won());
+                    assertEquals("dreamland:26", nextBattle.battle().replay().getScenario());
                 } else {
-                    assertEquals(Phase.NEXT_BATTLE, acknowledged.state().phase());
+                    var state = acknowledged.state();
                     assertNull(acknowledged.actual());
-                    stage = service.act(newToken, command(acknowledged.state(), "NEXT", 0));
-                    long nextScan = (acknowledged.state().deadlineSeconds() + 59) / 60 * 60;
-                    assertEquals(nextScan, stage.state().deadlineSeconds());
+                    if (floor % 5 == 0) {
+                        assertEquals(Phase.SELECT_BUFF, state.phase());
+                        assertEquals(3, state.buffs().size());
+                        stage = service.act(newToken, command(state, "SELECT_BUFF", state.buffs().getFirst().id()));
+                    } else {
+                        assertEquals(Phase.NEXT_BATTLE, state.phase());
+                        stage = service.act(newToken, command(state, "NEXT", 0));
+                        long nextScan = (state.deadlineSeconds() + 59) / 60 * 60;
+                        assertEquals(nextScan, stage.state().deadlineSeconds());
+                    }
                     var previous = battle.replay().getUnitsList();
                     var next = stage.state().battle().replay().getUnitsList();
                     for (int index = 0; index < team.size(); index++) {
@@ -253,5 +274,11 @@ class DreamlandServiceTest {
     /** 检查被拒绝的操作符合约定状态码。 */
     private static void assertFailure(String code, Runnable action) {
         assertEquals(code, assertThrows(ResponseStatusException.class, action::run).getReason());
+    }
+
+    /** 按原道具配置编号提取本次结算的真实入账数量。 */
+    private static long credited(DreamlandService.Settlement settlement, int itemId) {
+        return settlement.actual().items().stream().filter(item -> item.itemId() == itemId)
+                .findFirst().orElseThrow().credited();
     }
 }

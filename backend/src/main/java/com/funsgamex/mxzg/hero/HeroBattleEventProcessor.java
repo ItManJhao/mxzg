@@ -9,8 +9,8 @@ import java.util.*;
 public final class HeroBattleEventProcessor {
     /** 本批明确支持的旧事件编号；其他类型不得当作已执行。 */
     private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170, 171, 186, 206, 199, 200, 311, 174,
-        143, 175, 176, 177, 178, 179, 181, 182, 184, 190, 194, 201, 185, 207, 208, 209, 1004, 1014, 1204,
-        231, 234, 235, 240, 180);
+        143, 175, 176, 177, 178, 179, 181, 182, 184, 187, 190, 194, 201, 185, 207, 208, 209, 1004, 1014, 1204,
+        231, 232, 234, 235, 240, 180);
     /** 战斗是否已结束，触发处理器在每个监听前读取。 */
     private boolean ended;
     /** 当前事件所属回合，行动调度或战场回合入口显式设置。 */
@@ -156,6 +156,12 @@ public final class HeroBattleEventProcessor {
 
         /** 当前已选技能的主动标志，尚未出手时不能假设为主动。 */
         public boolean activeSkill() { return current != null && current.activeType() == 1; }
+
+        /** 光环拥有者阵亡时，按旧规则撤回该单位施加在存活队友身上的效果。 */
+        boolean hasHaloSkill() {
+            return skills.stream().anyMatch(skill -> skill.activeType() == 3);
+        }
+
         /** 当前技能实例的能量值，反击由队列入口显式传入。 */
         public long skillEnergy() { return currentEnergy; }
 
@@ -315,9 +321,9 @@ public final class HeroBattleEventProcessor {
         return true;
     }
 
-    /** 按旧监听快照稳定排序，受击与扣血前的守护和伤害上限走专用处理。 */
+    /** 按旧监听快照稳定排序，受击反弹及其他守护效果走各自专用处理。 */
     public void dispatch(int event, Actor carrier, int target, Executor executor) {
-        if (!SUPPORTED.contains(event) && !Set.of(187, 188, 189, 191, 176, 183, 195, 204, 185, 207).contains(event)) {
+        if (!SUPPORTED.contains(event) && !Set.of(188, 189, 191, 176, 183, 195, 204, 185, 207).contains(event)) {
             throw new IllegalArgumentException("尚未支持的战斗事件：" + event);
         }
         Objects.requireNonNull(executor);
@@ -325,7 +331,7 @@ public final class HeroBattleEventProcessor {
             return;
         }
         var pending = carrier.listeners.stream().filter(row -> row.definition().event() == event
-            || (event == 171 && Set.of(1004, 1014, 1204, 235).contains(row.definition().event()))
+            || (event == 171 && Set.of(1004, 1014, 1204, 232, 235).contains(row.definition().event()))
             || (event == 206 && row.definition().event() == 200)
             || (event == 189 && Set.of(143, 199, 231, 234, 240).contains(row.definition().event())))
             .sorted(Comparator.comparing(row -> row.sourceId() == carrier.id)).toList();
@@ -351,7 +357,7 @@ public final class HeroBattleEventProcessor {
                 carrier.restore();
                 continue;
             }
-            if (Set.of(1004, 1014, 1204, 143, 176, 199, 231, 234, 235, 240, 200, 311).contains(definition.event())) {
+            if (Set.of(1004, 1014, 1204, 143, 176, 199, 231, 232, 234, 235, 240, 200, 311).contains(definition.event())) {
                 // 旧专用trigger不经过AbstractArtTrigger的战斗结束检查。
                 executor.special(listener, carrier, target);
             } else if (!ended && (event != 173 || definition.skillFilter() == 0

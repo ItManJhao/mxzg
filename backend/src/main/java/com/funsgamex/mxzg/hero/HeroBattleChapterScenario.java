@@ -1,5 +1,5 @@
 /**
- * 配置化战场：按真实关卡敌方、成长和技能驱动主线、副本、幻境之塔和竞技场到胜负。
+ * 配置化战场：按真实关卡敌方、成长和技能驱动主线、各类副本和竞技场到胜负。
  * 正式阵容/挂机入口不依赖固定三关；旧initial仅保留独立审计用途，不接玩家库、进度或奖励。
  */
 package com.funsgamex.mxzg.hero;
@@ -55,6 +55,10 @@ public final class HeroBattleChapterScenario {
      * 外层按单位编号和效果配置编号保存已成功消耗的次数。
      */
     public record DreamlandResult(Result report, Map<Integer, Map<Integer, Integer>> effectUses) {}
+    /** 入场生命策略；梦境延续攻方及技能次数，试炼延续攻守双方生命。 */
+    enum EntryHealth { FRESH, DREAMLAND, TRIAL }
+    /** 试炼保留原守军匹配，记录当前引擎缺少的技能及原因。 */
+    record TrialSkillGap(int skillId, int level, String reason) {}
     /** 一次出手结束后的完整单位生命，包含死亡单位，不按阵营合并。 */
     public record Turn(int round, int sourceId, long skillEnergy, Map<Integer, Long> hp) {
         /** 冻结本次出手生命，后续行动不能改写历史记录。 */
@@ -166,6 +170,11 @@ public final class HeroBattleChapterScenario {
 
     /** 按旧基础成长→怪物初始修正→技能加成→玩家阵型顺序创建本场原始属性。 */
     private Unit unit(int id, int stage, JsonNode enemy) {
+        return unit(id, stage, enemy, true);
+    }
+
+    /** 试炼只预览的守军也能冻结战力面板，技能仍需在真正进入战斗前检查。 */
+    private Unit unit(int id, int stage, JsonNode enemy, boolean verifySkills) {
         int template = enemy == null ? 10101001 : enemy.path("hero_type").asInt();
         int star = enemy == null ? 1 : enemy.path("hero_star").asInt();
         int level = enemy == null ? 1 : enemy.path("hero_level").asInt();
@@ -189,8 +198,10 @@ public final class HeroBattleChapterScenario {
                 .forEach((type, value) -> attributes.merge(type, value, Math::addExact));
         }
         var plan = skills.battleSchedule(skills.select(template, star, stage));
-        for (var skill : plan) {
-            requireSupportedSkill(skill);
+        if (verifySkills) {
+            for (var skill : plan) {
+                requireSupportedSkill(skill);
+            }
         }
         return new Unit(id, enemy == null ? 1 : 2, template, level, star, stage,
             enemy == null ? 2 : enemy.path("pos").asInt(), attributes,
@@ -365,19 +376,17 @@ public final class HeroBattleChapterScenario {
             units.add(configuredEnemy(enemy));
         }
         var ordered = applyElementHalo(units).stream()
-                .map(unit -> dreamlandOpening(unit, remainingHp, buffAttribute == 105 ? buffValue : 0))
+                .map(unit -> unit.faction() == 1
+                        ? withEntryHealth(unit, remainingHp, buffAttribute == 105 ? buffValue : 0) : unit)
                 .toList();
         var counts = new HashMap<>(used);
         var report = runBattle("dreamland:" + floor, ordered, decision, new Random(),
-                HeroBattleRoundUtils.DREAMLAND_MAX_ROUNDS, Map.of(), true, counts);
+                HeroBattleRoundUtils.DREAMLAND_MAX_ROUNDS, Map.of(), EntryHealth.DREAMLAND, counts);
         return new DreamlandResult(report, Map.copyOf(counts));
     }
 
-    /** 已阵亡攻方保留为零血单位，恢复增益只对存活英雄生效且不超过生命上限。 */
-    private static Unit dreamlandOpening(Unit unit, Map<Integer, Long> remainingHp, long healRate) {
-        if (unit.faction() != 1) {
-            return unit;
-        }
+    /** 用本场编号恢复持久生命，治疗仅对存活单位生效且不超过该场满血值。 */
+    private static Unit withEntryHealth(Unit unit, Map<Integer, Long> remainingHp, long healRate) {
         var opening = unit.opening();
         long health = Math.min(opening.maxHp(), remainingHp.getOrDefault(unit.id(), opening.maxHp()));
         if (health > 0 && healRate > 0) {
@@ -388,6 +397,42 @@ public final class HeroBattleChapterScenario {
                 opening.defense(), opening.speed());
         return new Unit(unit.id(), unit.faction(), unit.template(), unit.level(), unit.star(), unit.stage(),
                 unit.position(), unit.attributes(), carried, unit.skills(), unit.portraitIconId());
+    }
+
+    /** 冻结试炼的机器人或真人守军，属性保持为加光环前的状态供逐场重建。 */
+    List<Unit> freezeTrialDefense(HeroBattleInputService.Input defender, List<ConfiguredEnemy> robots) {
+        if (defender != null) {
+            return List.copyOf(savedFormationUnits(defender, 2));
+        }
+        return robots.stream().map(enemy -> configuredEnemy(enemy, false)).toList();
+    }
+
+    /** 枚举该守军仍不可执行的技能，供地图可用性与离线旧表审计共用。 */
+    List<TrialSkillGap> trialDefenseGaps(List<Unit> defender) {
+        var gaps = new ArrayList<TrialSkillGap>();
+        for (var skill : defender.stream().flatMap(unit -> unit.skills().stream()).distinct().toList()) {
+            try {
+                requireSupportedSkill(skill);
+            } catch (IllegalArgumentException | UnsupportedOperationException failure) {
+                gaps.add(new TrialSkillGap(skill.skillId(), skill.level(), failure.getMessage()));
+            }
+        }
+        return gaps;
+    }
+
+    /** 返回试炼守军应用队伍光环后的展示属性；续战只覆盖当前生命。 */
+    List<Unit> trialDefensePanel(List<Unit> defender, Map<Integer, Long> health) {
+        return applyElementHalo(defender).stream().map(unit -> withEntryHealth(unit, health, 0)).toList();
+    }
+
+    /** 使用试炼回合上限及双方已记录的生命，保留完整攻守阵容供战报校验。 */
+    Result runTrialFormation(String scenario, HeroBattleInputService.Input attacker, List<Unit> defender,
+                             Map<Integer, Long> health, int rounds, DoublePredicate decision) {
+        var units = savedFormationUnits(attacker, 1);
+        units.addAll(defender);
+        var prepared = applyElementHalo(units).stream().map(unit -> withEntryHealth(unit, health, 0)).toList();
+        return runBattle(scenario, prepared, decision, new Random(), rounds, Map.of(), EntryHealth.TRIAL,
+                new HashMap<>());
     }
 
     /** 按旧战斗类型4使用主阵容挑战指定机器人，接入竞技场独立回合上限和每回合累计攻击倍率。 */
@@ -472,6 +517,11 @@ public final class HeroBattleChapterScenario {
 
     /** 将原守军行交给统一成长和技能预检，装备或符文尚未实现时拒绝生成战报。 */
     private Unit configuredEnemy(ConfiguredEnemy enemy) {
+        return configuredEnemy(enemy, true);
+    }
+
+    /** 保留原守军技能；试炼先做展示快照，战斗可用性单独检查。 */
+    private Unit configuredEnemy(ConfiguredEnemy enemy, boolean verifySkills) {
         if (!mapper.readTree(enemy.equipment()).isEmpty() || !mapper.readTree(enemy.runes()).isEmpty()) {
             throw new IllegalArgumentException("关卡守军装备或符文尚未支持：" + enemy.configId());
         }
@@ -481,7 +531,7 @@ public final class HeroBattleChapterScenario {
         row.put("hero_star", enemy.star());
         row.put("pos", enemy.position());
         row.put("attr", enemy.modifiers());
-        return unit(8 + enemy.position(), growth.npcStage(enemy.level()), row);
+        return unit(8 + enemy.position(), growth.npcStage(enemy.level()), row, verifySkills);
     }
 
     /** 旧3006：持久挂机三人、当前关卡单个怪物、双方仅普攻、怪物初始生命1；不修改主线资产。 */
@@ -539,11 +589,11 @@ public final class HeroBattleChapterScenario {
 
     /** 校验本场身份/站位/生命并规范为攻方在前；同模板不同单位合法，同侧站位不得重叠。 */
     public static List<Unit> roster(List<Unit> input) {
-        return roster(input, false);
+        return roster(input, EntryHealth.FRESH);
     }
 
-    /** 单独放行梦境首帧已阵亡攻方；其他战场仍必须全员带正生命值入场。 */
-    static List<Unit> roster(List<Unit> input, boolean keepFallenAttacker) {
+    /** 按玩法允许首帧的已阵亡单位，攻守双方都必须有可行动成员。 */
+    static List<Unit> roster(List<Unit> input, EntryHealth mode) {
         if (input.size() < 2 || input.size() > 16) throw new IllegalArgumentException("战斗单位数量无效");
         var ids = new HashSet<Integer>();
         var seats = new HashSet<String>();
@@ -553,13 +603,15 @@ public final class HeroBattleChapterScenario {
                 || unit.position() < 1 || unit.position() > 8
                 || !seats.add(unit.faction() + ":" + unit.position())
                 || unit.opening().maxHp() <= 0 || unit.opening().hp() < 0
-                || (unit.opening().hp() == 0 && (!keepFallenAttacker || unit.faction() != 1))
+                || (unit.opening().hp() == 0 && (mode == EntryHealth.FRESH
+                    || (mode == EntryHealth.DREAMLAND && unit.faction() != 1)))
                 || unit.opening().hp() > unit.opening().maxHp()) {
                 throw new IllegalArgumentException("战斗单位身份、站位或生命无效");
             }
             factions.add(unit.faction());
         }
-        if (factions.size() != 2 || input.stream().noneMatch(unit -> unit.faction() == 1 && unit.opening().hp() > 0)) {
+        if (factions.size() != 2 || input.stream().noneMatch(unit -> unit.faction() == 1 && unit.opening().hp() > 0)
+                || input.stream().noneMatch(unit -> unit.faction() == 2 && unit.opening().hp() > 0)) {
             throw new IllegalArgumentException("战斗缺少存活的对战阵营");
         }
         return input.stream().sorted(Comparator.comparingInt(Unit::faction)).toList();
@@ -578,15 +630,16 @@ public final class HeroBattleChapterScenario {
     /** 冻结开战头像，按战斗类型的回合规则完整执行并生成只读战报。 */
     private Result runBattle(String scenario, List<Unit> input, DoublePredicate decision, Random random,
                              int maxRounds, Map<Integer, Long> attackRates) {
-        return runBattle(scenario, input, decision, random, maxRounds, attackRates, false, new HashMap<>());
+        return runBattle(scenario, input, decision, random, maxRounds, attackRates, EntryHealth.FRESH,
+                new HashMap<>());
     }
 
-    /** 梦境沿用完整战报执行链，仅恢复前层的死亡标识和受支持的累计触发次数。 */
+    /** 续战恢复死亡状态；只有梦境继续携带前层累计触发次数。 */
     private Result runBattle(String scenario, List<Unit> input, DoublePredicate decision, Random random,
-                             int maxRounds, Map<Integer, Long> attackRates, boolean dreamland,
+                             int maxRounds, Map<Integer, Long> attackRates, EntryHealth mode,
                              Map<Integer, Map<Integer, Integer>> effectUses) {
         // 在战斗开始前冻结资源身份；之后的名册/配置变化不重算已持久战报。
-        var initial = roster(input, dreamland).stream().map(unit -> new Unit(unit.id(), unit.faction(), unit.template(),
+        var initial = roster(input, mode).stream().map(unit -> new Unit(unit.id(), unit.faction(), unit.template(),
             unit.level(), unit.star(), unit.stage(), unit.position(), unit.attributes(), unit.opening(),
             unit.skills(), unit.portraitIconId() == null
                 ? appearance.icon(unit.template(), unit.star(), 0, 0) : unit.portraitIconId())).toList();
@@ -601,9 +654,11 @@ public final class HeroBattleChapterScenario {
         var engine = new HeroBattleHealingExecutor(skills, states, HeroBattleHealingExecutor.inferredRandom(random));
         initial.forEach(unit -> engine.bindCombatData(unit.id(), unit.template(), unit.attributes()));
         for (var unit : initial) {
-            if (dreamland && unit.faction() == 1) {
-                var actor = engine.state(unit.id()).actor();
-                actor.setDead(unit.opening().hp() == 0);
+            var actor = engine.state(unit.id()).actor();
+            if (mode != EntryHealth.FRESH && unit.opening().hp() == 0) {
+                actor.setDead(true);
+            }
+            if (mode == EntryHealth.DREAMLAND && unit.faction() == 1) {
                 actor.restoreEffectUses(effectUses.getOrDefault(unit.id(), Map.of()));
             }
             for (var skill : unit.skills()) {
@@ -657,7 +712,7 @@ public final class HeroBattleChapterScenario {
             outcome = outcome(initial, snapshot(engine, initial), completed, maxRounds);
             if (outcome != HeroBattleRoundUtils.Outcome.ONGOING) break;
         }
-        if (dreamland) {
+        if (mode == EntryHealth.DREAMLAND) {
             for (var unit : initial) {
                 if (unit.faction() == 1) {
                     effectUses.put(unit.id(), engine.state(unit.id()).actor().continuedEffectUses());

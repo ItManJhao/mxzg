@@ -72,6 +72,32 @@ public class HeroLineupBattleService {
         return result;
     }
 
+    /** 保存首次匹配到的试炼守方阵容，无论真人后来如何改阵都使用该快照。 */
+    public List<HeroBattleChapterScenario.Unit> freezeTrialDefense(HeroBattleInputService.Input defender,
+            List<HeroBattleChapterScenario.ConfiguredEnemy> robots) {
+        return battles.freezeTrialDefense(defender, robots);
+    }
+
+    /** 计算试炼守方预览面板及当前剩余生命。 */
+    public List<HeroBattleChapterScenario.Unit> trialDefensePanel(List<HeroBattleChapterScenario.Unit> defense,
+            Map<Integer, Long> health) {
+        return battles.trialDefensePanel(defense, health);
+    }
+
+    /** 保留原匹配名单，只有所有守方技能都可执行时允许挑战。 */
+    public boolean trialDefenseReady(List<HeroBattleChapterScenario.Unit> defense) {
+        return battles.trialDefenseGaps(defense).isEmpty();
+    }
+
+    /** 试炼在同一关内保留守军生命，并以当前已保存阵容读取攻方续战生命。 */
+    public HeroBattleChapterScenario.Result trial(String scenario, HeroBattleInputService.Input attacker,
+            List<HeroBattleChapterScenario.Unit> defender, Map<Integer, Long> health,
+            int rounds, DoublePredicate decision) {
+        var result = battles.runTrialFormation(scenario, attacker, defender, health, rounds, decision);
+        HeroBattleReplayUtils.validate(result);
+        return result;
+    }
+
     /** 竞技场沿用持久主阵容，并根据旧配置给存活双方追加每回合攻击倍率。 */
     public Preview arena(String token, String scenario, List<HeroBattleChapterScenario.ConfiguredEnemy> enemies,
                          Map<Integer, Long> attackRates, DoublePredicate decision) {

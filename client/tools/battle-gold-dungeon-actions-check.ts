@@ -1,4 +1,4 @@
-/** 校验金币副本原动作与资源，并核对已开放日常副本战报与可选的真实服务端样本。 */
+/** 校验副本共用的旧动作覆盖和资源，并核对日常副本战报与可选的真实服务端样本。 */
 import { strict as assert } from "node:assert";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -376,6 +376,8 @@ function assets(): void {
         { file: "gold-dungeon-action-assets-20261119.json", frames: 76, audio: 3 },
         { file: "gold-dungeon-stage3-action-assets-20261123.json", frames: 154, audio: 5 },
         { file: "daily-dungeon-action-assets-20261123.json", frames: 193, audio: 8 },
+        { file: "dreamland-astrologer-action-assets-20261126.json", frames: 66, audio: 3 },
+        { file: "trial-flame-witch-action-assets-20261126.json", frames: 115, audio: 4 },
     ];
     for (const proof of proofs) {
         const evidence = JSON.parse(readFileSync("docs/validation/" + proof.file, "utf8"));
@@ -390,6 +392,126 @@ function assets(): void {
         for (const audio of evidence.audio) {
             assert.equal(hash(audio.local), audio.sha256);
         }
+        for (const icon of evidence.icons ?? []) {
+            assert.equal(hash(icon.path), icon.afterSha256);
+            assert.equal(JSON.parse(readFileSync(icon.path + ".meta", "utf8")).uuid, icon.imageUuid);
+        }
+    }
+}
+
+/** 核对梦境守军的高等级动作展开，保留原样式和等级间的延迟差异。 */
+function checkHigherLevelDungeonPresentation(): void {
+    const action = actionRows();
+    const goddess = action(4053101).map(row => BattleAttackUtils.plan(row));
+    for (const id of [4053102, 4053103]) {
+        const rows = action(id);
+        assert.deepEqual(rows.map(row => [row.type, row.delay, row.dimly]), [[3, 0, 0], [7, 60, 0]]);
+        assert.deepEqual(rows.map(row => BattleAttackUtils.plan(row)), goddess);
+        near(BattleAttackUtils.delaySeconds(rows[1]), 1);
+    }
+
+    const edward = action(5041101).map(row => BattleAttackUtils.plan(row));
+    for (const [id, frames] of [[5041102, 20], [5041103, 60]]) {
+        const rows = action(id);
+        assert.deepEqual(rows.map(row => [row.type, row.delay, row.dimly]), [[3, 0, 1], [9, frames, 1], [6, 0, 0]]);
+        assert.deepEqual(rows.map(row => BattleAttackUtils.plan(row)), edward);
+        near(BattleAttackUtils.delaySeconds(rows[1]), frames / 60);
+    }
+    for (const [id, frames] of [[2181101, 70], [2181102, 80], [2181103, 80], [2191101, 70], [2191103, 80]]) {
+        assert.equal(action(id)[1].delay, frames);
+    }
+    for (const [id, effectRows, vocalRows] of [[3221101, 6, 5], [3221103, 6, 1], [5111101, 5, 4], [5111102, 5, 1]]) {
+        const plans = action(id).map(row => BattleAttackUtils.plan(row));
+        assert.equal(plans.filter(plan => plan.effectOnly && plan.effect).length, effectRows);
+        assert.equal(plans.filter(plan => plan.sounds.length !== 0).length, vocalRows);
+    }
+}
+
+/** 锁定喵莉丝的普攻、两种主动和被动图标，验证各段位置、播放时点和原资源。 */
+function checkAstrologerPresentation(): void {
+    const action = actionRows();
+    const basic = action(2210100);
+    assert.deepEqual(basic.map(row => [row.type, row.delay]), [[3, 0], [7, 25]]);
+    assert.deepEqual(BattleAttackUtils.plan(basic[1]).effect?.paths, verifiedFrames("skill-102050210", 11));
+
+    for (const id of [2211101, 2211102, 2211103]) {
+        const rows = action(id);
+        assert.deepEqual(rows.map(row => [row.type, row.delay]), [[3, 0], [9, 70], [6, 60]]);
+        const [cast, field, attached] = rows.map(row => BattleAttackUtils.plan(row));
+        assert.equal(cast.action, "attack2");
+        assert.deepEqual(field.battlefieldOffset, [0.8, 0.45]);
+        assert.deepEqual(field.effect?.paths, verifiedFrames("skill-102050211", 13));
+        assert(attached.onSource);
+        near(attached.effect!.interval, 0.025);
+        assert.deepEqual(attached.effect?.paths, verifiedFrames("skill-102050211-1", 22));
+    }
+
+    for (const id of [2213101, 2213102, 2213103]) {
+        const rows = action(id);
+        assert.deepEqual(rows.map(row => [row.type, row.delay]), [[3, 0], [7, 50]]);
+        const [cast, target] = rows.map(row => BattleAttackUtils.plan(row));
+        assert.equal(cast.action, "attack3");
+        assert(!target.onSource && target.effectOnly);
+        assert.deepEqual(target.effect?.paths, verifiedFrames("skill-102050213", 20));
+    }
+    const icon = BattleAttackUtils.buffIconPath(102050214);
+    assert.equal(icon, "hero/ui/skill-icon_102050214/spriteFrame");
+    assert(resolveBundleFile(icon!.replace(/\/spriteFrame$/, ".png")));
+}
+
+/** 验证试炼圣焰女巫的原投掷、施法触发及后续目标段使用独立资源。 */
+function checkFlameWitchPresentation(): void {
+    const action = actionRows();
+    const basic = action(1220100);
+    assert.deepEqual(basic.map(row => [row.type, row.delay]), [[5, 0], [7, 28]]);
+    const [arrow, hit] = basic.map(row => BattleAttackUtils.plan(row));
+    assert(arrow.projectile);
+    assert.deepEqual(arrow.effect?.paths, verifiedFrames("skill-101050220-1", 4));
+    assert.deepEqual(hit.effect?.paths, verifiedFrames("skill-101050220-2", 16));
+
+    for (const id of [1221101, 1221102, 1221103]) {
+        const rows = action(id);
+        assert.deepEqual(rows.map(row => [row.type, row.delay]), [[3, 0], [7, 100], [6, 0]]);
+        const [cast, target, source] = rows.map(row => BattleAttackUtils.plan(row));
+        assert.equal(cast.action, "attack2");
+        assert.deepEqual(target.sounds, ["skill-101050221"]);
+        assert.deepEqual(target.effect?.paths, verifiedFrames("skill-101050221", 15));
+        assert.deepEqual(source.effect?.paths, verifiedFrames("skill-101050221-1", 68));
+    }
+
+    for (const id of [1223101, 1223102, 1223103]) {
+        const rows = action(id);
+        assert.deepEqual(rows.map(row => [row.type, row.delay]), [[3, 0], [7, 90]]);
+        const [cast, target] = rows.map(row => BattleAttackUtils.plan(row));
+        assert.equal(cast.action, "attack3");
+        assert.deepEqual(target.effect?.paths, verifiedFrames("skill-101050223", 12));
+    }
+}
+
+/** 校验试炼提米三档替换普攻的原目标特效和骨骼并发，逐帧核对现有资源入口。 */
+function checkTimiReplacementPresentation(): void {
+    const action = actionRows();
+    const frames = verifiedFrames("skill-103050150", 7);
+    assert(resolveBundleFile("audio/skill-103050150.mp3"));
+    const spine = JSON.parse(readFileSync(resolveBundleFile("spine/10305015.json"), "utf8"));
+    for (const id of [3155201, 3155202, 3155203]) {
+        const rows = action(id);
+        assert.deepEqual(rows.map(value => [value.type, value.delay, value.dimly]), [[7, 0, 1], [3, 0, 1]]);
+        const [target, attack] = rows.map(value => BattleAttackUtils.plan(value));
+        assert(target.effectOnly && !target.onSource && !target.projectile);
+        assert.deepEqual(target.effect?.paths, frames);
+        assert.deepEqual(target.sounds, ["skill-103050150"]);
+        near(target.effect!.anchorX, 0.5);
+        near(target.effect!.anchorY, 0.13 - 0.07);
+        near(target.effect!.interval, 0.08);
+        near(target.effect!.scaleX, 3);
+        near(target.effect!.scaleY, 3);
+        assert(!attack.effectOnly && !attack.effect);
+        assert.deepEqual(attack.sounds, []);
+        assert.equal(attack.action, "attack");
+        assert(spine.animations[attack.action]);
+        near(attack.attackSeconds, 0.6);
+        near(attack.actionSeconds, 1.8);
     }
 }
 
@@ -397,6 +519,10 @@ actions();
 checkSecondStagePresentation();
 checkThirdStagePresentation();
 checkExpandedDungeonPresentation();
+checkHigherLevelDungeonPresentation();
+checkAstrologerPresentation();
+checkFlameWitchPresentation();
+checkTimiReplacementPresentation();
 replay();
 assets();
 console.log("PASS daily dungeon actions, six-enemy replays and verified frames/audio");

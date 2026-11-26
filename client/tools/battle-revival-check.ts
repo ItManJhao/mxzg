@@ -129,6 +129,36 @@ function checkRoundDeathBeforeExpiry(): void {
     }
 }
 
+/** 各档自体重生均可接在持续伤害死亡后，播放依次完成扣血、重生和回合准备。 */
+async function checkRoundSelfRebirth(configId: number): Promise<void> {
+    const source = fixture();
+    const tick = { kind: "damage", sourceId: 10, targetId: 3, configId: 3101403,
+        actualHpChange: -100, reportedHpChange: -100, dead: true };
+    const rebirth = { kind: "revival", sourceId: 3, targetId: 3, configId,
+        actualHpChange: 25, reportedHpChange: 25, dead: false };
+    const turn = { ...source.phases[1], round: 2, events: source.phases[1].events.filter(event =>
+        event.kind === "skill.begin" || event.kind === "skill.end" || (event.kind === "damage" && event.targetId === 10)) };
+    source.units[1].finalHp = 25;
+    const report = { ...source, rounds: 2, phases: [source.phases[0],
+        { round: 2, sourceId: 0, events: [tick, rebirth] }, turn] };
+    const played: string[] = [];
+    const player = new BattleReplayPlayer({
+        async play(step) {
+            if (step.round === 2) {
+                played.push(step.kind);
+            }
+        },
+        stop() {},
+    });
+    assert(await player.play(encode(report)));
+    assert.deepEqual(played.slice(0, 4), ["damage", "revival", "round.ready", "skill.begin"]);
+    for (const events of [[rebirth], [tick, { ...rebirth, sourceId: 2 }], [tick, { ...rebirth, configId: 1103201 }]]) {
+        const phase = { ...report.phases[1], events };
+        assert.throws(() => BattleReplayUtils.decode(encode({ ...report, phases: [source.phases[0], phase, turn] })),
+            /复活目标或技能上下文/);
+    }
+}
+
 /** 给生产播放器的微任务依赖一个有限窗口；挂起渲染由用例显式放行。 */
 async function flush(until: () => boolean): Promise<void> {
     for (let index = 0; index < 50 && !until(); index++) {
@@ -184,11 +214,14 @@ async function checkPlayer(cancel: boolean): Promise<void> {
         : ["hit.begin", "hit.end", "cleanup.1", "cleanup.2", "revival"]);
 }
 
-/** 运行复活、受击反击、到期前死亡清理和两种播放结局。 */
+/** 运行复活、受击反击、回合前死亡清理及重生和两种播放结局。 */
 async function main(): Promise<void> {
     checkDecode();
     checkCounterReplay();
     checkRoundDeathBeforeExpiry();
+    for (const configId of [3233301, 3233302, 3233303, 5074301, 5074302, 5074303]) {
+        await checkRoundSelfRebirth(configId);
+    }
     await checkPlayer(false);
     await checkPlayer(true);
     console.log("PASS revival, queued counterattack, periodic death cleanup and cancellation");

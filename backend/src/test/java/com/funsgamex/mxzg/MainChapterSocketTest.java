@@ -5,13 +5,17 @@
 package com.funsgamex.mxzg;
 import com.funsgamex.mxzg.auth.*;
 import com.funsgamex.mxzg.campaign.IdleActivityMaintenanceService;
+import com.funsgamex.mxzg.friend.FriendService;
+import com.funsgamex.mxzg.hero.HeroBattleChapterScenario.Unit;
 import com.funsgamex.mxzg.hero.HeroGrowthRules;
+import com.funsgamex.mxzg.hero.HeroLineupBattleService;
 import com.funsgamex.mxzg.network.GameProtocolCodec;
 import com.funsgamex.mxzg.network.AssetSyncService;
 import com.funsgamex.mxzg.reward.RewardGrantService;
 import com.funsgamex.mxzg.role.RoleRepository;
 import com.funsgamex.mxzg.role.RoleRules;
 import com.funsgamex.mxzg.time.GameClock;
+import com.funsgamex.mxzg.trial.TrialService;
 import java.nio.ByteBuffer;
 import java.net.URI;
 import java.net.http.*;
@@ -26,12 +30,16 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import tools.jackson.databind.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
     "spring.datasource.url=jdbc:h2:mem:chapter_socket;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
-    "spring.datasource.username=sa", "spring.datasource.password=", "mxzg.gm.enabled=false"})
+    "spring.datasource.username=sa", "spring.datasource.password=", "mxzg.gm.enabled=false",
+    "mxzg.dreamland.max-floor=${mxzg.test.dreamland.floor-limit:35}", "mxzg.trial-maintenance.enabled=false"})
 @ActiveProfiles("local")
 class MainChapterSocketTest {
     /** 本测试专属随机端口。 */
@@ -50,12 +58,18 @@ class MainChapterSocketTest {
     @Autowired RoleRules roleRules;
     /** 按真实英雄养成上限准备可挑战的阵容。 */
     @Autowired HeroGrowthRules growth;
+    /** 只为隔离的 600 层连战测试加强攻方，守军和结算仍走实际执行入口。 */
+    @MockitoSpyBean HeroLineupBattleService lineupBattles;
     /** 测试角色的两名奖励英雄经正常发奖事务入库。 */
     @Autowired RewardGrantService grants;
     /** 构造奖励事务时使用与游戏一致的时间。 */
     @Autowired GameClock clock;
     /** 为快速战斗样本准备独立区服的可信挂机活动控制。 */
     @Autowired IdleActivityMaintenanceService idleActivity;
+    /** 隔离好友关系通过正式申请与同意建立。 */
+    @Autowired FriendService friends;
+    /** 助战次日结算由测试选择时刻调用同一邮件事务。 */
+    @Autowired TrialService trials;
     private final class Peer implements WebSocket.Listener, AutoCloseable {
         final HttpClient client = HttpClient.newHttpClient();
         final BlockingQueue<JsonNode> messages = new LinkedBlockingQueue<>();
@@ -63,11 +77,19 @@ class MainChapterSocketTest {
         final BlockingQueue<JsonNode> events = new LinkedBlockingQueue<>();
         final CompletableFuture<Integer> closed = new CompletableFuture<>();
         final java.io.ByteArrayOutputStream fragments = new java.io.ByteArrayOutputStream();
+        /** 批量客户端的帧间隔，零表示其他业务专项使用普通请求时序。 */
+        final Duration frameGap;
         WebSocket socket;
         String connectionId;
 
-        /** 建立真实本机连接，限定握手等待时间。 */
+        /** 创建不增加发包延迟的普通测试连接。 */
         Peer() {
+            this(Duration.ZERO);
+        }
+
+        /** 保留服务端的生产帧限制，由批量测试连接主动控制发送速率。 */
+        Peer(Duration frameGap) {
+            this.frameGap = frameGap;
             socket = client.newWebSocketBuilder().subprotocols(GameProtocolCodec.SUBPROTOCOL).connectTimeout(Duration.ofSeconds(5))
                 .buildAsync(URI.create("ws://127.0.0.1:" + port + "/api/v1/game/socket"), this).join();
         }
@@ -94,8 +116,11 @@ class MainChapterSocketTest {
         /** 传输异常解除等待，而不是测试永久挂起。 */
         @Override public void onError(WebSocket socket, Throwable error) { closed.completeExceptionally(error); }
 
-        /** 发出可关联请求，并确认服务器回显 id；事件测试单独读取队列。 */
+        /** 按配置的最小间隔发包，并确认服务器回显 id；事件测试单独读取队列。 */
         JsonNode request(String name, Object body) throws Exception {
+            if (!frameGap.isZero()) {
+                Thread.sleep(frameGap);
+            }
             String id = UUID.randomUUID().toString();
             Map<String, Object> frame = new LinkedHashMap<>(Map.of("version", 1, "kind", "request", "name", name, "id", id, "body", body));
             if (connectionId != null) frame.put("connectionId", connectionId);
@@ -804,23 +829,314 @@ class MainChapterSocketTest {
         assertEquals(30, item.path("credited").asInt());
     }
 
-    /** 用隔离角色走完前六层、第二次选增益、重连和首次里程碑领赏。 */
+    /** 经真实会话和 Protobuf 验证试炼首败续战、十五关、宝箱、重连、任务及次日回退。 */
+    @Test void playsCompleteNormalTrialOverWebSocket() throws Exception {
+        long now = java.time.Instant.parse("2026-11-25T15:00:00Z").getEpochSecond();
+        clock.setEpochSeconds(now);
+        try {
+            var player = login.login("trial_" + UUID.randomUUID().toString().substring(0, 12), "local-1");
+            var token = player.session().accessToken();
+            var role = player.role().id();
+            jdbc.update("UPDATE game_role SET role_level=30,created_at_seconds=? WHERE id=?", now, role);
+            String weak = UUID.randomUUID().toString();
+            jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10101001,40,1)",
+                    weak, role);
+            Map<String, Object> retry;
+            JsonNode losing;
+            long reset;
+            try (var peer = new Peer(Duration.ofMillis(40))) {
+                assertTrue(peer.authenticate(token).path("ok").asBoolean());
+                var state = success(peer, "trial.state", Map.of());
+                assertEquals(30, state.path("minimumLevel").asInt());
+                assertEquals(0, state.path("difficulty").asInt());
+                assertEquals(3, state.path("difficulties").size());
+                var invalid = dreamlandCommand(state, "selectDifficulty");
+                invalid.put("choice", 2);
+                assertEquals("TRIAL_DIFFICULTY_UNAVAILABLE", peer.request("trial.act", invalid)
+                        .path("error").path("code").asString());
+                assertEquals(state, success(peer, "trial.state", Map.of()));
+                var select = dreamlandCommand(state, "selectDifficulty");
+                select.put("choice", 1);
+                var choice = peer.request("trial.act", select);
+                assertTrue(choice.path("ok").asBoolean(), choice.toString());
+                writeTrial("difficulty", choice);
+                state = choice.path("body").path("state");
+                assertEquals(20, state.path("nodes").size());
+                assertEquals(1, state.path("currentNode").asInt());
+                assertEquals(6, state.path("nodes").get(0).path("opponent").path("heroes").size());
+                reset = state.path("resetAtSeconds").asLong();
+                var save = dreamlandCommand(state, "saveFormation");
+                save.put("formationId", 1);
+                save.put("slots", List.of(Map.of("position", 2, "heroId", weak)));
+                state = success(peer, "trial.act", save).path("state");
+                retry = dreamlandCommand(state, "fight");
+                retry.put("choice", 1);
+                var loss = peer.request("trial.act", retry);
+                assertTrue(loss.path("ok").asBoolean(), loss.toString());
+                losing = loss.path("body");
+                assertFalse(losing.path("state").path("battle").path("won").asBoolean());
+                assertEquals(0, losing.path("state").path("heroHealth").get(0).path("hp").asLong());
+                assertEquals(1, losing.path("state").path("currentNode").asInt());
+                writeTrial("loss", loss);
+            }
+
+            try (var peer = new Peer(Duration.ofMillis(40))) {
+                assertTrue(peer.authenticate(token).path("ok").asBoolean());
+                var state = success(peer, "trial.state", Map.of());
+                assertEquals(losing.path("state"), state);
+                assertEquals(losing, success(peer, "trial.act", retry));
+                String leader = UUID.randomUUID().toString();
+                int level = growth.limit(200, 6, 14);
+                jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,10105011,?,14,6)",
+                        leader, role, level);
+                var save = dreamlandCommand(state, "saveFormation");
+                save.put("formationId", 1);
+                save.put("slots", List.of(Map.of("position", 2, "heroId", weak),
+                        Map.of("position", 3, "heroId", leader)));
+                state = success(peer, "trial.act", save).path("state");
+                for (int battle = 1; battle <= 15; battle++) {
+                    int node = state.path("currentNode").asInt();
+                    var fight = dreamlandCommand(state, "fight");
+                    fight.put("choice", node);
+                    var reply = peer.request("trial.act", fight);
+                    assertTrue(reply.path("ok").asBoolean(), reply.toString());
+                    var receipt = reply.path("body");
+                    var next = receipt.path("state");
+                    assertTrue(next.path("battle").path("won").asBoolean(), "试炼战斗 " + battle + " 未胜利");
+                    if (battle == 1) {
+                        assertDreamlandCredit(receipt, 901201, 55);
+                        var firstReportUnits = losing.path("state").path("battle").path("replay").path("units");
+                        var retryUnits = next.path("battle").path("replay").path("units");
+                        assertEquals(firstReportUnits.size() + 1, retryUnits.size());
+                        assertEquals(0, retryUnits.get(0).path("initialHp").asLong());
+                        var carriedDefense = losing.path("state").path("nodes").get(0).path("opponent").path("heroes");
+                        for (var defender : carriedDefense) {
+                            var unit = retryUnits.valueStream().filter(row -> row.path("faction").asInt() == 2
+                                    && row.path("position").asInt() == defender.path("position").asInt())
+                                    .findFirst().orElseThrow();
+                            assertEquals(defender.path("hp").asLong(), unit.path("initialHp").asLong());
+                        }
+                        writeTrial("fight", reply);
+                    }
+                    if (battle % 3 == 0) {
+                        var claim = dreamlandCommand(next, "claim");
+                        claim.put("choice", node + 1);
+                        var chest = peer.request("trial.act", claim);
+                        assertTrue(chest.path("ok").asBoolean(), chest.toString());
+                        next = chest.path("body").path("state");
+                        if (battle == 3) {
+                            assertEquals(chest.path("body"), success(peer, "trial.act", claim));
+                            assertDreamlandCredit(chest.path("body"), 901201, 55);
+                            writeTrial("claim", chest);
+                        }
+                    }
+                    state = next;
+                }
+                assertEquals(0, state.path("currentNode").asInt());
+                assertEquals(1, state.path("completedDifficulty").asInt());
+                assertEquals(20, state.path("nodes").valueStream().filter(node ->
+                        node.path("status").asString().equals("cleared")).count());
+                var shop = success(peer, "trial.shop", Map.of());
+                var buy = Map.of("requestId", UUID.randomUUID().toString(), "offerId", 1, "count", 1,
+                        "refreshAt", shop.path("refreshAt").asLong());
+                var purchase = peer.request("trial.shop.buy", buy);
+                assertTrue(purchase.path("ok").asBoolean(), purchase.toString());
+                assertEquals(purchase.path("body"), success(peer, "trial.shop.buy", buy));
+                assertDreamlandCredit(purchase.path("body"), 901503, 5);
+                assertEquals(875L, jdbc.queryForObject(
+                        "SELECT quantity FROM game_inventory WHERE role_id=? AND item_id=901201", Long.class, role));
+                writeTrial("shop-purchase", purchase);
+                var quests = success(peer, "quest.list", Map.of());
+                var daily = quests.path("daily").valueStream().filter(row -> row.path("id").asInt() == 13)
+                        .findFirst().orElseThrow();
+                assertEquals(3, daily.path("current").asLong());
+                assertEquals("main_proving_lang", daily.path("destination").asString());
+                clock.setEpochSeconds(reset);
+                var fresh = success(peer, "trial.state", Map.of());
+                assertEquals(0, fresh.path("difficulty").asInt());
+                assertEquals(1, fresh.path("completedDifficulty").asInt());
+                assertTrue(fresh.path("heroHealth").isEmpty());
+                var resume = dreamlandCommand(fresh, "selectDifficulty");
+                resume.put("choice", 1);
+                var resumed = success(peer, "trial.act", resume);
+                assertEquals(5, resumed.path("state").path("currentNode").asInt());
+                assertDreamlandCredit(resumed, 901201, 235);
+            }
+        } finally {
+            clock.reset();
+        }
+    }
+
+    /** 下一名原守军技能未接通时，前一胜场的奖励、战报和进度仍然提交。 */
+    @Test void blockedTrialOpponentKeepsPreviousVictoryAndAssets() throws Exception {
+        long now = java.time.Instant.parse("2026-11-25T15:00:00Z").getEpochSecond();
+        clock.setEpochSeconds(now);
+        try {
+            var player = login.login("trial_guard_" + UUID.randomUUID().toString().substring(0, 10), "local-1");
+            String role = player.role().id();
+            jdbc.update("UPDATE game_role SET role_level=30,created_at_seconds=? WHERE id=?", now, role);
+            String hero = UUID.randomUUID().toString();
+            jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,10105011,?,14,6)",
+                    hero, role, growth.limit(200, 6, 14));
+            try (var peer = new Peer()) {
+                assertTrue(peer.authenticate(player.session().accessToken()).path("ok").asBoolean());
+                var state = success(peer, "trial.state", Map.of());
+                var select = dreamlandCommand(state, "selectDifficulty");
+                select.put("choice", 1);
+                state = success(peer, "trial.act", select).path("state");
+                var save = dreamlandCommand(state, "saveFormation");
+                save.put("formationId", 1);
+                save.put("slots", List.of(Map.of("position", 2, "heroId", hero)));
+                state = success(peer, "trial.act", save).path("state");
+                // 固定测试用的匹配条件：首战后历史主阵战力增加，下一守军从原高战力池匹配。
+                jdbc.update("UPDATE game_role SET max_main_power=8000000 WHERE id=?", role);
+                var fight = dreamlandCommand(state, "fight");
+                fight.put("choice", 1);
+                var win = peer.request("trial.act", fight);
+                assertTrue(win.path("ok").asBoolean(), win.toString());
+                var receipt = win.path("body");
+                assertDreamlandCredit(receipt, 901201, 55);
+                var next = receipt.path("state");
+                assertEquals(2, next.path("currentNode").asInt());
+                assertEquals("blocked", next.path("nodes").get(1).path("status").asString());
+                assertEquals(6, next.path("nodes").get(1).path("opponent").path("heroes").size());
+                writeTrial("blocked", win);
+
+                var blocked = dreamlandCommand(next, "fight");
+                blocked.put("choice", 2);
+                long revision = roles.revision(role);
+                var rejected = peer.request("trial.act", blocked);
+                assertEquals("TRIAL_OPPONENT_UNAVAILABLE", rejected.path("error").path("code").asString());
+                assertEquals(next, success(peer, "trial.state", Map.of()));
+                assertEquals(revision, roles.revision(role));
+                assertEquals(55L, jdbc.queryForObject(
+                        "SELECT quantity FROM game_inventory WHERE role_id=? AND item_id=901201", Long.class, role));
+            }
+        } finally {
+            clock.reset();
+        }
+    }
+
+    /** 双角色验证助战选择、派遣快照、保存上阵后的锁定，以及次日邮件仅到账一次。 */
+    @Test void borrowsTrialFriendAcrossReconnectAndDeliversNextDayMail() throws Exception {
+        long now = java.time.Instant.parse("2026-11-25T15:00:00Z").getEpochSecond();
+        clock.setEpochSeconds(now);
+        try {
+            var owner = login.login("trial_owner_" + UUID.randomUUID().toString().substring(0, 10), "local-1");
+            var borrower = login.login("trial_guest_" + UUID.randomUUID().toString().substring(0, 10), "local-1");
+            String ownerId = owner.role().id();
+            String borrowerId = borrower.role().id();
+            String ownerToken = owner.session().accessToken();
+            String borrowerToken = borrower.session().accessToken();
+            jdbc.update("UPDATE game_role SET role_level=30,created_at_seconds=? WHERE id IN (?,?)",
+                    now, ownerId, borrowerId);
+            friends.change(borrowerId, new FriendService.Command(UUID.randomUUID().toString(),
+                    FriendService.Action.APPLY, ownerId, 0));
+            friends.change(ownerId, new FriendService.Command(UUID.randomUUID().toString(),
+                    FriendService.Action.ACCEPT, borrowerId, 0));
+            String ally = UUID.randomUUID().toString();
+            jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,10204013,40,5,2)",
+                    ally, ownerId);
+            String strong = UUID.randomUUID().toString();
+            jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,10105011,?,14,6)",
+                    strong, borrowerId, growth.limit(200, 6, 14));
+            try (var peer = new Peer()) {
+                assertTrue(peer.authenticate(ownerToken).path("ok").asBoolean());
+                var state = success(peer, "trial.state", Map.of());
+                var dispatch = dreamlandCommand(state, "dispatchAssist");
+                dispatch.put("targetId", ally);
+                assertTrue(success(peer, "trial.act", dispatch).path("actual").isMissingNode());
+                assertEquals(40, success(peer, "trial.assistance", Map.of()).path("dispatched").get(0).path("level").asInt());
+            }
+            jdbc.update("UPDATE game_hero SET hero_level=50 WHERE id=?", ally);
+            long reset;
+            try (var peer = new Peer()) {
+                assertTrue(peer.authenticate(borrowerToken).path("ok").asBoolean());
+                var assist = success(peer, "trial.assistance", Map.of());
+                assertEquals(40, assist.path("available").get(0).path("level").asInt());
+                var select = dreamlandCommand(assist, "selectAssist");
+                select.put("targetId", ally);
+                var selected = success(peer, "trial.act", select).path("state");
+                var save = dreamlandCommand(selected, "saveFormation");
+                save.put("formationId", 1);
+                save.put("slots", List.of(Map.of("position", 2, "heroId", strong), Map.of("position", 3, "heroId", ally)));
+                var saved = success(peer, "trial.act", save).path("state");
+                var cancel = dreamlandCommand(saved, "cancelAssist");
+                cancel.put("targetId", ally);
+                assertFalse(peer.request("trial.act", cancel).path("ok").asBoolean());
+                assertTrue(success(peer, "trial.assistance", Map.of()).path("selected").get(0).path("used").asBoolean());
+                var difficulty = dreamlandCommand(saved, "selectDifficulty");
+                difficulty.put("choice", 1);
+                var active = success(peer, "trial.act", difficulty).path("state");
+                var fight = dreamlandCommand(active, "fight");
+                fight.put("choice", 1);
+                var fought = success(peer, "trial.act", fight).path("state");
+                var borrowedUnit = fought.path("battle").path("replay").path("units").valueStream()
+                        .filter(unit -> unit.path("faction").asInt() == 1 && unit.path("position").asInt() == 3)
+                        .findFirst().orElseThrow();
+                assertEquals(40, borrowedUnit.path("level").asInt());
+                reset = fought.path("resetAtSeconds").asLong();
+            }
+            try (var peer = new Peer()) {
+                assertTrue(peer.authenticate(borrowerToken).path("ok").asBoolean());
+                var state = success(peer, "trial.state", Map.of());
+                assertEquals(2, state.path("slots").size());
+                clock.setEpochSeconds(reset);
+                var next = success(peer, "trial.state", Map.of());
+                assertEquals(1, next.path("slots").size());
+                assertTrue(success(peer, "trial.assistance", Map.of()).path("selected").isEmpty());
+            }
+            trials.mailAssistRewards(ownerId);
+            trials.mailAssistRewards(ownerId);
+            try (var peer = new Peer()) {
+                assertTrue(peer.authenticate(ownerToken).path("ok").asBoolean());
+                var mail = success(peer, "mail.list", Map.of()).path("entries").valueStream()
+                        .filter(row -> row.path("title").asString().equals("勇者试炼支援奖励")).toList();
+                assertEquals(1, mail.size());
+                assertTrue(mail.getFirst().path("hasAttachments").asBoolean());
+            }
+        } finally {
+            clock.reset();
+        }
+    }
+
+    /** 保存真实试炼帧供 TS 协议和战报播放器验证，不包含鉴权消息。 */
+    private static void writeTrial(String name, JsonNode frame) throws Exception {
+        java.nio.file.Files.write(java.nio.file.Path.of("target/trial-" + name + ".pb"), GameProtocolCodec.encode(frame));
+    }
+
+    /** 从第1层验证目标上限内的连续胜场、三选一、重连、封顶结算、排行、任务及逐档首通。 */
     @Test void completesDreamlandOverWebSocketAndResumesOriginalBattle() throws Exception {
+        int limit = Integer.getInteger("mxzg.test.dreamland.floor-limit", 35);
+        var configuration = dreamlandRewards();
+        int standardRewardFloors = configuration.path("standardRewardFloorCount").asInt();
+        int buffInterval = configuration.path("buffInterval").asInt();
+        var frameGap = Duration.ofMillis(40);
         var player = login.login("dream_" + UUID.randomUUID().toString().substring(0, 12), "local-1");
         var role = player.role().id();
         var token = player.session().accessToken();
         jdbc.update("UPDATE game_role SET role_level=100 WHERE id=?", role);
         var hero = UUID.randomUUID().toString();
-        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,10105011,100,9,3)",
-            hero, role);
-        var slots = List.of(Map.of("position", 2, "heroId", hero));
+        int star = MainChapterProgressionPreview.lateChapterLeaderStar(550);
+        int level = growth.limit(limit > 465 ? 400 : 200, 6, star);
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,10105011,?,?,6)",
+            hero, role, level, star);
+        var lineup = MainChapterProgressionPreview.prepareLateChapterLineup(jdbc, role, hero, 200, star, level);
+        if (limit > 465) {
+            doAnswer(call -> {
+                @SuppressWarnings("unchecked")
+                var frozenTeam = (List<Unit>) call.callRealMethod();
+                return MainChapterProgressionPreview.dreamlandAcceptanceTeam(frozenTeam);
+            }).when(lineupBattles).freezeDreamlandFormation(any());
+        }
+        var slots = lineup.stream().map(slot -> Map.of("position", slot.position(), "heroId", slot.heroId())).toList();
         JsonNode first;
         Map<String, Object> choice;
-        try (var peer = new Peer()) {
+        try (var peer = new Peer(frameGap)) {
             assertTrue(peer.authenticate(token).path("ok").asBoolean());
             var state = success(peer, "dreamland.state", Map.of());
             assertEquals(25, state.path("minimumLevel").asInt());
-            assertEquals(6, state.path("maxFloor").asInt());
+            assertEquals(limit, state.path("maxFloor").asInt());
             assertEquals("READY", state.path("phase").asString());
             var saved = dreamlandCommand(state, "SAVE_FORMATION");
             saved.put("formationId", 1);
@@ -838,56 +1154,155 @@ class MainChapterSocketTest {
             assertTrue(first.path("state").path("battle").path("won").asBoolean());
             assertEquals("dreamland:1", first.path("state").path("battle").path("replay").path("scenario").asString());
         }
-        try (var peer = new Peer()) {
-            assertTrue(peer.authenticate(token).path("ok").asBoolean());
-            var state = success(peer, "dreamland.state", Map.of());
-            assertEquals(first.path("state").path("battle"), state.path("battle"));
+        JsonNode state;
+        try (var peer = new Peer(frameGap)) {
+            state = resumeDreamland(peer, token, first.path("state"));
             assertEquals(first, success(peer, "dreamland.act", choice));
-            int battleFloor = 1;
-            boolean pickedAgain = false;
-            for (int step = 0; step < 15 && battleFloor < 6; step++) {
-                Map<String, Object> command;
-                if (state.path("phase").asString().equals("SELECT_BUFF")) {
-                    assertEquals(5, battleFloor);
-                    assertEquals(3, state.path("buffs").size());
-                    command = dreamlandCommand(state, "SELECT_BUFF");
-                    command.put("choice", state.path("buffs").get(0).path("id").asInt());
-                    pickedAgain = true;
-                } else {
-                    command = dreamlandCommand(state, "NEXT");
-                }
-                var reply = peer.request("dreamland.act", command);
-                assertTrue(reply.path("ok").asBoolean(), reply.toString());
-                state = reply.path("body").path("state");
-                var battle = state.path("battle");
-                if (!battle.isMissingNode() && battle.path("floor").asInt() > battleFloor) {
-                    battleFloor = battle.path("floor").asInt();
-                    assertTrue(battle.path("won").asBoolean(), "第 " + battleFloor + " 层须真实获胜");
-                    write("dreamland-floor-" + battleFloor, reply);
-                }
+            state = advanceDreamlandFloors(peer, state, Math.min(15, limit), buffInterval);
+        }
+        for (int checkpoint : List.of(30, 100, 200)) {
+            if (checkpoint >= limit) {
+                break;
             }
-            assertTrue(pickedAgain);
-            assertEquals(6, battleFloor);
-            var run = success(peer, "dreamland.act", dreamlandCommand(state, "NEXT"));
+            try (var peer = new Peer(frameGap)) {
+                state = advanceDreamlandFloors(peer, resumeDreamland(peer, token, state), checkpoint, buffInterval);
+            }
+        }
+        try (var peer = new Peer(frameGap)) {
+            state = advanceDreamlandFloors(peer, resumeDreamland(peer, token, state), limit, buffInterval);
+            var settle = dreamlandCommand(state, "NEXT");
+            var run = success(peer, "dreamland.act", settle);
             state = run.path("state");
             assertEquals("READY", state.path("phase").asString());
-            assertFalse(run.path("actual").path("items").isEmpty());
-            assertEquals(6, state.path("highestFloor").asInt());
-            var claim = dreamlandCommand(state, "CLAIM");
-            claim.put("choice", state.path("milestones").get(0).path("id").asInt());
-            var receipt = success(peer, "dreamland.act", claim);
-            assertTrue(receipt.path("state").path("milestones").get(0).path("claimed").asBoolean());
-            assertFalse(receipt.path("actual").path("items").isEmpty());
-            assertEquals(receipt, success(peer, "dreamland.act", claim));
+            assertTrue(state.path("buffs").isEmpty(), "封顶胜场确认后不应继续三选一");
+            var expected = new LinkedHashMap<Integer, Long>();
+            for (var stage : configuration.path("stages")) {
+                int floor = stage.path("floor").asInt();
+                if (floor > limit) {
+                    break;
+                }
+                var rewards = stage.path(floor <= standardRewardFloors ? "standardRewards" : "afterRewards");
+                for (var reward : rewards) {
+                    expected.merge(reward.path("itemId").asInt(), reward.path("quantity").asLong(), Math::addExact);
+                }
+            }
+            assertEquals(expected.size(), run.path("actual").path("items").size());
+            for (var award : expected.entrySet()) {
+                assertDreamlandCredit(run, award.getKey(), award.getValue());
+            }
+            assertEquals(limit, state.path("highestFloor").asInt());
+            assertEquals(run, success(peer, "dreamland.act", settle));
+            var ranking = success(peer, "dreamland.ranking", Map.of());
+            assertEquals(role, ranking.path("own").path("roleId").asString());
+            assertEquals(limit, ranking.path("own").path("floor").asInt());
+            var milestones = configuration.path("milestones").valueStream()
+                .filter(row -> row.path("floor").asInt() <= limit).toList();
+            assertEquals(milestones.size(), state.path("milestones").size());
+            for (int index = 0; index < milestones.size(); index++) {
+                var milestone = milestones.get(index);
+                int milestoneId = milestone.path("floor").asInt();
+                var claim = dreamlandCommand(state, "CLAIM");
+                claim.put("choice", milestoneId);
+                var receipt = success(peer, "dreamland.act", claim);
+                state = receipt.path("state");
+                assertTrue(state.path("milestones").get(index).path("claimed").asBoolean());
+                var rewards = milestone.path("rewards");
+                assertEquals(rewards.size(), receipt.path("actual").path("items").size());
+                for (var reward : rewards) {
+                    assertDreamlandCredit(receipt, reward.path("itemId").asInt(), reward.path("quantity").asLong());
+                }
+                assertEquals(receipt, success(peer, "dreamland.act", claim));
+            }
             var tasks = success(peer, "quest.list", Map.of()).path("daily");
             var task = tasks.valueStream().filter(row -> row.path("id").asInt() == 14).findFirst().orElseThrow();
             assertEquals(1, task.path("current").asInt());
             assertEquals("main_infinite", task.path("destination").asString());
-            assertEquals(6L, jdbc.queryForObject("""
+            assertEquals((long) limit, jdbc.queryForObject("""
                 SELECT amount FROM game_quest_counter WHERE role_id=? AND metric='INFINITE_CHALLENGE'
                     AND period_end_seconds=? AND condition_value=0
                 """, Long.class, role, state.path("resetAtSeconds").asLong()));
         }
+        clock.setEpochSeconds(state.path("resetAtSeconds").asLong());
+        try (var peer = new Peer(frameGap)) {
+            assertTrue(peer.authenticate(token).path("ok").asBoolean());
+            var resumed = success(peer, "dreamland.state", Map.of());
+            int startFloor = Math.max(0, limit - configuration.path("resetFloorCount").asInt());
+            assertEquals(startFloor, resumed.path("startFloor").asInt());
+            assertEquals(limit, resumed.path("highestFloor").asInt());
+            assertEquals(startFloor, resumed.path("todayRewardFloor").asInt());
+            assertEquals(0, resumed.path("challengeCount").asInt());
+            assertTrue(resumed.path("milestones").valueStream().allMatch(item -> item.path("claimed").asBoolean()));
+            var started = success(peer, "dreamland.act", dreamlandCommand(resumed, "START")).path("state");
+            var selected = dreamlandCommand(started, "SELECT_BUFF");
+            selected.put("choice", started.path("buffs").get(0).path("id").asInt());
+            var battle = success(peer, "dreamland.act", selected).path("state").path("battle");
+            assertEquals(startFloor + 1, battle.path("floor").asInt());
+            assertTrue(battle.path("won").asBoolean());
+        } finally {
+            clock.reset();
+        }
+    }
+
+    /** 重新鉴权后从服务器恢复本次冒险，验证同一持久版本和原冻结战报。 */
+    private JsonNode resumeDreamland(Peer peer, String token, JsonNode previous) throws Exception {
+        assertTrue(peer.authenticate(token).path("ok").asBoolean());
+        var restored = success(peer, "dreamland.state", Map.of());
+        assertEquals(previous.path("version"), restored.path("version"));
+        assertEquals(previous.path("battle"), restored.path("battle"));
+        return restored;
+    }
+
+    /** 从原配置单独读取楼层和发奖预期，不用服务生成的奖励预览作为断言来源。 */
+    private JsonNode dreamlandRewards() throws Exception {
+        try (var resource = getClass().getResourceAsStream("/gameplay/dreamland-rules.json")) {
+            assertNotNull(resource, "必须包含原梦境奖励配置");
+            return new ObjectMapper().readTree(resource);
+        }
+    }
+
+    /** 连续确认战报并继续挑战，后期优先选原队伍恢复增益，返回目标层待确认战报。 */
+    private JsonNode advanceDreamlandFloors(Peer peer, JsonNode state, int targetFloor, int buffInterval) throws Exception {
+        int firstFloor = state.path("battle").path("floor").asInt();
+        for (int floor = firstFloor; floor < targetFloor; floor++) {
+            var acknowledged = success(peer, "dreamland.act", dreamlandCommand(state, "NEXT"));
+            state = acknowledged.path("state");
+            assertEquals(floor, state.path("highestFloor").asInt());
+            assertTrue(acknowledged.path("actual").isMissingNode(), "冒险进行中不应提前发奖");
+            Map<String, Object> command;
+            if (floor % buffInterval == 0) {
+                assertEquals("SELECT_BUFF", state.path("phase").asString());
+                assertEquals(3, state.path("buffs").size());
+                command = dreamlandCommand(state, "SELECT_BUFF");
+                var options = state.path("buffs");
+                int choice = options.get(0).path("id").asInt();
+                if (state.path("maxFloor").asInt() > 465) {
+                    // 只从服务端这次给出的原选项里选恢复，维持数百层连战中的持续生命。
+                    choice = options.valueStream().mapToInt(option -> option.path("id").asInt())
+                        .filter(id -> id == 10).findFirst().orElse(choice);
+                }
+                command.put("choice", choice);
+            } else {
+                assertEquals("NEXT_BATTLE", state.path("phase").asString());
+                command = dreamlandCommand(state, "NEXT");
+            }
+            var reply = peer.request("dreamland.act", command);
+            assertTrue(reply.path("ok").asBoolean(), "第 " + (floor + 1) + " 层：" + reply);
+            state = reply.path("body").path("state");
+            var battle = state.path("battle");
+            int nextFloor = floor + 1;
+            assertEquals(nextFloor, battle.path("floor").asInt());
+            assertEquals("dreamland:" + nextFloor, battle.path("replay").path("scenario").asString());
+            assertTrue(battle.path("won").asBoolean(), "第 " + nextFloor + " 层须真实获胜");
+            write("dreamland-floor-" + nextFloor, reply);
+        }
+        return state;
+    }
+
+    /** 检查真实协议回执中的到账数量，奖励缺失视为结算失败。 */
+    private static void assertDreamlandCredit(JsonNode receipt, int itemId, long amount) {
+        var item = receipt.path("actual").path("items").valueStream()
+            .filter(row -> row.path("itemId").asInt() == itemId).findFirst().orElseThrow();
+        assertEquals(amount, item.path("credited").asLong());
     }
 
     /** 每次梦境操作使用新请求号；结果未知时由调用者重发原整包。 */

@@ -38,6 +38,8 @@ export interface DungeonHallArgs {
     readonly openDailyDungeon: () => void;
     /** 永恒梦境入口打开独立进度与挑战页。 */
     readonly openDreamland: () => void;
+    /** 勇者试炼入口请求本日试炼进度，并按服务器状态打开难度窗或地图。 */
+    readonly openTrial: () => void;
 }
 
 const { ccclass, property } = _decorator;
@@ -127,7 +129,7 @@ export class DungeonHallView extends BaseView<DungeonHallArgs> {
         node.getComponent(DungeonHallCardView)!.render(card, (id, quantity) => this.openReward(id, quantity));
     }
 
-    /** 打开日常副本或永恒梦境，其他入口反馈当前实现状态。 */
+    /** 打开日常副本、永恒梦境和勇者试炼，其他入口反馈当前实现状态。 */
     private selectCard(card: DungeonHallCard, index: number): void {
         if (index === 0) {
             this.args?.openDailyDungeon();
@@ -135,6 +137,10 @@ export class DungeonHallView extends BaseView<DungeonHallArgs> {
         }
         if (index === 1) {
             this.args?.openDreamland();
+            return;
+        }
+        if (index === 2) {
+            this.args?.openTrial();
             return;
         }
         UIManager.instance.toast(`${card.title}玩法尚未接入`);

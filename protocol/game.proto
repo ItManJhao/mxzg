@@ -174,6 +174,17 @@ message Frame {
     DreamlandState dreamland_state = 164;
     DreamlandCommand dreamland_command = 165;
     DreamlandSettlement dreamland_settlement = 166;
+    DreamlandAssistance dreamland_assistance = 167;
+    DreamlandRanking dreamland_ranking = 168;
+    DreamlandFormationPowerRequest dreamland_formation_power_request = 169;
+    DreamlandFormationPower dreamland_formation_power = 170;
+    TrialState trial_state = 171;
+    TrialCommand trial_command = 172;
+    TrialSettlement trial_settlement = 173;
+    TrialAssistance trial_assistance = 174;
+    TrialShopState trial_shop_state = 175;
+    TrialShopBuy trial_shop_buy = 176;
+    TrialShopReceipt trial_shop_receipt = 177;
   }
 }
 
@@ -733,6 +744,145 @@ message DailyDungeonReceipt {
 }
 
 // 永恒梦境的连续挑战由服务端持有，包含重连所需的阶段、截止时间和末场战报。
+// 勇者试炼使用上海自然日进度，战报、英雄生命和奖励均由服务端结算。
+message TrialState {
+  required int64 version = 1;
+  required uint32 minimum_level = 2;
+  required int64 reset_at_seconds = 3;
+  required uint32 difficulty = 4;
+  required uint32 max_difficulty = 5;
+  required uint32 completed_difficulty = 6;
+  required uint32 current_node = 7;
+  required uint32 revive_used = 8;
+  required uint32 revive_limit = 9;
+  optional ChapterReward revive_cost = 10;
+  required uint32 formation_id = 11;
+  repeated FormationSlot slots = 12;
+  repeated TrialNode nodes = 13;
+  repeated TrialHeroHealth hero_health = 14;
+  repeated ChapterReward today_rewards = 15;
+  optional TrialBattle battle = 16;
+  repeated TrialDifficulty difficulties = 17;
+}
+
+message TrialDifficulty {
+  required uint32 id = 1;
+  required int64 minimum_power = 2;
+  repeated ChapterReward rewards = 3;
+  required bool combat_ready = 4;
+}
+
+message TrialNode {
+  required uint32 node = 1;
+  required string type = 2;
+  required string status = 3;
+  required uint32 display_level = 4;
+  repeated ChapterReward rewards = 5;
+  optional TrialOpponent opponent = 6;
+}
+
+message TrialOpponent {
+  required string name = 1;
+  required int64 power = 2;
+  required uint32 level = 3;
+  required uint32 avatar_id = 4;
+  required uint32 formation_id = 5;
+  repeated TrialOpponentHero heroes = 6;
+}
+
+message TrialOpponentHero {
+  required uint32 position = 1;
+  required uint32 template_id = 2;
+  required uint32 level = 3;
+  required uint32 star = 4;
+  required uint32 element = 5;
+  required int64 hp = 6;
+  required int64 max_hp = 7;
+}
+
+message TrialHeroHealth {
+  required string hero_id = 1;
+  required int64 hp = 2;
+  required int64 max_hp = 3;
+}
+
+message TrialBattle {
+  required string battle_id = 1;
+  required uint32 node = 2;
+  required bool won = 3;
+  required BattleReplay replay = 4;
+}
+
+message TrialCommand {
+  required string request_id = 1;
+  required int64 expected_version = 2;
+  required string action = 3;
+  optional uint32 choice = 4;
+  optional uint32 formation_id = 5;
+  repeated FormationSlot slots = 6;
+  optional string target_id = 7;
+  repeated string hero_ids = 8;
+}
+
+message TrialSettlement {
+  required string request_id = 1;
+  required string role_id = 2;
+  required int64 asset_revision = 3;
+  required string action = 4;
+  required TrialState state = 5;
+  optional RewardGrantResult actual = 6;
+}
+
+message TrialAssistance {
+  required int64 version = 1;
+  required int64 reset_at_seconds = 2;
+  repeated TrialAssistHero dispatched = 3;
+  repeated TrialAssistHero selected = 4;
+  repeated TrialAssistHero available = 5;
+  required uint32 dispatch_limit = 6;
+  required int64 max_assist_power = 7;
+}
+
+message TrialAssistHero {
+  required string role_id = 1;
+  required string role_name = 2;
+  required string hero_id = 3;
+  required uint32 template_id = 4;
+  required uint32 level = 5;
+  required uint32 star = 6;
+  required int64 power = 7;
+  required bool used = 8;
+}
+
+// 试炼商店报价由当前角色等级和上海周周期决定，余额沿统一背包快照交付。
+message TrialShopState {
+  required int64 refresh_at = 1;
+  repeated TrialShopOffer offers = 2;
+}
+
+message TrialShopOffer {
+  required uint32 id = 1;
+  required ChapterReward reward = 2;
+  required uint32 price = 3;
+  required uint32 purchase_limit = 4;
+  required uint32 purchased = 5;
+}
+
+message TrialShopBuy {
+  required string request_id = 1;
+  required uint32 offer_id = 2;
+  required uint32 count = 3;
+  required int64 refresh_at = 4;
+}
+
+message TrialShopReceipt {
+  required string request_id = 1;
+  required string role_id = 2;
+  required int64 asset_revision = 3;
+  required TrialShopState state = 4;
+  required RewardGrantResult actual = 5;
+}
+
 message DreamlandState {
   required int64 version = 1;
   required uint32 minimum_level = 2;
@@ -753,6 +903,7 @@ message DreamlandState {
   repeated ChapterReward pending_rewards = 17;
   repeated DreamlandMilestone milestones = 18;
   optional DreamlandBattle battle = 19;
+  optional DreamlandAssistHero assistance = 20;
 }
 
 message DreamlandBuff {
@@ -782,6 +933,7 @@ message DreamlandCommand {
   optional uint32 choice = 4;
   optional uint32 formation_id = 5;
   repeated FormationSlot slots = 6;
+  optional string target_id = 7;
 }
 
 message DreamlandSettlement {
@@ -791,6 +943,68 @@ message DreamlandSettlement {
   required string action = 4;
   required DreamlandState state = 5;
   optional RewardGrantResult actual = 6;
+}
+
+// 预估独立阵容的普通站位及本日选中助战，服务端复用保存资格校验。
+message DreamlandFormationPowerRequest {
+  required string request_id = 1;
+  required int64 expected_version = 2;
+  required uint32 formation_id = 3;
+  repeated FormationSlot slots = 4;
+}
+
+message DreamlandFormationPower {
+  required string request_id = 1;
+  required int64 version = 2;
+  required uint32 power = 3;
+}
+
+// 只公开梦境可用的好友英雄镜像。实际战斗属性与阵容资格由服务端持有。
+message DreamlandAssistHero {
+  required string role_id = 1;
+  required string role_name = 2;
+  required string hero_id = 3;
+  required uint32 template_id = 4;
+  required uint32 level = 5;
+  required uint32 star = 6;
+  required int64 power = 7;
+}
+
+message DreamlandAssistance {
+  required int64 version = 1;
+  required int64 reset_at_seconds = 2;
+  required bool can_select = 3;
+  required int64 max_assist_power = 4;
+  optional DreamlandAssistHero dispatched = 5;
+  optional DreamlandAssistHero selected = 6;
+  repeated DreamlandAssistHero available = 7;
+  repeated ChapterReward dispatch_rewards = 8;
+}
+
+// 同服最高层排行榜，与上海零点冻结后发奖的榜单快照独立。
+message DreamlandRankEntry {
+  required string role_id = 1;
+  required string name = 2;
+  required uint32 level = 3;
+  required uint32 head_id = 4;
+  required uint32 head_border_id = 5;
+  required int64 power = 6;
+  required uint32 floor = 7;
+  required uint32 rank = 8;
+  required int64 achieved_at_seconds = 9;
+}
+
+message DreamlandRankTier {
+  required uint32 min_rank = 1;
+  required uint32 max_rank = 2;
+  repeated ChapterReward rewards = 3;
+}
+
+message DreamlandRanking {
+  repeated DreamlandRankEntry entries = 1;
+  required DreamlandRankEntry own = 2;
+  repeated DreamlandRankTier reward_tiers = 3;
+  required int64 reset_at_seconds = 4;
 }
 
 // 幻境之塔的专用布阵、最高层、体力、扫荡及里程碑均由服务端持有。

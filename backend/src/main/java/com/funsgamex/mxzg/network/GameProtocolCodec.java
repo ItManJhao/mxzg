@@ -45,7 +45,10 @@ public final class GameProtocolCodec {
         "smithPreviewRequest", "smithForgeRequest", "smithForgeAllRequest", "smithPreview", "smithReceipt",
         "dailyDungeonState", "dailyDungeonChallengeRequest", "dailyDungeonReceipt",
         "towerState", "towerFormationSave", "towerRequest", "towerSettlement",
-        "dreamlandState", "dreamlandCommand", "dreamlandSettlement",
+        "dreamlandState", "dreamlandCommand", "dreamlandSettlement", "dreamlandAssistance", "dreamlandRanking",
+        "dreamlandFormationPowerRequest", "dreamlandFormationPower",
+        "trialState", "trialCommand", "trialSettlement", "trialAssistance",
+        "trialShopState", "trialShopBuy", "trialShopReceipt",
         "arenaState", "arenaChallengeRequest", "arenaReplayRequest", "arenaReplay", "arenaSettlement",
         "arenaTicketBuyRequest", "arenaTicketPurchase",
         "arenaRanking", "arenaSeason", "arenaChestRequest", "arenaChestReceipt", "arenaLikeRequest", "arenaLikeReceipt",
@@ -158,6 +161,9 @@ public final class GameProtocolCodec {
                 case "tower.formation.save" -> "towerFormationSave";
                 case "tower.challenge", "tower.sweep", "tower.milestone.claim" -> "towerRequest";
                 case "dreamland.act" -> "dreamlandCommand";
+                case "dreamland.formation.power" -> "dreamlandFormationPowerRequest";
+                case "trial.act" -> "trialCommand";
+                case "trial.shop.buy" -> "trialShopBuy";
                 case "arena.challenge" -> "arenaChallengeRequest";
                 case "arena.replay" -> "arenaReplayRequest";
                 case "arena.ticket.buy" -> "arenaTicketBuyRequest";
@@ -237,6 +243,14 @@ public final class GameProtocolCodec {
             case "tower.challenge", "tower.sweep", "tower.milestone.claim" -> "towerSettlement";
             case "dreamland.state" -> "dreamlandState";
             case "dreamland.act" -> "dreamlandSettlement";
+            case "dreamland.assistance" -> "dreamlandAssistance";
+            case "dreamland.ranking" -> "dreamlandRanking";
+            case "dreamland.formation.power" -> "dreamlandFormationPower";
+            case "trial.state" -> "trialState";
+            case "trial.act" -> "trialSettlement";
+            case "trial.assistance" -> "trialAssistance";
+            case "trial.shop" -> "trialShopState";
+            case "trial.shop.buy" -> "trialShopReceipt";
             case "arena.state", "arena.refresh" -> "arenaState";
             case "arena.challenge" -> "arenaSettlement";
             case "arena.replay" -> "arenaReplay";

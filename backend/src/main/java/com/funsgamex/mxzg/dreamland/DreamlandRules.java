@@ -18,8 +18,8 @@ import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class DreamlandRules {
-    /** 当前已接入的连续守军和回放范围，新增楼层完成实际战斗复验后才可扩展。 */
-    private static final int MAX_OPEN_FLOOR = 6;
+    /** 已通过守军实战、连续挑战和领奖的最高层，区服未配置上限时默认开放至此。 */
+    private static final int MAX_OPEN_FLOOR = 600;
     /** 原规则包含完整配置；开放范围由本次已验证的连续楼层决定。 */
     private final Config config;
     /** 当前区服可战斗的最后一层，必须落在同一份完整规则内。 */
@@ -44,8 +44,9 @@ public class DreamlandRules {
                   int buffInterval, int assistPowerRatio, List<Reward> assistDispatchRewards, List<Stage> stages,
                   List<Buff> buffs, List<Milestone> milestones, List<RankReward> rankRewards) {}
 
-    /** 加载并核对原规则；配置缺层、增益组错误或无效开放范围时拒绝装配。 */
-    public DreamlandRules(ObjectMapper mapper, @Value("${mxzg.dreamland.max-floor:6}") int maxFloor) {
+    /** 加载并核对原规则；关卡、增益、助战或开放范围不合法时拒绝装配。 */
+    public DreamlandRules(ObjectMapper mapper,
+                          @Value("${mxzg.dreamland.max-floor:" + MAX_OPEN_FLOOR + "}") int maxFloor) {
         try (var input = DreamlandRules.class.getResourceAsStream("/gameplay/dreamland-rules.json")) {
             if (input == null) {
                 throw new IllegalStateException("缺少永恒梦境配置");
@@ -61,6 +62,11 @@ public class DreamlandRules {
                 || config.resetFloorCount() <= 0 || config.standardRewardFloorCount() <= 0 || config.buffInterval() <= 0
                 || maxFloor < 1 || maxFloor > MAX_OPEN_FLOOR || maxFloor > config.stages().size()) {
             throw new IllegalStateException("永恒梦境开放配置无效");
+        }
+        if (config.assistPowerRatio() <= 0 || config.assistDispatchRewards() == null
+                || config.assistDispatchRewards().isEmpty() || config.assistDispatchRewards().stream()
+                    .anyMatch(reward -> reward == null || reward.itemId() <= 0 || reward.quantity() <= 0)) {
+            throw new IllegalStateException("永恒梦境助战配置无效");
         }
         validateStages();
         validateBuffsAndMilestones();

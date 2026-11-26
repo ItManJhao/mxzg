@@ -90,6 +90,8 @@ class OpeningFixture {
     public readonly fadeStarts: { at: number; frames: string[] }[] = [];
     /** 生产分类日志中收集的错误，防止取消被误报为播放失败。 */
     public readonly errors: string[] = [];
+    /** 实际伤害回调播放的音效，群攻用例据此校验与旧共享震屏同一条触发链。 */
+    public readonly damageSounds: string[] = [];
     /** 由真实Preview创建的显示能力，仅用来调用生产状态显示，不复制paintBuffs规则。 */
     public presentation: BattleReplayPresentation | null = null;
     /** 资源门闩是否阻断；用例放行后不重新阻断其他请求。 */
@@ -226,6 +228,9 @@ class OpeningFixture {
         GameLog.shared.classified = (_layer, severity, _source, message) => {
             if (severity === "error") {
                 this.errors.push(String(message));
+            }
+            if (message.startsWith("damage.sound ")) {
+                this.damageSounds.push(message);
             }
             if (String(message).startsWith("opening.fade.started")) {
                 this.fadeStarts.push({
@@ -647,7 +652,8 @@ async function checkControlLifecycle(): Promise<void> {
         expiresAtRound: 3, buffValue: 1, hpByUnit: { 1: 10, 2: 10, 3: 10, 4: 10 },
     });
     const fixture = new OpeningFixture(false, false,
-        [2051301, 5011301, 1081501, 2141401, 2141301, 1081301].map(id => step(id, "preload-" + id)));
+        [2051301, 5011301, 1081501, 2141401, 2141301, 1081301, 1133201, 2093201, 2105401]
+            .map(id => step(id, "preload-" + id)));
     let close: (() => void) | undefined;
     try {
         const opening = fixture.open().then(value => { close = value; });
@@ -669,6 +675,15 @@ async function checkControlLifecycle(): Promise<void> {
         };
         await apply(1081301, "invisible");
         assert.equal(row.active, false, "一次属性实例必须保留生命周期，但不能出现空Buff图标槽");
+        await apply(1133201, "attribute");
+        await apply(2093201, "mark");
+        await apply(2105401, "unmarked-ice");
+        assert.equal(row.active, false, "原图集无对应资源的状态不占 Buff 图标槽");
+        assert(!fixture.loaded.some(path => /skill-icon_(101040133|101020023|102050105)\/spriteFrame$/.test(path)));
+        assert.equal(skeleton.paused, true, "缺少原状态图标的冰冻仍暂停骨骼");
+        assert.equal(skeleton.customMaterial.effectAsset.testPath, "effects/legacy-frozen");
+        await apply(2105401, "unmarked-ice", true);
+        assert.equal(skeleton.customMaterial, original);
         for (const [config, name] of [[1081501, "SilenceEffect"], [2141401, "ParryEffect"]] as const) {
             await apply(config, "first");
             const effect = slot.getChildByName(name)!;
@@ -898,9 +913,125 @@ async function checkActionTiming(): Promise<void> {
     }
 }
 
+/** 验证梦境守军的逐目标投射和末日使者群攻共用一次震屏、暗屏与声音。 */
+async function checkDreamlandEffects(): Promise<void> {
+    OpeningClockRuntime.reset();
+    const fox = [1, 2].map(targetId => ({
+        kind: "presentation", configId: 4130200, sourceId: 3, targetId, round: 1,
+    } as BattleReplayStep));
+    const doom = fox.map(step => ({ ...step, configId: 5061201 }));
+    const hits = (actions: readonly BattleReplayStep[], configId: number): BattleReplayStep[] => actions.map(step => ({
+        ...step, kind: "damage", configId, reportedHpChange: -3,
+        activeSkillDamage: configId === 5061301, hpByUnit: { 1: 7, 2: 7, 3: 10, 4: 10 },
+    }));
+    const foxHits = hits(fox, 4130300);
+    const doomHits = hits(doom, 5061301);
+    const fixture = new OpeningFixture(false, false, [...fox, ...foxHits, ...doom, ...doomHits]);
+    const scale = BattleInfoUtils.defaultTimeScale();
+    let close: (() => void) | undefined;
+    try {
+        const opening = fixture.open().then(value => { close = value; });
+        await OpeningClockRuntime.advance(4);
+        await opening;
+        const present = fixture.presentation!;
+        const effects = () => fixture.child("LayerVfx").children.filter(child => child.name === "SkillEffect");
+        const floats = () => fixture.child("LayerFloat/FloatDamageRoot").children
+            .filter(child => child.name === "BattleHealthFloat");
+        present.prepareSkill!([...fox, ...foxHits]);
+        const projectile = Promise.all([present.play(fox[0], fox), ...foxHits.map(hit => present.play(hit))]);
+        await OpeningClockRuntime.advance(0.29 / scale);
+        assert.equal(effects().length, 0);
+        await OpeningClockRuntime.advance(0.02 / scale);
+        assert.equal(effects().length, 2, "旧delay_time不能再推迟；0.3秒后对两个实际目标分别投射");
+        assert(effects().every(effect => effect.scale.x === 2 && effect.scale.y === 2));
+        assert(fixture.loaded.includes("effects/skill/skill-104040020/skill-104040020_8/spriteFrame"));
+        await OpeningClockRuntime.advance(0.37 / scale);
+        assert.equal(floats().length, 2, "命中后保留每个目标的伤害数字");
+        await OpeningClockRuntime.advance(2);
+        await projectile;
+
+        for (const round of [1, 2]) {
+            const cast = doom.map(step => ({ ...step, round }));
+            const damage = doomHits.map(step => ({ ...step, round }));
+            present.prepareSkill!([...cast, ...damage]);
+            const action = Promise.all([present.play(cast[0], cast), ...damage.map(hit => present.play(hit))]);
+            await OpeningClockRuntime.advance(0.85 / scale);
+            assert.equal(effects().length, 2, "每个命中目标显示独立特效");
+            assert(fixture.loaded.includes("effects/skill/skill-105050063/skill-105050063_10/spriteFrame"));
+            assert(!fixture.loaded.some(path => path.startsWith("effects/skill/skill-105050061/")),
+                "伤害行声明的预载图集不会另行播放");
+            await OpeningClockRuntime.advance(0.51 / scale);
+            assert.equal(floats().length, 2);
+            assert.deepEqual(fixture.damageSounds, Array<string>(round).fill("damage.sound skill-105050061"),
+                "同次施法只播放一次共享受击效果，下一次施法重新触发");
+            await OpeningClockRuntime.advance(2);
+            await action;
+        }
+        assert.deepEqual(fixture.errors, []);
+    } finally {
+        close?.();
+        fixture.dispose();
+        OpeningClockRuntime.reset();
+    }
+}
+
+/** 检查梦境守军的旧覆盖，包括原地施法、独立命中特效和柯莱不同技能的动作顺序。 */
+function checkDreamlandGuardActions(): void {
+    const { rows } = GameConfig.instance.getFileByPath("config/buff") as {
+        rows: Parameters<typeof BattleAttackUtils.legacyActions>[0][];
+    };
+    const guards = [
+        { id: 1203101, seconds: 2.2, delay: 100, effect: "skill-101050203", frames: 21, interval: 0.03 },
+        { id: 2203101, seconds: 2, delay: 50, effect: "skill-102050203", frames: 9, interval: 0.05 },
+        { id: 3143101, seconds: null, delay: 0, effect: "", frames: 0, interval: 0 },
+    ];
+    for (const guard of guards) {
+        const row = rows.find(value => value.idx === guard.id);
+        assert(row);
+        const [cast, impact] = BattleAttackUtils.legacyActions(row);
+        const castPlan = BattleAttackUtils.plan(cast);
+        assert.equal(cast.type, 3);
+        assert.equal(castPlan.action, "attack3");
+        assert.equal(castPlan.moveOffset, null);
+        assert.equal(castPlan.effect, null);
+        if (guard.seconds !== null) {
+            assert.equal(castPlan.actionSeconds, guard.seconds);
+        }
+        if (guard.frames === 0) {
+            assert.equal(impact, undefined);
+            continue;
+        }
+        assert.equal(impact.type, 7);
+        assert.equal(impact.delay, guard.delay);
+        const impactPlan = BattleAttackUtils.plan(impact);
+        assert.equal(impactPlan.effect?.paths.length, guard.frames);
+        assert.equal(impactPlan.effect?.interval, guard.interval);
+        assert.equal(impactPlan.effect?.paths[guard.frames - 1],
+            `effects/skill/${guard.effect}/${guard.effect}_${guard.frames - 1}/spriteFrame`);
+        assert.deepEqual(impactPlan.sounds, [guard.effect]);
+    }
+    const colai = [
+        { id: 3130200, order: [7, 3], delay: 20, name: "skill-103050130", frames: 14, clip: "attack" },
+        { id: 3131201, order: [7, 3, 1], delay: 70, name: "skill-103050131", frames: 12, clip: "attack2" },
+        { id: 3135201, order: [7, 3], delay: 20, name: "skill-103050130", frames: 14, clip: "attack" },
+    ];
+    for (const guard of colai) {
+        const row = rows.find(value => value.idx === guard.id);
+        assert(row);
+        const actions = BattleAttackUtils.legacyActions(row);
+        assert.deepEqual(actions.map(action => action.type), guard.order);
+        assert.equal(actions[0].delay, guard.delay);
+        const impact = BattleAttackUtils.plan(actions[0]);
+        assert.equal(impact.effect?.paths.length, guard.frames);
+        assert.deepEqual(impact.sounds, [guard.name]);
+        assert.equal(BattleAttackUtils.plan(actions[1]).action, guard.clip);
+    }
+}
+
 /** 使用真实配置完成出场、施法、持续控制和飘字回归；不运行玩家服务或实际战斗。 */
 async function main(): Promise<void> {
     await ConfigFixtureUtils.installReal();
+    checkDreamlandGuardActions();
     await checkOrdering();
     await checkLateActors();
     await checkColdSkill("ready");
@@ -914,6 +1045,7 @@ async function main(): Promise<void> {
     await checkBattleNumbers();
     await checkStationaryCast();
     await checkActionTiming();
+    await checkDreamlandEffects();
     OpeningClockRuntime.reset();
     console.log("PASS 正式出场与控制；群攻双飘字独立落点、正确字库、轨迹渐隐、正常收尾与关闭清理");
 }

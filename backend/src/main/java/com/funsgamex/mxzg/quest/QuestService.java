@@ -328,11 +328,11 @@ public class QuestService {
                 task.rewards(), destination(task));
     }
 
-    /** 保留已接通的原玩法目的地；梦境与两类市场均可从各自任务前往。 */
+    /** 保留已接通的原玩法目的地，支持勇者试炼通关和成就任务跳转。 */
     private static String destination(QuestRules.Task task) {
         return switch (task.metric()) {
             case LOGIN, CHALLENGE_CLAN_DUNGEON, BEAT_CLAN_DUNGEON, ACCEPT_TAVERN_TASK,
-                    PASS_ADVEN, ADVEN_LEVEL, COMBINE_RUNE, PROPHECY, SACRIFICE -> "";
+                    COMBINE_RUNE, PROPHECY, SACRIFICE -> "";
             case SHOP_BUY -> task.condition() == 100100 || task.condition() == 100800 ? task.destination() : "";
             default -> task.destination();
         };

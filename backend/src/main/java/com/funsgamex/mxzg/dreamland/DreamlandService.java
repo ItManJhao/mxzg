@@ -1,6 +1,6 @@
 /**
- * 永恒梦境独立阵容、连战进度和结算。协议处理层调用状态和命令入口，所有推进、发奖和
- * 原回执在同一角色锁内写入。冻结的攻方与战报用于继续挑战和断线恢复。
+ * 永恒梦境独立阵容、好友助战、连战进度和结算。协议处理层调用状态和命令入口，所有推进、
+ * 发奖和原回执在同一角色锁内写入。冻结的攻方与战报用于继续挑战和断线恢复。
  */
 package com.funsgamex.mxzg.dreamland;
 
@@ -12,6 +12,8 @@ import com.funsgamex.mxzg.hero.HeroBattleInputService;
 import com.funsgamex.mxzg.hero.HeroBattleReplayProtocolUtils;
 import com.funsgamex.mxzg.hero.HeroBattleRoundUtils;
 import com.funsgamex.mxzg.hero.HeroLineupBattleService;
+import com.funsgamex.mxzg.hero.HeroMainPowerService;
+import com.funsgamex.mxzg.hero.HeroProfile;
 import com.funsgamex.mxzg.hero.HeroRepository;
 import com.funsgamex.mxzg.lineup.Lineup;
 import com.funsgamex.mxzg.lineup.MainFormationRules;
@@ -29,6 +31,7 @@ import com.funsgamex.mxzg.role.RoleRepository;
 import com.funsgamex.mxzg.time.GameClock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -36,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.LongSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -57,9 +61,27 @@ public class DreamlandService {
     /** 响应依据服务端期限和当前阶段，不以客户端画面判断一局是否已经结算。 */
     public enum Phase { READY, SELECT_BUFF, NEXT_BATTLE, RESULT }
 
-    /** 命令中的选择值仅用于增益或里程碑；阵容操作单独附带阵型和站位。 */
+    /** 数字选择用于增益或里程碑，阵容操作附阵型和站位，助战命令附派遣英雄或好友 ID。 */
     public record Command(String requestId, long expectedVersion, String action, int choice,
-                          int formationId, List<Lineup.Slot> slots) {}
+                          int formationId, List<Lineup.Slot> slots, String targetId) {
+        /** 无助战目标的状态命令继续使用原有调用方式。 */
+        public Command(String requestId, long expectedVersion, String action, int choice,
+                       int formationId, List<Lineup.Slot> slots) {
+            this(requestId, expectedVersion, action, choice, formationId, slots, null);
+        }
+    }
+
+    /** 客户端展示已派遣的英雄身份与派遣时的战力，不暴露原始战斗数据。 */
+    public record AssistHero(String roleId, String roleName, String heroId, int templateId,
+                             int level, int star, int power) {}
+
+    /** 当日派遣及借用快照；战力上限按借用人当前名册计算。 */
+    public record AssistState(long version, long resetAtSeconds, boolean canSelect, long maxAssistPower,
+                              AssistHero dispatched, AssistHero selected, List<AssistHero> available,
+                              List<Reward> dispatchRewards) {}
+
+    /** 草稿战力的请求标识、同次梦境版本和服务端分值，只用于当前开窗展示。 */
+    public record FormationPower(String requestId, long version, int power) {}
 
     /** 一组可选增益的旧表编号、简体标题和战斗效果。 */
     public record BuffOption(int id, String name, String description) {}
@@ -70,12 +92,13 @@ public class DreamlandService {
     /** 已经完成模拟、尚待玩家确认的战场及原始战报。 */
     public record BattleState(String battleId, int floor, boolean won, @JsonIgnore BattleReplay replay) {}
 
-    /** 当前服务端快照；楼层为绝对值，期限均为 Unix 秒。 */
+    /** 当前服务端快照；楼层为绝对值，期限均为 Unix 秒，助战在开战后显示入场时的英雄。 */
     public record State(long version, int minimumLevel, int maxFloor, int startFloor, int currentFloor,
                         int highestFloor, int todayHighestFloor, int todayRewardFloor, int challengeCount,
                         Phase phase, long deadlineSeconds, long resetAtSeconds, int activeBuffId,
                         List<BuffOption> buffs, List<Lineup.Slot> slots, int formationId,
-                        List<Reward> pendingRewards, List<Milestone> milestones, BattleState battle) {
+                        List<Reward> pendingRewards, List<Milestone> milestones, BattleState battle,
+                        AssistHero assistance) {
         /** 历史回执 JSON 不存 Protobuf 对象，二进制战报与 JSON 并行保存。 */
         State withoutReplay() {
             return copyWithReplay(null);
@@ -95,7 +118,8 @@ public class DreamlandService {
             return new State(version, minimumLevel, maxFloor, startFloor, currentFloor, highestFloor, todayHighestFloor,
                     todayRewardFloor, challengeCount, phase, deadlineSeconds, resetAtSeconds, activeBuffId, buffs, slots,
                     formationId, pendingRewards, milestones,
-                    battle == null ? null : new BattleState(battle.battleId(), battle.floor(), battle.won(), replay));
+                    battle == null ? null : new BattleState(battle.battleId(), battle.floor(), battle.won(), replay),
+                    assistance);
         }
     }
 
@@ -113,6 +137,13 @@ public class DreamlandService {
                     challengeCount, resetAt, formationId, slots, claimedMilestone, next);
         }
 
+        /** 更换/撤回助战时只移除旧英雄的站位，保留本人的布阵和进度。 */
+        Progress withoutHero(String heroId) {
+            var remaining = slots.stream().filter(slot -> !heroId.equals(slot.heroId())).toList();
+            return new Progress(version, startFloor, highestFloor, todayHighestFloor, todayRewardFloor,
+                    challengeCount, resetAt, formationId, remaining, claimedMilestone, run);
+        }
+
         /** 只在已接受的业务命令或定时变化时递增持久版本。 */
         Progress bump() {
             return new Progress(Math.incrementExact(version), startFloor, highestFloor, todayHighestFloor,
@@ -120,14 +151,14 @@ public class DreamlandService {
         }
     }
 
-    /** 序列化冻结攻方、续战生命及用量；当前层仅在战报确认后推进，期限为 Unix 秒。 */
+    /** 序列化冻结攻方、出战助战、续战生命及用量；期限为 Unix 秒。 */
     record Run(int currentFloor, Phase phase, long deadline, int activeBuffId, List<Integer> buffChoices,
                List<Unit> attacker, Map<Integer, Long> remainingHp, Map<Integer, Map<Integer, Integer>> effectUses,
-               String battleId, boolean won) {
+               String battleId, boolean won, AssistHero assistance) {
         /** 回放确认会替换阶段和期限，同时清除已确认战报的身份。 */
         Run advanced(int nextFloor, Phase nextPhase, long nextDeadline) {
             return new Run(nextFloor, nextPhase, nextDeadline, activeBuffId, buffChoices,
-                    attacker, remainingHp, effectUses, null, false);
+                    attacker, remainingHp, effectUses, null, false, assistance);
         }
     }
 
@@ -140,16 +171,22 @@ public class DreamlandService {
     private final RoleRepository roles;
     /** 梦境持久进度、活跃战报和命令幂等回执。 */
     private final DreamlandRepository repository;
+    /** 当日派遣和借用使用同一角色事务，好友有效性按关系表复核。 */
+    private final DreamlandAssistRepository assists;
+    /** 已确认的新历史最高层进入同区服排行。 */
+    private final DreamlandRankService ranking;
     /** 旧表静态规则和本期开放上限。 */
     private final DreamlandRules rules;
     /** 提供永久解锁阵型及用户首次进入时的默认阵容。 */
     private final MainFormationStateService formations;
     /** 复用相同的站位、英雄等级和同模板校验。 */
     private final MainFormationRules formationRules;
-    /** 专用阵容只能保存归属当前角色的英雄。 */
+    /** 读取本人的可派遣、可布阵英雄和最强单体战力。 */
     private final HeroRepository heroes;
     /** 在角色锁中按指定阵容生成攻方基础快照。 */
     private final HeroBattleInputService inputs;
+    /** 梦境草稿和主线队伍按相同元素光环及属性来源计分。 */
+    private final HeroMainPowerService formationPower;
     /** 用统一技能、属性及战报执行链模拟配置守军。 */
     private final HeroLineupBattleService battles;
     /** 结算继续使用可信领奖入口，不直接改钱包或库存。 */
@@ -163,18 +200,23 @@ public class DreamlandService {
 
     /** 注入现有领域入口和梦境持久化，不读取当前会话或修改资产。 */
     public DreamlandService(SessionService sessions, RoleRepository roles, DreamlandRepository repository,
+                            DreamlandAssistRepository assists, DreamlandRankService ranking,
                             DreamlandRules rules, MainFormationStateService formations, MainFormationRules formationRules,
-                            HeroRepository heroes, HeroBattleInputService inputs, HeroLineupBattleService battles,
+                            HeroRepository heroes, HeroBattleInputService inputs, HeroMainPowerService formationPower,
+                            HeroLineupBattleService battles,
                             RewardGrantService grants, AssetSyncService sync, GameClock clock,
                             ApplicationEventPublisher events) {
         this.sessions = sessions;
         this.roles = roles;
         this.repository = repository;
+        this.assists = assists;
+        this.ranking = ranking;
         this.rules = rules;
         this.formations = formations;
         this.formationRules = formationRules;
         this.heroes = heroes;
         this.inputs = inputs;
+        this.formationPower = formationPower;
         this.battles = battles;
         this.grants = grants;
         this.sync = sync;
@@ -187,6 +229,44 @@ public class DreamlandService {
     public State state(String token) {
         var profile = access(token);
         return state(profile.id(), catchUp(profile, repository.find(profile.id()), clock.epochSeconds()));
+    }
+
+    /** 打开助战页时读取当天真实派遣、双向好友候选及借用人的单体战力上限。 */
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public AssistState assistance(String token) {
+        var profile = access(token);
+        String role = profile.id();
+        var progress = catchUp(profile, repository.find(role), clock.epochSeconds()).progress();
+        boolean canSelect = progress.run() == null;
+        long limit = assistPowerLimit(heroes.list(role));
+        var own = assists.ownDispatch(role, progress.resetAt());
+        var available = assists.available(role, progress.resetAt());
+        var selected = canSelect ? currentAssist(role, progress, () -> limit).hero() : progress.run().assistance();
+        return new AssistState(progress.version(), progress.resetAt(), canSelect, limit,
+                own == null ? null : own.view(), selected,
+                available.stream().map(DreamlandAssistRepository.Dispatch::view).toList(),
+                rules.config().assistDispatchRewards());
+    }
+
+    /** 在当前角色锁中预估可保存的梦境阵容；跨日或版本变动要求先刷新，不在读接口中推进。 */
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public FormationPower previewFormationPower(String token, String requestId, long expectedVersion,
+                                                 int formationId, List<Lineup.Slot> slots) {
+        if (!RewardReceiptPayloads.validId(requestId) || expectedVersion < 0 || formationId <= 0) {
+            throw rejected("DREAMLAND_REQUEST_INVALID");
+        }
+        String role = access(token).id();
+        var stored = repository.find(role);
+        var progress = stored == null ? null : stored.progress();
+        long version = progress == null ? 0 : progress.version();
+        if (version != expectedVersion || (progress != null && clock.epochSeconds() >= progress.resetAt())) {
+            throw rejected("DREAMLAND_STATE_CHANGED");
+        }
+        if (progress != null) {
+            requireReady(progress);
+        }
+        var draft = formationDraft(role, progress, formationId, slots);
+        return new FormationPower(requestId, version, formationPower.scoreFormation(draft.team(inputs)));
     }
 
     /** 自动推进与玩家命令串行，取得角色锁后重新取时，避免批次等待时越过上海日界。 */
@@ -248,10 +328,15 @@ public class DreamlandService {
                 || command.choice() < 0 || command.formationId() < 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "DREAMLAND_REQUEST_INVALID");
         }
+        boolean noFormation = command.formationId() == 0 && command.slots().isEmpty();
+        boolean noTarget = command.targetId() == null;
         boolean valid = switch (command.action()) {
-            case "START", "NEXT", "END" -> command.choice() == 0 && command.formationId() == 0 && command.slots().isEmpty();
-            case "SELECT_BUFF", "CLAIM" -> command.choice() > 0 && command.formationId() == 0 && command.slots().isEmpty();
-            case "SAVE_FORMATION" -> command.choice() == 0 && command.formationId() > 0 && !command.slots().isEmpty();
+            case "START", "NEXT", "END", "CLEAR_ASSIST" -> command.choice() == 0 && noFormation && noTarget;
+            case "SELECT_BUFF", "CLAIM" -> command.choice() > 0 && noFormation && noTarget;
+            case "SAVE_FORMATION" -> command.choice() == 0 && command.formationId() > 0
+                    && !command.slots().isEmpty() && noTarget;
+            case "DISPATCH_ASSIST", "SELECT_ASSIST" -> command.choice() == 0 && noFormation
+                    && RewardReceiptPayloads.validId(command.targetId());
             default -> false;
         };
         if (!valid) {
@@ -259,7 +344,7 @@ public class DreamlandService {
         }
     }
 
-    /** 按动作只允许可信的阶段转换；正在运行时允许领取此前达成的里程碑。 */
+    /** 按动作校验阶段；运行中仍可领取既有里程碑及派遣自己的英雄。 */
     private Step command(RoleProfile profile, DreamlandRepository.Stored stored, Command command, long now) {
         var before = stored.progress();
         return switch (command.action()) {
@@ -272,6 +357,8 @@ public class DreamlandService {
             }
             case "CLAIM" -> claim(before, stored.replay(), command.choice());
             case "SAVE_FORMATION" -> saveFormation(profile.id(), before, command.formationId(), command.slots());
+            case "DISPATCH_ASSIST" -> dispatchAssist(profile.id(), stored, command.targetId());
+            case "SELECT_ASSIST", "CLEAR_ASSIST" -> selectAssist(profile.id(), before, command.targetId());
             default -> throw new IllegalStateException("未知的已校验梦境命令");
         };
     }
@@ -301,11 +388,16 @@ public class DreamlandService {
         return current;
     }
 
-    /** 按旧服先清理上期活动挑战，确认过的胜场照常到账；未确认战报与未开打楼层不会补打。 */
+    /** 跨日发放已确认胜场，并清除上个自然日的派遣选择及站位。 */
     private DreamlandRepository.Stored resetDay(String role, DreamlandRepository.Stored stored, long now) {
         var finished = finish(stored.progress());
         grant(role, finished.awards(), now);
         var previous = finished.progress();
+        var selection = assists.selection(role, previous.resetAt());
+        if (selection != null) {
+            previous = previous.withoutHero(selection.heroId());
+            assists.clearSelection(role);
+        }
         int start = Math.max(0, previous.highestFloor() - rules.config().resetFloorCount());
         var ready = new Progress(previous.version(), start, previous.highestFloor(), start, start, 0,
                 nextReset(now), previous.formationId(), previous.slots(), previous.claimedMilestone(), null);
@@ -331,20 +423,101 @@ public class DreamlandService {
         }
     }
 
-    /** 按已解锁阵型保存专用阵容，启动后由开战快照冻结，不允许替换已冻结的英雄。 */
+    /** 每天派遣一名自己的英雄；冻结实力和奖励后沿用原进度及可能仍需播放的战报。 */
+    private Step dispatchAssist(String role, DreamlandRepository.Stored stored, String heroId) {
+        var progress = stored.progress();
+        if (assists.ownDispatch(role, progress.resetAt()) != null) {
+            throw rejected("DREAMLAND_ASSIST_ALREADY_DISPATCHED");
+        }
+        var hero = heroes.find(role, heroId).orElseThrow(() -> rejected("DREAMLAND_ASSIST_OWN_HERO"));
+        assists.saveDispatch(role, progress.resetAt(), DreamlandAssistRepository.HeroSnapshot.capture(hero));
+        return new Step(progress, stored.replay(), rules.config().assistDispatchRewards());
+    }
+
+    /** 选取同区服好友的当日派遣，或清除旧助战；新助战需要重新安排站位。 */
+    private Step selectAssist(String role, Progress progress, String sender) {
+        requireReady(progress);
+        var previous = assists.selection(role, progress.resetAt());
+        if (sender == null) {
+            assists.clearSelection(role);
+        } else {
+            var dispatch = assists.availableFrom(role, sender, progress.resetAt());
+            if (dispatch == null) {
+                throw rejected("DREAMLAND_ASSIST_UNAVAILABLE");
+            }
+            if (dispatch.hero().power() > assistPowerLimit(heroes.list(role))) {
+                throw rejected("DREAMLAND_ASSIST_POWER");
+            }
+            if (previous != null && previous.heroId().equals(dispatch.hero().id())) {
+                return new Step(progress, null, List.of());
+            }
+            assists.saveSelection(role, progress.resetAt(), dispatch);
+        }
+        var updated = previous == null ? progress : progress.withoutHero(previous.heroId());
+        return new Step(updated, null, List.of());
+    }
+
+    /** 按配置万分比计算最强单体战力上限；等于上限的整数战力可以借用。 */
+    private long assistPowerLimit(List<HeroProfile> roster) {
+        int maximum = roster.stream().mapToInt(hero -> hero.panelStats().power()).max().orElse(0);
+        return (long) maximum * rules.config().assistPowerRatio() / 10_000;
+    }
+
+    /** 将待选的持久行与实时资格配对；旧关系或超出战力上限时仅保留待清理的站位身份。 */
+    private AssistSelection currentAssist(String role, Progress progress, LongSupplier powerLimit) {
+        var selection = assists.selection(role, progress.resetAt());
+        if (selection == null) {
+            return new AssistSelection(null, null);
+        }
+        var dispatch = assists.availableFrom(role, selection.senderId(), progress.resetAt());
+        if (dispatch == null || !selection.heroId().equals(dispatch.hero().id())
+                || dispatch.hero().power() > powerLimit.getAsLong()) {
+            return new AssistSelection(selection.heroId(), null);
+        }
+        return new AssistSelection(selection.heroId(), dispatch);
+    }
+
+    /** 旧站位英雄 ID 与当前有效派遣；当派遣为空时旧站位只用于从阵容中排除该英雄。 */
+    private record AssistSelection(String previousHeroId, DreamlandAssistRepository.Dispatch dispatch) {
+        /** 只在当日仍能使用该派遣时返回对应展示信息。 */
+        AssistHero hero() {
+            return dispatch == null ? null : dispatch.view();
+        }
+    }
+
+    /** 保存本人名册和一名已验证助战的合法站位；正在冒险时阵容不可更改。 */
     private Step saveFormation(String role, Progress before, int formationId, List<Lineup.Slot> slots) {
         requireReady(before);
-        if (slots.size() > 8 || slots.stream().anyMatch(slot -> slot == null || slot.position() == null
+        var sorted = formationDraft(role, before, formationId, slots).slots();
+        var updated = new Progress(before.version(), before.startFloor(), before.highestFloor(),
+                before.todayHighestFloor(), before.todayRewardFloor(), before.challengeCount(), before.resetAt(),
+                formationId, sorted, before.claimedMilestone(), null);
+        return new Step(updated, null, List.of());
+    }
+
+    /** 让保存和预估共享同一普通站位校验；只接受本角色名册及当日选中且仍有效的派遣。 */
+    private FormationDraft formationDraft(String role, Progress progress, int formationId, List<Lineup.Slot> slots) {
+        if (slots == null || slots.size() > 8 || slots.stream().anyMatch(slot -> slot == null || slot.position() == null
                 || slot.position() < 1 || slot.position() > 8 || !RewardReceiptPayloads.validId(slot.heroId()))) {
             throw rejected("DREAMLAND_FORMATION_INVALID");
         }
         var main = formations.current(role);
         var unlocked = new MainFormationRules.Unlocks(new HashSet<>(main.unlockedIds()), false);
-        var owned = heroes.list(role).stream().map(hero -> new MainFormationRules.Hero(
+        var roster = heroes.list(role);
+        var available = new LinkedHashMap<String, HeroProfile>();
+        roster.forEach(hero -> available.put(hero.id(), hero));
+        var assist = progress == null ? null : currentAssist(role, progress, () -> assistPowerLimit(roster)).dispatch();
+        if (assist != null) {
+            var hero = assist.hero().battleHero();
+            if (available.putIfAbsent(hero.id(), hero) != null) {
+                throw new IllegalStateException("梦境派遣英雄与借用方名册冲突");
+            }
+        }
+        var candidates = available.values().stream().map(hero -> new MainFormationRules.Hero(
                 hero.id(), hero.templateId(), hero.level(), hero.star())).toList();
         List<Lineup.Slot> normalized;
         try {
-            normalized = formationRules.normalize(formationId, unlocked, owned, slots);
+            normalized = formationRules.normalize(formationId, unlocked, candidates, slots);
         } catch (IllegalArgumentException error) {
             throw rejected("DREAMLAND_FORMATION_INVALID");
         }
@@ -352,33 +525,46 @@ public class DreamlandService {
             throw rejected("DREAMLAND_FORMATION_INVALID");
         }
         var sorted = normalized.stream().sorted(Comparator.comparingInt(Lineup.Slot::position)).toList();
-        var updated = new Progress(before.version(), before.startFloor(), before.highestFloor(),
-                before.todayHighestFloor(), before.todayRewardFloor(), before.challengeCount(), before.resetAt(),
-                formationId, sorted, before.claimedMilestone(), null);
-        return new Step(updated, null, List.of());
+        var team = sorted.stream().map(slot -> available.get(slot.heroId())).toList();
+        return new FormationDraft(sorted, team);
     }
 
-    /** 锁定当前专用阵容，第一次打开时可用已有主线阵容，立即进入增益选择。 */
+    /** 冻结本次安全站位和其对应条目；派遣的战斗输入只在预估时还原面板。 */
+    private record FormationDraft(List<Lineup.Slot> slots, List<HeroProfile> members) {
+        /** 自有英雄直接使用权威面板，派遣英雄使用同源规则恢复冻结面板。 */
+        List<HeroProfile> team(HeroBattleInputService inputs) {
+            return members.stream().map(hero -> hero.panelStats() == null ? inputs.dreamlandAssistPanel(hero) : hero)
+                    .toList();
+        }
+    }
+
+    /** 使用当前可用阵容进入增益选择，并冻结已排入合法站位的好友助战。 */
     private Step start(String role, Progress before, long now) {
         requireReady(before);
         if (before.startFloor() >= rules.maxFloor()) {
             throw rejected("DREAMLAND_FLOOR_UNAVAILABLE");
         }
-        var lineup = lineup(role, before);
+        var selection = currentAssist(role, before, () -> assistPowerLimit(heroes.list(role)));
+        var lineup = lineup(role, before, selection);
         if (lineup.slots().isEmpty()) {
             throw rejected("DREAMLAND_FORMATION_EMPTY");
         }
-        var input = inputs.forFormation(role, before.version(), lineup.formationId(), lineup.slots());
+        var dispatch = selection.dispatch();
+        boolean hasBorrowed = dispatch != null && lineup.slots().stream()
+                .anyMatch(slot -> dispatch.hero().id().equals(slot.heroId()));
+        var input = inputs.forAssistedFormation(role, before.version(), lineup.formationId(), lineup.slots(),
+                hasBorrowed ? dispatch.hero().battleHero() : null);
         var attacker = battles.freezeDreamlandFormation(input);
         var run = new Run(before.startFloor(), Phase.SELECT_BUFF, now + rules.config().buffAutoSeconds(),
-                0, rules.chooseBuffs(ThreadLocalRandom.current()), attacker, Map.of(), Map.of(), null, false);
+                0, rules.chooseBuffs(ThreadLocalRandom.current()), attacker, Map.of(), Map.of(), null, false,
+                hasBorrowed ? dispatch.view() : null);
         var started = new Progress(before.version(), before.startFloor(), before.highestFloor(),
                 before.todayHighestFloor(), before.todayRewardFloor(), Math.incrementExact(before.challengeCount()),
                 before.resetAt(), lineup.formationId(), lineup.slots(), before.claimedMilestone(), run);
         return new Step(started, null, List.of());
     }
 
-    /** 所选增益必须属于本轮已经持久化的候选，新的三项为下次五连胜阶段预先冻结。 */
+    /** 使用已持久化的增益候选，保留本次冒险的攻方，并冻结下轮候选。 */
     private Step selectBuff(RoleProfile profile, Progress progress, int choice, long now) {
         var run = requireRun(progress);
         if (run.phase() != Phase.SELECT_BUFF || !run.buffChoices().contains(choice)) {
@@ -386,11 +572,11 @@ public class DreamlandService {
         }
         var selected = new Run(run.currentFloor(), Phase.NEXT_BATTLE, now, choice,
                 rules.chooseBuffs(ThreadLocalRandom.current()), run.attacker(), run.remainingHp(),
-                run.effectUses(), null, false);
+                run.effectUses(), null, false, run.assistance());
         return fight(profile, progress.withRun(selected), now, true);
     }
 
-    /** 选择「继续」可启动下一战或确认已播放的战报；五连胜后重新选择增益。 */
+    /** 启动下一战或确认胜场，并在刷新历史最高层时更新区服排行。 */
     private Step next(RoleProfile profile, Progress progress, long now) {
         var run = requireRun(progress);
         if (run.phase() == Phase.NEXT_BATTLE) {
@@ -407,6 +593,9 @@ public class DreamlandService {
         boolean chooseBuff = (floor - progress.startFloor()) % config.buffInterval() == 0;
         var phase = chooseBuff ? Phase.SELECT_BUFF : Phase.NEXT_BATTLE;
         var deadline = now + (chooseBuff ? config.buffAutoSeconds() : config.battleFrequencySeconds());
+        if (floor > progress.highestFloor()) {
+            ranking.recordBest(profile, floor);
+        }
         var won = new Progress(progress.version(), progress.startFloor(), Math.max(progress.highestFloor(), floor),
                 Math.max(progress.todayHighestFloor(), floor), progress.todayRewardFloor(), progress.challengeCount(),
                 progress.resetAt(), progress.formationId(), progress.slots(), progress.claimedMilestone(),
@@ -414,7 +603,7 @@ public class DreamlandService {
         return floor == rules.maxFloor() ? finish(won) : new Step(won, null, List.of());
     }
 
-    /** 模拟下一层并只保存原结果及其续战状态；实际经验、发奖和通关确认分阶段提交。 */
+    /** 模拟下一层并保存原战报及续战攻方；实际发奖和通关确认另行推进。 */
     private Step fight(RoleProfile profile, Progress progress, long now, boolean firstWithBuff) {
         var run = progress.run();
         int floor = run.currentFloor() + 1;
@@ -440,7 +629,7 @@ public class DreamlandService {
         long deadline = firstWithBuff ? now + rules.config().battleFrequencySeconds() : resultDeadline(run, now);
         var resolved = new Run(run.currentFloor(), Phase.RESULT, deadline,
                 run.activeBuffId(), run.buffChoices(), run.attacker(), remainingHp, result.effectUses(),
-                UUID.randomUUID().toString(), won);
+                UUID.randomUUID().toString(), won, run.assistance());
         events.publishEvent(new QuestProgressEvent(profile.id(), QuestMetric.INFINITE_CHALLENGE, 0, 1, now));
         return new Step(progress.withRun(resolved), report, List.of());
     }
@@ -517,10 +706,14 @@ public class DreamlandService {
         return actual;
     }
 
-    /** 展示独立阵容；尚未保存时读取现有主线站位作为草稿，不带助战位。 */
-    private LineupState lineup(String role, Progress progress) {
+    /** 展示独立阵容；准备阶段排除失去借用资格的旧站位，活动冒险保持冻结阵容。 */
+    private LineupState lineup(String role, Progress progress, AssistSelection selection) {
         if (progress.formationId() > 0) {
-            return new LineupState(progress.formationId(), progress.slots());
+            var slots = progress.slots();
+            if (selection != null && selection.previousHeroId() != null && selection.dispatch() == null) {
+                slots = slots.stream().filter(slot -> !selection.previousHeroId().equals(slot.heroId())).toList();
+            }
+            return new LineupState(progress.formationId(), slots);
         }
         var main = formations.current(role);
         var slots = main.slots().stream().filter(slot -> slot.position() < 9).toList();
@@ -530,11 +723,13 @@ public class DreamlandService {
     /** 确认初次草稿和独立阵容只公开玩法所需的阵型及站位。 */
     private record LineupState(int formationId, List<Lineup.Slot> slots) {}
 
-    /** 描述当前版本、技能选择、累计奖励以及断线后可复播的战报。 */
+    /** 描述当前版本、助战和可领取奖励；进行中的战斗使用冻结阵容和可复播的战报。 */
     private State state(String role, DreamlandRepository.Stored stored) {
         var progress = stored.progress();
         var run = progress.run();
-        var lineup = lineup(role, progress);
+        var selection = run == null ? currentAssist(role, progress, () -> assistPowerLimit(heroes.list(role))) : null;
+        var lineup = lineup(role, progress, selection);
+        var assistance = run == null ? selection.hero() : run.assistance();
         var milestones = rules.config().milestones().stream().filter(row -> row.floor() <= rules.maxFloor())
                 .map(row -> new Milestone(row.floor(), row.floor(), row.floor() <= progress.claimedMilestone(),
                         row.rewards())).toList();
@@ -553,7 +748,7 @@ public class DreamlandService {
                 progress.todayHighestFloor(), progress.todayRewardFloor(), progress.challengeCount(),
                 run == null ? Phase.READY : run.phase(), run == null ? 0 : run.deadline(), progress.resetAt(),
                 run == null ? 0 : run.activeBuffId(), buffs, lineup.slots(), lineup.formationId(), pending(progress),
-                milestones, battle);
+                milestones, battle, assistance);
     }
 
     /** READY 以没有活动冒险表示；重发只有原回执能绕过阶段检查。 */

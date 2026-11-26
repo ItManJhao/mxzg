@@ -142,6 +142,9 @@ function approvedEffectsChanges() {
         'docs/validation/daily-dungeon-action-assets-20261123.json',
         'docs/validation/tower-action-assets-20261123.json',
         'docs/validation/tower-floor30-action-assets-20261124.json',
+        'docs/validation/dreamland-astrologer-action-assets-20261126.json',
+        'docs/validation/trial-flame-witch-action-assets-20261126.json',
+        'docs/validation/trial-timi-action-assets-20261126.json',
     ], '特效增量须逐批对应已核对的原图证据');
     assert.deepEqual([...delta.newAssets].sort(), ['legacy-stone.effect', 'legacy-stone.effect.meta',
         'legacy-spine-pma.effect', 'legacy-spine-pma.effect.meta'].sort(),
@@ -213,7 +216,7 @@ function approvedEffectsChanges() {
 
 const actualBundles = bundleEntries().map(entry => entry.name).sort();
 assert.deepEqual(effectsMove.bundleInventory.added.map(row => row.name), ['effects'], '本次仅新增effects素材包');
-const enabledModules = ['market', 'dungeon', 'dreamland', 'guild', 'vip', 'arena', 'tower',
+const enabledModules = ['market', 'dungeon', 'dreamland', 'trial', 'guild', 'vip', 'arena', 'tower',
     'chat', 'friend', 'mail', 'quest', 'ranking', 'reward', 'role', 'blackmarket', 'smith'];
 for (const name of enabledModules) {
     const meta = read(resolveAssetPath(`bundles/module/${name}.meta`));

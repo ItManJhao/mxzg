@@ -61,6 +61,7 @@ const routes: Readonly<Record<string, { page: string; title: string; tab: Featur
     dungeon: {page: "dungeon-hall", title: "副本大厅", tab: "dungeon"},
     "gold-dungeon": {page: "gold-dungeon", title: "日常副本", tab: "dungeon"},
     dreamland: {page: "dreamland", title: "永恒梦境", tab: "dungeon"},
+    trial: {page: "trial", title: "勇者试炼", tab: "dungeon"},
     arena: {page: "arena", title: "竞技场", tab: "arena"},
     tower: {page: "tower", title: "幻境之塔", tab: "tower"},
     clan: {page: "guild", title: "公会", tab: "clan"},
@@ -81,6 +82,7 @@ const questDestinations: Readonly<Record<string, string | undefined>> = {
     main_smith_shop: "smith",
     main_mission: "gold-dungeon",
     main_infinite: "dreamland",
+    main_proving_lang: "trial",
     main_friend: "main_friend",
 };
 
@@ -153,7 +155,7 @@ export class HomeFeatureNavigation {
         if ((id === "dungeon" || id === "clan") && !this.canOpenGatedTab(id)) {
             return true;
         }
-        if ((id === "gold-dungeon" || id === "dreamland" || id === "arena" || id === "tower"
+        if ((id === "gold-dungeon" || id === "dreamland" || id === "trial" || id === "arena" || id === "tower"
             || id === "main_black_market" || id === "smith")
             && !this.canOpenPlay(id)) {
             return true;
@@ -187,11 +189,13 @@ export class HomeFeatureNavigation {
         let args: unknown;
         if (id === "dungeon") {
             args = { account: this.host.account, openDailyDungeon: () => this.open("gold-dungeon"),
-                openDreamland: () => this.open("dreamland") };
+                openDreamland: () => this.open("dreamland"), openTrial: () => this.open("trial") };
         } else if (id === "gold-dungeon") {
             args = { account: this.host.account, backToHall: () => this.open("dungeon") };
         } else if (id === "dreamland") {
             args = { backToHall: () => this.open("dungeon") };
+        } else if (id === "trial") {
+            args = { backToHall: () => this.open("dungeon"), openShop: () => this.openTrialShop() };
         } else if (id === "main_black_market") {
             args = { account: this.host.account, backToCity: () => this.open("city") };
         } else if (id === "smith") {
@@ -320,11 +324,14 @@ export class HomeFeatureNavigation {
         return true;
     }
 
-    /** 玩法与任务入口共用等级读取；梦境一级入口按副本策划的 main_infinite 条件配置。 */
-    private canOpenPlay(id: "gold-dungeon" | "dreamland" | "arena" | "tower" | "main_black_market" | "smith"): boolean {
+    /** 玩法与任务入口共用等级读取，梦境和试炼按副本策划的功能编号准入。 */
+    private canOpenPlay(id: "gold-dungeon" | "dreamland" | "trial" | "arena" | "tower" | "main_black_market" | "smith"): boolean {
         const entry = CityNavigationUtils.findNavEntry(id === "gold-dungeon" ? "daily" : id);
         const role = this.host.account?.snapshot.role;
-        const gateId = id === "dreamland" ? "main_infinite" : entry?.gateId;
+        const dungeonGates: Readonly<Record<string, string | undefined>> = {
+            dreamland: "main_infinite", trial: "main_proving_lang",
+        };
+        const gateId = dungeonGates[id] ?? entry?.gateId;
         const gate = gateId && GameConfig.instance.getConfig(GConfig.OpenCondition, gateId);
         if (!role || !gate) {
             this.host.notice(routes[id].title + "条件尚未同步");
@@ -335,6 +342,15 @@ export class HomeFeatureNavigation {
             return false;
         }
         return true;
+    }
+
+    /** 在试炼地图上打开周货架，保留地图的进度和当前展示。 */
+    private openTrialShop(): void {
+        void this.ui.openById("trial-shop").catch(error => {
+            if (!UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
+                UIManager.instance.toast("试炼商店打开失败，请重试");
+            }
+        });
     }
 
     /** 副本和公会共用底栏的实际等级门槛。 */
