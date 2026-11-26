@@ -309,6 +309,8 @@ class MainChapterIdleClaimServiceTest {
         assertEquals(oldChest.startedAt(), afterQuick.startedAt());
         assertEquals(oldChest.operationVersion(), afterQuick.operationVersion());
         assertEquals(7200 % oldChest.resetSeconds(), afterQuick.dropSeconds());
+        // 免费战斗可能随机掉落钻石，单独固定付费拒绝场景的余额。
+        jdbc.update("UPDATE game_role SET diamonds=20 WHERE id=?", player.role());
         assertEquals("QUICK_BATTLE_DIAMONDS", assertThrows(MainChapterQuickBattleService.Rejected.class,
                 () -> quick.claim(player.role(), paidRequest, free.resetAt(), 1)).code());
         assertEquals(1, repository.totalSuccessful(player.role()));
