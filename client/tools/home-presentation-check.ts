@@ -57,6 +57,7 @@ function fixture() {
   home.chromePrefab = { _instantiate: () => chromeNode } as unknown as Prefab;
   home.cityHost = new Node("CityMapHost"); home.chromeHost = new Node("CityChromeHost");
   const profileNode=new Node("RoleProfileView"),profile=profileNode.addComponent(RoleProfileView);
+  profile.gmBadgeButton = new Node("PersonalSpaceBadge").addComponent(Button);
   profile.nickname=new Node("Name").addComponent(Label);profile.roleId=new Node("Id").addComponent(Label);profile.level=new Node("Level").addComponent(Label);
   profile.guildLabel = new Node("GuildName").addComponent(Label);
   profile.closeButton=new Node("Close").addComponent(Button);profile.settingsButton=new Node("Settings").addComponent(Button);
@@ -86,6 +87,64 @@ function fixture() {
   chrome.experienceFill = new Node("ExperienceFill").addComponent(Sprite);
   chrome.avatar=new Node("Avatar");chrome.avatar.addComponent(Button);
   return { home, city, chrome, profile, settings };
+}
+
+/** 回归个人空间整块徽章的点击次数、关窗重置和真实挂点。 */
+function checkRoleProfileGmGesture(): void {
+  const { profile } = fixture();
+  const model = new AccountModel();
+  model.replace({ busy: false, error: "", role: { id: "role-id", nickname: "玩家甲", level: 7, gold: 0, diamonds: 123 } });
+  const controller = new RoleController(model);
+  const badge = profile.gmBadgeButton!;
+  let opens = 0;
+  const baseArgs = { model, controller, serverName: "测试一服", logout: () => {} };
+  const args = { ...baseArgs, onOpenGm: (owner: RoleProfileView) => {
+    assert.equal(owner, profile, "把当前资料页作为菜单归属");
+    opens += 1;
+  } };
+  const tapBadge = (count: number) => {
+    for (let index = 0; index < count; index++) {
+      badge.node.emit(Button.EventType.CLICK);
+    }
+  };
+  try {
+    profile.runOpen(baseArgs);
+    assert.equal(badge.interactable, false, "未注入调试入口时禁用徽章按钮");
+    tapBadge(10);
+    assert.equal(opens, 0);
+    profile.runClose();
+
+    profile.runOpen(args);
+    assert.equal(badge.interactable, true);
+    tapBadge(9);
+    assert.equal(opens, 0, "九次点击不打开调试菜单");
+    profile.runClose();
+    tapBadge(1);
+    assert.equal(opens, 0, "关闭后已经移除徽章监听");
+
+    profile.runOpen(args);
+    tapBadge(9);
+    assert.equal(opens, 0, "重新打开时从零计数");
+    tapBadge(1);
+    assert.equal(opens, 1, "第十次点击打开一次调试菜单");
+    tapBadge(1);
+    assert.equal(opens, 1, "触发后重新计数");
+
+    const prefab = JSON.parse(readFileSync("client/assets/bundles/module/role/prefabs/RoleProfileView.prefab", "utf8"));
+    const binding = prefab.find((row: { gmBadgeButton?: unknown }) => row.gmBadgeButton);
+    const button = prefab[binding.gmBadgeButton.__id__];
+    const badgeNode = prefab[button.node.__id__];
+    assert.equal(button.__type__, "cc.Button");
+    assert.equal(button._transition, 0, "徽章保持原美术，无额外按钮演出");
+    assert.equal(badgeNode._name, "PersonalSpaceBadge");
+    assert.equal(badgeNode._active, true, "使用可接收点击的整块徽章挂点");
+    const transform = badgeNode._components.map((entry: { __id__: number }) => prefab[entry.__id__])
+      .find((entry: { __type__: string }) => entry.__type__ === "cc.UITransform");
+    assert.deepEqual(transform._contentSize, { __type__: "cc.Size", width: 175, height: 64 });
+  } finally {
+    profile.runDispose();
+    controller.dispose();
+  }
 }
 
 /** 两种入口共用全局反馈；技能条目由真实配置和精确等级证据生成，迟到失败不能覆盖其他窗口。 */
@@ -412,6 +471,7 @@ async function main() {
   await checkCityConfigGate();
   await ConfigFixtureUtils.installReal();
   await checkGlobalFeedback();
+  checkRoleProfileGmGesture();
   const { home, city, chrome, profile, settings } = fixture();
   // 验证正常经验、升级清零、满级及缺失数据，避免沿用上一角色比例。
   chrome.setExperience(66,120); assert.equal(chrome.experienceFill!.fillRange,0.55);

@@ -31,7 +31,7 @@ export class GmController {
     /** 原发放参数与发送状态。结果待确认时保留原单，重置后下一次发放使用新单。 */
     private pending: { body: GmGrant; sending: boolean } | null = null;
 
-    /** 从预览应用取得当前会话的认证请求通道，所有 GM 请求共用此连接。 */
+    /** 从登录应用取得当前会话的认证请求通道，所有 GM 请求共用此连接。 */
     constructor(private readonly operations: Pick<AccountOperations, "request">) {}
 
     /** 查询真实服务端开关；非法回包拒绝展示为可用。 */

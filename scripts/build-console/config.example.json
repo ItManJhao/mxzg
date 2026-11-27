@@ -1,0 +1,18 @@
+{
+  "listenHost": "192.168.1.50",
+  "listenPort": 18084,
+  "portalUrl": "https://192.168.1.50:18084",
+  "gameUrl": "https://192.168.1.50:18082/index.html",
+  "stateDirectory": "D:/MxzgBuild/console",
+  "gitRemote": "ssh://git@git.example.com/games/mxzg.git",
+  "runtimeDirectory": "D:/MxzgBuild/test-runtime",
+  "staticRoot": "D:/MxzgBuild/h5",
+  "javaPath": "C:/Tools/jdk-21/bin/java.exe",
+  "pythonPath": "C:/Tools/Python/python.exe",
+  "pythonModulePath": "",
+  "creatorPath": "C:/ProgramData/cocos/editors/Creator/3.8.8/CocosCreator.exe",
+  "mavenCache": "D:/MxzgBuild/maven-cache",
+  "keyStore": "D:/MxzgBuild/test-runtime/certs/server.p12",
+  "keyStorePasswordFile": "D:/MxzgBuild/test-runtime/certs/server-password.txt",
+  "caCertificate": "D:/MxzgBuild/test-runtime/certs/ca.pem"
+}

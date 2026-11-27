@@ -1,6 +1,6 @@
 # 游戏内开发 GM
 
-入口：登录进入主城后，在 Creator 浏览器预览中松开 **F9** 打开或关闭开发 GM；打开过程中再次按 F9 也会取消。角色资料/设置中的旧 GM 按钮已移除。入口仍仅限 Creator 预览，发布包不注册该快捷键。
+登录进入主城后，点头像打开个人信息，再点左上角金色 **「个人空间」** 挂牌 10 次，即可打开开发 GM。整块挂牌都能接收点击，关窗后重新计数。手机 H5 与 Creator 预览都支持该手势，Creator 还可用 **F9** 切换菜单或取消加载。
 
 `GmView` 只保存总菜单，点击功能后打开对应窗口：
 
@@ -8,7 +8,7 @@
 | --- | --- |
 | 英雄 | `GmGrantView` 的英雄类别，搜索配置并发放到当前角色 |
 | 道具 | `GmGrantView` 的道具类别，包含已恢复的真实精灵 2000002 |
-| 技能 | 已有技能验收窗口，继续使用原测试流程，不发放玩家技能 |
+| 技能 | Creator 本机使用已有技能验收窗口及战报样本 |
 | 战斗测试 | `GmBattleView` 选择前三关，使用当前保存阵容，只试战、不推进主线或发奖 |
 | 角色与时间 | `GmToolsView` 设置当前角色等级和主线挑战关卡，读取、设置或恢复开发服务器时间 |
 
@@ -26,7 +26,7 @@
 
 - 2026-11-14负责人确认本机local默认开启GM：application-local.yml使用`${MXZG_GM_ENABLED:true}`，每次启动/重启都会读取，不再要求临时设置环境变量。需要关闭可显式设置`MXZG_GM_ENABLED=false`；production仍不装配GM服务，不能仅隐藏前端入口。
 - 独立 MySQL 验收使用 `backend/test-mysql.ps1 -MysqlHome <官方 ZIP 解压目录> -Preview`。测试启动器创建并校验自己的数据目录、库、受限账号和回环端口，在测试专用配置中开启 GM；不读取日常数据库环境变量，也不连接玩家库。
-- 当前只发给当前登录角色，客户端不能传入目标角色 ID。关闭入口不代替服务端鉴权和开关。
+- 手机测试包与 Creator 预览使用同一套当前登录角色的 GM 协议。开发服默认开启，发放使用已有的会话归属和幂等校验。
 
 ## 本机永久设置与重启
 
@@ -48,7 +48,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'G:\work\FsGame\Project\
 
 ## 操作与协议
 
-1. 按 F9 打开总菜单，进入英雄或道具窗口，输入名称或配置 ID 搜索；下拉最多显示 100 条，点选后填写数量。
+1. 用「个人空间」挂牌手势或 Creator F9 打开总菜单。进入英雄或道具窗口后，可按名称或配置 ID 搜索，列表最多显示 100 条。点选后填写数量。
 2. `GmGrantView` 转交 `GmController`，应用注入当前会话的调用能力，经 `GameSocketClient` 发送 `Protocol.GM_GRANT`。
 3. `protocol/game.proto` 定义 `gm.status` 的 `GmStatus`，及 `gm.grant` 的 `GmGrant` / `GmResult`。全程 WebSocket + Protobuf，不增加业务 HTTP。
 4. 服务端核验身份、开关、配置及数量，在当前角色行锁下写资产与 `game_gm_grant` 回执（V11），提交后通过 `state.changed` 同步。

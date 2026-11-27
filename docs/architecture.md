@@ -150,7 +150,7 @@ RemakeApp 持有唯一 ToastManager。UIManager.toast 统一提交成功、拒�
 
 页面正文保留加载进度、玩法状态和固定操作说明，框架开窗失败只报告一次。HomeFeatureNavigation 仅在同次有效开页真实等待满 350 毫秒且页面尚未显示时提示一次，缓存瞬开直接显示。完成、取消、替换、返回、身份重置和销毁会清理对应计时，开页失败复用 UIManager 已报告标记去重。
 
-Creator预览F9松键开关GmView，不再由角色资料设置打开。总菜单只分流，GmGrantView按hero/item固定类别读取配置和发放，GmBattleView保留前三关快捷只读样本（不作为目录或接口上限），技能入口复用SkillAuditView。应用注入唯一GmController及异步测试动作，View不持有连接或修改Model；关闭子窗返回总菜单，F9/换号清理整条GM窗链。发布版不登记快捷键，production不装配GM服务。详见[开发GM](gm-development.md)。
+手机 H5 和 Creator 预览都可在个人信息页点击左上角「个人空间」挂牌 10 次打开 GmView。Creator 额外支持松开 F9 切换窗口，并通过 SkillAuditView 提供本机技能样本。总菜单按入口分流，GmGrantView 按固定类别读取配置及发放，GmBattleView 用保存阵容执行前三关只读试战。应用注入唯一 GmController 和测试动作，换号时撤回开窗并清理整条 GM 窗口链。正式环境由服务端控制 GM 服务。详见[开发 GM](gm-development.md)。
 
 ## 游戏红点
 

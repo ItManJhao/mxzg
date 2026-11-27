@@ -1,6 +1,6 @@
 /**
  * 个人空间显示当前账号资料及已保存的主线英雄，并打开各独立的设置和编辑窗口。
- * 用户操作交给 RoleController，资料与阵容读取各自的唯一快照。
+ * 用户操作交给 RoleController，资料与阵容读取各自的唯一快照。调试手势由应用按环境启用。
  */
 import { _decorator, Button, Label, Node, view as ccView } from "cc";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
@@ -24,6 +24,8 @@ import { RoleRenameView } from "./RoleRenameView";
 import { RoleSettingsView } from "./RoleSettingsView";
 
 const { ccclass, property } = _decorator;
+/** 当前资料页的个人空间徽章点击满十次后触发一次调试入口。 */
+const GM_BADGE_TAP_COUNT = 10;
 
 /** 应用层注入唯一账号状态与既有操作，不携带凭证或另存角色快照。 */
 export interface RoleProfileOpenArgs {
@@ -35,6 +37,8 @@ export interface RoleProfileOpenArgs {
     serverName: string;
     /** 用户明确点击退出时交回账号服务。 */
     logout: () => void;
+    /** 应用允许调试入口时注入，资料页检测到徽章手势后调用。 */
+    onOpenGm?: (owner: RoleProfileView) => void;
 }
 @UIRegistry.view({
     id: "role-profile",
@@ -47,6 +51,8 @@ export interface RoleProfileOpenArgs {
 })
 @ccclass("RoleProfileView")
 export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
+    /** 覆盖背景里完整「个人空间」徽章的无动画按钮。 */
+    @property(Button) gmBadgeButton: Button | null = null;
     /** 服务器昵称，长昵称按预制区域收缩。 */
     @property(Label) nickname: Label | null = null;
     /** 服务端分配的公开数字编号，以字符串完整展示。 */
@@ -88,12 +94,13 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
     /** 当前已显示的主线英雄实例，点击从这一轮展示取 ID，关闭时清空。 */
     private showcased: readonly OwnedHero[] = [];
 
-    /** 打开资料窗并订阅当前角色；同一窗口重新打开时以最新参数重新绑定一次。 */
+    /** 打开资料窗并订阅当前角色，应用启用时开始本次徽章点击计数。 */
     public onOpen(args?: RoleProfileOpenArgs): void {
         if (!args?.model.snapshot.role) {
             throw new Error("角色尚未初始化，不能打开资料");
         }
         this.bindButtons(args);
+        this.bindGmGesture(args.onOpenGm);
         this.ownListener(args.model.subscribe(state => {
             if (state.busy || !state.role) {
                 this.close();
@@ -159,6 +166,24 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
         this.ownListener(() => {
             if (node.isValid) {
                 node.off(Button.EventType.CLICK, action);
+            }
+        });
+    }
+
+    /** 开窗时开始对徽章计数，满十次把当前资料页作为调试菜单宿主，关窗时退订。 */
+    private bindGmGesture(openGm: RoleProfileOpenArgs["onOpenGm"]): void {
+        if (this.gmBadgeButton) {
+            this.gmBadgeButton.interactable = !!openGm;
+        }
+        if (!openGm) {
+            return;
+        }
+        let taps = 0;
+        this.bindButton(this.gmBadgeButton, () => {
+            taps += 1;
+            if (taps === GM_BADGE_TAP_COUNT) {
+                taps = 0;
+                openGm(this);
             }
         });
     }

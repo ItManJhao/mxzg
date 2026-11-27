@@ -374,11 +374,11 @@
       "inspector": "脚本绑定及 Creator 浏览器检查，范围为本机独立测试环境。"
     },
     "client/assets/bundles/module/role/prefabs/RoleProfileView.prefab": {
-      "sha256": "a344a8b4ee0bec1df5f4ff583571e36247520bd34f568d6f6023850be7fdfa7e",
-      "date": "2026-11-23",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "绑定现有公会名称标签，按角色快照显示真实公会名或未加入。保留预制体 UUID 和布局。",
-      "inspector": "待 Creator 预览。"
+      "sha256": "d99682f1a6609231f21f60e4ec9616898c0293f6090b32e91cf6023724ee9842",
+      "date": "2026-11-26",
+      "status": "实际预览通过",
+      "scope": "独立角色进入个人空间，在金色挂牌的多个位置点击。第 9 次仍显示个人空间，第 10 次打开开发 GM 并读到启用状态。",
+      "inspector": "手机 H5 构建包在本机浏览器以 360×720 竖屏画面连接隔离 H2，使用坐标点击验收。"
     },
     "client/assets/bundles/module/role/prefabs/RoleRenameView.prefab": {
       "sha256": "7f19d8f1f9d6270b90ac7314694162ea555fe048068403fdd40722e7bd4bb2fc",

@@ -43,6 +43,7 @@ import {AccountLoginView} from "../../features/account/ui/AccountLoginView";
 import { CityMapService } from "../../features/city/ui/CityMapService";
 import {HomePageBinding} from "../../features/home/ui/HomePageBinding";
 import {RemakeHomeView} from "../../features/home/ui/RemakeHomeView";
+import type { BaseView } from "../../framework/ui/BaseView";
 import { UIManager } from "../../framework/ui/UIManager";
 import { UIRegistry } from "../../framework/ui/UIRegistry";
 import {HomeFeatureNavigation} from "./HomeFeatureNavigation";
@@ -63,6 +64,8 @@ interface ApplicationPageContext {
     entry: LoginEntry;
     /** 启动完成且玩家已确认进入主城时允许点击功能入口。 */
     inHome(): boolean;
+    /** 资料页标题达到手势门槛后，在该页名下打开当前角色的开发 GM 窗口。 */
+    openGmFromProfile(owner: BaseView<unknown>): void;
 
     /** 账号动作结束后由应用重新核对当前路由。 */
     syncRoute(): void;
@@ -127,6 +130,7 @@ export class ApplicationPages {
                                 serverName: servers.servers.find(row => row.id === model.snapshot.role?.serverId)?.name
                                     ?? model.snapshot.role.serverId ?? "区服未同步",
                                 logout: () => controller.logout(),
+                                onOpenGm: (owner: BaseView<unknown>) => context.openGmFromProfile(owner),
                             }).catch(error => {
                                 if (!UIManager.isOpenCancelled(error)) {
                                     this.showNotice("角色详情打开失败，请重试");

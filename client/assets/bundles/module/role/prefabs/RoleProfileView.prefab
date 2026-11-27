@@ -3808,7 +3808,7 @@
         "__id__": 160
       }
     ],
-    "_name": "CCSprite_2",
+    "_name": "PersonalSpaceBadge",
     "_mobility": 0,
     "_lscale": {
       "__type__": "cc.Vec3",
@@ -3822,6 +3822,9 @@
       },
       {
         "__id__": 148
+      },
+      {
+        "__id__": 744
       }
     ],
     "_prefab": {
@@ -4522,6 +4525,9 @@
     ],
     "emptyShowcase": {
       "__id__": 159
+    },
+    "gmBadgeButton": {
+      "__id__": 744
     },
     "portraitButton": {
       "__id__": 82
@@ -18546,5 +18552,29 @@
     "node": {
       "__id__": 738
     }
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "22b0f079-207e-4c56-b951-5068a1a8d10e"
+  },
+  {
+    "__type__": "cc.Button",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 145
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 743
+    },
+    "clickEvents": [],
+    "_interactable": false,
+    "_transition": 0,
+    "_target": {
+      "__id__": 145
+    },
+    "_id": ""
   }
 ]

@@ -109,6 +109,7 @@ export class RemakeApp extends Component {
             role: this.modules.role,
             entry,
             inHome,
+            openGmFromProfile: owner => this.development?.openGmFromProfile(owner),
             syncRoute,
             showToast: (text, duration) => this.notices?.show(text, duration),
         });

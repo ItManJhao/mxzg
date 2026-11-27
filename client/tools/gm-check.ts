@@ -1,6 +1,6 @@
 /**
  * GM 请求与独立窗口回归：覆盖发放幂等、角色与时间操作、二进制载荷和全局反馈。
- * 使用轻量引擎替身验证重复开窗、关闭清理、迟到结果和 F9 监听释放，不代替 Creator 画面验收。
+ * 使用轻量引擎替身验证资料页与 F9 开窗、关闭清理和迟到结果，不代替 Creator 画面验收。
  */
 import { Button, EditBox, Input, KeyCode, Label, Node, input } from "cc";
 import { setEditorContext } from "./cc-env";
@@ -588,12 +588,13 @@ async function checkBattlePresentationLifetime(): Promise<void> {
     }
 }
 
-/** 通过开发入口验证主城 F9 开关、未展示技能的撤回和预览退出释放；发布版不登记热键。 */
+/** 验证预览 F9 与手机资料手势共用菜单，且构建版可开窗、无热键和本机技能目录。 */
 async function checkShortcut(): Promise<void> {
     const originalOn = input.on;
     const originalOff = input.off;
     const ui = UIManager.instance;
     const originalOpen = ui.open;
+    const originalOpenChild = ui.openChild;
     const originalIsOpen = ui.isOpen;
     const originalClose = ui.closeById;
     let callback: ((event: { keyCode: number }) => void) | null = null;
@@ -604,6 +605,7 @@ async function checkShortcut(): Promise<void> {
     let inHome = false;
     const account = new AccountModel();
     const preview = new DevelopmentPreview(null, null, () => true);
+    const profile = {} as BaseView<unknown>;
     const unused = async (): Promise<never> => { throw new Error("打开 GM 菜单的装配不应主动发协议"); };
     const configure = () => preview.configureGm(
         { get currentRole() { return account.snapshot.busy ? null : account.snapshot.role; } },
@@ -628,6 +630,10 @@ async function checkShortcut(): Promise<void> {
         opened.push(args);
         return {} as BaseView<unknown>;
     }) as typeof ui.open;
+    ui.openChild = (async (view: BaseView<unknown>, ctor: typeof GmView, args: GmOpenArgs) => {
+        assert(view === profile, "手机菜单归发起手势的资料窗口所有");
+        return ui.open(ctor, args);
+    }) as typeof ui.openChild;
     ui.isOpen = id => active.has(id);
     ui.closeById = id => {
         closed.push(id);
@@ -675,13 +681,28 @@ async function checkShortcut(): Promise<void> {
         assert(callback === null, "应用销毁恰好移除一次 F9 监听");
         setEditorContext(false, false);
         configure();
-        assert(callback === null, "发布模式不登记 GM 快捷键");
+        assert(callback === null, "H5 构建模式无需注册 GM 快捷键");
+        const menusBeforeTouch = opened.length;
+        inHome = false;
+        preview.openGmFromProfile(profile);
+        assert(opened.length === menusBeforeTouch, "未进入主城时忽略资料手势");
+        inHome = true;
+        preview.openGmFromProfile(profile);
+        preview.openGmFromProfile(profile);
+        await flushView();
+        assert(opened.length === menusBeforeTouch + 1, "H5 资料手势只打开一个 GM 菜单");
+        const touchMenu = opened[menusBeforeTouch];
+        assert(touchMenu.roleId === "gm-menu-role" && !!touchMenu.openLineupBattle && !touchMenu.openSkillAudit,
+            "H5 使用登录角色和同一试战接线，技能样本仍由本机 Creator 提供");
+        preview.resetSession();
+        assert(!active.has("gm"), "换角色清理 H5 资料手势打开的 GM 窗口");
     } finally {
         setEditorContext(false, true);
         preview.dispose();
         input.on = originalOn;
         input.off = originalOff;
         ui.open = originalOpen;
+        ui.openChild = originalOpenChild;
         ui.isOpen = originalIsOpen;
         ui.closeById = originalClose;
     }

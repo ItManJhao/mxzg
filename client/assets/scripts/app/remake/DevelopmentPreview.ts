@@ -1,6 +1,6 @@
 /**
- * 开发验收入口：独立只读战报和技能目录复用原战场，正常登录预览另外提供 GM 菜单。
- * 开发快捷键和演示的生命周期在这里统一管理，发布版不登记入口。
+ * 开发验收入口：管理登录后的 GM 菜单和只读试战，Creator 另外提供热键及本机技能样本。
+ * 角色切换与应用销毁时统一回收开发浮窗和战报演示。
  */
 import {Node} from "cc";
 import {BattlePreviewResult} from "../../features/battle/BattlePreviewModel";
@@ -11,6 +11,7 @@ import type { AccountOperations } from "../../features/account/AccountOperations
 import {BattleReplayPreview} from "../../features/battle/ui/BattleReplayPreview";
 import {SkillAuditView} from "../../features/battle/ui/SkillAuditView";
 import {SkillAuditEntry, SkillAuditEvidence, SkillAuditUtils} from "../../features/battle/utils/SkillAuditUtils";
+import type { BaseView } from "../../framework/ui/BaseView";
 import { OpenCancelled, UIManager } from "../../framework/ui/UIManager";
 import { MainChapterView } from "../../features/battle/ui/MainChapterView";
 import { ConfirmView } from "../../features/common/ui/ConfirmView";
@@ -70,7 +71,7 @@ export class DevelopmentPreview {
     private readonly unregister: Array<() => void> = [];
     /** 当前演示的取消函数，重复播放前先清理旧画面。 */
     private replayCleanup: (() => void) | null = null;
-    /** 登录预览才安装的 GM 热键和窗口。独立演示、发布版和销毁后均为 null。 */
+    /** 登录应用共用的 GM 窗口入口。独立演示、装配前和销毁后均为 null。 */
     private gm: GmPreviewMenu | null = null;
 
     /**
@@ -88,16 +89,27 @@ export class DevelopmentPreview {
         this.showReward = show;
     }
 
-    /** 为普通 Creator 预览装配一次开发菜单；F9 由 GM 模块管理，仅在主城可用。 */
+    /** 为正常登录装配开发菜单，Creator 预览额外拥有 F9 和本机技能样本。 */
     public configureGm(
         service: Pick<AccountController, "currentRole">,
         operations: Pick<AccountOperations, "request" | "deliver">,
         inHome: () => boolean,
     ): void {
-        if (PREVIEW && !this.gm) {
-            this.gm = new GmPreviewMenu(service, operations, inHome,
-                (result, stillOpen) => this.openLineupBattle(result, stillOpen), () => this.openSkillAudit());
+        if (!this.gm) {
+            this.gm = new GmPreviewMenu(
+                service,
+                operations,
+                inHome,
+                (result, stillOpen) => this.openLineupBattle(result, stillOpen),
+                PREVIEW ? () => this.openSkillAudit() : undefined,
+                PREVIEW,
+            );
         }
+    }
+
+    /** 个人资料标题触发后复用认证 GM 窗口，资料页销毁时取消本次开窗。 */
+    public openGmFromProfile(owner: BaseView<unknown>): void {
+        this.gm?.openFromProfile(owner);
     }
 
     /** 清理该轮角色页面挂起的开发演示、技能目录、GM 窗口及未确认的开发请求。 */
@@ -374,9 +386,9 @@ export class DevelopmentPreview {
     }
 
 
-    /** 打开已校验的战报。准备期间原窗口关闭就恢复主城，开播后由战场负责关闭。 */
+    /** 播放已校验的阵容试战。准备时关窗会恢复主城，开播后由战场负责关闭。 */
     public async openLineupBattle(result: BattlePreviewResult, stillOpen: () => boolean = () => true): Promise<void> {
-        if (!PREVIEW || !this.pageHost || !this.valid() || !stillOpen()) {
+        if (!this.pageHost || !this.valid() || !stillOpen()) {
             throw new OpenCancelled();
         }
         this.cancelReplay();
