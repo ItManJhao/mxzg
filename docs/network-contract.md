@@ -99,7 +99,7 @@ role 包含身份、区服、等级、金币、钻石，以及基础资料 basic
 
 ## 初始化与同步调用链
 
-1. ServerSelectionController 请求匿名区服目录，AccountController 通过账号网关发起登录或恢复。GameSocketClient 统一发送 session.login 和 session.authenticate。
+1. ServerSelectionController 在客户端配置的入口匿名请求 `servers.list`。共享服的条目省略 `Server.socket_url`，个人服的条目携带管理员登记的 WSS 地址。选服后，GameSocketClient 向对应实例发送带有该区服 ID 的 `session.login`；断线后在签发凭证的实例发送 `session.authenticate`。个人服接入与证书配置见[内网打包机交接](intranet-build-handoff.md)。
 2. 服务端解析身份，持有角色串行锁完成接管；旧凭证撤销，旧连接收到 kicked。读取数据库一致快照，随成功响应一次返回。
 3. GameSocketClient 校验请求、连接、角色与完整数据。AccountController 接纳账号时在同一通知批次调用 AssetStateBinding。
 4. AssetStateBinding 在任何模块提交前校验完整角色、普通/期限库存、英雄、阵型、主线/挂机状态、持久版本与当前身份。通过后在同一通知批次把原始帧定向交给 RoleController、BagController、HeroRosterController、MainChapterController 的 onNotify；模块更新唯一 Model 后通知界面，非法整包不得先提交部分资产。

@@ -37,7 +37,7 @@ export class AccountComposition {
     private constructor() {
     }
 
-    /** 创建账号和连接，绑定应用公共时钟，并在接纳连接前校验角色快照。 */
+    /** 装配固定目录、按区服路由的游戏连接及会话存储；接纳连接前校验角色快照。 */
     public static async create(socketUrl: string): Promise<ApplicationAccount> {
         const model = new AccountModel();
         const connection = await IsolatedSocketPreviewUtils.isolatedSocketPreview(socketUrl, sys.localStorage);
@@ -59,7 +59,6 @@ export class AccountComposition {
                 if (!Number.isSafeInteger(snapshot.revision) || Number(snapshot.revision) < 0) throw new Error("状态版本无效");
             },
         });
-        const api = new AccountApi(socket);
         const storage = connection.storage;
         let savedServer: string | null = null;
         try {
@@ -67,15 +66,37 @@ export class AccountComposition {
         } catch {
         }
         const servers = new ServerSelectionController(socket, id => storage.setItem("mxzg.remake.selectedServer", id), savedServer);
+        const api = new AccountApi(socket, id => servers.socketUrlFor(id));
         const controller = new AccountController(model, api, {
             read: () => {
                 const saved = storage.getItem(SESSION_KEY);
-                return saved ? AccountApi.readSession(JSON.parse(saved)) : null;
+                if (!saved) {
+                    return null;
+                }
+                const session = AccountApi.readSession(JSON.parse(saved));
+                if (!session.route && !AccountComposition.canRestoreLegacySession(connection.socketUrl)) {
+                    return null;
+                }
+                return session;
             },
             write: session => storage.setItem(SESSION_KEY, JSON.stringify(session)),
             clear: () => storage.removeItem(SESSION_KEY),
         });
         return {model, socket, controller, servers, storageNamespace: connection.storageNamespace};
+    }
+
+    /** 老版本没有保存签发地址，仅允许原 H5 同源入口或既有本机回环开发服迁移旧凭证。 */
+    private static canRestoreLegacySession(socketUrl: string): boolean {
+        if (typeof location === "undefined") {
+            return false;
+        }
+        const endpoint = new URL(socketUrl);
+        if (endpoint.protocol === "ws:" && (endpoint.hostname === "127.0.0.1" || endpoint.hostname === "localhost")) {
+            return (location.hostname === "127.0.0.1" || location.hostname === "localhost")
+                && endpoint.port === "18080" && endpoint.pathname === "/api/v1/game/socket";
+        }
+        return location.protocol === "https:" && endpoint.protocol === "wss:" && endpoint.host === location.host
+            && endpoint.pathname === "/api/v1/game/socket";
     }
 
     /**

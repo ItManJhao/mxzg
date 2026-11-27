@@ -15,6 +15,8 @@ async function main() {
     path.join(root, "protocol/game.proto"),
   ], (error, output) => error ? reject(error) : resolve(output)));
   const built = await esbuild.build({
+    // 固定嵌入的模块相对路径，确保从项目或 client 目录执行时产物一致。
+    absWorkingDir: root,
     stdin: { contents: source, resolveDir: path.join(root, "client"), sourcefile: "game-protocol.js" },
     bundle: true, platform: "browser", format: "esm", target: "es2017", write: false, legalComments: "inline",
   });
