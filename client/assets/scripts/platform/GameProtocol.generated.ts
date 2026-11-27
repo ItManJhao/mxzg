@@ -41864,6 +41864,7 @@ var mxzg = $root.mxzg = (() => {
       Server.prototype.regionName = "";
       Server.prototype.name = "";
       Server.prototype.enabled = false;
+      Server.prototype.socketUrl = "";
       Server.create = function create(properties) {
         return new Server(properties);
       };
@@ -41894,6 +41895,11 @@ var mxzg = $root.mxzg = (() => {
           /* id 5, wireType 0 =*/
           40
         ).bool(message.enabled);
+        if (message.socketUrl != null && Object.hasOwnProperty.call(message, "socketUrl"))
+          writer.uint32(
+            /* id 6, wireType 2 =*/
+            50
+          ).string(message.socketUrl);
         return writer;
       };
       Server.decode = function decode(reader, length, error, long) {
@@ -41939,6 +41945,10 @@ var mxzg = $root.mxzg = (() => {
               message.enabled = reader.bool();
               break;
             }
+            case 6: {
+              message.socketUrl = reader.string();
+              break;
+            }
             default:
               reader.skipType(tag & 7, long);
               break;
@@ -41978,6 +41988,10 @@ var mxzg = $root.mxzg = (() => {
           return "name: string expected";
         if (typeof message.enabled !== "boolean")
           return "enabled: boolean expected";
+        if (message.socketUrl != null && Object.hasOwnProperty.call(message, "socketUrl")) {
+          if (!$util.isString(message.socketUrl))
+            return "socketUrl: string expected";
+        }
         return null;
       };
       Server.fromObject = function fromObject(object, long) {
@@ -42000,6 +42014,8 @@ var mxzg = $root.mxzg = (() => {
           message.name = String(object.name);
         if (object.enabled != null)
           message.enabled = Boolean(object.enabled);
+        if (object.socketUrl != null)
+          message.socketUrl = String(object.socketUrl);
         return message;
       };
       Server.toObject = function toObject(message, options, q) {
@@ -42016,6 +42032,7 @@ var mxzg = $root.mxzg = (() => {
           object.regionName = "";
           object.name = "";
           object.enabled = false;
+          object.socketUrl = "";
         }
         if (message.id != null && Object.hasOwnProperty.call(message, "id"))
           object.id = message.id;
@@ -42027,6 +42044,8 @@ var mxzg = $root.mxzg = (() => {
           object.name = message.name;
         if (message.enabled != null && Object.hasOwnProperty.call(message, "enabled"))
           object.enabled = message.enabled;
+        if (message.socketUrl != null && Object.hasOwnProperty.call(message, "socketUrl"))
+          object.socketUrl = message.socketUrl;
         return object;
       };
       Server.prototype.toJSON = function toJSON() {

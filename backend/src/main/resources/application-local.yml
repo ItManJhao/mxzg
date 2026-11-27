@@ -8,6 +8,12 @@ spring:
 server:
   address: 127.0.0.1
 mxzg:
+  # 共享机发布内网目录文件；个人实例在独立库中登记单一 ID，并允许共享 H5 的精确来源。
+  lan:
+    directory-file: ${MXZG_LAN_DIRECTORY_FILE:}
+    personal-id: ${MXZG_LAN_PERSONAL_ID:}
+    personal-name: ${MXZG_LAN_PERSONAL_NAME:}
+    shared-origin: ${MXZG_LAN_SHARED_ORIGIN:}
   chat:
     # 两种跨区频道在本机由真实的两个开发服验收。其他部署默认没有聊天房间映射。
     cross-rooms: ${MXZG_CHAT_CROSS_ROOMS:local-1=dev-cross,local-2=dev-cross}

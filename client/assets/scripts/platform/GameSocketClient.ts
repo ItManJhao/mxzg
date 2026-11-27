@@ -75,19 +75,31 @@ export class GameSocketClient {
   private heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly pending = new Map<string, Pending>();
   private readonly instanceId = this.identifier();
+  /** 当前游戏会话的目标地址。登录或恢复确定，断线重连沿用，退出恢复为目录地址。 */
+  private gameUrl: string;
+  /** 当前会话预期的区服，可识别地址误配和跨服快照；无绑定的旧凭证首次恢复时为空。 */
+  private gameServerId?: string;
 
-  /** 验证地址，禁止令牌出现在 URL；明文连接仅允许回环开发地址。 */
-  constructor(private readonly url: string, private readonly options: SocketOptions) {
-    if (!/^wss:\/\/[^\s?#@]+$/.test(url) && !/^ws:\/\/(?:127\.0\.0\.1|localhost):\d+\/[^\s?#@]+$/.test(url)) {
+  /** @param directoryUrl 构建时配置的匿名目录及共享服入口，明文连接只允许回环地址。
+   * @param options 应用提供的连接工厂、协议校验、时钟及诊断回调。 */
+  constructor(readonly directoryUrl: string, private readonly options: SocketOptions) {
+    if (!/^wss:\/\/[^\s?#@]+$/.test(directoryUrl) && !/^ws:\/\/(?:127\.0\.0\.1|localhost):\d+\/[^\s?#@]+$/.test(directoryUrl)) {
       throw new Error("长连接地址无效");
     }
+    this.gameUrl = directoryUrl;
   }
 
-  /** 登录/恢复时等待鉴权及快照校验；相同会话共享连接任务，不回退 HTTP。 */
-  connect(token: string): Promise<void> {
+  /** 在已核对的原实例鉴权。自动重连沿用该令牌的目标，新令牌缺省仅能使用目录实例。 */
+  connect(token: string, socketUrl = token === this.token ? this.gameUrl : this.directoryUrl,
+      serverId = token === this.token ? this.gameServerId : undefined): Promise<void> {
     if (this.suspended) return Promise.reject(new SocketFailure("NOT_READY", "应用在后台，等待恢复"));
     if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return Promise.reject(new SocketFailure("UNAUTHENTICATED", "登录凭证无效"));
-    if (token !== this.token) { this.disconnect(); this.token = token; }
+    if (token !== this.token || socketUrl !== this.gameUrl || serverId !== this.gameServerId) {
+      this.disconnect();
+      this.token = token;
+      this.gameUrl = socketUrl;
+      this.gameServerId = serverId;
+    }
     if (this.ready) return Promise.resolve();
     if (this.connecting) return this.connecting;
     this.blocked = null;
@@ -100,17 +112,22 @@ export class GameSocketClient {
     return task;
   }
 
-  /** 本地身份交换也走二进制连接；先结束旧会话，失败不会恢复旧账号。 */
-  async login(account: string, serverId: string): Promise<GameFrame> {
+  /** 在选定实例交换开发身份；先结束旧会话，个人服离线时不会回落到共享服。 */
+  async login(account: string, serverId: string, socketUrl = this.directoryUrl): Promise<GameFrame> {
     if (this.suspended) throw new SocketFailure("NOT_READY", "应用在后台，等待恢复");
-    this.disconnect(); const generation=++this.generation;
-    await this.establish("",generation,{account,serverId});
-    if(generation!==this.generation || !this.latestState) throw new SocketFailure("SESSION_CHANGED");
+    this.disconnect();
+    this.gameUrl = socketUrl;
+    this.gameServerId = serverId;
+    const generation = ++this.generation;
+    await this.establish("", generation, {account, serverId});
+    if (generation !== this.generation || !this.latestState) {
+      throw new SocketFailure("SESSION_CHANGED");
+    }
     return this.latestState;
   }
-  /** 匿名选服使用短生命周期连接；返回后关闭，不接管玩家会话。 */
+  /** 匿名目录始终使用构建入口；读取清单不会改变已登录会话的目标或携带令牌。 */
   catalog(): Promise<unknown> {
-    const socket=this.options.create(this.url); socket.binaryType="arraybuffer"; const id=this.identifier();
+    const socket=this.options.create(this.directoryUrl); socket.binaryType="arraybuffer"; const id=this.identifier();
     return new Promise((resolve,reject)=>{
       let done=false;
       const finish=(error: Error|null,value?:unknown):void=>{
@@ -174,9 +191,11 @@ export class GameSocketClient {
     else if (this.maintain && this.token && !this.blocked) void this.connect(this.token).catch(() => {});
   }
 
-  /** 登出、换号或应用销毁时取消全部任务；迟到回包无法复活旧会话。 */
+  /** 登出、换号或应用销毁时清空本次路由、请求与重连任务；迟到回包无法复活旧会话。 */
   disconnect(): void {
     this.maintain = false;
+    this.gameUrl = this.directoryUrl;
+    this.gameServerId = undefined;
     this.token = "";
     this.roleId = "";
     this.latestState = null;
@@ -186,10 +205,10 @@ export class GameSocketClient {
     this.drop(new SocketFailure("SESSION_CHANGED", "会话已切换"), false);
   }
 
-  /** 鉴权和首包校验完成后校准公共时钟，再通知应用提交快照。 */
+  /** 向会话绑定的游戏实例鉴权，核对首包角色和区服后校准时钟并通知应用。 */
   private async establish(token: string, generation: number, login?: { account: string; serverId: string }): Promise<void> {
     try {
-      const socket = this.options.create(this.url);
+      const socket = this.options.create(this.gameUrl);
       this.socket = socket;
       socket.binaryType = "arraybuffer";
       await new Promise<void>((resolve, reject) => {
@@ -226,7 +245,10 @@ export class GameSocketClient {
       if (generation !== this.generation) {
         throw new SocketFailure("SESSION_CHANGED");
       }
-      if (this.object(this.object(snapshot).role).id !== this.roleId) throw new SocketFailure("INVALID_MESSAGE");
+      const role = this.object(this.object(snapshot).role);
+      if (role.id !== this.roleId || (this.gameServerId && role.serverId !== this.gameServerId)) {
+        throw new SocketFailure("INVALID_MESSAGE", "角色与当前游戏区服不一致");
+      }
       if(!Number.isSafeInteger(this.object(snapshot).revision) || Number(this.object(snapshot).revision)<0) throw new SocketFailure("INVALID_MESSAGE");
       this.stateRevision=Number(this.object(snapshot).revision);
       this.latestState=frame;
@@ -334,15 +356,16 @@ export class GameSocketClient {
     }
   }
 
-  /** 接纳同一角色的较新快照，再通知应用一次性提交各模块。 */
+  /** 接纳同一区服及角色的较新快照，再通知应用一次性提交各模块。 */
   private onStateChanged(frame: GameFrame): void {
     if (frame.id !== undefined || frame.ok !== undefined || frame.error !== undefined) {
       throw new SocketFailure("INVALID_MESSAGE");
     }
     this.options.validateSnapshot(frame.body);
     const state = this.object(frame.body);
+    const role = this.object(state.role);
     if (!Number.isSafeInteger(state.revision) || Number(state.revision) < 0
-        || this.object(state.role).id !== this.roleId) {
+        || role.id !== this.roleId || (this.gameServerId && role.serverId !== this.gameServerId)) {
       throw new SocketFailure("INVALID_MESSAGE");
     }
     if (!this.traceReceived(frame)) {

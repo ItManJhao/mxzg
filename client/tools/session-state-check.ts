@@ -3,7 +3,8 @@ import {strict as assert} from "node:assert";
 import {GameSocketClient,SocketPort,SocketFailure} from "../assets/scripts/platform/GameSocketClient";
 import { GameProtocolCodecUtils, GAME_SOCKET_PROTOCOL, GameFrame } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import { Protocol } from "../assets/scripts/platform/Protocol";
-import { AccountApi } from "../assets/scripts/features/account/AccountApi";
+import { AccountApi, type AccountSession } from "../assets/scripts/features/account/AccountApi";
+import { ServerSelectionController, type GameServer } from "../assets/scripts/features/account/ServerSelectionController";
 import {AccountModel} from "../assets/scripts/features/account/AccountModel";
 import {AccountController} from "../assets/scripts/features/account/AccountController";
 import {AccountComposition} from "../assets/scripts/app/remake/AccountComposition";
@@ -474,8 +475,126 @@ async function checkLogoutDuringNotification(): Promise<void> {
     }
 }
 
+/** 模拟一台共享目录和两台个人实例，用实际二进制帧检查登录、重连、换服及旧凭证的归属。 */
+async function checkLanServerRouting(): Promise<void> {
+    const directory = "wss://shared.test/api/v1/game/socket";
+    const first = "wss://one.test/api/v1/game/socket";
+    const second = "wss://two.test/api/v1/game/socket";
+    const sharedRow = { id: "local-1", regionId: "lan", regionName: "联调", name: "共享验收服", enabled: true };
+    const personalRow = { ...sharedRow, id: "dev-one", name: "个人服", socketUrl: first };
+    let rows: GameServer[] = [sharedRow, personalRow];
+    class DirectoryServer extends Server {
+        /** 记录公开目录请求；其余登录与鉴权交给共享服的二进制响应实现。 */
+        public override receive(wire: Wire, frame: GameFrame): void {
+            if (frame.name !== Protocol.SERVERS_LIST) {
+                super.receive(wire, frame);
+                return;
+            }
+            this.requests.push(frame.name);
+            queueMicrotask(() => wire.push({
+                version: 1, kind: "response", name: frame.name, id: frame.id, ok: true, body: { items: rows },
+            }));
+        }
+    }
+    const shared = new DirectoryServer();
+    const a = new Server();
+    const b = new Server();
+    const hosts = new Map([[directory, shared], [first, a], [second, b]]);
+    const storage = {
+        session: null as AccountSession | null,
+        read(): AccountSession | null { return this.session; },
+        write(session: AccountSession): void { this.session = session; },
+        clear(): void { this.session = null; },
+    };
+    const attempts: string[] = [];
+    /** 创建新的应用连接；存储、服务端状态和目录跨页面刷新保留。 */
+    function page() {
+        const socket = new GameSocketClient(directory, {
+            create(url) {
+                attempts.push(url);
+                const server = hosts.get(url);
+                if (!server) throw new Error("个人服离线");
+                return server.create();
+            },
+            validateSnapshot() {}, retryDelay: () => 0, heartbeatMs: 100000,
+        });
+        const selection = new ServerSelectionController(socket, () => {});
+        const api = new AccountApi(socket, id => selection.socketUrlFor(id));
+        const account = new AccountController(new AccountModel(), api, storage);
+        return { socket, selection, account };
+    }
+    const journal = { forRole: async (serverKey: string) => serverKey };
+    let client = page();
+    try {
+        await client.selection.load();
+        assert(await client.account.login("player", sharedRow.id));
+        assert.equal(await client.account.openRoleJournal(journal), sharedRow.id);
+        assert(await client.account.login("player", personalRow.id));
+        const personalKey = await client.account.openRoleJournal(journal);
+        assert.notEqual(personalKey, personalRow.id);
+        await client.selection.load();
+        assert.deepEqual(shared.requests, [Protocol.SERVERS_LIST, Protocol.SESSION_LOGIN, Protocol.SERVERS_LIST]);
+        assert.deepEqual(a.requests, [Protocol.SESSION_LOGIN]);
+        a.wires[a.wires.length - 1].drop();
+        await until(() => a.requests.includes(Protocol.SESSION_AUTHENTICATE));
+        client.socket.setBackground(true);
+        client.socket.setBackground(false);
+        await until(() => a.requests.filter(name => name === Protocol.SESSION_AUTHENTICATE).length === 2);
+        client.account.dispose();
+        client = page();
+        await client.selection.load();
+        assert(await client.account.restore());
+        assert.equal(await client.account.openRoleJournal(journal), personalKey);
+        const saved = storage.read()!;
+        assert.equal(saved.route?.serverId, personalRow.id);
+        assert.equal(saved.route?.socketUrl, first);
+
+        rows = [sharedRow, { ...personalRow, socketUrl: second }];
+        await client.selection.load();
+        let entered = false;
+        await client.account.enterServer("player", personalRow.id, () => { entered = true; });
+        assert(entered);
+        assert.deepEqual(b.requests, [Protocol.SESSION_LOGIN], "同编号换地址后必须显式登录新的实例");
+        client.account.dispose();
+        client = page();
+        await client.selection.load();
+        storage.write(saved);
+        assert.equal(await client.account.restore(), false);
+        assert.equal(storage.read(), null);
+        assert(!b.requests.includes(Protocol.SESSION_AUTHENTICATE), "换地址后不能把旧凭证发送到新实例");
+        assert(await client.account.login("player", personalRow.id));
+        assert.notEqual(await client.account.openRoleJournal(journal), personalKey);
+        assert.deepEqual(b.requests, [Protocol.SESSION_LOGIN, Protocol.SESSION_LOGIN]);
+
+        rows = [sharedRow];
+        await client.selection.load();
+        assert.equal(await client.account.restore(), false);
+        assert(!b.requests.includes(Protocol.SESSION_AUTHENTICATE), "已经移除的个人服不能恢复");
+        rows = [sharedRow, personalRow, personalRow];
+        await assert.rejects(client.selection.load());
+        for (const socketUrl of ["ws://one.test/api/v1/game/socket", first + "?token=x", "wss://user@one.test/api/v1/game/socket"]) {
+            rows = [sharedRow, { ...personalRow, socketUrl }];
+            await assert.rejects(client.selection.load());
+        }
+        assert.deepEqual(client.selection.servers.map(row => row.id), [sharedRow.id], "非法目录不得覆盖上一版");
+        rows = [sharedRow, { ...personalRow, socketUrl: "wss://offline.test/api/v1/game/socket" }];
+        await client.selection.load();
+        const before = attempts.length;
+        assert.equal(await client.account.login("player", personalRow.id), false);
+        assert.deepEqual(attempts.slice(before), [rows[1].socketUrl], "个人服离线不能回落到共享服");
+
+        storage.write({ accessToken: saved.accessToken, expiresAt: saved.expiresAt });
+        assert(await client.account.restore());
+        assert.equal(storage.read()!.route?.socketUrl, directory, "旧版共享凭证在原服务确认后绑定地址");
+        assert.equal(storage.read()!.route?.serverId, sharedRow.id);
+    } finally {
+        client.account.dispose();
+    }
+}
+
 /** 依次执行本文件的会话与统一状态检查；全部使用受控连接，不访问日常服务。 */
 async function main(){
+ await checkLanServerRouting();
  checkServerClockFrameTime();
  await checkServerClockHeartbeat();
  await checkAuthenticatedReceipts();

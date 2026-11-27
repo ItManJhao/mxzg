@@ -56,23 +56,29 @@ export class AccountController {
         }
     }
 
-    /** 用此刻已确认的区服及角色一次选定原操作日志；后续打开存储不会改用另一角色的主键。 */
-    public openRoleJournal<T>(journal: { forRole(serverId: string, roleId: string): Promise<T> }): Promise<T> {
+    /** 共享服沿用既有持久键；个人服按实例地址和区服隔离同号角色的待确认操作。 */
+    public openRoleJournal<T>(journal: { forRole(serverKey: string, roleId: string): Promise<T> }): Promise<T> {
         const role = this.currentRole;
         if (!role?.serverId) {
             return Promise.reject(new SessionChanged());
         }
-        return journal.forRole(role.serverId, role.id);
+        const route = this.session?.route;
+        const serverKey = route && route.socketUrl !== route.directoryUrl
+            ? JSON.stringify([route.socketUrl, role.serverId])
+            : role.serverId;
+        return journal.forRole(serverKey, role.id);
     }
 
-    /** 进入所选账号和区服。仅账号、区服均匹配时复用已同步的当前角色。 */
+    /** 进入所选账号和区服，仅在账号、区服及其当前连接地址一致时复用角色。 */
     public async enterServer(account: string, serverId: string | undefined, entered: () => void): Promise<void> {
         if (this.disposed) {
             return;
         }
         const role = this.currentRole;
         const requestedAccount = account.trim().toLowerCase() || this.accountName;
-        if (role && requestedAccount === this.accountName && (!serverId || (role.serverId || "local-1") === serverId)) {
+        const route = this.session?.route;
+        if (role && requestedAccount === this.accountName && (!serverId || (role.serverId || "local-1") === serverId)
+            && (!route || this.api.matchesRoute?.(route) !== false)) {
             entered();
             return;
         }
@@ -108,7 +114,7 @@ export class AccountController {
         }
     }
 
-    /** 恢复已保存的凭证；临时网络失败允许重试，初始资料成功交付才进入当前角色。 */
+    /** 恢复签发实例的凭证；旧共享服凭证由首包确认归属后升级，临时网络失败可重试。 */
     async restore(): Promise<boolean> {
         if (this.disposed) {
             return false;
@@ -133,8 +139,15 @@ export class AccountController {
         }
         this.model.replace({ busy: true, role: null, error: "" });
         try {
-            const role = await this.api.currentRole(session.accessToken);
+            const role = await this.api.currentRole(session.accessToken, session.route);
             if (operation !== this.operation) return false;
+            if (!session.route && role.serverId && this.api.routeFor) {
+                const route = this.api.routeFor(role.serverId);
+                if (route.socketUrl !== route.directoryUrl) {
+                    throw new SocketFailure("UNAUTHENTICATED", "原共享区服已迁移，请重新登录");
+                }
+                session = { ...session, route };
+            }
             return this.accept({ session, role }, operation);
         } catch (error) {
             if (operation !== this.operation) return false;

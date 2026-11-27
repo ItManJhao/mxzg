@@ -301,7 +301,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         connections.put(session.getId(), new Connection(session));
     }
 
-    /** 解析受限信封并按角色串行调度，公会通知在释放发起者的角色锁后交付。 */
+    /** 解析受限信封，匿名目录可列出个人实例；已登录业务按本机角色串行调度。 */
     @Override protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) {
         Connection connection = connections.get(session.getId());
         if (connection == null) return;
@@ -323,7 +323,10 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             String name = request.path("name").asString();
             if (connection.role == null) {
                 switch(name) {
-                    case "servers.list" -> { fields(request.path("body"),Set.of()); respond(connection,request,Map.of("items",servers.list())); }
+                    case "servers.list" -> {
+                        fields(request.path("body"), Set.of());
+                        respond(connection, request, Map.of("items", servers.published()));
+                    }
                     case "session.login", "session.authenticate" -> authenticate(connection,request);
                     default -> throw rejected("UNAUTHENTICATED");
                 }
@@ -368,7 +371,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         } finally { connection.lock.unlock(); }
     }
 
-    /** 首帧鉴权后原子替换本进程在线连接，返回统一状态和游戏时钟。 */
+    /** 首帧登录或恢复后接管当前角色；个人服接管旧令牌前核对角色所属区服。 */
     private void authenticate(Connection connection, JsonNode request) throws IOException {
         JsonNode body = request.path("body");
         com.funsgamex.mxzg.auth.SessionService.IssuedSession issued=null;
@@ -385,6 +388,9 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         text(body, "clientInstanceId", UUID_PATTERN);
         String token = "Bearer " + accessToken;
         String role = sessions.requireRole(token);
+        if (issued == null) {
+            servers.requireResumableRole(role);
+        }
         ReentrantLock roleLock = roleLock(role);
         if (!awaitLock(roleLock)) throw rejected("BUSY");
         try {

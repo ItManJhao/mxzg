@@ -2,11 +2,24 @@
  * 不持有玩家状态，不从普通库存或历史奖励回执反推当前冒险点。 */
 import type { GameFrame } from "../../platform/GameProtocolCodecUtils";
 import type { RoleProfile, RoleBasics, TavernPointState } from "./AccountModel";
-import type { GameSocketClient } from "../../platform/GameSocketClient";
+import { SocketFailure, type GameSocketClient } from "../../platform/GameSocketClient";
+
+/** 本机保存的凭证归属。只有区服目录与游戏地址仍匹配时，才可把凭证发给对应实例。 */
+export interface AccountRoute {
+    /** 登录时获取清单的可信入口。 */
+    readonly directoryUrl: string;
+    /** 签发凭证的具体游戏实例地址。 */
+    readonly socketUrl: string;
+    /** 服务端登录首包确认的区服编号。 */
+    readonly serverId: string;
+}
+
 export interface AccountSession {
     accessToken: string;
     expiresAt: string;
     account?: string;
+    /** 新版凭证记录原始实例；旧版共享服凭证可在受信任的原入口迁移。 */
+    route?: AccountRoute;
 }
 export interface LoginResult {
     session: AccountSession;
@@ -14,7 +27,11 @@ export interface LoginResult {
 }
 export interface AccountGateway {
     developmentLogin(account: string, serverId?: string): Promise<LoginResult>;
-    currentRole(token: string): Promise<RoleProfile>;
+    currentRole(token: string, route?: AccountRoute): Promise<RoleProfile>;
+    /** 核对目录里的区服仍指向会话创建时的地址。 */
+    matchesRoute?(route: AccountRoute): boolean;
+    /** 取得当前目录的地址，用于把旧共享服凭证升级到明确的实例绑定。 */
+    routeFor?(serverId: string): AccountRoute;
     /** 本次连接完整状态，由应用交给模块 onNotify。 */
     initialization?(): GameFrame | null;
     disconnect?(): void;
@@ -22,30 +39,54 @@ export interface AccountGateway {
 }
 /** WebSocket 账号入口：登录回包包含统一初始化，角色与背包由应用协调提交。 */
 export class AccountApi implements AccountGateway {
-    /** 应用注入唯一长连接，不持有资产副本。 */
-    constructor(private readonly socket: GameSocketClient) {
+    /** @param socket 应用注入的唯一长连接，用于登录、鉴权和首包。
+     * @param resolveSocketUrl 从已校验的最新目录取得个人服地址，返回 undefined 表示共享服。 */
+    constructor(private readonly socket: GameSocketClient,
+        private readonly resolveSocketUrl?: (serverId: string) => string | undefined) {
     }
 
-    /** 本地身份交换成功后从同一首包读取角色及冒险点，不追加角色或背包查询。 */
+    /** 凭据只写入当前选服地址的绑定，角色及冒险点来自同一登录首包。 */
     async developmentLogin(account: string, serverId = "local-1"): Promise<LoginResult> {
-        const frame = await this.socket.login(account, serverId);
+        const route = this.routeFor(serverId);
+        const frame = await this.socket.login(account, serverId, route.socketUrl);
         const body = AccountApi.record(frame.body);
         const role = AccountApi.readSnapshotRole(body.initial);
         if (role.serverId !== serverId) {
             throw new Error("角色区服与所选区服不一致");
         }
-        return { session: AccountApi.readSession(body.session), role };
+        return { session: { ...AccountApi.readSession(body.session), route }, role };
     }
 
-    /** 恢复连接读取同连接最新完整快照的角色及冒险点，不发送额外查询或沿用旧扩展。 */
-    async currentRole(token: string): Promise<RoleProfile> {
-        await this.socket.connect(token);
+    /** 恢复前重新核对目录；已下架或地址变更时先拒绝，不把旧凭证交给其他实例。 */
+    async currentRole(token: string, route?: AccountRoute): Promise<RoleProfile> {
+        if (route && !this.matchesRoute(route)) {
+            throw new SocketFailure("UNAUTHENTICATED", "区服地址已变更或已下架，请重新选服登录");
+        }
+        await this.socket.connect(token, route?.socketUrl ?? this.socket.directoryUrl, route?.serverId);
         const frame = this.socket.latestState;
         if (!frame) {
             throw new Error("缺少登录初始化数据");
         }
         const body = AccountApi.record(frame.body);
         return AccountApi.readSnapshotRole(frame.kind === "event" ? body : body.initial);
+    }
+
+    /** 判断同一区服能否复用已登录角色。目录未开放该条目也视为绑定已失效。 */
+    public matchesRoute(route: AccountRoute): boolean {
+        if (route.directoryUrl !== this.socket.directoryUrl) {
+            return false;
+        }
+        try {
+            return this.routeFor(route.serverId).socketUrl === route.socketUrl;
+        } catch {
+            return false;
+        }
+    }
+
+    /** 区服编号取自已开放的目录行，老协议的同实例条目统一使用目录入口。 */
+    public routeFor(serverId: string): AccountRoute {
+        const directoryUrl = this.socket.directoryUrl;
+        return { serverId, directoryUrl, socketUrl: this.resolveSocketUrl?.(serverId) ?? directoryUrl };
     }
 
     /** 应用在接纳账号的同一通知批次中交付初始化状态。 */
@@ -71,7 +112,7 @@ export class AccountApi implements AccountGateway {
         return value as Record<string, unknown>;
     }
 
-    /** 校验并拷贝持久凭证，拒绝非法令牌或无法解析的过期时间。 */
+    /** 校验并拷贝持久凭证及可选归属；损坏的路由不按旧版共享服凭证解释。 */
     public static readSession(value: unknown): AccountSession {
         const row = AccountApi.record(value);
         if (typeof row.accessToken !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(row.accessToken) ||
@@ -81,9 +122,20 @@ export class AccountApi implements AccountGateway {
         if (row.account !== undefined && (typeof row.account !== "string" || !/^[a-z0-9_-]{3,32}$/.test(row.account))) {
             throw new Error("会话账号无效");
         }
+        let route: AccountRoute | undefined;
+        if (row.route !== undefined) {
+            const saved = AccountApi.record(row.route);
+            if (typeof saved.serverId !== "string" || !/^[a-z0-9_-]{1,32}$/.test(saved.serverId)
+                || typeof saved.socketUrl !== "string" || !saved.socketUrl
+                || typeof saved.directoryUrl !== "string" || !saved.directoryUrl) {
+                throw new Error("会话区服地址无效");
+            }
+            route = { serverId: saved.serverId, socketUrl: saved.socketUrl, directoryUrl: saved.directoryUrl };
+        }
         return {
             accessToken: row.accessToken,
-            expiresAt: row.expiresAt, ...(typeof row.account === "string" ? { account: row.account } : {})
+            expiresAt: row.expiresAt, ...(typeof row.account === "string" ? { account: row.account } : {}),
+            ...(route ? { route } : {}),
         };
     }
 

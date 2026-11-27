@@ -1413,7 +1413,15 @@ message RewardNoticeItem {
 // 本地身份交换只在 local 后端启用，生产渠道认证另行接入。
 message Login { required string account = 1; required string server_id = 2; required string client_instance_id = 3; }
 message Session { required string access_token = 1; required string expires_at = 2; }
-message Server { required string id = 1; required string region_id = 2; required string region_name = 3; required string name = 4; required bool enabled = 5; }
+message Server {
+  required string id = 1;
+  required string region_id = 2;
+  required string region_name = 3;
+  required string name = 4;
+  required bool enabled = 5;
+  // 内网目录登记的个人实例入口。缺省时，所选区服由提供目录的游戏地址承载。
+  optional string socket_url = 6;
+}
 message Servers { repeated Server items = 1; }
 message Authenticate {
   required string access_token = 1;
