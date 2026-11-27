@@ -8,6 +8,7 @@ import type { AccountActions, AccountView } from "./AccountLoginBinding";
 import type { AccountState } from "../AccountModel";
 import type { GameServer, ServerSelectionController } from "../ServerSelectionController";
 import { ServerPickerView } from "./ServerPickerView";
+import { ServerCellView } from "./ServerCellView";
 
 const { ccclass, property } = _decorator;
 
@@ -71,9 +72,9 @@ export class AccountLoginView extends BaseView implements AccountView {
         return () => { for (const stop of stops.splice(0)) stop(); };
     }
 
-    /** 根据账号状态更新操作及进度；新失败只通过全局飘字报告一次，不发请求。 */
-    render(state: AccountState): void {
-        this.loginButton!.interactable = !state.busy;
+    /** 根据账号状态与所选区服的实际可达性更新操作，维护期间仍允许选择其他区服。 */
+    render(state: AccountState, canEnter = true): void {
+        this.loginButton!.interactable = !state.busy && canEnter;
         this.restoreButton!.interactable = !state.busy;
         this.accountInput!.enabled = !state.busy;
         this.logoutButton!.interactable = !state.busy;
@@ -102,9 +103,11 @@ export class AccountLoginView extends BaseView implements AccountView {
         UIManager.instance.toast(message);
     }
 
-    /** 更新服务器名称，未同步时显示等待提示。 */
+    /** 展示当前所选服务器及维护、检测状态，玩家可从同一入口切换其他区服。 */
     renderServer(server: GameServer | null): void {
-        if (this.serverLabel) this.serverLabel.string = server ? `${server.regionName} · ${server.name}  ▾` : "正在获取区服…";
+        if (this.serverLabel) {
+            this.serverLabel.string = server ? `${server.regionName} · ${ServerCellView.displayName(server)}  ▾` : "暂无可选区服";
+        }
     }
     /** 回填本机开发账号，不触发登录。 */
     prepareAccount(account: string): void { if (this.accountInput) this.accountInput.string = account; }

@@ -20,7 +20,8 @@ export interface AccountActions {
 export interface AccountView {
     bind(actions: AccountActions): () => void;
 
-    render(state: AccountState): void;
+    /** 展示账号状态，所选区服不可用时单独禁用开始游戏。 */
+    render(state: AccountState, canEnter: boolean): void;
 
     renderServer?(server: GameServer | null): void;
 
@@ -57,7 +58,7 @@ export class AccountLoginBinding {
         private readonly selection?: ServerSelectionController,
     ) {}
 
-    /** 打开时预填已知账号一次；之后无会话时保留用户编辑，避免状态刷新覆盖新输入。 */
+    /** 打开时预填已知账号一次并开始探测区服；之后保留用户输入，只更新选服和按钮。 */
     public show(): void {
         if (this.open) {
             return;
@@ -84,7 +85,7 @@ export class AccountLoginBinding {
                 },
                 logout: () => this.service.logout(),
                 chooseServer: () => {
-                    if (this.selection && !this.model.snapshot.busy) {
+                    if (this.selection && !this.model.snapshot.busy && !this.entryAttempt) {
                         this.view.openServerPicker?.(this.selection);
                     }
                 },
@@ -92,7 +93,11 @@ export class AccountLoginBinding {
             this.disposers.push(this.model.subscribe(state => this.paint(state)));
             const selection = this.selection;
             if (selection) {
-                this.disposers.push(selection.subscribe(() => this.view.renderServer?.(selection.selected)));
+                this.disposers.push(selection.subscribe(() => {
+                    this.view.renderServer?.(selection.selected);
+                    this.paint(this.model.snapshot);
+                }));
+                this.disposers.push(selection.watchAvailability());
             }
             this.view.renderServer?.(selection?.selected ?? null);
             this.paint(this.model.snapshot);
@@ -102,7 +107,7 @@ export class AccountLoginBinding {
         }
     }
 
-    /** 关闭当前登录页，注销监听并取消这一次点击的界面跳转。 */
+    /** 关闭当前登录页，停止区服轮询，注销监听并取消这一次点击的界面跳转。 */
     public close(): void {
         this.open = false;
         this.entryAttempt = null;
@@ -111,12 +116,22 @@ export class AccountLoginBinding {
         }
     }
 
-    /** 将选服与输入交给账号服务；只允许当前点击进入主城。 */
+    /** 复核玩家点击的区服再交给账号服务，关页或切服后禁止沿用旧点击进入主城。 */
     private async startGame(account: string): Promise<void> {
         const attempt = this.entryAttempt = {};
         try {
             this.paint(this.model.snapshot);
-            await this.service.enterServer(account, this.selection?.selected?.id, () => {
+            const id = this.selection?.selected?.id;
+            if (this.selection && (!id || !await this.selection.confirmEntry(id))) {
+                if (this.entryAttempt === attempt) {
+                    this.view.showNotice("所选区服暂时无法进入，请查看选服状态");
+                }
+                return;
+            }
+            if (this.entryAttempt !== attempt) {
+                return;
+            }
+            await this.service.enterServer(account, id, () => {
                 if (this.entryAttempt === attempt) {
                     this.enterGame();
                 }
@@ -133,8 +148,8 @@ export class AccountLoginBinding {
         }
     }
 
-    /** 将角色资料、连接进度和按钮等待状态交给登录页展示。 */
+    /** 将角色资料、连接进度和选服可达性分别交给页面，维护时仍允许打开选服。 */
     private paint(state: AccountState): void {
-        this.view.render({ ...state, busy: state.busy || !!this.entryAttempt });
+        this.view.render({ ...state, busy: state.busy || !!this.entryAttempt }, !this.selection || !!this.selection.selected?.enabled);
     }
 }

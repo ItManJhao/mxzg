@@ -25,12 +25,20 @@ export class ServerCellView extends Component {
     backgrounds: Node[] = [];
     /** 当前格子的选择回调，复用前解绑，销毁时释放。 */
     private tap: (() => void) | null = null;
-    /** 刷新区服文字、标记和点击回调；根尺寸由 SuperContent 设置。 */
+    /** 为区服名称附上首次检测或维护状态，便于玩家辨认不可进入的原因。 */
+    public static displayName(server: GameServer): string {
+        if (server.enabled) {
+            return server.name;
+        }
+        return server.name + (server.checking ? "（检测中）" : "（维护）");
+    }
+
+    /** 刷新区服实际状态、名称和点击回调，检测中或维护的格子不能选择。 */
     show(server: GameServer, chosen: boolean, select: () => void, region = false): void {
         if (!this.button || !this.caption)
             throw new Error("ChooseServerCell 未绑定按钮或名称");
         this.button.interactable = server.enabled;
-        this.caption.string = server.name;
+        this.caption.string = region ? server.name : ServerCellView.displayName(server);
         this.caption.fontSize = 24;
         this.caption.lineHeight = 30;
         this.caption.node.setScale(1, 1, 1);

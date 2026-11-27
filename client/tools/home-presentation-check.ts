@@ -580,7 +580,10 @@ async function main() {
   controller.dispose();
   // 选服真实数据分组与选择由页面处理，列表排列留给 SuperContent。
   const servers=[{id:"a1",regionId:"a",regionName:"一区",name:"一服",enabled:true},{id:"b1",regionId:"b",regionName:"二区",name:"二服",enabled:true}];
-  const selection = new ServerSelectionController({catalog:async()=>servers},()=>{});
+  const selection = new ServerSelectionController({
+    catalog: async () => servers,
+    probePersonalServer: async () => { throw new Error("同实例区服不需要个人服探测"); },
+  }, () => {});
   await selection.load();
   const picker=new Node("Picker").addComponent(ServerPickerView);
   picker.closeButton=new Node("Close").addComponent(Button);

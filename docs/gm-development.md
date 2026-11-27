@@ -26,7 +26,18 @@
 
 - 2026-11-14负责人确认本机local默认开启GM：application-local.yml使用`${MXZG_GM_ENABLED:true}`，每次启动/重启都会读取，不再要求临时设置环境变量。需要关闭可显式设置`MXZG_GM_ENABLED=false`；production仍不装配GM服务，不能仅隐藏前端入口。
 - 独立 MySQL 验收使用 `backend/test-mysql.ps1 -MysqlHome <官方 ZIP 解压目录> -Preview`。测试启动器创建并校验自己的数据目录、库、受限账号和回环端口，在测试专用配置中开启 GM；不读取日常数据库环境变量，也不连接玩家库。
-- 内网个人服和共享验收服的启动脚本沿用 `local` 的 GM 默认配置。手机测试包与 Creator 预览使用同一套当前登录角色的 GM 协议，发放使用已有的会话归属和幂等校验。
+- 通用个人服入口 `backend/dev.ps1 personal` 和手机测试服启动脚本 `scripts/Start-PhoneH5.ps1` 沿用 `local` 配置，默认开启 GM。手机 H5 与 Creator 预览都向当前选中的游戏服查询 `gm.status`。菜单提示「服务端 GM 已关闭」表示该区服回复了关闭状态。发放沿用当前角色的会话归属和幂等校验。
+- Hao 的桌面「MXZG 一键编译并启动个人服」和 `scripts/start-dev-hao.cmd` 都通过 `scripts/Manage-DevHao.ps1` 启动 `dev-hao`。脚本显式传入 `--mxzg.gm.enabled=true`，该参数优先于环境变量 `MXZG_GM_ENABLED`。
+
+打包机如需在运行目录显式配置共享验收服，可在 MXZG 项目 `runtimeDirectory` 的 `application-local.yml` 中把下面的 `gm` 小节合并到已有的 `mxzg` 下，保留 `lan` 和其他配置。
+
+```yaml
+mxzg:
+  gm:
+    enabled: true
+```
+
+如启动器或部署模板通过命令行、`SPRING_APPLICATION_JSON` 或环境变量显式关闭此项，在共享项目的持久启动配置中同步调整。随后在构建台选择 MXZG，执行「后端重启」。重新进入共享验收服，打开 GM 菜单即可查询生效状态。
 
 ## 本机永久设置与重启
 

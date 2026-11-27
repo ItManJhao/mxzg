@@ -475,6 +475,75 @@ async function checkLogoutDuringNotification(): Promise<void> {
     }
 }
 
+/** 真实二进制目录回包决定探测结果；超时、取消和错误身份只关闭短连接，保留共享服登录。 */
+async function checkPersonalServerProbe(): Promise<void> {
+    const directory = "wss://shared.test/api/v1/game/socket";
+    const address = "wss://personal.test/api/v1/game/socket";
+    const row: GameServer = { id: "dev-hao", enabled: true, regionId: "lan", regionName: "内网", name: "个人服" };
+    const shared = new Server();
+    const personal = new Server();
+    const requests: GameFrame[] = [];
+    let rows = [row];
+    let reply = true;
+    let mismatch = false;
+    personal.receive = (wire: Wire, frame: GameFrame): void => {
+        requests.push(frame);
+        if (reply) {
+            wire.push({
+                version: 1, kind: "response", name: Protocol.SERVERS_LIST,
+                id: mismatch ? "other-request" : frame.id, ok: true, body: { items: rows },
+            });
+        }
+    };
+    const observed: string[] = [];
+    const socket = new GameSocketClient(directory, {
+        create: url => (url === directory ? shared : personal).create(),
+        onReceive: frame => observed.push(frame.name),
+        validateSnapshot() {}, timeoutMs: 100, heartbeatMs: 100000,
+    });
+    const signal = new AbortController().signal;
+    try {
+        await socket.login("player", "local-1");
+        const state = socket.latestState;
+        assert.equal(await socket.probePersonalServer(address, row.id, signal), true);
+        rows = [{ ...row, id: "someone-else" }];
+        assert.equal(await socket.probePersonalServer(address, row.id, signal), false);
+        rows = [{ ...row, socketUrl: address }];
+        assert.equal(await socket.probePersonalServer(address, row.id, signal), false, "共享目录登记不能证明目标自持此区服");
+        rows = [{ ...row, enabled: false }];
+        assert.equal(await socket.probePersonalServer(address, row.id, signal), false);
+        rows = [row];
+        mismatch = true;
+        assert.equal(await socket.probePersonalServer(address, row.id, signal), false);
+        mismatch = false;
+        reply = false;
+        assert.equal(await socket.probePersonalServer(address, row.id, signal), false, "已握手但无业务回包也须超时");
+        const cancel = new AbortController();
+        const count = requests.length;
+        const pending = socket.probePersonalServer(address, row.id, cancel.signal);
+        await until(() => requests.length > count);
+        cancel.abort();
+        assert.equal(await pending, false);
+        const connections = personal.wires.length;
+        assert.equal(await socket.probePersonalServer(address, row.id, cancel.signal), false);
+        await assert.rejects(socket.catalog(cancel.signal), (error: SocketFailure) => error.code === "CANCELLED");
+        assert.equal(await socket.probePersonalServer(address.replace("wss:", "ws:"), row.id, signal), false);
+        assert.equal(personal.wires.length, connections, "已取消或地址无效时不新建连接");
+        reply = true;
+        assert.equal(await socket.probePersonalServer(address, row.id, signal), true, "恢复后下一轮重新检测");
+        assert(personal.wires.every(wire => wire.readyState === 3));
+        for (const frame of requests) {
+            assert.deepEqual(frame, { version: 1, kind: "request", name: Protocol.SERVERS_LIST, id: frame.id, body: {} });
+        }
+        assert.deepEqual(shared.requests, [Protocol.SESSION_LOGIN]);
+        assert(!observed.includes(Protocol.SERVERS_LIST), "临时探测不进入会话协议日志");
+        assert.equal(socket.latestState, state);
+        socket.assertReady("a".repeat(43));
+    } finally {
+        socket.disconnect();
+    }
+}
+
 /** 模拟一台共享目录和两台个人实例，用实际二进制帧检查登录、重连、换服及旧凭证的归属。 */
 async function checkLanServerRouting(): Promise<void> {
     const directory = "wss://shared.test/api/v1/game/socket";
@@ -592,8 +661,92 @@ async function checkLanServerRouting(): Promise<void> {
     }
 }
 
+/** 登录页用受控探针复现个人服停启；共享服可独立进入，关页取消在途点击和旧状态通知。 */
+async function checkLanAvailability(): Promise<void> {
+    const shared = { id: "local-1", regionId: "lan", regionName: "内网", name: "共享验收服", enabled: true };
+    const personal = { ...shared, id: "dev-hao", name: "Hao 个人开发服", socketUrl: "wss://hao.test/api/v1/game/socket" };
+    let rows = [shared, personal];
+    let probe: ((online: boolean) => void) | undefined;
+    let latestSignal: AbortSignal | undefined;
+    let count = 0;
+    const selection = new ServerSelectionController({
+        catalog: async () => rows,
+        probePersonalServer: (_url, _id, signal) => new Promise<boolean>(resolve => {
+            count++;
+            latestSignal = signal;
+            probe = resolve;
+        }),
+    }, () => {}, personal.id);
+    await selection.load();
+    const model = new AccountModel();
+    const entries: string[] = [];
+    let actions: AccountActions;
+    let canEnter = false;
+    const page = new AccountLoginBinding(model, {
+        enterServer: async (_account: string, id: string) => { entries.push(id); },
+    } as AccountController, {
+        bind(value) { actions = value; return () => {}; },
+        render(_state, allowed) { canEnter = allowed; },
+        showNotice() {},
+    }, () => {}, selection);
+    page.show();
+    try {
+        await until(() => !!probe);
+        assert.equal(selection.selected?.checking, true);
+        assert.equal(canEnter, false);
+        selection.choose(shared.id);
+        actions!.login("player");
+        await until(() => entries.includes(shared.id));
+        assert.equal(count, 1, "个人服探测尚未结束也能进入共享服");
+        probe!(true);
+        await until(() => !!selection.servers.find(row => row.id === personal.id)?.enabled);
+        selection.choose(personal.id);
+        assert.equal(canEnter, true);
+        actions!.login("player");
+        await until(() => count === 2);
+        const simultaneous = selection.confirmEntry(personal.id);
+        assert.equal(count, 2, "同一目标同时复核时复用探测");
+        probe!(false);
+        assert.equal(await simultaneous, false);
+        assert.equal(canEnter, false);
+        assert.equal(selection.selected?.id, personal.id, "个人服离线时保留已选区服");
+        assert.equal(selection.selected?.checking, false);
+        assert.throws(() => selection.choose(personal.id));
+        assert.equal(selection.socketUrlFor(personal.id), personal.socketUrl, "暂时离线不能清除已登记的凭证归属");
+        actions!.login("player");
+        assert.deepEqual(entries, [shared.id], "维护期间不能通过程序点击进入或默默回落共享");
+
+        // 实际等待下一轮五秒定时刷新，不手动重开页面。
+        await new Promise(resolve => setTimeout(resolve, 5100));
+        await until(() => count === 3);
+        probe!(true);
+        await until(() => canEnter);
+        assert.equal(selection.selected?.id, personal.id);
+        actions!.login("player");
+        await until(() => count === 4);
+        probe!(true);
+        await until(() => entries.includes(personal.id));
+        actions!.login("player");
+        await until(() => count === 5);
+        page.close();
+        assert.equal(latestSignal!.aborted, true);
+        probe!(false);
+        await new Promise(resolve => setTimeout(resolve, 0));
+        assert.deepEqual(entries, [shared.id, personal.id], "恢复后可进入个人服，关页后的点击不能重复进入");
+        assert.equal(selection.selected?.enabled, true, "关页后丢弃迟到结果");
+
+        rows = [shared, personal].map(row => ({ ...row, enabled: false }));
+        await selection.load();
+        assert(selection.servers.every(row => !row.enabled), "全服显式维护时立即替换旧绿灯");
+    } finally {
+        page.close();
+    }
+}
+
 /** 依次执行本文件的会话与统一状态检查；全部使用受控连接，不访问日常服务。 */
 async function main(){
+ await checkLanAvailability();
+ await checkPersonalServerProbe();
  await checkLanServerRouting();
  checkServerClockFrameTime();
  await checkServerClockHeartbeat();

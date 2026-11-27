@@ -1,6 +1,6 @@
 /**
  * 游戏 WebSocket 连接：鉴权、恢复同步、心跳、公共时钟校准、退避重连和请求关联。
- * 应用持有此实例；不保存玩家资产，不自动重放业务请求，旧连接回包由连接代次隔离。
+ * 应用持有此实例；匿名目录与个人服状态查询各自使用短连接，游戏会话独立鉴权和恢复。
  */
 import type { ServerClock } from "../core/ServerClock";
 import type { AuthenticatedGameProtocol, ReadProtocol } from "./Protocol";
@@ -125,29 +125,108 @@ export class GameSocketClient {
     }
     return this.latestState;
   }
-  /** 匿名目录始终使用构建入口；读取清单不会改变已登录会话的目标或携带令牌。 */
-  catalog(): Promise<unknown> {
-    const socket=this.options.create(this.directoryUrl); socket.binaryType="arraybuffer"; const id=this.identifier();
-    return new Promise((resolve,reject)=>{
-      let done=false;
-      const finish=(error: Error|null,value?:unknown):void=>{
-        if(done)return;done=true;clearTimeout(timer);socket.onopen=socket.onmessage=socket.onerror=socket.onclose=null;
-        try {socket.close();} catch {}
-        if(error)reject(error);else resolve(value);
-      };
-      const timer=setTimeout(()=>finish(new SocketFailure("TIMEOUT")),this.options.timeoutMs||15000);
-      socket.onopen=()=>{
-        if(socket.protocol!==GAME_SOCKET_PROTOCOL){finish(new SocketFailure("INVALID_MESSAGE","服务端协议版本不匹配，请重启后端"));return;}
-        try {socket.send(GameProtocolCodecUtils.encodeGameFrame({version:1,kind:"request",name:Protocol.SERVERS_LIST,id,body:{}}));}catch{finish(new SocketFailure("DISCONNECTED"));}
-      };
-      socket.onmessage=event=>{
+  /** 从构建入口读取共享目录。页面轮询可传取消信号与总超时毫秒数，独立于已登录会话。 */
+  public catalog(signal?: AbortSignal, timeoutMs = this.options.timeoutMs || 15000): Promise<unknown> {
+    return this.readCatalog(this.directoryUrl, timeoutMs, signal);
+  }
+
+  /** 校验目录登记或探测使用的 WSS 游戏入口，统一其地址格式并拒绝凭证、查询参数和片段。 */
+  public static readPersonalSocketUrl(value: unknown): string {
+    if (typeof value !== "string" || !/^wss:\/\/[^\s/?#@\\]+\/api\/v1\/game\/socket$/.test(value)) {
+      throw new Error("个人服连接地址无效");
+    }
+    return new URL(value).href;
+  }
+
+  /**
+   * 用目录登记的 WSS 地址匿名确认目标能受理指定区服。仅认本实例已开放的区服，
+   * 防止误连回共享目录时把目录登记的远端个人服当作本机服务；连接失败或取消均返回 false。
+   */
+  public async probePersonalServer(socketUrl: string, serverId: string, signal: AbortSignal): Promise<boolean> {
+    try {
+      const url = GameSocketClient.readPersonalSocketUrl(socketUrl);
+      const timeoutMs = Math.min(this.options.timeoutMs || 3000, 3000);
+      const items = await this.readCatalog(url, timeoutMs, signal);
+      if (!Array.isArray(items) || signal.aborted) {
+        return false;
+      }
+      const matches = items.filter(row => row?.id === serverId);
+      return matches.length === 1 && matches[0].enabled === true && matches[0].socketUrl === undefined;
+    } catch {
+      return false;
+    }
+  }
+
+  /** 独占一条匿名连接完成一次 servers.list，从握手到收到匹配的二进制回包共用一个期限。 */
+  private async readCatalog(url: string, timeoutMs: number, signal?: AbortSignal): Promise<unknown> {
+    if (signal?.aborted) {
+      throw new SocketFailure("CANCELLED", "已取消选服查询");
+    }
+    const id = this.identifier();
+    const socket = this.options.create(url);
+    socket.binaryType = "arraybuffer";
+    return new Promise((resolve, reject) => {
+      let done = false;
+      const finish = (error: Error | null, items?: unknown): void => {
+        if (done) {
+          return;
+        }
+        done = true;
+        clearTimeout(timer);
+        signal?.removeEventListener("abort", cancel);
+        socket.onopen = socket.onmessage = socket.onerror = socket.onclose = null;
         try {
-          const frame=GameProtocolCodecUtils.decodeGameFrame(event.data);
-          if(frame.version!==1 || frame.kind!=="response" || frame.name!==Protocol.SERVERS_LIST || frame.id!==id || frame.ok!==true || frame.error!==undefined) throw new SocketFailure("INVALID_MESSAGE");
-          this.traceReceived(frame);finish(null,this.object(frame.body).items);
-        }catch{finish(new SocketFailure("INVALID_MESSAGE"));}
+          socket.close();
+        } catch { /* 平台已释放连接时也须交付本次查询结果。 */ }
+        if (error) {
+          reject(error);
+        } else {
+          resolve(items);
+        }
       };
-      socket.onerror=socket.onclose=()=>finish(new SocketFailure("DISCONNECTED"));
+      const cancel = (): void => finish(new SocketFailure("CANCELLED", "已取消选服查询"));
+      const timer = setTimeout(() => finish(new SocketFailure("TIMEOUT")), timeoutMs);
+      signal?.addEventListener("abort", cancel);
+      if (signal?.aborted) {
+        cancel();
+        return;
+      }
+      socket.onopen = () => {
+        if (done) {
+          return;
+        }
+        if (socket.protocol !== GAME_SOCKET_PROTOCOL) {
+          finish(new SocketFailure("INVALID_MESSAGE", "服务端协议版本不匹配，请重启后端"));
+          return;
+        }
+        try {
+          socket.send(GameProtocolCodecUtils.encodeGameFrame({
+            version: 1, kind: "request", name: Protocol.SERVERS_LIST, id, body: {},
+          }));
+        } catch {
+          finish(new SocketFailure("DISCONNECTED"));
+        }
+      };
+      socket.onmessage = event => {
+        if (done) {
+          return;
+        }
+        try {
+          const frame = GameProtocolCodecUtils.decodeGameFrame(event.data);
+          if (frame.version !== 1 || frame.kind !== "response" || frame.name !== Protocol.SERVERS_LIST
+              || frame.id !== id || frame.ok !== true || frame.error !== undefined) {
+            throw new SocketFailure("INVALID_MESSAGE");
+          }
+          // 带取消信号的状态轮询不写入玩家协议日志。
+          if (!signal) {
+            this.traceReceived(frame);
+          }
+          finish(null, this.object(frame.body).items);
+        } catch {
+          finish(new SocketFailure("INVALID_MESSAGE"));
+        }
+      };
+      socket.onerror = socket.onclose = () => finish(new SocketFailure("DISCONNECTED"));
     });
   }
 
