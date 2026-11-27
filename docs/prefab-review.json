@@ -7028,7 +7028,7 @@
       }
     },
     "components": {
-      "Widget": 14,
+      "Widget": 15,
       "Layout": 1,
       "Mask": 1,
       "ScrollView": 0,
@@ -7152,15 +7152,15 @@
     "scrolls": [],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "Creator iPhone 14 Pro 验证原名册、图鉴火系与光系、普通技能和进化目录。翼徽等后续微调待完成最终画面复验。",
-    "sha256": "92c5522758bdd5d3d64e814c21af4bb5788da7ec7699173da00363d3e4296d41",
+    "reviewStatus": "实际预览通过",
+    "visual": "本次视觉验收覆盖进化图鉴入口。名册页签隐藏按钮，图鉴页签的按钮与列表底框留有间距，点击打开进化目录。翼徽微调仍待专项复验。",
+    "sha256": "c8343fe7b3c60b5841e7e4f87841f087b2c1883040c7c736aebce7b8ea3ef0a3",
     "acceptance": {
-      "sha256": "92c5522758bdd5d3d64e814c21af4bb5788da7ec7699173da00363d3e4296d41",
-      "date": "2026-11-25",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "Creator iPhone 14 Pro 验证原名册、图鉴火系与光系、普通技能和进化目录。翼徽等后续微调待完成最终画面复验。",
-      "inspector": "未签收最终视觉指纹。"
+      "sha256": "c8343fe7b3c60b5841e7e4f87841f087b2c1883040c7c736aebce7b8ea3ef0a3",
+      "date": "2026-11-27",
+      "status": "实际预览通过",
+      "scope": "本次视觉验收覆盖进化图鉴入口。名册页签隐藏按钮，图鉴页签的按钮与列表底框留有间距，点击打开进化目录。翼徽微调仍待专项复验。",
+      "inspector": "Creator iPhone 14 Pro 竖屏预设与隔离角色实际点击。"
     }
   },
   {
