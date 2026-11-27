@@ -1,0 +1,9 @@
+{
+  "mode": "personal",
+  "checkout": "D:/请替换为开发机上的实际MXZG仓库路径",
+  "id": "dev-hao",
+  "name": "Hao 个人开发服",
+  "address": "192.168.0.33",
+  "port": 18083,
+  "sharedOrigin": "https://192.168.0.38:18082"
+}

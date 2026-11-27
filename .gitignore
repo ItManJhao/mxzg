@@ -44,6 +44,9 @@ ip2region.db
 /backend/.local/
 /backend/target/
 
+# Each developer configures the reset tool for their own local game instance.
+/scripts/server-reset/reset.json
+
 # Cocos Creator
 client/library/
 client/temp/
