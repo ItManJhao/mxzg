@@ -17,7 +17,7 @@ $previousMavenHome = $env:MAVEN_USER_HOME
 $previousAdditionalLocation = $env:SPRING_CONFIG_ADDITIONAL_LOCATION
 $previousPersonalEnvironment = @{}
 
-# 根据已登记的个人服身份构造本次 Maven 子进程的配置。证书和 H2 固定在该 ID 的忽略目录。
+# 根据已登记的个人服身份构造本次 Maven 子进程的配置。证书和 H2 固定在该 ID 的忽略目录，GM 沿用 local 配置。
 function Get-PersonalServerEnvironment {
     if ($Id -cnotmatch '^dev-[a-z0-9][a-z0-9_-]{0,26}$' -or [string]::IsNullOrWhiteSpace($Name) -or
         $Name.Length -gt 64 -or $Name -match '\p{Cc}') {
@@ -66,7 +66,6 @@ function Get-PersonalServerEnvironment {
                 password = ''
             }
         }
-        mxzg = @{ gm = @{ enabled = $false } }
     }
     return @{
         SPRING_APPLICATION_JSON = $settings | ConvertTo-Json -Depth 8 -Compress

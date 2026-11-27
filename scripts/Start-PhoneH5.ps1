@@ -69,7 +69,7 @@ function Stop-PhoneH5Process([Diagnostics.Process]$Process) {
     }
 }
 
-# 检查部署输入并返回新进程的 Java 路径与 Spring 配置，证书密码只传给子进程。
+# 检查部署输入并返回新进程的 Java 路径与 Spring 配置。证书密码只传给子进程，GM 沿用 local 配置。
 function Get-PhoneH5StartSettings {
     $java = if ($JavaPath) {
         [IO.Path]::GetFullPath($JavaPath)
@@ -119,7 +119,6 @@ function Get-PhoneH5StartSettings {
                 datasource = @{ url = 'jdbc:h2:file:./data/phone-wifi-test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;WRITE_DELAY=0' }
                 web = @{ resources = @{ 'static-locations' = @(([Uri]($static.TrimEnd('\', '/') + '\')).AbsoluteUri) } }
             }
-            mxzg = @{ gm = @{ enabled = $false } }
         }
     }
 }

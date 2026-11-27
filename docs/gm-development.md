@@ -26,7 +26,7 @@
 
 - 2026-11-14负责人确认本机local默认开启GM：application-local.yml使用`${MXZG_GM_ENABLED:true}`，每次启动/重启都会读取，不再要求临时设置环境变量。需要关闭可显式设置`MXZG_GM_ENABLED=false`；production仍不装配GM服务，不能仅隐藏前端入口。
 - 独立 MySQL 验收使用 `backend/test-mysql.ps1 -MysqlHome <官方 ZIP 解压目录> -Preview`。测试启动器创建并校验自己的数据目录、库、受限账号和回环端口，在测试专用配置中开启 GM；不读取日常数据库环境变量，也不连接玩家库。
-- 手机测试包与 Creator 预览使用同一套当前登录角色的 GM 协议。开发服默认开启，发放使用已有的会话归属和幂等校验。
+- 内网个人服和共享验收服的启动脚本沿用 `local` 的 GM 默认配置。手机测试包与 Creator 预览使用同一套当前登录角色的 GM 协议，发放使用已有的会话归属和幂等校验。
 
 ## 本机永久设置与重启
 

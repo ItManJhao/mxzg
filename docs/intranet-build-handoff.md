@@ -42,7 +42,9 @@
    New-NetFirewallRule -DisplayName 'MXZG 个人服 dev-wang' -Direction Inbound -Action Allow -Protocol TCP -LocalAddress 192.168.50.21 -LocalPort 18082 -RemoteAddress 192.168.50.0/24
    ```
 
-3. 将 ID、显示名称和 `wss://192.168.50.21:18082/api/v1/game/socket` 三项交给打包机维护人登记。启动窗口按 `Ctrl+C` 停服，修改 Java 代码后重新运行启动命令编译。个人数据在 `backend/.local/lan-personal/dev-wang/game.mv.db`，重启沿用；如需备份，先停这个个人实例。个人服通过该启动入口运行时关闭 GM。
+3. 将 ID、显示名称和 `wss://192.168.50.21:18082/api/v1/game/socket` 三项交给打包机维护人登记。启动窗口按 `Ctrl+C` 停服，修改 Java 代码后重新运行启动命令编译。个人数据在 `backend/.local/lan-personal/dev-wang/game.mv.db`，重启沿用；如需备份，先停这个个人实例。
+
+内网个人服和共享验收服下次启动时沿用 `local` 配置，默认开启 GM。验收时选中目标区服，进入主城点头像，再点左上角「个人空间」挂牌 10 次。需要关闭时，在启动该服的环境中设置 `MXZG_GM_ENABLED=false`。详见[开发 GM](gm-development.md)。
 
 ### 首次为个人服签发证书
 
