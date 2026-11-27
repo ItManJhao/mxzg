@@ -20,6 +20,7 @@
 | 副本大厅与竞技场 | [五类日常副本](network-contract.md#日常副本)、[幻境之塔](network-contract.md#幻境之塔)、[竞技场](network-contract.md#竞技场) |
 | VIP 等级与领奖 | [契约任务、累计条件与回包](network-contract.md#vip-契约任务) |
 | 配置、资源和构建 | [配置生成](config-pipeline.md)、[加载与缓存](staged-resource-loading.md)、[自动图集](bag-auto-atlas.md) |
+| 内网打包机 | [Windows 打包机交接与发布流程](intranet-build-handoff.md) |
 | 本机运行、GM和技能台 | [本机启停与独立验证](local-remake-workflow.md)、[GM维护](gm-development.md) |
 
 ## 记录怎样维护

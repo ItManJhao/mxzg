@@ -8,6 +8,7 @@ mxzg 使用 Cocos Creator 3.8.8、TypeScript、Java 21 和 Spring Boot 重做原
 
 - 查哪些操作已经接通、哪些经过实际验证，读[开发进度](docs/development-progress.md)。
 - 接手开发、定位页面与服务端入口、选择检查命令，读[开发交接](docs/handoff.md)。
+- 接入内网验收服、通过网页发布或恢复打包机，读[内网打包机交接](docs/intranet-build-handoff.md)。
 - 查协议、架构和各玩法的专题说明，读[文档索引](docs/README.md)。
 - 评估海外发行，读[多语言现状与试点](docs/localization-plan.md)，其中列出旧译覆盖、界面改造量和首轮验收方法。
 
